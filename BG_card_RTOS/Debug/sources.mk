@@ -39,6 +39,7 @@ src/hardware/USB/src \
 src/hardware/audio \
 src/hardware/audio/effect_parameter \
 src/hardware/audio/music_parameter \
+src/hardware/audio_looper \
 src \
 startup \
 

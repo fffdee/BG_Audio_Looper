@@ -1,0 +1,272 @@
+/**
+ **************************************************************************************
+ * @file    audio_looper.c
+ * @brief   Audio looper functions implementation
+ *
+ * @author  BanGO
+ * @version V1.0.0
+ *
+ * @Copyright (C) 2025, Audio Looper Project. All rights reserved.
+ **************************************************************************************
+ */
+
+#include "audio_looper.h"
+#include "debug.h"
+#include "bg_flash_manager.h"
+
+// 鍏ㄥ眬Loop绠＄悊鍣�
+LoopManager_t g_loop_manager = {0};
+
+// 澶栭儴鍏ㄥ眬鍙橀噺寮曠敤
+extern uint32_t sectorAddress;
+extern uint32_t record_time;
+extern uint16_t rec, rea, play;
+extern uint16_t time;
+extern uint8_t record_flag;
+extern uint8_t play_flag;
+extern int16_t ReadBuf[96];
+extern int16_t CRC[100];
+extern int16_t CRC2[96];
+extern int16_t PcmBuf3[100];
+extern uint16_t read_write;
+
+// 澶栭儴鍑芥暟澹版槑
+extern void convertInt16ArrayToUint8Array(const int16_t *input, uint8_t *output, uint32_t size);
+extern void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, uint32_t size);
+
+/**
+ * @brief 鍒濆鍖朙oop绠＄悊鍣�
+ */
+void loop_init(void)
+{
+    g_loop_manager.loop_play = 0;
+    g_loop_manager.loop = 0;
+    g_loop_manager.state = 2;  // 瀵瑰簲play_flag=2 (鍒濆绌洪棽鐘舵�)
+    g_loop_manager.sector_address = 0;
+    g_loop_manager.record_time = 0;
+    g_loop_manager.is_initialized = 1;
+    
+    // 鍚屾鍏ㄥ眬鍙橀噺
+    play_flag = g_loop_manager.state;
+    sectorAddress = g_loop_manager.sector_address;
+    record_time = g_loop_manager.record_time;
+    
+    DBG("Loop manager initialized\n");
+}
+
+/**
+ * @brief 閲嶇疆Loop绠＄悊鍣�
+ */
+void loop_reset(void)
+{
+    g_loop_manager.loop_play = 0;
+    g_loop_manager.loop = 0;
+    g_loop_manager.state = 2;
+    g_loop_manager.sector_address = 0;
+    g_loop_manager.record_time = 0;
+    
+    // 閲嶇疆璁℃暟鍣�
+    rec = 0;
+    rea = 0;
+    play = 0;
+    
+    // 鍚屾鍏ㄥ眬鍙橀噺
+    play_flag = g_loop_manager.state;
+    sectorAddress = g_loop_manager.sector_address;
+    record_time = g_loop_manager.record_time;
+    
+    DBG("Loop manager reset\n");
+}
+
+/**
+ * @brief 澶勭悊鎸夐敭鎸変笅浜嬩欢
+ * 瀹炵幇鏅鸿兘鐘舵�鍒囨崲閫昏緫
+ */
+void loop_handle_button_press(void)
+{
+    if (!g_loop_manager.is_initialized) {
+        DBG("Loop manager not initialized\n");
+        return;
+    }
+    
+    // 瀹炵幇鍘熸潵鐨勬寜閿�杈�
+    if (g_loop_manager.loop_play == 1) {
+        if (g_loop_manager.loop == 0) {
+            g_loop_manager.sector_address = 0;
+            g_loop_manager.state = 1;  // 鎾斁鐘舵�
+            g_loop_manager.loop = 1;
+        }
+        else if (g_loop_manager.loop == 1) {
+            g_loop_manager.state = 3;  // 鍙犲綍鐘舵�
+            g_loop_manager.loop = 0;
+        }
+        DBG("play_flag is %d\n", g_loop_manager.state);
+    }
+    
+    if (g_loop_manager.state == 1 && g_loop_manager.loop_play == 0) {
+        g_loop_manager.state = 3;
+        g_loop_manager.loop_play = 1;
+        g_loop_manager.sector_address = 0;
+        DBG("play_flag is %d %d\n", g_loop_manager.state, g_loop_manager.loop_play);
+    }
+    
+    if (g_loop_manager.state == 0) {
+        g_loop_manager.record_time = g_loop_manager.sector_address;
+        g_loop_manager.state = 1;
+    }
+    
+    if (g_loop_manager.state == 2) {
+        g_loop_manager.state = 0;  // 寮�褰曞埗
+    }
+    
+    // 鍚屾鍏ㄥ眬鍙橀噺
+    play_flag = g_loop_manager.state;
+    sectorAddress = g_loop_manager.sector_address;
+    record_time = g_loop_manager.record_time;
+}
+
+/**
+ * @brief 澶勭悊褰曞埗閫昏緫
+ * @param audio_data 闊抽鏁版嵁
+ * @param buffer 缂撳啿鍖�
+ * @param length 鏁版嵁闀垮害
+ */
+void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t length)
+{
+    if (g_loop_manager.state != 0 || !record_flag) {
+        return;  // 涓嶅湪褰曞埗鐘舵�鎴杛ecord_flag鏈缃�
+    }
+    
+    record_flag = 0;
+    
+    // 杞崲闊抽鏁版嵁
+    convertInt16ArrayToUint8Array(audio_data, buffer, 96);
+    
+    // 鍐欏叆Flash
+    if (BG_flash_manager.PageProgram(g_loop_manager.sector_address, buffer, 192, DEV_NOR) == 0) {
+        rec++;
+        g_loop_manager.sector_address += 256;
+    }
+    
+    // 璋冭瘯杈撳嚭
+    if (rec == 2000) {
+        DBG("buf3 %d %d %d %d %d %d\n", audio_data[12], audio_data[13], audio_data[14], 
+            audio_data[15], audio_data[16], audio_data[17]);
+        convertUint8ArrayToInt16Array(buffer, CRC, 192);
+        DBG("CRC %d %d %d %d %d %d\n", CRC[12], CRC[13], CRC[14], CRC[15], CRC[16], CRC[17]);
+    }
+    
+    if (rec == 10000) {
+        DBG("buf3 %d %d %d %d %d %d\n", audio_data[12], audio_data[13], audio_data[14], 
+            audio_data[15], audio_data[16], audio_data[17]);
+        convertUint8ArrayToInt16Array(buffer, CRC2, 192);
+        DBG("CRC2 %d %d %d %d %d %d\n", CRC2[12], CRC2[13], CRC2[14], CRC2[15], CRC2[16], CRC2[17]);
+    }
+    
+    if (rec == 11718) {
+        DBG("have not%d %d %d\n", rec, rea, time);
+    }
+    
+    // 妫�煡瀛樺偍绌洪棿
+    if (g_loop_manager.sector_address >= BG_flash_manager.GetTotalByte(DEV_NOR)) {
+        DBG("have not%d space !%d play %d recording address %d ,Total is %d\n", 
+            rec, rea, play, read_write, BG_flash_manager.GetTotalByte(DEV_NOR));
+        
+        g_loop_manager.state = !g_loop_manager.state;
+        read_write++;
+        g_loop_manager.record_time = BG_flash_manager.GetTotalByte(DEV_NOR);
+        rec = 0;
+        rea = 0;
+        play = 0;
+        g_loop_manager.sector_address = 0;
+    }
+    
+    // 鍚屾鍏ㄥ眬鍙橀噺
+    sectorAddress = g_loop_manager.sector_address;
+    record_time = g_loop_manager.record_time;
+    play_flag = g_loop_manager.state;
+}
+
+/**
+ * @brief 澶勭悊鎾斁閫昏緫
+ * @param output_data 杈撳嚭闊抽鏁版嵁
+ * @param buffer 缂撳啿鍖�
+ * @param length 鏁版嵁闀垮害
+ */
+void loop_process_playback(int16_t* output_data, uint8_t* buffer, uint16_t length)
+{
+    if (g_loop_manager.state != 1 || !record_flag) {
+        return;  // 涓嶅湪鎾斁鐘舵�鎴杛ecord_flag鏈缃�
+    }
+    uint16_t i;
+    record_flag = 0;
+    rec++;
+    
+    // 浠嶧lash璇诲彇鏁版嵁
+    BG_flash_manager.ReadData(g_loop_manager.sector_address, buffer, 192, DEV_NOR);
+    convertUint8ArrayToInt16Array(buffer, ReadBuf, 192);
+    
+    // 娣峰悎闊抽鏁版嵁
+    for (i = 0; i < 96; i++) {
+        output_data[i] = __nds32__clips((output_data[i] * 2 + ReadBuf[i]), (16) - 1);
+    }
+    
+    g_loop_manager.sector_address += 256;
+    
+    // 妫�煡鏄惁鍒拌揪褰曞埗缁撴潫
+    if (g_loop_manager.sector_address > g_loop_manager.record_time) {
+        DBG("have not%d", g_loop_manager.record_time);
+        rec = 0;
+        g_loop_manager.sector_address = 0;
+    }
+    
+    // 鍚屾鍏ㄥ眬鍙橀噺
+    sectorAddress = g_loop_manager.sector_address;
+    play_flag = g_loop_manager.state;
+}
+
+/**
+ * @brief 鑾峰彇褰撳墠寰幆鐘舵�
+ */
+LoopState_t loop_get_state(void)
+{
+    switch (g_loop_manager.state) {
+        case 0: return LOOP_STATE_RECORDING;
+        case 1: return LOOP_STATE_PLAYING;
+        case 2: return LOOP_STATE_IDLE;
+        case 3: return LOOP_STATE_OVERDUB;
+        default: return LOOP_STATE_IDLE;
+    }
+}
+
+/**
+ * @brief 妫�煡鏄惁姝ｅ湪褰曞埗
+ */
+uint8_t loop_is_recording(void)
+{
+    return (g_loop_manager.state == 0) ? 1 : 0;
+}
+
+/**
+ * @brief 妫�煡鏄惁姝ｅ湪鎾斁
+ */
+uint8_t loop_is_playing(void)
+{
+    return (g_loop_manager.state == 1) ? 1 : 0;
+}
+
+/**
+ * @brief 鑾峰彇褰撳墠鍦板潃
+ */
+uint32_t loop_get_current_address(void)
+{
+    return g_loop_manager.sector_address;
+}
+
+/**
+ * @brief 鑾峰彇褰曞埗鏃堕棿
+ */
+uint32_t loop_get_record_time(void)
+{
+    return g_loop_manager.record_time;
+}

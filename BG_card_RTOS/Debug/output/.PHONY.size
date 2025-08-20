@@ -1,2 +1,2 @@
    text (code + rodata)	   data	    bss	    dec	    hex	filename
-  63576 (54396 +   9180)	   1352	  26832	  91760	  16670	BG_card_RTOS.adx
+  63496 (54252 +   9244)	   1352	  26460	  91308	  164ac	BG_card_RTOS.adx

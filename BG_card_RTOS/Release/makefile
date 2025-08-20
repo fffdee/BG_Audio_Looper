@@ -30,6 +30,7 @@ RM := rm -rf
 -include src/hardware/BG_Encoder/subdir.mk
 -include src/hardware/BG_Lcd/subdir.mk
 -include src/hardware/BG_flash_manager/subdir.mk
+-include src/hardware/audio_looper/subdir.mk
 -include src/hardware/USB/src/subdir.mk
 -include src/subdir.mk
 -include startup/subdir.mk

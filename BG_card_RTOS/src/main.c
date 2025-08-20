@@ -54,6 +54,7 @@
 #include "gui_tool.h"
 #include "ctrlvars.h"
 #include "page_manager.h"
+#include "audio_looper.h"
 
 extern void SysTickInit(void);
 extern void UsbAudioMicDacInit(void);
@@ -79,14 +80,7 @@ void Timer2Interrupt(void)
 	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
 	OTG_PortLinkCheck();
 	//DBG("time run");
-//	read_write++;
-//	if(read_write>5)read_write=0;
-//	if(read_write==5){
-//		record_flag=1;
-//
-//	}else{
-//		record_flag=0;
-//	}
+
 	if(left_flag==1)
 		left_time++;
 	else left_time=0;
@@ -108,7 +102,10 @@ void Timer2Interrupt(void)
 
 		record_flag=1;
 	}
-	//BG_page.Loop(&BG_page);
+
+	// 更新loop状态 - 在1ms定时中断中处理所有实时状态更新
+	loop_timer_update();
+
 #ifdef CFG_APP_USB_AUDIO_MODE_EN
 	UsbAudioTimer1msProcess(); //1ms锟叫断硷拷锟�
 #endif
@@ -132,10 +129,10 @@ static uint32_t PcmBuf2[100] = {0};
 static uint32_t PcmBuf3[100] = {0};
 static uint32_t PcmBuf4[100] = {0};
 int16_t CRC[100] = {0};
-static int16_t WriteBufer[96] = {0};
+int16_t WriteBufer[96] = {0};
 
-static int16_t CRC2[96] = {0};
-static int16_t ReadBuf[96] = {0};
+int16_t CRC2[96] = {0};
+int16_t ReadBuf[96] = {0};
 uint32_t sectorAddress = 0;
 
 uint32_t record_time;
@@ -707,37 +704,7 @@ void SerialTask(){
 
 
 }
-void input_det2(){
-	//enter 按键初始化，上拉输入。
-//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX23);
-//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX23);
-//		GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX23);
-//		GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX23);
 
-//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX1);
-//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX1);
-//		GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX1);
-//		GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX1);
-//
-//		GPIO_RegOneBitClear(GPIO_B_IE, GPIOB6);
-//		GPIO_RegOneBitSet(GPIO_B_OE, GPIOB6);
-//		GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
-//
-//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX28);
-//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX28);
-//		GPIO_RegOneBitSet(GPIO_A_PD, GPIO_INDEX28);
-//		GPIO_RegOneBitClear(GPIO_A_PU, GPIO_INDEX28);
-//
-//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX29);
-//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX29);
-//		GPIO_RegOneBitSet(GPIO_A_PD, GPIO_INDEX29);
-//		GPIO_RegOneBitClear(GPIO_A_PU, GPIO_INDEX29);
-//
-//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX30);
-//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX30);
-//		GPIO_RegOneBitSet(GPIO_A_PD, GPIO_INDEX30);
-//		GPIO_RegOneBitClear(GPIO_A_PU, GPIO_INDEX30);
-}
 uint32_t record_time = 0;
 
 void EffectTask(){
@@ -773,72 +740,24 @@ void EffectTask(){
 	//AudioEffectEchoInit(&gCtrlVars.echo_unit,  2, 48000);
 
 	AudioEffectReverbInit(&gCtrlVars.reverb_unit,  2, 48000);
-
-
+	
+	play_flag = 0;
 	BG_flash_manager.Init();
 	BG_flash_manager.EraseAll(DEV_NOR);
-	play_flag=2;
-	DBG("record is ready\n");
-	sectorAddress=0;
-	//record_time = BG_flash_manager.GetTotalByte(DEV_NOR);
-	uint8_t loop_play = 0;
-	uint8_t loop= 0;
+	
+	// 初始化loop管理器
+	loop_init();
+	
+	DBG("Loop manager is ready\n");
 	while(1){
 //
-//		if(!BG_encoder.enter()){
-//			DelayMs(100);
-//			if(!BG_encoder.enter()){
-//				//BG_page.Enter(&BG_page);
-//				BG_page.Last(&BG_page);
-//			}
-//		}
-//		if(BG_encoder.get_value()!=last_value&&last_value!=0)
-//		{
-//			if(last_value>BG_encoder.get_value()){
-//				BG_page.Last(&BG_page);
-//			}
-//			if(last_value<BG_encoder.get_value()){
-//				BG_page.Next(&BG_page);
-//			}
-//
-//		}
-//		last_value = BG_encoder.get_value();
-//		if(UI_flag==1)BG_page.Loop(&BG_page);
-		//input_det();
+
 		if(!BG_encoder.enter()){
 			DelayMs(100);
 			if(!BG_encoder.enter()){
-
-
-				if(loop_play==1){
-
-					if(loop==0){
-						sectorAddress=0;
-						play_flag =1;
-						loop=1;
-					}
-				else if( loop==1){
-					play_flag =3;
-					loop=0;
-				}
-				DBG("play_flag is %d\n",play_flag);
-				}
-				if(play_flag == 1&&loop_play == 0){
-					play_flag = 3;
-					loop_play = 1;
-					sectorAddress=0;
-					DBG("play_flag is %d %d\n",play_flag,loop_play);
-				}
-				if(play_flag==0){
-					record_time=sectorAddress;
-					play_flag = 1;
-					}
-			   if(play_flag==2)play_flag = 0;
-
-
-
-
-									}
+				// 使用loop函数处理按键
+				loop_handle_button_press();
+			}
 		}
 
 		if(AudioADC_DataLenGet(ADC0_MODULE) >= 48)
@@ -856,110 +775,29 @@ void EffectTask(){
 					n = RealLen;
 				}
 				//AudioEffectEchoApply(&gCtrlVars.echo_unit, PcmBuf1, PcmBuf2, n);
-				memset(PcmBuf3,0x00,48);
+				//memset(PcmBuf3,0x00,48);
 				AudioEffectReverbApply(&gCtrlVars.reverb_unit, PcmBuf1, PcmBuf3, n);
-				if(play_flag==0||play_flag==2||play_flag==3){
+				// if(play_flag==0||play_flag==2||play_flag==3){
 
 				convertInt16ArrayToUint8Array(PcmBuf3,Buffer ,96);
 				for(i=0;i<n;i++)
 					PcmBuf4[i] = PcmBuf3[i]+PcmBuf2[i];
 				AudioDAC_DataSet(DAC0, PcmBuf4, n);
 
-				play++;
+			
 
-				}
-				else{
-			//		AudioDAC_DataSet(DAC0, PcmBuf3, n);
+			// 	}
+			// 	else{
+			// //		AudioDAC_DataSet(DAC0, PcmBuf3, n);
 
-				}
+			// 	}
 
 
 			}
 
-
-			if(play_flag==0&&record_flag==1){
-					record_flag=0;
-
-															//DBG("{0x%08X, 0x%08X}\n",PcmBuf1[50],sectorAddress);
-															//BG_flash_manager.SectorErase(sectorAddress);
-
-					if(BG_flash_manager.PageProgram(sectorAddress, Buffer, 192,DEV_NOR)==0){
-						rec++;
-						sectorAddress +=256;
-
-
-					}
-					if(rec==2000){
-						DBG("buf3 %d %d %d %d %d %d\n",PcmBuf3[12],PcmBuf3[13],PcmBuf3[14],PcmBuf3[15],PcmBuf3[16],PcmBuf3[17]);
-
-						convertUint8ArrayToInt16Array(Buffer,CRC,192);
-						DBG("CRC %d %d %d %d %d %d\n",CRC[12],CRC[13],CRC[14],CRC[15],CRC[16],CRC[17]);
-//						DBG("sdaw  %d\n",CRC[30]);
-					}
-
-					if(rec==10000){
-						DBG("buf3 %d %d %d %d %d %d\n",PcmBuf3[12],PcmBuf3[13],PcmBuf3[14],PcmBuf3[15],PcmBuf3[16],PcmBuf3[17]);
-
-						convertUint8ArrayToInt16Array(Buffer,CRC2,192);
-						DBG("CRC2 %d %d %d %d %d %d\n",CRC2[12],CRC2[13],CRC2[14],CRC2[15],CRC2[16],CRC2[17]);
-//						DBG("sdaw  %d\n",CRC[30]);
-					}
-						//memcpy(PcmBuf3,CRC,48);
-					if(rec==11718)DBG("have not%d %d %d\n",rec,rea,time);
-															//BG_flash_manager.GetTotalByte()
-															//DBG("have not space ! recording ,Total is %d\n",BG_flash_manager.GetTotalByte());
-					if(sectorAddress>=BG_flash_manager.GetTotalByte(DEV_NOR)){
-
-							DBG("have not%d  space !%d paly %d recording address %d ,Total is %d\n",rec,rea,play,read_write,BG_flash_manager.GetTotalByte(DEV_NOR));
-							play_flag =!play_flag;
-							read_write++;
-							record_time = BG_flash_manager.GetTotalByte(DEV_NOR);
-							rec=0;
-							rea=0;
-							play=0;
-							sectorAddress=0;
-
-					}
-				}else if(play_flag==1&&record_flag==1){
-
-
-															rec++;
-//															if(rec%30000==9){
-//																BG_flash_manager.ReadData(sectorAddress, Buffer, 96);
-//																convertUint8ArrayToInt16Array(Buffer,CRC,96);
-//															}
-
-															BG_flash_manager.ReadData(sectorAddress, Buffer, 192,DEV_NOR);
-															convertUint8ArrayToInt16Array(Buffer,ReadBuf,192);
-//
-//															if(rec==2000)
-//																for(i=0;i<96;i++){
-//																	DBG("(%d) read is (%d)", i,ReadBuf[i]);
-//																	if(!compareInt16Arrays(ReadBuf,CRC,96))
-//																		DBG("data is bad\n");
-//																}
-//															if(BG_encoder.encoder()%2==0){
-																for(i=0;i<96;i++)
-																	PcmBuf3[i] = __nds32__clips((PcmBuf3[i]*2 + ReadBuf[i]), (16)-1);
-																	AudioDAC_DataSet(DAC0, PcmBuf3, 48);
-
-
-
-
-															sectorAddress +=256;
-															record_flag=0;
-
-
-
-															if(sectorAddress>record_time){
-																DBG("have not%d",record_time);
-																	rec=0;
-																	sectorAddress =0;
-
-															}
-
-										}
-
+			// 使用loop函数处理录制和播放
+			loop_process_recording(PcmBuf3, Buffer, 48);
+			loop_process_playback(PcmBuf3, Buffer, 48);
 
 	}
 }

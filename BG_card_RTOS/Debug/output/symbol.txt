@@ -19,21 +19,21 @@
 00000000 a EILM_BEGIN
 00000000 a NDS_SAG_LMA_EILM
 00000000 W _ITB_BASE_
-00000000 W _RELAX_END_	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:20
-00000000 T _start	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:20
-00000000 t exception_vector	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:20
-000000a4 t exception_vector_end	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:350
-000000a4 T stub	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:349
-00000104 t FlashXmcResumeTimeGet	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:533
-00000120 t flash_udelay	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:1120
-0000019c t flash_delayms	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6233
-000001b6 t FshcGpioSet	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6240
-000001d8 t FshcInit	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6249
-000001f2 t FshcSendCmd	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6257
-00000226 t FshcSpiIOModeCfg	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6275
-0000050e t SpiFlashResetCRM	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6324
-0000054a t SpiFlashResume	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6374
-0000057e t SpiFlashSuspend	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6380
+00000000 W _RELAX_END_	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:20
+00000000 T _start	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:20
+00000000 t exception_vector	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:20
+000000a4 t exception_vector_end	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:350
+000000a4 T stub	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:349
+00000104 t FlashXmcResumeTimeGet	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:530
+00000120 t flash_udelay	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:1120
+0000019c t flash_delayms	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6233
+000001b6 t FshcGpioSet	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6240
+000001d8 t FshcInit	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6249
+000001f2 t FshcSendCmd	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6257
+00000226 t FshcSpiIOModeCfg	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6275
+0000050e t SpiFlashResetCRM	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6324
+0000054a t SpiFlashResume	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6374
+0000057e t SpiFlashSuspend	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6380
 000005b2 t SpiFlashReadId
 000007b4 t SpiFlashReadStatus
 0000085a t SpiFlashIsBusy
@@ -65,50 +65,50 @@
 000017fc T SpiFlashInfoGet
 00001804 T SpiFlashIOCtrl
 000018cc r SpiFlash
-00001980 T OS_Trap_Interrupt_SWI	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/os_cpu_a.S:110
-00001ae0 t ISR_TABLE	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:52
-00001b5c t OS_Trap_TLB_Fill	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:94
-00001b6c t OS_Trap_PTE_Not_Present	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:103
-00001b7c t OS_Trap_TLB_Misc	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:111
-00001b8c t OS_Trap_TLB_VLPT_Miss	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:120
-00001b9c t OS_Trap_Machine_Error	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:128
-00001bac t OS_Trap_Debug_Related	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:136
-00001bbc t OS_Trap_General_Exception	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:144
-00001bcc t OS_Trap_Syscall	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:152
-00001bdc t OS_Trap_Int_Comm	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:159
-00001cc6 t OS_Trap_Interrupt_HW0	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:169
-00001cd0 t OS_Trap_Interrupt_HW1	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:174
-00001cda t OS_Trap_Interrupt_HW2	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:179
-00001ce4 t OS_Trap_Interrupt_HW3	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:184
-00001cee t OS_Trap_Interrupt_HW4	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:189
-00001cf8 t OS_Trap_Interrupt_HW5	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:200
-00001d1e t OS_Trap_Interrupt_HW6	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:205
-00001d28 t OS_Trap_Interrupt_HW7	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:210
-00001d32 t OS_Trap_Interrupt_HW8	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:215
-00001d3c t OS_Trap_Interrupt_HW9	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:220
-00001d46 t OS_Trap_Interrupt_HW10	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:225
-00001d50 t OS_Trap_Interrupt_HW11	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:230
-00001d5a t OS_Trap_Interrupt_HW12	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:235
-00001d64 t OS_Trap_Interrupt_HW13	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:240
-00001d6e t OS_Trap_Interrupt_HW14	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:245
-00001d78 t OS_Trap_Interrupt_HW15	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:250
-00001d82 t OS_Trap_Interrupt_HW16	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:255
-00001d8c t OS_Trap_Interrupt_HW17	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:260
-00001d96 t OS_Trap_Interrupt_HW18	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:265
-00001da0 t OS_Trap_Interrupt_HW19	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:270
-00001daa t OS_Trap_Interrupt_HW20	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:275
-00001db4 t OS_Trap_Interrupt_HW21	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:280
-00001dbe t OS_Trap_Interrupt_HW22	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:285
-00001dc8 t OS_Trap_Interrupt_HW23	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:290
-00001dd2 t OS_Trap_Interrupt_HW24	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:295
-00001ddc t OS_Trap_Interrupt_HW25	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:300
-00001de6 t OS_Trap_Interrupt_HW26	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:305
-00001df0 t OS_Trap_Interrupt_HW27	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:310
-00001dfa t OS_Trap_Interrupt_HW28	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:315
-00001e04 t OS_Trap_Interrupt_HW29	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:320
-00001e0e t OS_Trap_Interrupt_HW30	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:325
-00001e18 t OS_Trap_Interrupt_HW31	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:330
-00001e24 t ___start	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/crt0.S:350
+00001980 T OS_Trap_Interrupt_SWI	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/os_cpu_a.S:110
+00001ae0 t ISR_TABLE	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:52
+00001b5c t OS_Trap_TLB_Fill	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:94
+00001b6c t OS_Trap_PTE_Not_Present	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:103
+00001b7c t OS_Trap_TLB_Misc	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:111
+00001b8c t OS_Trap_TLB_VLPT_Miss	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:120
+00001b9c t OS_Trap_Machine_Error	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:128
+00001bac t OS_Trap_Debug_Related	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:136
+00001bbc t OS_Trap_General_Exception	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:144
+00001bcc t OS_Trap_Syscall	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:152
+00001bdc t OS_Trap_Int_Comm	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:159
+00001cc6 t OS_Trap_Interrupt_HW0	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:169
+00001cd0 t OS_Trap_Interrupt_HW1	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:174
+00001cda t OS_Trap_Interrupt_HW2	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:179
+00001ce4 t OS_Trap_Interrupt_HW3	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:184
+00001cee t OS_Trap_Interrupt_HW4	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:189
+00001cf8 t OS_Trap_Interrupt_HW5	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:200
+00001d1e t OS_Trap_Interrupt_HW6	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:205
+00001d28 t OS_Trap_Interrupt_HW7	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:210
+00001d32 t OS_Trap_Interrupt_HW8	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:215
+00001d3c t OS_Trap_Interrupt_HW9	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:220
+00001d46 t OS_Trap_Interrupt_HW10	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:225
+00001d50 t OS_Trap_Interrupt_HW11	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:230
+00001d5a t OS_Trap_Interrupt_HW12	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:235
+00001d64 t OS_Trap_Interrupt_HW13	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:240
+00001d6e t OS_Trap_Interrupt_HW14	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:245
+00001d78 t OS_Trap_Interrupt_HW15	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:250
+00001d82 t OS_Trap_Interrupt_HW16	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:255
+00001d8c t OS_Trap_Interrupt_HW17	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:260
+00001d96 t OS_Trap_Interrupt_HW18	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:265
+00001da0 t OS_Trap_Interrupt_HW19	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:270
+00001daa t OS_Trap_Interrupt_HW20	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:275
+00001db4 t OS_Trap_Interrupt_HW21	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:280
+00001dbe t OS_Trap_Interrupt_HW22	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:285
+00001dc8 t OS_Trap_Interrupt_HW23	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:290
+00001dd2 t OS_Trap_Interrupt_HW24	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:295
+00001ddc t OS_Trap_Interrupt_HW25	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:300
+00001de6 t OS_Trap_Interrupt_HW26	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:305
+00001df0 t OS_Trap_Interrupt_HW27	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:310
+00001dfa t OS_Trap_Interrupt_HW28	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:315
+00001e04 t OS_Trap_Interrupt_HW29	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:320
+00001e0e t OS_Trap_Interrupt_HW30	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:325
+00001e18 t OS_Trap_Interrupt_HW31	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:330
+00001e24 t ___start	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/crt0.S:350
 00001e74 T Clock_DeepSleepSysClkSelect
 00001f76 T Power_GotoDeepSleep
 00002064 T Clock_CoreClkDivSet
@@ -124,7 +124,7 @@
 000021d0 T DelayMs
 00002222 T __udelay
 00002274 T Timer_InterruptFlagClear
-00002328 T SystickInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/portISR.c:100
+00002328 T SystickInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/portISR.c:100
 00002358 T DMA0_Interrupt
 000023d8 T DMA1_Interrupt
 00002472 T DMA2_Interrupt
@@ -138,342 +138,347 @@
 00002828 T TimeOutSet
 00002848 T IsTimeOut
 000028fe W UART1_Interrupt
-00002984 T AudioADC_DigitalInit	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:35
-00002b46 T AudioADC_DataLenGet	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:143
-00002b72 T AudioADC_DataGet	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:161
-00002bd4 T AudioDAC_Init	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:14
-00002e34 T AudioDAC_DataSpaceLenGet	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:237
-00002e70 T AudioDAC_DataSet	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:250
-00002e9e T SPIM_DMA_Done_Clear	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:28
-00002eb2 T SPIM_DMA_HalfDone	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:62
-00002ee2 T SPIM_DMA_Send_Start	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:110
-00002f1e T SPIM_DMA_Recv_Start	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:129
-00002f5a T UART0_InitWpr	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:31
-00002f6c T UART1_InitWpr	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:36
-00002f7e T UART0_SendByteWpr	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:90
-00002f90 T UART1_SendByteWpr	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:103
-00002fa2 t prvInsertBlockIntoFreeList	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:750
-00002fe8 T pvPortMalloc	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:170
-000030a6 T pvPortMallocFromEnd	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:312
-00003184 T vPortFree	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:474
-000031ee T vPortDefineHeapRegions	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:811
-000032c6 T GetIPSR	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:911
-000032da T GetCurrentTaskHandle	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:924
-000032f6 T DeleteTaskMallocMem	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:934
-0000332e T vListInitialise	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:75
-00003342 T vListInitialiseItem	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:95
-00003348 T vListInsertEnd	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:102
-00003360 T uxListRemove	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:179
-00003382 T CtxRestore	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/os_cpu_a.S:70
-00003414 T vPortEndScheduler	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:242
-00003430 T pxPortInitialiseStack	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:145
-000034ec T xPortStartScheduler	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:227
-00003504 T vPortYield	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:254
-00003512 T vPortEnterCritical	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:264
-00003540 T vPortExitCritical	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:281
-0000356a T ulPortSetInterruptMask	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:293
-0000357e T vPortClearInterruptMask	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:314
-00003588 W vPortISRStartFirstTask	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/portISR.c:80
-0000359a T xQueueGenericReset	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/queue.c:255
-00003616 T xQueueGenericCreate	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/queue.c:308
-00003676 t prvResetNextTaskUnblockTime	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3092
-0000369e t prvDeleteTCB	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3076
-000036b8 t prvAllocateTCBAndStack	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2904
-000036fe t prvInitialiseTCBVariables	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2693
-0000375a t prvInitialiseTaskLists	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2801
-000037a8 T xTaskGenericCreate	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:516
-000038b4 T vTaskDelete	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:696
-00003934 T vTaskStartScheduler	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1447
-00003990 T vTaskSuspendAll	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1536
-0000399c T pcTaskGetTaskName	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1723
-000039be T xTaskIncrementTick	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1842
-00003ad0 T xTaskResumeAll	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1574
-00003ba2 t prvCheckTasksWaitingTermination	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2833
-00003bf0 t prvIdleTask	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2546
-00003c0e T vTaskSwitchContext	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2107
-00003cbc T xTaskRemoveFromEventList	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2335
-00003d3a T xTaskGetCurrentTaskHandle	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3119
-00003d40 T prvInitialiseHeap	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:99
-00003d68 T osPortMallocFromEnd_1	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:188
-00003d7a T vApplicationIdleHook	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:230
-00003d7c T trace_TASK_SWITCHED_IN	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:310
-00003d8a T trace_TASK_SWITCHED_OUT	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:319
-00003e08 T Gui_DrawPoint	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:28
-00003e22 T Gui_Circle	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:34
-00003e36 T Gui_ShowChar	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:41
-00003ede T Gui_ShowString	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:88
-00003f1a T Gui_ShowImage	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:133
-00003f78 T Gui_DrawLine	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:151
-00003f8c T Gui_ShowNum	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:104
-00004034 T set_encoder_range	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:96
-0000405c T set_encoder_value	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:129
-0000406e T get_encoder_mode	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:147
-00004074 T get_encoder_value	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:152
-0000407a T get_encoder_range	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:157
-0000408c T encoder_button_init	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:71
-000040fa T encoder_buttun_state	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:169
-00004194 T enter_button_state	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:211
-000041aa T lcd_init	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:37
-00004216 T gui_Circle	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:168
-0000433e T Gui_box	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:400
-000043ae T DisplayButtonDown	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:456
-0000441e T DisplayButtonUp	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:470
-0000448e T lcd_write_byte	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:48
-000044b2 T Lcd_WriteIndex	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:55
-000044e2 T Lcd_WriteData	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:63
-00004512 T LCD_WriteData_16Bit	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:79
-0000454a T Lcd_SetRegion	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:105
-000045aa T gui_DrawPoint	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:129
-000045c8 T Lcd_Clear	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:144
-00004608 T showimage	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:433
-0000464e T Lcd_SetXY	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:123
-00004662 T gui_DrawLine	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:207
-000046fe T st7735_init	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/st7735.c:7
-00004964 T flash_init	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:36
-000049e0 T flash_write_byte	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:49
-00004a04 T flash_WriteEnable	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:192
-00004a60 T flash_write	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:56
-00004a7a T flash_read_byte	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:62
-00004a9e T flash_ReadID	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:80
-00004b20 T flash_GetTotalByte	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:107
-00004b94 T flash_read	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:70
-00004bae T flash_ReadData	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:371
-00004c40 T Windbond_GetCapacity	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:137
-00004c8c T flash_IsSectorErased	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:166
-00004cb2 T flash_GetRemainingCapacity	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:174
-00004d16 T flash_ReadStatusReg	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:216
-00004d6a T flash_WaitForWriteEnd	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:254
-00004d80 T flash_SectorErase	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:259
-00004e1a T flash_EraseAll	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:284
-00004e80 T flash_PageProgram	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:304
-00004f2e T UsbAudioTimer1msProcess	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:295
-00004fb4 T AudioEffectReverbInit	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/audio_effect.c:1481
-00005024 T AudioEffectReverbApply	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/audio_effect.c:2747
-0000503e T Communication_Effect_Init	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:252
-0000533a T GlobalSampeRateSet	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:589
-000053ba T GlobalMclkSet	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:690
-0000543e T PrivateMclkSet	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:748
-0000547a T Line3MicPinSet	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:1009
-0000548e T DefaultParamgsInit	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:775
-00005764 T CtrlVarsInit	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:291
-00005cfa T Timer2Interrupt	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:77
-00005d9a T spi_init	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:191
-00005e2c T convertUint8ArrayToInt16Array	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:426
-00005e54 T convertInt16ArrayToUint8Array	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:446
-00005e76 T audio_Init	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:603
-00005f56 T EffectTask	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:743
-0000640a T main	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:967
-00006542 W BLE_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W BT_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 t Default_Handler	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:47
-00006542 W FFTInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W GpioInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W I2C_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W I2sInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W IRInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W RtcInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W SDIO0_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W SPIM_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W SPIS_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W SWInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W SpdifInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W Timer3Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W Timer4Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W Timer5Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W Timer6Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W UART0_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006542 W WakeupInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:49
-00006544 T ExceptionCommHandler	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:53
-0000676c T __c_init	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:186
-000067a0 T __cpu_init	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:213
-00006842 T HardwareStackProtectEnable	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:316
-00006868 T __init	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:336
-0000688a T GIE_ENABLE	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/interrupt.c:16
-00006894 T GIE_DISABLE	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/interrupt.c:21
-000068a2 T GIE_STATE_GET	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/interrupt.c:27
-000068aa T NVIC_EnableIRQ	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/interrupt.c:70
-000068c2 t GetPswINTL	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:30
-000068d0 W SwUartSend	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:25
-000068d2 T putchar	/cygdrive/d/app/Andestech/AndeSight300RDS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
-00006962 T nds_write	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:85
-00006982 T DbgUartInit	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:94
-000069a6 T AudioADC_LREnable
-00006aa8 T AudioADC_Enable
-00006ac6 T AudioADC_Disable
-00006b10 T AudioADC_HighPassFilterConfig
-00006b24 T AudioADC_HighPassFilterSet
-00006b5a T AudioADC_Clear
-00006b70 T AudioADC_SampleRateGet
-00006bf4 T AudioADC_SampleRateSet
-00006d2a T AudioADC_FadeTimeSet
-00006d86 T AudioADC_FadeEnable
-00006dbc T AudioADC_SoftMute
-00006e48 T AudioADC_VolSet
-00006ea6 T AudioADC_AnaInit
-00006ee6 T AudioADC_PGASel
-000070ae T AudioADC_PGAGainSet
-0000721a T AudioADC_MicBias1Enable
-0000723c T AudioADC_DynamicElementMatch
-0000729c T AudioADC_IsOverflow
-000072b4 T AudioADC_OverflowClear
-000072d6 T Chip_VMIDDetectDisable
-000072e8 T Chip_Init
-00007388 T Chip_MemInit
-00007394 T Clock_Config
-00007416 T WaitOscillateWork
-00007430 T Clock_USBClkDivSet
-00007442 T Clock_RcFreqGet
-000074e8 T Clock_PllLock
-000075de T Clock_APllLock
-000076d4 T Clock_SysClkSelect
-00007762 T Clock_USBClkSelect
-0000778e T Clock_UARTClkSelect
-000077e6 T Clock_Timer3ClkSelect
-00007810 T Clock_Module1Enable
-00007820 T Clock_Module2Enable
-00007830 T Clock_Module3Enable
-00007840 T Clock_AudioPllClockSet
-0000799c T Clock_AudioMclkSel
-00007a74 T EnableMPU
-00007ad6 T EnableIDCache
-00007b18 T DataCacheInvalidAll
-00007b22 T DataCacheRangeInvalid
-00007b88 t AudioDAC0_ChannelEnable
-00007bf0 t AudioDAC1_ChannelEnable
-00007c34 T AudioDAC_Enable
-00007c52 T AudioDAC_DitherDisable
-00007c70 T AudioDAC_ScrambleDisable
-00007c8e T AudioDAC_DoutModeSet
-00007cce T AudioDAC_EdgeSet
-00007d14 T AudioDAC_DsmOutdisModeSet
-00007d42 T AudioDAC_ZeroNumSet
-00007d56 T AudioDAC_SampleRateGet
-00007dda T AudioDAC_SampleRateSet
-00007f20 T AudioDAC_Reset
-00007f42 T AudioDAC_FadeTimeSet
-00007faa T AudioDAC_FadeEnable
-00007fdc T AudioDAC_DigitalMute
-0000801c T AudioDAC_VolSet
-00008062 T AudioDAC_VmidChargeOp
-00008098 t AudioDAC0_PowerOn
-00008194 t AudioDAC1_PowerOn
-00008248 T AudioDAC_ClkEnable
-00008276 T AudioDAC_FuncReset
-000082a4 T AudioDAC_VIMDControl
-000082b6 T AudioDAC_SCFMute
-000082fc T AudioDAC_IBSelect
-00008346 T AudioDAC_AllPowerOn
-0000846a T AudioDAC_AllChannelEnable
-000084f6 T AudioDAC_PowerOn
-00008518 T AudioDAC_ChannelEnable
-00008536 T DMA_ChannelAllocTableSet
-00008548 T DMA_ChannelEnable
-00008574 T DMA_ChannelDisable
-000085a2 T DMA_InterruptFlagGet
-000085f6 T DMA_InterruptFlagClear
-0000869c T DMA_BlockConfig
-0000883a T DMA_BlockBufSet
-0000891c T DMA_CircularConfig
-00008b00 T DMA_CircularDataLenGet
-00008b72 T DMA_CircularSpaceLenGet
-00008c52 T DMA_CircularWritePtrSet
-00008c86 T DMA_CircularDataPut
-00008df0 T DMA_CircularReadPtrSet
-00008e22 T DMA_CircularDataGet
-00008fc8 T Efuse_ReadData
-0000902e T GPIO_RegOneBitGet
-00009042 T GPIO_PortAModeSet
-00009ccc T OTG_PortGetDP
-00009cda T OTG_PortGetDM
-00009ce8 T OTG_PortEnableDPPullUp
-00009d0e T OTG_PortDisableDPPullUp
-00009d34 T OTG_PortIsEnableDPPullUp
-00009d44 T OTG_PortEnablePullDown
-00009d6a T OTG_PortDisablePullDown
-00009d90 T OTG_PortIsEnablePullDown
-00009d9c T OTG_PortEnablePullUp500K
-00009dc2 T OTG_PortDisablePullUp500K
-00009de8 T OTG_PortLinkCheck
-0000a02c T UsbInterrupt
-0000a088 T Remap_AddrRemapSet
-0000a122 T Remap_InitTcm
-0000a154 T SPIM_Init
-0000a23c T SPIM_IoConfig
-0000a2e2 T SPIM_DMAStart
-0000a31c T SPIM_GetIntFlag
-0000a328 T SPIM_ClrIntFlag
-0000a33a T SPIM_SetDmaEn
-0000a352 T SysTickInit
-0000a37c T SysTimerIntFlagClear
-0000a38a T ClockFreqGet
-0000a3b8 T Timer_Config
-0000a56c T Timer_Start
-0000a5e4 t UART_BaudClkGet
-0000a63a T UART0_Init
-0000a808 T UART1_Init
-0000a9e0 T UART0_SendByte
-0000aa20 T UART1_SendByte
-0000aa60 T WDG_Disable
-0000aa84 T reverb_init
-0000adcc T reverb_configure
-0000af30 T reverb_apply
-0000b4d8 T floor
-0000b600 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
-0000b640 T __udivdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:818
-0000b644 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
-0000b69c T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
-0000b7f4 T __fixdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3666
-0000b848 T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
-0000bdd8 T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
-0000c288 T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
-0000c288 T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
-0000c32c T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
-0000c718 T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
-0000c784 T memcmp
-0000c7bc T memcpy
-0000c7e8 T memset
-0000c818 T printf
-0000c822 T puts
-0000c874 T strlen
-0000c880 t vprintf_help
-0000c8b4 T vprintf
-0000c900 T do_printf
-0000cda8 t sep_frac
-0000cdda T _printf_float
-0000d4ac T strcpy
-0000d4c0 T abs
-0000d4c8 T _write
-0000d4e0 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
-0000d508 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
-0000d5cc R F8x16	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/font.h:103
-0000dbbc R gImage_qq	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/BanGUI/base_func/picture.h:11
-0000ebf8 R GAIN_CONTROL_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:215
-0000ecf8 R EXPANDER_DEFAULT_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:206
-0000ed20 R DRC_DEFAULT_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:183
-0000ee04 R EQ_DEFAULT_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:159
-0000f064 R SupportSampleRateList	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:83
-0000f698 R MPUConfigTable	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/init-default.c:379
-0000f818 r COMB_SIZE
-0000f860 A __data_lmastart
-0000fda8 A EILM_SIZE
-20004000 D UARTS_SendByte_MAP	/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:267
+00002984 T AudioADC_DigitalInit	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:35
+00002b46 T AudioADC_DataLenGet	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:143
+00002b72 T AudioADC_DataGet	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:161
+00002bd4 T AudioDAC_Init	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:14
+00002e34 T AudioDAC_DataSpaceLenGet	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:237
+00002e70 T AudioDAC_DataSet	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:250
+00002e9e T SPIM_DMA_Done_Clear	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:28
+00002eb2 T SPIM_DMA_HalfDone	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:62
+00002ee2 T SPIM_DMA_Send_Start	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:110
+00002f1e T SPIM_DMA_Recv_Start	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/spim_interface.c:129
+00002f5a T UART0_InitWpr	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:31
+00002f6c T UART1_InitWpr	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:36
+00002f7e T UART0_SendByteWpr	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:90
+00002f90 T UART1_SendByteWpr	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:103
+00002fa2 t prvInsertBlockIntoFreeList	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:750
+00002fe8 T pvPortMalloc	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:170
+000030a6 T pvPortMallocFromEnd	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:312
+00003184 T vPortFree	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:474
+000031ee T vPortDefineHeapRegions	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:811
+000032c6 T GetIPSR	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:911
+000032da T GetCurrentTaskHandle	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:924
+000032f6 T DeleteTaskMallocMem	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:934
+0000332e T vListInitialise	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:75
+00003342 T vListInitialiseItem	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:95
+00003348 T vListInsertEnd	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:102
+00003360 T uxListRemove	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:179
+00003382 T CtxRestore	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/os_cpu_a.S:70
+00003414 T vPortEndScheduler	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:242
+00003430 T pxPortInitialiseStack	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:145
+000034ec T xPortStartScheduler	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:227
+00003504 T vPortYield	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:254
+00003512 T vPortEnterCritical	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:264
+00003540 T vPortExitCritical	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:281
+0000356a T ulPortSetInterruptMask	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:293
+0000357e T vPortClearInterruptMask	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:314
+00003588 W vPortISRStartFirstTask	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/portISR.c:80
+0000359a T xQueueGenericReset	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/queue.c:255
+00003616 T xQueueGenericCreate	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/queue.c:308
+00003676 t prvResetNextTaskUnblockTime	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3092
+0000369e t prvDeleteTCB	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3076
+000036b8 t prvAllocateTCBAndStack	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2904
+000036fe t prvInitialiseTCBVariables	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2693
+0000375a t prvInitialiseTaskLists	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2801
+000037a8 T xTaskGenericCreate	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:516
+000038b4 T vTaskDelete	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:696
+00003934 T vTaskStartScheduler	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1447
+00003990 T vTaskSuspendAll	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1536
+0000399c T pcTaskGetTaskName	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1723
+000039be T xTaskIncrementTick	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1842
+00003ad0 T xTaskResumeAll	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1574
+00003ba2 t prvCheckTasksWaitingTermination	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2833
+00003bf0 t prvIdleTask	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2546
+00003c0e T vTaskSwitchContext	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2107
+00003cbc T xTaskRemoveFromEventList	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2335
+00003d3a T xTaskGetCurrentTaskHandle	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3119
+00003d40 T prvInitialiseHeap	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:99
+00003d68 T osPortMallocFromEnd_1	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:188
+00003d7a T vApplicationIdleHook	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:230
+00003d7c T trace_TASK_SWITCHED_IN	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:310
+00003d8a T trace_TASK_SWITCHED_OUT	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:319
+00003e08 T Gui_DrawPoint	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:28
+00003e22 T Gui_Circle	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:34
+00003e36 T Gui_ShowChar	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:41
+00003ede T Gui_ShowString	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:88
+00003f1a T Gui_ShowImage	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:133
+00003f78 T Gui_DrawLine	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:151
+00003f8c T Gui_ShowNum	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:104
+00004034 T set_encoder_range	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:96
+0000405c T set_encoder_value	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:129
+0000406e T get_encoder_mode	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:147
+00004074 T get_encoder_value	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:152
+0000407a T get_encoder_range	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:157
+0000408c T encoder_button_init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:71
+000040fa T encoder_buttun_state	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:169
+00004194 T enter_button_state	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:211
+000041aa T lcd_init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:37
+00004216 T gui_Circle	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:168
+0000433e T Gui_box	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:400
+000043ae T DisplayButtonDown	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:456
+0000441e T DisplayButtonUp	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:470
+0000448e T lcd_write_byte	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:48
+000044b2 T Lcd_WriteIndex	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:55
+000044e2 T Lcd_WriteData	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:63
+00004512 T LCD_WriteData_16Bit	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:79
+0000454a T Lcd_SetRegion	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:105
+000045aa T gui_DrawPoint	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:129
+000045c8 T Lcd_Clear	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:144
+00004608 T showimage	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:433
+0000464e T Lcd_SetXY	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:123
+00004662 T gui_DrawLine	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:207
+000046fe T st7735_init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/st7735.c:7
+00004964 T flash_init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:36
+000049e0 T flash_write_byte	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:49
+00004a04 T flash_WriteEnable	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:192
+00004a60 T flash_write	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:56
+00004a7a T flash_read_byte	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:62
+00004a9e T flash_ReadID	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:80
+00004b20 T flash_GetTotalByte	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:107
+00004b94 T flash_read	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:70
+00004bae T flash_ReadData	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:371
+00004c40 T Windbond_GetCapacity	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:137
+00004c8c T flash_IsSectorErased	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:166
+00004cb2 T flash_GetRemainingCapacity	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:174
+00004d16 T flash_ReadStatusReg	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:216
+00004d6a T flash_WaitForWriteEnd	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:254
+00004d80 T flash_SectorErase	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:259
+00004e1a T flash_EraseAll	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:284
+00004e80 T flash_PageProgram	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:304
+00004f2e T UsbAudioTimer1msProcess	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:295
+00004fb4 T AudioEffectReverbInit	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/audio_effect.c:1481
+00005024 T AudioEffectReverbApply	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/audio_effect.c:2747
+0000503e T Communication_Effect_Init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:252
+0000533a T GlobalSampeRateSet	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:589
+000053ba T GlobalMclkSet	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:690
+0000543e T PrivateMclkSet	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:748
+0000547a T Line3MicPinSet	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:1009
+0000548e T DefaultParamgsInit	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:775
+00005764 T CtrlVarsInit	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:291
+00005cfa T loop_init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:40
+00005d3e T loop_handle_button_press	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:86
+00005df4 T loop_process_recording	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:147
+00005ea8 T loop_process_playback	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:193
+00005f4a T loop_timer_update	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:228
+00005f68 T Timer2Interrupt	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:78
+0000600c T spi_init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:188
+0000609e T convertUint8ArrayToInt16Array	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:423
+000060c6 T convertInt16ArrayToUint8Array	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:443
+000060e8 T audio_Init	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:600
+000061c8 T EffectTask	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:710
+0000637a T main	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:805
+000064b2 W BLE_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W BT_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 t Default_Handler	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:47
+000064b2 W FFTInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W GpioInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W I2C_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W I2sInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W IRInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W RtcInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W SDIO0_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W SPIM_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W SPIS_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W SWInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W SpdifInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W Timer3Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W Timer4Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W Timer5Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W Timer6Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W UART0_Interrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b2 W WakeupInterrupt	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:49
+000064b4 T ExceptionCommHandler	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:53
+000066dc T __c_init	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:186
+00006710 T __cpu_init	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:213
+000067b2 T HardwareStackProtectEnable	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:316
+000067d8 T __init	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:336
+000067fa T GIE_ENABLE	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/interrupt.c:16
+00006804 T GIE_DISABLE	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/interrupt.c:21
+00006812 T GIE_STATE_GET	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/interrupt.c:27
+0000681a T NVIC_EnableIRQ	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/interrupt.c:70
+00006832 t GetPswINTL	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:30
+00006840 W SwUartSend	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:25
+00006842 T putchar	/cygdrive/d/app/Andestech/AndeSight300RDS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
+000068d2 T nds_write	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:85
+000068f2 T DbgUartInit	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:94
+00006916 T AudioADC_LREnable
+00006a18 T AudioADC_Enable
+00006a36 T AudioADC_Disable
+00006a80 T AudioADC_HighPassFilterConfig
+00006a94 T AudioADC_HighPassFilterSet
+00006aca T AudioADC_Clear
+00006ae0 T AudioADC_SampleRateGet
+00006b64 T AudioADC_SampleRateSet
+00006c9a T AudioADC_FadeTimeSet
+00006cf6 T AudioADC_FadeEnable
+00006d2c T AudioADC_SoftMute
+00006db8 T AudioADC_VolSet
+00006e16 T AudioADC_AnaInit
+00006e56 T AudioADC_PGASel
+0000701e T AudioADC_PGAGainSet
+0000718a T AudioADC_MicBias1Enable
+000071ac T AudioADC_DynamicElementMatch
+0000720c T AudioADC_IsOverflow
+00007224 T AudioADC_OverflowClear
+00007246 T Chip_VMIDDetectDisable
+00007258 T Chip_Init
+000072f8 T Chip_MemInit
+00007304 T Clock_Config
+00007386 T WaitOscillateWork
+000073a0 T Clock_USBClkDivSet
+000073b2 T Clock_RcFreqGet
+00007458 T Clock_PllLock
+0000754e T Clock_APllLock
+00007644 T Clock_SysClkSelect
+000076d2 T Clock_USBClkSelect
+000076fe T Clock_UARTClkSelect
+00007756 T Clock_Timer3ClkSelect
+00007780 T Clock_Module1Enable
+00007790 T Clock_Module2Enable
+000077a0 T Clock_Module3Enable
+000077b0 T Clock_AudioPllClockSet
+0000790c T Clock_AudioMclkSel
+000079e4 T EnableMPU
+00007a46 T EnableIDCache
+00007a88 T DataCacheInvalidAll
+00007a92 T DataCacheRangeInvalid
+00007af8 t AudioDAC0_ChannelEnable
+00007b60 t AudioDAC1_ChannelEnable
+00007ba4 T AudioDAC_Enable
+00007bc2 T AudioDAC_DitherDisable
+00007be0 T AudioDAC_ScrambleDisable
+00007bfe T AudioDAC_DoutModeSet
+00007c3e T AudioDAC_EdgeSet
+00007c84 T AudioDAC_DsmOutdisModeSet
+00007cb2 T AudioDAC_ZeroNumSet
+00007cc6 T AudioDAC_SampleRateGet
+00007d4a T AudioDAC_SampleRateSet
+00007e90 T AudioDAC_Reset
+00007eb2 T AudioDAC_FadeTimeSet
+00007f1a T AudioDAC_FadeEnable
+00007f4c T AudioDAC_DigitalMute
+00007f8c T AudioDAC_VolSet
+00007fd2 T AudioDAC_VmidChargeOp
+00008008 t AudioDAC0_PowerOn
+00008104 t AudioDAC1_PowerOn
+000081b8 T AudioDAC_ClkEnable
+000081e6 T AudioDAC_FuncReset
+00008214 T AudioDAC_VIMDControl
+00008226 T AudioDAC_SCFMute
+0000826c T AudioDAC_IBSelect
+000082b6 T AudioDAC_AllPowerOn
+000083da T AudioDAC_AllChannelEnable
+00008466 T AudioDAC_PowerOn
+00008488 T AudioDAC_ChannelEnable
+000084a6 T DMA_ChannelAllocTableSet
+000084b8 T DMA_ChannelEnable
+000084e4 T DMA_ChannelDisable
+00008512 T DMA_InterruptFlagGet
+00008566 T DMA_InterruptFlagClear
+0000860c T DMA_BlockConfig
+000087aa T DMA_BlockBufSet
+0000888c T DMA_CircularConfig
+00008a70 T DMA_CircularDataLenGet
+00008ae2 T DMA_CircularSpaceLenGet
+00008bc2 T DMA_CircularWritePtrSet
+00008bf6 T DMA_CircularDataPut
+00008d60 T DMA_CircularReadPtrSet
+00008d92 T DMA_CircularDataGet
+00008f38 T Efuse_ReadData
+00008f9e T GPIO_RegOneBitGet
+00008fb2 T GPIO_PortAModeSet
+00009c3c T OTG_PortGetDP
+00009c4a T OTG_PortGetDM
+00009c58 T OTG_PortEnableDPPullUp
+00009c7e T OTG_PortDisableDPPullUp
+00009ca4 T OTG_PortIsEnableDPPullUp
+00009cb4 T OTG_PortEnablePullDown
+00009cda T OTG_PortDisablePullDown
+00009d00 T OTG_PortIsEnablePullDown
+00009d0c T OTG_PortEnablePullUp500K
+00009d32 T OTG_PortDisablePullUp500K
+00009d58 T OTG_PortLinkCheck
+00009f9c T UsbInterrupt
+00009ff8 T Remap_AddrRemapSet
+0000a092 T Remap_InitTcm
+0000a0c4 T SPIM_Init
+0000a1ac T SPIM_IoConfig
+0000a252 T SPIM_DMAStart
+0000a28c T SPIM_GetIntFlag
+0000a298 T SPIM_ClrIntFlag
+0000a2aa T SPIM_SetDmaEn
+0000a2c2 T SysTickInit
+0000a2ec T SysTimerIntFlagClear
+0000a2fa T ClockFreqGet
+0000a328 T Timer_Config
+0000a4dc T Timer_Start
+0000a554 t UART_BaudClkGet
+0000a5aa T UART0_Init
+0000a778 T UART1_Init
+0000a950 T UART0_SendByte
+0000a990 T UART1_SendByte
+0000a9d0 T WDG_Disable
+0000a9f4 T reverb_init
+0000ad3c T reverb_configure
+0000aea0 T reverb_apply
+0000b448 T floor
+0000b570 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
+0000b5b0 T __udivdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:818
+0000b5b4 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
+0000b60c T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
+0000b764 T __fixdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3666
+0000b7b8 T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
+0000bd48 T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
+0000c1f8 T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
+0000c1f8 T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
+0000c29c T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
+0000c688 T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
+0000c6f4 T memcmp
+0000c72c T memcpy
+0000c758 T memset
+0000c788 T printf
+0000c792 T puts
+0000c7e4 T strlen
+0000c7f0 t vprintf_help
+0000c824 T vprintf
+0000c870 T do_printf
+0000cd18 t sep_frac
+0000cd4a T _printf_float
+0000d41c T strcpy
+0000d430 T abs
+0000d438 T _write
+0000d450 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
+0000d478 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
+0000d53c R F8x16	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/font.h:103
+0000db2c R gImage_qq	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/BanGUI/base_func/picture.h:11
+0000eb68 R GAIN_CONTROL_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:215
+0000ec68 R EXPANDER_DEFAULT_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:206
+0000ec90 R DRC_DEFAULT_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:183
+0000ed74 R EQ_DEFAULT_TABLE	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:159
+0000efd4 R SupportSampleRateList	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:83
+0000f648 R MPUConfigTable	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/init-default.c:379
+0000f7c8 r COMB_SIZE
+0000f820 A __data_lmastart
+0000fd68 A EILM_SIZE
+20004000 D UARTS_SendByte_MAP	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:267
 20004000 D __data_start
 20004000 A _stack
-20004008 D UARTS_Init_MAP	/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_card_RTOS/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:263
-20004010 d xNextTaskUnblockTime	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:226
-20004014 D BGUI_tool	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:15
-20004030 D BG_encoder	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:48
-20004050 D task_run	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:31
-2000405c D BG_lcd	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:25
-20004080 D BG_flash_manager	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:23
-200040a4 D gain_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:279
-200040e4 D eq_param_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:276
-20004104 D expander_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:274
-2000410c D drc_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:273
-20004118 D eq_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:271
-20004138 d DmaChannelMap	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:159
-20004158 D spimIO	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:151
-20004178 D gSramEndAddr	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:15
+20004008 D UARTS_Init_MAP	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:263
+20004010 d xNextTaskUnblockTime	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:226
+20004014 D BGUI_tool	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/base_func/gui_tool.c:15
+20004030 D BG_encoder	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:48
+20004050 D task_run	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:31
+2000405c D BG_lcd	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:25
+20004080 D BG_flash_manager	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:23
+200040a4 D gain_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:279
+200040e4 D eq_param_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:276
+20004104 D expander_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:274
+2000410c D drc_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:273
+20004118 D eq_unit_aggregate	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:271
+20004138 d DmaChannelMap	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:156
+20004158 D spimIO	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:148
+20004178 D gSramEndAddr	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:15
 2000417c D BtHoscClkDiv
 2000417e D IsApllFreeRun
 2000417f D IsDpllFreeRun
@@ -492,121 +497,119 @@
 20004540 D OtgPortLinkState
 20004548 S __bss_start
 20004548 S _edata
-20004548 S user_rLen	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2619
+20004548 S user_rLen	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2619
 2000454a S OtgPortDeviceDetectTime
 2000454c S OtgPortLinkHoldTime
-20004550 S SysemMipsPercent	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:224
-20004554 S List	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/BanGUI/page/page_manager.c:53
-20004558 S UsbSraObj	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:39
-20004560 S pUserData	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2620
-20004564 S user_offset	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2618
-20004568 S cbuf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:44
-20004570 S xQueue	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:118
-20004578 b xBlockAllocatedBit	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:167
-2000457c b xMinimumEverFreeBytesRemaining	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:161
-20004580 b xFreeBytesRemaining	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:160
-20004584 b pxEnd	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
-20004588 b xStart	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
-2000459c b head	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:139
-200045b0 B psw_1	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:263
-200045b4 b psw_0	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:262
-200045b8 B ulCriticalNesting	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:261
-200045bc b ulTotalRunTime	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:241
-200045c0 b ulTaskSwitchedInTime	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:240
-200045c4 b uxSchedulerSuspended	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:236
-200045c8 b uxTaskNumber	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:225
-200045cc b xNumOfOverflows	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:224
-200045d0 b xYieldPending	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:223
-200045d4 b uxPendedTicks	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:222
-200045d8 b xSchedulerRunning	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:221
-200045dc b uxTopReadyPriority	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:220
-200045e0 b xTickCount	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:219
-200045e4 b uxCurrentNumberOfTasks	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:218
-200045e8 b uxTasksDeleted	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:201
-200045ec b xTasksWaitingTermination	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:200
-20004600 b xPendingReadyList	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:196
-20004614 b pxOverflowDelayedTaskList	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:195
-20004618 b pxDelayedTaskList	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:194
-2000461c b xDelayedTaskList2	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:193
-20004630 b xDelayedTaskList1	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:192
-20004644 b pxReadyTasksLists	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:191
-2000470c B pxCurrentTCB	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:188
-20004710 b AllTaskCycle	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
-20004714 b IdleTaskCycle	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
+20004550 S SysemMipsPercent	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:224
+20004554 S List	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/BanGUI/page/page_manager.c:53
+20004558 S UsbSraObj	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:39
+20004560 S pUserData	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2620
+20004564 S user_offset	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2618
+20004568 S cbuf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:44
+20004570 S xQueue	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:115
+20004578 b xBlockAllocatedBit	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:167
+2000457c b xMinimumEverFreeBytesRemaining	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:161
+20004580 b xFreeBytesRemaining	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:160
+20004584 b pxEnd	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
+20004588 b xStart	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
+2000459c b head	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:139
+200045b0 B psw_1	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:263
+200045b4 b psw_0	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:262
+200045b8 B ulCriticalNesting	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:261
+200045bc b ulTotalRunTime	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:241
+200045c0 b ulTaskSwitchedInTime	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:240
+200045c4 b uxSchedulerSuspended	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:236
+200045c8 b uxTaskNumber	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:225
+200045cc b xNumOfOverflows	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:224
+200045d0 b xYieldPending	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:223
+200045d4 b uxPendedTicks	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:222
+200045d8 b xSchedulerRunning	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:221
+200045dc b uxTopReadyPriority	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:220
+200045e0 b xTickCount	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:219
+200045e4 b uxCurrentNumberOfTasks	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:218
+200045e8 b uxTasksDeleted	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:201
+200045ec b xTasksWaitingTermination	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:200
+20004600 b xPendingReadyList	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:196
+20004614 b pxOverflowDelayedTaskList	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:195
+20004618 b pxDelayedTaskList	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:194
+2000461c b xDelayedTaskList2	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:193
+20004630 b xDelayedTaskList1	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:192
+20004644 b pxReadyTasksLists	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:191
+2000470c B pxCurrentTCB	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:188
+20004710 b AllTaskCycle	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
+20004714 b IdleTaskCycle	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
 20004718 b encoder_range.3163
-2000471c b FramCount	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:59
-20004720 B IsUsbAudioMode	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:56
-20004724 B usb_mic_enable	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:41
-20004728 B usb_speaker_enable	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:40
-2000472c B communic_buf_w	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:43
-20004730 B effect_list_addr	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:41
-200047a8 B effect_addr	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:39
-20004898 B effect_list	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:38
-20004910 B effect_sum	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:37
-20004911 B spimMode	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:145
-20004912 B spimRate	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:144
-20004914 B record_time	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:741
-20004918 B sectorAddress	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:139
-2000491c b ReadBuf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:138
-200049dc b CRC2	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:137
-20004a9c B CRC	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:134
-20004b64 b PcmBuf4	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:133
-20004cf4 b PcmBuf3	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:132
-20004e84 b PcmBuf2	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:131
-20005014 b PcmBuf1	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:130
-200051a4 B AudioDACBuf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:128
-200061a4 B AudioADC2Buf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:127
-200071a4 B AudioADC1Buf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:126
-20007708 W _FP_BASE_
-20007708 W _SDA_BASE_
-200081a4 B UI_flag	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:76
-200081a5 B UI_count	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:76
-200081a6 B right_flag	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:73
-200081a7 B left_flag	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:72
-200081a8 B right_time	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:71
-200081aa B left_time	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:70
-200081ac B time	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:69
-200081ae B play	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:68
-200081b0 B rea	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:68
-200081b2 B rec	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:68
-200081b4 B play_flag	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:67
-200081b6 B read_write	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:66
-200081b8 B record_flag	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/main.c:65
-200081b9 B IsSwUartActedAsUARTFlag	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:17
-200081ba B DebugPrintPort	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/MVsB1_Base_SDK/startup/retarget.c:14
-200081bb b sIsDac1InitOK
-200081bc b sIsDac0InitOK
-200081bd B OtgPortDetectPause
-200081be B gIsUsbRemove_USB1
-200081bf B UsbIntEn
-200081c0 b XmcResumeCnt
-200081c4 b FlashBusyFlag
-200081c8 b EsmtFlag
-200081cc B gSysTick
-200081d0 B _NDS32_REENT__errno
-200081d4 b output_idx
-200081d8 b output_buff
-200081dc B pcm_out_buf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:43
-200089dc B UsbAudioSpeaker	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:36
-20008a2c B usb_in_buff	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:41
-2000922c B UsbAudioMic	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:37
-2000927c B pcm_in_buf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:42
-2000967c B usb_speak_buff	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:40
-2000968c B iso_buf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:38
-2000974c B eq_hfp_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:902
-2000979c B eq3_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:895
-200097ec B eq4_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:896
-2000983c B eq2_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:894
-2000988c B eq5_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:897
-200098dc B eq8_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:900
-2000992c B eq7_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:899
-2000997c B eq1_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:893
-200099cc B eq6_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/src/hardware/audio/ctrlvars.h:898
-20009a1c B EffectChangeTimer	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:48
-20009a28 B user_rx_data	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2617
-20009a48 B communic_buf	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:42
-20009c48 B eff_addr_compare	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:40
-20009d38 B gCtrlVars	/cygdrive/c/Users/BanGO/Desktop/BG_card_RTOS/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:33
-2000adec B FpUsbIntProcess
-2000ae04 B SpiFlashInfo
-2000ae18 B _end
+2000471c b FramCount	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:59
+20004720 B IsUsbAudioMode	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:56
+20004724 B usb_mic_enable	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:41
+20004728 B usb_speaker_enable	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:40
+2000472c B communic_buf_w	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:43
+20004730 B effect_list_addr	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:41
+200047a8 B effect_addr	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:39
+20004898 B effect_list	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:38
+20004910 B effect_sum	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:37
+20004914 B g_loop_manager	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:22
+20004928 B spimMode	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:142
+20004929 B spimRate	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:141
+2000492c B sectorAddress	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:136
+20004930 B ReadBuf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:135
+200049f0 b PcmBuf4	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:130
+20004b80 b PcmBuf3	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:129
+20004d10 b PcmBuf2	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:128
+20004ea0 b PcmBuf1	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:127
+20005030 B AudioDACBuf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:125
+20006030 B AudioADC2Buf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:124
+20007030 B AudioADC1Buf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:123
+20007650 W _FP_BASE_
+20007650 W _SDA_BASE_
+20008030 B UI_flag	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:77
+20008031 B UI_count	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:77
+20008032 B right_flag	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:74
+20008033 B left_flag	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:73
+20008034 B right_time	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:72
+20008036 B left_time	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:71
+20008038 B time	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:70
+2000803a B play	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:69
+2000803c B rea	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:69
+2000803e B rec	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:69
+20008040 B play_flag	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:68
+20008042 B read_write	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:67
+20008044 B record_flag	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/main.c:66
+20008045 B IsSwUartActedAsUARTFlag	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:17
+20008046 B DebugPrintPort	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/startup/retarget.c:14
+20008047 b sIsDac1InitOK
+20008048 b sIsDac0InitOK
+20008049 B OtgPortDetectPause
+2000804a B gIsUsbRemove_USB1
+2000804b B UsbIntEn
+2000804c b XmcResumeCnt
+20008050 b FlashBusyFlag
+20008054 b EsmtFlag
+20008058 B gSysTick
+2000805c B _NDS32_REENT__errno
+20008060 b output_idx
+20008064 b output_buff
+20008068 B pcm_out_buf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:43
+20008868 B UsbAudioSpeaker	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:36
+200088b8 B usb_in_buff	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:41
+200090b8 B UsbAudioMic	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:37
+20009108 B pcm_in_buf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:42
+20009508 B usb_speak_buff	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:40
+20009518 B iso_buf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:38
+200095d8 B eq_hfp_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:902
+20009628 B eq3_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:895
+20009678 B eq4_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:896
+200096c8 B eq2_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:894
+20009718 B eq5_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:897
+20009768 B eq8_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:900
+200097b8 B eq7_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:899
+20009808 B eq1_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:893
+20009858 B eq6_filter_buf	/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/src/hardware/audio/ctrlvars.h:898
+200098a8 B EffectChangeTimer	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:48
+200098b4 B user_rx_data	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2617
+200098d4 B communic_buf	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:42
+20009ad4 B eff_addr_compare	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:40
+20009bc4 B gCtrlVars	/cygdrive/c/Users/BanGO/Desktop/BG_Audio_Looper/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:33
+2000ac78 B FpUsbIntProcess
+2000ac90 B SpiFlashInfo
+2000aca4 B _end

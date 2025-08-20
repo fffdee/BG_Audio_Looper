@@ -1,0 +1,932 @@
+/**
+ **************************************************************************************
+ * @file    freertos_example.c
+ * @brief   freertos example
+ *
+ * @author  Peter
+ * @version V1.0.0
+ *
+ * $Created: 2019-05-30 11:30:00$
+ *
+ * @Copyright (C) 2019, Shanghai Mountain View Silicon Co.,Ltd. All rights reserved.
+ **************************************************************************************
+ */
+
+#include <stdlib.h>
+#include <stdbool.h>
+#include <nds32_intrinsic.h>
+#include "gpio.h"
+#include "uarts.h"
+#include "uarts_interface.h"
+#include "type.h"
+#include "debug.h"
+#include "timeout.h"
+#include "clk.h"
+#include "dma.h"
+#include "timer.h"
+#include "adc.h"
+#include "dac.h"
+#include "watchdog.h"
+#include "spi_flash.h"
+#include "remap.h"
+#include "irqn.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "delay.h"
+#include "chip_info.h"
+#include "audio_adc.h"
+#include "adc_interface.h"
+#include "dac_interface.h"
+#include "spim_interface.h"
+#include "spim.h"
+#include "bg_encoder.h"
+#include "bg_flash_manager.h"
+#include "bg_lcd.h"
+#include <math.h>
+#include <string.h>
+#include "otg_device_hcd.h"
+#include "otg_device_standard_request.h"
+#include "otg_device_stor.h"
+#include "usb_audio_api.h"
+#include "otg_detect.h"
+#include "otg_device_audio.h"
+#include "gui_tool.h"
+#include "ctrlvars.h"
+#include "page_manager.h"
+#include "audio_looper.h"
+
+extern void SysTickInit(void);
+extern void UsbAudioMicDacInit(void);
+extern void OTG_DeviceAudioInit();
+
+extern void UsbAudioTimer1msProcess(void);
+//__attribute__((section(".driver.isr")))
+
+uint8_t record_flag = 0;
+uint16_t read_write = 0;
+uint8_t play_flag=0;
+uint16_t rec = 0,rea=0,play=0;
+uint16_t time=0;
+uint16_t left_time = 0;
+uint16_t right_time = 0;
+uint8_t left_flag = false;
+uint8_t right_flag = false;
+
+BG_Page BG_page;
+uint8_t UI_count =0,UI_flag=0;
+void Timer2Interrupt(void)
+{
+	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
+	OTG_PortLinkCheck();
+	//DBG("time run");
+//	read_write++;
+//	if(read_write>5)read_write=0;
+//	if(read_write==5){
+//		record_flag=1;
+//
+//	}else{
+//		record_flag=0;
+//	}
+	if(left_flag==1)
+		left_time++;
+	else left_time=0;
+
+	if(right_flag==1)
+		right_time++;
+	else right_time=0;
+
+	rea++;
+	time++;
+	UI_count++;
+	if(UI_count==10){
+		UI_flag=1;
+	}else{
+		UI_flag=0;
+	}
+	if(time>65530)time=0;
+	if(record_flag==0){
+
+		record_flag=1;
+	}
+	//BG_page.Loop(&BG_page);
+#ifdef CFG_APP_USB_AUDIO_MODE_EN
+	UsbAudioTimer1msProcess(); //1ms锟叫断硷拷锟�
+#endif
+}
+
+
+xQueueHandle xQueue;
+
+uint32_t SendCount = 0;
+uint32_t RecvCount = 0;
+uint32_t result[100];
+
+
+//2锟斤拷全锟斤拷buf锟节伙拷锟斤拷ADC锟斤拷DAC锟捷ｏ拷注锟解单位
+uint32_t AudioADC1Buf[1024] = {0}; //1024 * 4 = 4K
+uint32_t AudioADC2Buf[1024] = {0}; //1024 * 4 = 4K
+uint32_t AudioDACBuf[1024] = {0}; //1024 * 4 = 4K
+
+static uint32_t PcmBuf1[100] = {0};
+static uint32_t PcmBuf2[100] = {0};
+static uint32_t PcmBuf3[100] = {0};
+static uint32_t PcmBuf4[100] = {0};
+int16_t CRC[100] = {0};
+int16_t WriteBufer[96] = {0};
+
+int16_t CRC2[96] = {0};
+int16_t ReadBuf[96] = {0};
+uint32_t sectorAddress = 0;
+
+uint32_t record_time;
+#define  MAX_BUF_LEN   4096
+
+uint8_t spimRate  = SPIM_CLK_DIV_24M;
+uint8_t spimMode = 0;
+uint8_t SpimBuf_TX[MAX_BUF_LEN];
+uint8_t SpimBuf_RX[MAX_BUF_LEN];
+
+
+
+const char* spimIO[][4] =
+{
+	//    cs      miso     clk      mosi
+		{"A22",    "A7",    "A6",     "A5"},
+		{"A8",    "A22",   "A21",    "A20"},
+};
+
+
+static uint8_t DmaChannelMap[29] = {
+	255,//PERIPHERAL_ID_SPIS_RX = 0,		//0
+	255,//PERIPHERAL_ID_SPIS_TX,			//1
+	255,//PERIPHERAL_ID_TIMER3,			//2
+	255,//PERIPHERAL_ID_SDIO_RX,			//3
+	255,//PERIPHERAL_ID_SDIO_TX,			//4
+	255,//PERIPHERAL_ID_UART0_RX,			//5
+	255,//PERIPHERAL_ID_TIMER1,				//6
+	255,//PERIPHERAL_ID_TIMER2,				//7
+	255,//PERIPHERAL_ID_SDPIF_RX,			//8 SPDIF_RX /TX锟斤拷使锟斤拷同一通锟斤拷
+	255,//PERIPHERAL_ID_SDPIF_TX,			//9
+	0,//PERIPHERAL_ID_SPIM_RX,			//10
+	1,//PERIPHERAL_ID_SPIM_TX,			//11
+	255,//PERIPHERAL_ID_UART0_TX,			//12
+	255,//PERIPHERAL_ID_UART1_RX,			//13
+	255,//PERIPHERAL_ID_UART1_TX,			//14
+	255,//PERIPHERAL_ID_TIMER4,				//15
+	255,//PERIPHERAL_ID_TIMER5,				//16
+	255,//PERIPHERAL_ID_TIMER6,				//17
+	2,//PERIPHERAL_ID_AUDIO_ADC0_RX,		//18
+	3,//PERIPHERAL_ID_AUDIO_ADC1_RX,		//19
+	4,//PERIPHERAL_ID_AUDIO_DAC0_TX,		//20
+	5,//PERIPHERAL_ID_AUDIO_DAC1_TX,		//21
+	255,//PERIPHERAL_ID_I2S0_RX,			//22
+	255,//PERIPHERAL_ID_I2S0_TX,			//23
+	255,//PERIPHERAL_ID_I2S1_RX,			//24
+	255,//PERIPHERAL_ID_I2S1_TX,			//25
+	255,//PERIPHERAL_ID_PPWM,				//26
+	255,//PERIPHERAL_ID_ADC,     			//27
+	255,//PERIPHERAL_ID_SOFTWARE,			//28
+};
+
+void spi_init(void)
+{
+		SPIM_SetDmaEn(1);
+		SPIM_IoConfig(SPIM_PORT0_A5_A6_A7);
+		DMA_ChannelAllocTableSet(DmaChannelMap);
+		if(SPIM_Init(spimMode,spimRate))
+		{
+				DBG("SPI init success!\n");
+				DBG("spim mode:%d\n",spimMode);//
+				DBG("spim rate:%d\n",spimRate);//
+				DBG("spim_cs  :%s\n",spimIO[0][0]);
+				DBG("spim_miso:%s\n",spimIO[0][1]);
+				DBG("spim_clk :%s\n",spimIO[0][2]);
+				DBG("spim_mosi:%s\n",spimIO[0][3]);
+		}
+		else
+		{
+			DBG("****** Err: SPI init fail ******\n");
+		}
+
+}
+static void AudioMicExample(void)
+{
+    uint32_t  SampleRate = 44100;
+    uint16_t  RealLen;
+    uint16_t  n;
+
+	//DAC init
+	AudioDAC_Init(DAC0, SampleRate, (void*)AudioDACBuf, sizeof(AudioDACBuf), NULL, 0);
+
+	//Mic1 Mic2  analog
+	AudioADC_AnaInit();
+
+
+	AudioADC_MicBias1Enable(TRUE);
+	//AudioADC_VcomConfig(1);//MicBias en
+	//模锟斤拷通为NONE止锟较达拷通然锟斤拷要锟斤拷模锟斤拷通锟斤拷
+
+	AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
+
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN_NONE);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN_NONE);
+
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
+
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 15, 4);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 15, 4);
+
+	//Mic1 Mic2  digital
+	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void*)AudioADC1Buf, sizeof(AudioADC1Buf));
+
+	while(1)
+	{
+		if(AudioADC_DataLenGet(ADC1_MODULE) >= 256)
+		{
+			n = AudioDAC_DataSpaceLenGet(DAC0);
+			RealLen = AudioADC_DataGet(ADC1_MODULE, PcmBuf1, 256);
+			if(n > RealLen)
+			{
+				n = RealLen;
+			}
+			AudioDAC_DataSet(DAC0, PcmBuf1, n);
+		}
+	}
+}
+
+static void AudioLineInExample()
+{
+    uint32_t  SampleRate = 48000;
+    uint16_t  RealLen;
+    uint16_t  n;
+
+	//DAC init
+	AudioDAC_Init(DAC0, SampleRate, (void*)AudioDACBuf, sizeof(AudioDACBuf), NULL, 0);
+
+	//LineIn1  analog
+	AudioADC_AnaInit();
+
+	AudioADC_DynamicElementMatch(ADC0_MODULE, TRUE, TRUE);
+
+	//模锟斤拷通为NONE止锟较达拷通然锟斤拷要锟斤拷模锟斤拷通锟斤拷
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN_NONE);
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN_NONE);
+
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN1_RIGHT);
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN1_LEFT);
+
+	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN1_RIGHT, 12, 4);
+	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN1_LEFT, 12, 4);
+
+	//LineIn1  digital
+	AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void*)AudioADC1Buf, sizeof(AudioADC1Buf));
+
+	while(1)
+	{
+		if(AudioADC_DataLenGet(ADC0_MODULE) >= 256)
+		{
+			n = AudioDAC_DataSpaceLenGet(DAC0);
+			RealLen = AudioADC_DataGet(ADC0_MODULE, PcmBuf1, 256);
+			if(n > RealLen)
+			{
+				n = RealLen;
+			}
+			AudioDAC_DataSet(DAC0, PcmBuf1, n);
+		}
+	}
+}
+
+static void AudioMixerExample(void)
+{
+	uint32_t  SampleRate = 48000;
+	uint16_t  RealLen;
+	uint16_t  n;
+	uint32_t  cnt;
+
+	//DAC init
+	AudioDAC_Init(DAC0, SampleRate, (void*)AudioDACBuf, sizeof(AudioDACBuf), NULL, 0);
+
+	//ADC
+	//LineIn1  analog
+	AudioADC_AnaInit();
+
+	AudioADC_DynamicElementMatch(ADC0_MODULE, TRUE, TRUE);
+
+	//模锟斤拷通为NONE止锟较达拷通然锟斤拷要锟斤拷模锟斤拷通锟斤拷
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN_NONE);
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN_NONE);
+
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN1_RIGHT);
+	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN1_LEFT);
+
+	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN1_RIGHT, 12, 4);
+	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN1_LEFT, 12, 4);
+	//LineIn2  digital
+	AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void*)AudioADC1Buf, sizeof(AudioADC1Buf));
+
+
+
+
+	AudioADC_MicBias1Enable(TRUE);
+
+	AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
+
+	//模锟斤拷通为NONE止锟较达拷通然锟斤拷要锟斤拷模锟斤拷通锟斤拷
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN_NONE);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN_NONE);
+
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
+
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 15, 4);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 15, 4);
+	//Mic1 Mic2  digital
+	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void*)AudioADC2Buf, sizeof(AudioADC2Buf));
+
+	while(1)
+	{
+		if(AudioADC_DataLenGet(ADC1_MODULE) >= 256)
+		{
+			n = AudioDAC_DataSpaceLenGet(DAC0);
+			RealLen = AudioADC_DataGet(ADC1_MODULE, PcmBuf1, 256);
+			if(n > RealLen)
+			{
+				n = RealLen;
+			}
+
+			RealLen = AudioADC_DataGet(ADC0_MODULE, PcmBuf2, 256);
+			if(n > RealLen)
+			{
+				n = RealLen;
+			}
+			for(cnt = 0; cnt< n; cnt++)
+			{
+
+				PcmBuf3[cnt] = PcmBuf1[cnt] + PcmBuf2[cnt];
+			}
+			AudioDAC_DataSet(DAC0, PcmBuf3, n);
+		}
+	}
+}
+void SendTask(void)
+{
+	while(1){
+	DelayMs(500);
+	SendCount++;
+	DBG("SendMsg:0x%x\n",(unsigned int)SendCount);
+	xQueueSend( xQueue, &SendCount, portMAX_DELAY );
+	}
+}
+
+void RecvTask(void)
+{
+	uint32_t temp,i;
+	while(1){
+	 xQueueReceive( xQueue, &temp, portMAX_DELAY );
+	 DBG("RecvMsg:0x%x\n\n",(unsigned int)temp);
+	 //DBG("RecvMsg:%d\n\n",(unsigned int)temp);
+	 result[RecvCount++] = temp;
+
+	 if(RecvCount == 100)
+		 RecvCount = 0;
+	}
+}
+
+
+//uint32_t distort(uint32_t input) {
+//    // 值锟窖撅拷一0锟斤拷UINT32_MAX之锟斤拷
+//    uint32_t output;
+//    if (input > (UINT32_MAX / 2) + (UINT32_MAX / 10)) {
+//        output = UINT32_MAX; // 锟斤拷锟酵碉拷锟斤拷锟街�
+//    } else if (input < (UINT32_MAX / 2) - (UINT32_MAX / 10)) {
+//        output = 0; // 锟斤拷锟酵碉拷锟斤拷小值
+//    } else {
+//        // 锟斤拷模锟斤拷失锟芥，虻サ爻锟斤拷锟�.1锟斤拷实锟斤拷应锟斤拷锟叫匡拷要锟接碉拷锟姐法
+//        output = (input * 11) / 10;
+//        if (output > UINT32_MAX) {
+//            output = UINT32_MAX;
+//        }
+//    }
+//    return output;
+//}
+
+void convertUint8ArrayToUint32Array(const uint8_t *input, uint32_t *output, size_t size) {
+
+	uint16_t i;
+	for (i = 0; i < size; i++) {
+        // 每4锟斤拷锟街斤拷锟斤拷锟揭伙拷锟絬int32_t
+        output[i] = (uint32_t)input[i * 4 ] << 24 |
+                    (uint32_t)input[i * 4 + 1] << 16 |
+                    (uint32_t)input[i * 4 + 2] << 8 |
+                    (uint32_t)input[i * 4 + 3];
+    }
+}
+
+void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, size_t size) {
+    size_t i;
+    for (i = 0; i < size; ++i) {
+            // 假设系统是小端
+            int16_t sample = (int16_t)(input[i * 2]) | ((int16_t)(input[i * 2 + 1]) << 8);
+            output[i] = sample;
+        }
+}
+
+void convertUint32ArrayToUint8Array(const uint32_t *input, uint8_t *output, size_t size) {
+	size_t i;
+	for (i = 0; i < size; i++) {
+        // 每锟斤拷uint32_t锟街斤拷为4锟斤拷uint8_t
+        output[i * 4]     = (uint8_t)((input[i] >> 24) & 0xFF); // 锟斤拷取锟斤拷锟轿伙拷纸锟�
+        output[i * 4 + 1] = (uint8_t)((input[i] >> 16) & 0xFF); // 锟斤拷取锟轿革拷位锟街斤拷
+        output[i * 4 + 2] = (uint8_t)((input[i] >> 8) & 0xFF);  // 锟斤拷取锟轿碉拷位锟街斤拷
+        output[i * 4 + 3] = (uint8_t)(input[i] & 0xFF);         // 锟斤拷取锟斤拷锟轿伙拷纸锟�
+    }
+}
+
+void convertInt16ArrayToUint8Array(const int16_t *input, uint8_t *output, size_t size) {
+    size_t i;
+    for (i = 0; i < size; ++i) {
+        // 假设系统是小端
+        output[i * 2] = (uint8_t)(input[i] & 0xFF); // 低8位
+        output[i * 2 + 1] = (uint8_t)((input[i] >> 8) & 0xFF); // 高8位
+    }
+
+}
+void AudioTask(void)
+{
+	//AudioMicExample();
+
+	uint16_t  RealLen;
+	uint16_t  n;
+	uint16_t  i;
+
+
+
+
+	while(1){
+
+
+		DBG("record is ready\n");
+		if(AudioADC_DataLenGet(ADC1_MODULE) >= 256)
+			{
+				n = AudioDAC_DataSpaceLenGet(DAC0);
+				RealLen = AudioADC_DataGet(ADC1_MODULE, PcmBuf1, 256);
+				if(n > RealLen)
+				{
+					n = RealLen;
+				}
+
+				//
+
+
+				 AudioDAC_DataSet(DAC0, PcmBuf1, n);
+
+//				for(i = 0; i<n; i++){
+//
+//									//PcmBuf2[i] = distort(PcmBuf1[i]);
+//						PcmBuf1[i] = 0xf5f5f5f5;
+//									//DBG("{0x%08X}\n",PcmBuf1[i]);
+//				}
+
+
+			}
+	}
+
+}
+
+void RecordTask(){
+	uint8_t Buffer[1024];
+
+//	spi_init();
+//	BG_flash_manager.Init();
+//	BG_flash_manager.EraseAll();
+	play_flag=0;
+
+	while(1){
+
+		if(play_flag==1&&record_flag==1){
+
+			convertInt16ArrayToUint8Array(PcmBuf3,Buffer ,960);
+							//DBG("{0x%08X, 0x%08X}\n",PcmBuf1[50],sectorAddress);
+							//BG_flash_manager.SectorErase(sectorAddress);
+							if(BG_flash_manager.PageProgram(sectorAddress, Buffer, 480,DEV_NOR)==0){
+
+									sectorAddress =sectorAddress+960;
+							}
+							//BG_flash_manager.GetTotalByte()
+							DBG("have not space ! recording ,Total is %d\n",BG_flash_manager.GetTotalByte(DEV_NOR));
+							if(sectorAddress>BG_flash_manager.GetTotalByte(DEV_NOR)){
+										DBG("have not space ! recording ,Total is %d\n",BG_flash_manager.GetTotalByte(DEV_NOR));
+										play_flag =!play_flag;
+										sectorAddress=0;
+						 }
+		}else if(play_flag==0){
+							BG_flash_manager.ReadData(sectorAddress, Buffer, 960,DEV_NOR);
+
+							convertUint8ArrayToInt16Array(Buffer,PcmBuf2,480);
+
+							//if(PcmBuf3[i]!=PcmBuf2[128])
+							//DBG("{0x%08X  ,0x%08X }\n",sectorAddress,PcmBuf2[50]);
+							AudioDAC_DataSet(DAC0, PcmBuf2, 480);
+							sectorAddress +=960;
+							if(sectorAddress>BG_flash_manager.GetTotalByte(DEV_NOR))
+								sectorAddress = 0;
+		}
+	}
+
+}
+
+void input_det(){
+
+
+
+		if(!GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX28)){
+					DBG("HP1 SI INPUT");
+		}
+		if(!GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX29)){
+					DBG("HP2 SI INPUT");
+		}
+		if(!GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX30)){
+					DBG("HP3 SI INPUT");
+		}
+}
+
+
+
+void FlashTask(void)
+{
+	spi_init();
+	BG_lcd.Init();
+	BG_lcd.Clear(RED);
+	// 初始化闪存管理器
+	BG_flash_manager.Init();
+
+	DBG("EARSE ALL\n");
+	// 擦除所有闪存内容
+	BG_flash_manager.EraseAll(DEV_NAND);
+	DBG("EARSE FINISH\n");
+
+	// 读取闪存ID
+	uint8_t manufacturerID, memoryType, deviceID;
+	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID,DEV_NOR);
+
+	// 打印闪存ID
+	DBG("ID is %d%d%d\n", manufacturerID, memoryType, deviceID);
+	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID,DEV_NAND);
+
+		// 打印闪存ID
+	DBG("ID is %X%X%X\n", manufacturerID, memoryType, deviceID);
+
+
+    BG_lcd.Clear(BLUE);
+
+}
+void audio_init(uint32_t SampleRate);
+void audio_process(void);
+void USBTask(){
+
+	OTG_DeviceModeSel(AUDIO_MIC,0x1234,0x1234);
+
+
+	audio_init(48000);
+	UsbDevicePlayInit();
+	UsbDeviceEnable();
+
+	while(1){
+
+		OTG_DeviceRequestProcess();
+		OTG_DeviceStorProcess();
+		audio_process();
+	}
+
+}
+void audio_Init(uint16_t SampleRate){
+
+
+		//DAC init
+		AudioDAC_Init(DAC0, SampleRate, (void*)AudioDACBuf, sizeof(AudioDACBuf), NULL, 0);
+
+		//Mic1 Mic2  analog
+		AudioADC_AnaInit();
+
+		AudioADC_DynamicElementMatch(ADC0_MODULE, TRUE, TRUE);
+
+		//模拟通道先配置为NONE，防止上次配置通道残留，然后再配置需要的模拟通道
+		AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN_NONE);
+		AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN_NONE);
+
+		AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT);
+		AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT);
+
+		AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT, 32, 0);
+		AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT, 32, 0);
+		//LineIn2  digital
+		AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void*)AudioADC1Buf, sizeof(AudioADC1Buf));
+
+
+		AudioADC_MicBias1Enable(TRUE);
+		//AudioADC_VcomConfig(1);//MicBias en
+		//模锟斤拷通为NONE止锟较达拷通然锟斤拷要锟斤拷模锟斤拷通锟斤拷
+
+		AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
+
+		AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
+		AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
+
+		AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 12, 2);
+		AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 12, 2);
+		AudioDAC_DoutModeSet(AUDIO_DAC1, MODE0, WIDTH_16_BIT);
+
+		AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void*)AudioADC2Buf, sizeof(AudioADC2Buf));
+
+
+		gCtrlVars.sample_rate = SampleRate;
+}
+
+int compareInt16Arrays(const int16_t *array1, const int16_t *array2, size_t size) {
+	size_t i;
+	for (i = 0; i < size; ++i) {
+        if (array1[i] != array2[i]) {
+            return 0; // 只要发现一个不相等的元素，立即返回0
+        }
+    }
+    return 1; // 所有元素都相等
+}
+
+void HardWareTask(void)
+{
+	//uint16_t* range;
+	BG_encoder.button_init();
+
+//	BG_encoder.set_range(0,50,LIMIT_MODE);
+//	BG_encoder.set_value(25);
+
+	//enter 按键初始化，上拉输入。
+	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX23);
+	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX23);
+	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX23);
+	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX23);
+
+	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX24);
+	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX24);
+	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX24);
+	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX24);
+
+	while(1){
+
+		if(!BG_encoder.enter()){
+				DelayMs(50);
+				if(!BG_encoder.enter()){
+
+					play_flag = 1;
+					sectorAddress = 0;
+					DBG("record is %d",record_flag);
+				}
+			}
+
+	}
+}
+
+void SerialTask(){
+
+	uint8_t Buf[200];
+	uint8_t len = 0;
+
+	while(1){
+		if((UART1_IOCtl(UART_IOCTL_RXSTAT_GET, 1) & 0x01))//接收的频次变稀，则可能会错过数据
+					{
+					     len = UART1_Recv( Buf,10,100);//TimeOut增大，一次最长接收的长度则变长
+					     UART1_IOCtl( UART_IOCTL_RXINT_CLR, 1);
+					     if(len > 0)//如果接收到数据
+					     {
+					    	 UART1_Send(Buf,len,20);//把接收到的数据打印出来
+					     }
+					}
+
+	}
+
+
+}
+void input_det2(){
+	//enter 按键初始化，上拉输入。
+//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX23);
+//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX23);
+//		GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX23);
+//		GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX23);
+
+//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX1);
+//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX1);
+//		GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX1);
+//		GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX1);
+//
+//		GPIO_RegOneBitClear(GPIO_B_IE, GPIOB6);
+//		GPIO_RegOneBitSet(GPIO_B_OE, GPIOB6);
+//		GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
+//
+//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX28);
+//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX28);
+//		GPIO_RegOneBitSet(GPIO_A_PD, GPIO_INDEX28);
+//		GPIO_RegOneBitClear(GPIO_A_PU, GPIO_INDEX28);
+//
+//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX29);
+//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX29);
+//		GPIO_RegOneBitSet(GPIO_A_PD, GPIO_INDEX29);
+//		GPIO_RegOneBitClear(GPIO_A_PU, GPIO_INDEX29);
+//
+//		GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX30);
+//		GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX30);
+//		GPIO_RegOneBitSet(GPIO_A_PD, GPIO_INDEX30);
+//		GPIO_RegOneBitClear(GPIO_A_PU, GPIO_INDEX30);
+}
+uint32_t record_time = 0;
+
+void EffectTask(){
+
+	uint16_t  RealLen;
+	uint16_t  n;
+	uint16_t  i;
+	uint8_t last_value;
+	uint8_t Buffer[200];
+	audio_init(48000);
+	CtrlVarsInit();
+	spi_init();
+	GPIO_RegOneBitClear(GPIO_A_IE, GPIOA24);
+	GPIO_RegOneBitSet(GPIO_A_OE, GPIOA24);
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA24);
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA24);
+	BG_lcd.Init();
+	BG_lcd.Clear(RED);
+	BG_lcd.Clear(0x00);
+	BGUI_tool.DrawPoint(64,80,0xFFFF);
+	BGUI_tool.DrawPoint(1,1,0xFFFF);
+	BGUI_tool.ShowImage(16, 16, 40, 40, gImage_qq);
+	//BG_page  = BG_Page_Init(table,MAX_PAGE);
+	BG_encoder.button_init();
+
+	BG_encoder.set_range(0,50,LIMIT_MODE);
+	BG_encoder.set_value(25);
+
+	//AudioEffectsInit();
+	gCtrlVars.audio_effect_init_flag =1;
+	gCtrlVars.echo_unit.enable = 1;
+	gCtrlVars.reverb_unit.enable = 1;
+	//AudioEffectEchoInit(&gCtrlVars.echo_unit,  2, 48000);
+
+	AudioEffectReverbInit(&gCtrlVars.reverb_unit,  2, 48000);
+
+
+	BG_flash_manager.Init();
+	BG_flash_manager.EraseAll(DEV_NOR);
+	
+	// 初始化loop管理器
+	loop_init();
+	
+	DBG("Loop manager is ready\n");
+	while(1){
+//
+//		if(!BG_encoder.enter()){
+//			DelayMs(100);
+//			if(!BG_encoder.enter()){
+//				//BG_page.Enter(&BG_page);
+//				BG_page.Last(&BG_page);
+//			}
+//		}
+//		if(BG_encoder.get_value()!=last_value&&last_value!=0)
+//		{
+//			if(last_value>BG_encoder.get_value()){
+//				BG_page.Last(&BG_page);
+//			}
+//			if(last_value<BG_encoder.get_value()){
+//				BG_page.Next(&BG_page);
+//			}
+//
+//		}
+//		last_value = BG_encoder.get_value();
+//		if(UI_flag==1)BG_page.Loop(&BG_page);
+		//input_det();
+		if(!BG_encoder.enter()){
+			DelayMs(100);
+			if(!BG_encoder.enter()){
+				// 使用loop函数处理按键
+				loop_handle_button_press();
+			}
+		}
+
+		if(AudioADC_DataLenGet(ADC0_MODULE) >= 48)
+			{
+				n = AudioDAC_DataSpaceLenGet(DAC0);
+				RealLen = AudioADC_DataGet(ADC1_MODULE, PcmBuf1,48);
+
+				if(n > RealLen)
+				{
+					n = RealLen;
+				}
+				RealLen = AudioADC_DataGet(ADC0_MODULE, PcmBuf2,48);
+				if(n > RealLen)
+				{
+					n = RealLen;
+				}
+				//AudioEffectEchoApply(&gCtrlVars.echo_unit, PcmBuf1, PcmBuf2, n);
+				memset(PcmBuf3,0x00,48);
+				AudioEffectReverbApply(&gCtrlVars.reverb_unit, PcmBuf1, PcmBuf3, n);
+				if(play_flag==0||play_flag==2||play_flag==3){
+
+				convertInt16ArrayToUint8Array(PcmBuf3,Buffer ,96);
+				for(i=0;i<n;i++)
+					PcmBuf4[i] = PcmBuf3[i]+PcmBuf2[i];
+				AudioDAC_DataSet(DAC0, PcmBuf4, n);
+
+				play++;
+
+				}
+				else{
+			//		AudioDAC_DataSet(DAC0, PcmBuf3, n);
+
+				}
+
+
+			}
+
+			// 使用loop函数处理录制和播放
+			loop_process_recording(PcmBuf3, Buffer, 48);
+			loop_process_playback(PcmBuf3, Buffer, 48);
+
+	}
+}
+void prvInitialiseHeap(void);
+int main(void)
+{
+	Chip_Init(1);
+	WDG_Disable();
+
+
+	Clock_Module1Enable(ALL_MODULE1_CLK_SWITCH);
+	Clock_Module2Enable(ALL_MODULE2_CLK_SWITCH);
+	Clock_Module3Enable(ALL_MODULE3_CLK_SWITCH);
+
+	Clock_Module1Enable(ALL_MODULE1_CLK_SWITCH);
+	Clock_Module2Enable(ALL_MODULE2_CLK_SWITCH);
+	Clock_Module3Enable(ALL_MODULE3_CLK_SWITCH);
+
+	Clock_Config(1, 24000000);
+	Clock_PllLock(288000);
+	Clock_APllLock(240000);
+
+	Clock_SysClkSelect(PLL_CLK_MODE);
+	Clock_UARTClkSelect(APLL_CLK_MODE);
+	Clock_Timer3ClkSelect(SYSTEM_CLK_MODE);
+
+	Clock_USBClkDivSet(4);
+	Clock_USBClkSelect(APLL_CLK_MODE);
+
+
+	GPIO_PortAModeSet(GPIOA9, 1);//Rx, A24:uart1_rxd_0
+	GPIO_PortAModeSet(GPIOA10, 3);//Tx, A25:uart1_txd_0
+	DbgUartInit(1, 115200, 8, 0, 1);
+
+	Clock_USBClkDivSet(4);
+	Clock_USBClkSelect(APLL_CLK_MODE);
+
+	Remap_InitTcm(0, 12);
+	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
+	DMA_ChannelAllocTableSet(DmaChannelMap);
+
+	GIE_ENABLE();
+//	SysTickInit();
+	Timer_Config(TIMER2,1000,0);
+ 	Timer_Start(TIMER2);
+ 	NVIC_EnableIRQ(Timer2_IRQn);
+
+	DBG("****************************************************************\n");
+	DBG("                          BG_CARD SDK                           \n");
+	DBG("****************************************************************\n");
+
+	prvInitialiseHeap();
+
+	NVIC_EnableIRQ(SWI_IRQn);
+
+	xQueue = xQueueCreate( 4, sizeof(uint32_t) );
+
+	//xTaskCreate( (TaskFunction_t)SendTask, "SendMsgTask", 512, NULL, 1, NULL );
+
+	//xTaskCreate( (TaskFunction_t)RecvTask, "RecvMsgTask", 512, NULL, 2, NULL );
+
+	//xTaskCreate( (TaskFunction_t)AudioTask, "AudioTask", 512, NULL, 2, NULL );
+
+	//xTaskCreate( (TaskFunction_t)RecordTask, "RecordTask", 1024, NULL, 1, NULL );
+
+//	xTaskCreate( (TaskFunction_t)HardWareTask, "HardWareTask", 512, NULL, 2, NULL );
+
+	//xTaskCreate( (TaskFunction_t)FlashTask, "FlashTask", 512, NULL, 1, NULL );
+	//xTaskCreate( (TaskFunction_t)USBTask, "USBTask", 512, NULL, 1, NULL );
+	xTaskCreate( (TaskFunction_t)EffectTask, "EffectTask",2048, NULL, 1, NULL );
+
+	//xTaskCreate( (TaskFunction_t)SerialTask, "SerialTask",2048, NULL, 1, NULL );
+
+	vTaskStartScheduler();
+
+	while(1);
+}
+
+

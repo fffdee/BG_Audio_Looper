@@ -1,0 +1,2 @@
+RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>false</eraseAll><flashDriver>C\:/Users/BanGO/Desktop/BanGO_prj/BG_card_RTOS/MVsB1_Base_SDK/Tools/b1_download_v1.9.exe</flashDriver><imageFile>C\:\\Users\\BanGO\\Desktop\\BG_card_RTOS\\BG_card_RTOS\\Debug\\output\\BG_card_RTOS.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>true</verify></rseFlashDriverModel>
+eclipse.preferences.version=1

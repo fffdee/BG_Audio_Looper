@@ -1,0 +1,281 @@
+/**
+ **************************************************************************************
+ * @file    audio_looper.c
+ * @brief   Audio looper functions implementation
+ *
+ * @author  BanGO
+ * @version V1.0.0
+ *
+ * @Copyright (C) 2025, Audio Looper Project. All rights reserved.
+ **************************************************************************************
+ */
+
+#include "audio_looper.h"
+#include "debug.h"
+#include "bg_flash_manager.h"
+#include "type.h"
+#include <nds32_intrinsic.h>
+#include <math.h>
+#include <string.h>
+
+// 全局Loop管理器
+LoopManager_t g_loop_manager = {0};
+
+// 外部全局变量引用 - 为了兼容原有代码
+extern uint32_t sectorAddress;
+extern uint16_t rec, rea, play;
+extern uint16_t time;
+extern uint8_t record_flag;
+extern uint8_t play_flag;
+extern int16_t ReadBuf[96];
+extern uint16_t read_write;
+
+// 外部函数声明
+extern void convertInt16ArrayToUint8Array(const int16_t *input, uint8_t *output, uint32_t size);
+extern void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, uint32_t size);
+
+/**
+ * @brief 初始化Loop管理器
+ */
+void loop_init(void)
+{
+    g_loop_manager.state = LOOP_STATE_IDLE;
+    g_loop_manager.sector_address = 0;
+    g_loop_manager.record_length = 0;
+    g_loop_manager.play_position = 0;
+    g_loop_manager.is_initialized = 1;
+    g_loop_manager.is_new_recording = 0;
+    
+    // 同步全局变量
+    play_flag = 2; // 对应空闲状态
+    sectorAddress = 0;
+    rec = 0;
+    rea = 0;
+    play = 0;
+    
+    DBG("Loop manager initialized\n");
+}
+
+/**
+ * @brief 重置Loop管理器
+ */
+void loop_reset(void)
+{
+    g_loop_manager.state = LOOP_STATE_IDLE;
+    g_loop_manager.sector_address = 0;
+    g_loop_manager.record_length = 0;
+    g_loop_manager.play_position = 0;
+    g_loop_manager.is_new_recording = 0;
+    
+    // 重置计数器
+    rec = 0;
+    rea = 0;
+    play = 0;
+    
+    // 同步全局变量
+    play_flag = 2; // 空闲状态
+    sectorAddress = 0;
+    
+    DBG("Loop manager reset\n");
+}
+
+/**
+ * @brief 处理按键按下事件
+ * 实现简单的三步循环：空闲→录制→播放→（擦除回到空闲）
+ */
+void loop_handle_button_press(void)
+{
+    if (!g_loop_manager.is_initialized) {
+        DBG("Loop manager not initialized\n");
+        return;
+    }
+    
+    switch(g_loop_manager.state)
+    {
+        case LOOP_STATE_IDLE:
+            // 第一次按下：开始录制
+            g_loop_manager.state = LOOP_STATE_RECORDING;
+            g_loop_manager.record_length = 0;
+            g_loop_manager.play_position = 0;
+            g_loop_manager.sector_address = 0;
+            g_loop_manager.is_new_recording = 1;
+            play_flag = 0; // 录制状态
+            DBG("Start recording\n");
+            break;
+            
+        case LOOP_STATE_RECORDING:
+            // 第二次按下：停止录制并开始播放
+            g_loop_manager.state = LOOP_STATE_PLAYING;
+            g_loop_manager.record_length = g_loop_manager.sector_address;
+            g_loop_manager.play_position = 0;
+            g_loop_manager.sector_address = 0;
+            play_flag = 1; // 播放状态
+            DBG("Stop recording, start playing. Record length: %d\n", g_loop_manager.record_length);
+            break;
+            
+        case LOOP_STATE_PLAYING:
+            // 第三次按下：擦除并等待新录制
+            g_loop_manager.state = LOOP_STATE_IDLE;
+            g_loop_manager.record_length = 0;
+            g_loop_manager.play_position = 0;
+            g_loop_manager.sector_address = 0;
+            g_loop_manager.is_new_recording = 0;
+            play_flag = 2; // 空闲状态
+            // 重置计数器
+            rec = 0;
+            rea = 0;
+            play = 0;
+            DBG("Erase and back to idle\n");
+            break;
+            
+        default:
+            g_loop_manager.state = LOOP_STATE_IDLE;
+            play_flag = 2;
+            break;
+    }
+    
+    // 同步全局变量
+    sectorAddress = g_loop_manager.sector_address;
+}
+
+/**
+ * @brief 处理录制逻辑
+ * @param audio_data 音频数据
+ * @param buffer 缓冲区
+ * @param length 数据长度
+ */
+void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t length)
+{
+    if (g_loop_manager.state != LOOP_STATE_RECORDING || !record_flag) {
+        return;  // 不在录制状态或record_flag未置位
+    }
+    
+    record_flag = 0;
+    
+    // 转换音频数据
+    convertInt16ArrayToUint8Array(audio_data, buffer, 96);
+    
+    // 写入Flash
+    if (BG_flash_manager.PageProgram(g_loop_manager.sector_address, buffer, 192, DEV_NOR) == 0) {
+        rec++;
+        g_loop_manager.sector_address += 256;
+        DBG("write %d to %d\n",buffer[96],g_loop_manager.sector_address);
+    }
+    
+    // 检查存储空间
+    if (g_loop_manager.sector_address >= BG_flash_manager.GetTotalByte(DEV_NOR)) {
+        DBG("Flash full, stop recording. Address: %d, Total: %d\n", 
+            g_loop_manager.sector_address, BG_flash_manager.GetTotalByte(DEV_NOR));
+        
+        // 自动停止录制并开始播放
+        g_loop_manager.state = LOOP_STATE_PLAYING;
+        g_loop_manager.record_length = g_loop_manager.sector_address;
+        g_loop_manager.play_position = 0;
+        g_loop_manager.sector_address = 0;
+        play_flag = 1;
+        
+        read_write++;
+        rec = 0;
+        rea = 0;
+        play = 0;
+    }
+    
+    // 同步全局变量
+    sectorAddress = g_loop_manager.sector_address;
+}
+
+/**
+ * @brief 处理播放逻辑
+ * @param output_data 输出音频数据
+ * @param buffer 缓冲区
+ * @param length 数据长度
+ */
+void loop_process_playback(int16_t* output_data, uint8_t* buffer, uint16_t length)
+{
+    if (g_loop_manager.state != LOOP_STATE_PLAYING || !record_flag || g_loop_manager.record_length == 0) {
+        return;  // 不在播放状态或record_flag未置位或没有录制数据
+    }
+    
+    uint16_t i;
+    record_flag = 0;
+    
+    // 从Flash读取数据
+    BG_flash_manager.ReadData(g_loop_manager.play_position, buffer, 192, DEV_NOR);
+    convertUint8ArrayToInt16Array(buffer, ReadBuf, 192);
+    DBG("read %d to %d\n",buffer[96],g_loop_manager.sector_address);
+    // 混合音频数据
+    for (i = 0; i < 96; i++) {
+        output_data[i] = __nds32__clips((output_data[i] + ReadBuf[i]), (16) - 1);
+    }
+    
+    g_loop_manager.play_position += 256;
+    
+    // 检查是否到达录制结束，循环播放
+    if (g_loop_manager.play_position >= g_loop_manager.record_length) {
+        g_loop_manager.play_position = 0;
+        play++;
+        DBG("Loop playback, count: %d\n", play);
+    }
+    
+    // 同步全局变量
+    sectorAddress = g_loop_manager.play_position;
+}
+
+/**
+ * @brief 定时器更新函数，在1ms中断中调用
+ * 处理所有需要实时更新的状态
+ */
+void loop_timer_update(void)
+{
+    if (!g_loop_manager.is_initialized) {
+        return;
+    }
+    
+    // 可以在这里添加需要定时更新的逻辑
+    // 例如：LED指示、状态监控等
+    
+    // 确保全局变量同步
+    sectorAddress = (g_loop_manager.state == LOOP_STATE_PLAYING) ? 
+                   g_loop_manager.play_position : g_loop_manager.sector_address;
+}
+
+/**
+ * @brief 获取当前循环状态
+ */
+LoopState_t loop_get_state(void)
+{
+    return g_loop_manager.state;
+}
+
+/**
+ * @brief 检查是否正在录制
+ */
+uint8_t loop_is_recording(void)
+{
+    return (g_loop_manager.state == LOOP_STATE_RECORDING) ? 1 : 0;
+}
+
+/**
+ * @brief 检查是否正在播放
+ */
+uint8_t loop_is_playing(void)
+{
+    return (g_loop_manager.state == LOOP_STATE_PLAYING) ? 1 : 0;
+}
+
+/**
+ * @brief 获取当前地址
+ */
+uint32_t loop_get_current_address(void)
+{
+    return (g_loop_manager.state == LOOP_STATE_PLAYING) ? 
+           g_loop_manager.play_position : g_loop_manager.sector_address;
+}
+
+/**
+ * @brief 获取录制长度
+ */
+uint32_t loop_get_record_length(void)
+{
+    return g_loop_manager.record_length;
+}

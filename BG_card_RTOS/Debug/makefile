@@ -38,6 +38,7 @@ RM := rm -rf
 -include src/hardware/audio/subdir.mk
 -include src/hardware/audio/effect_parameter/subdir.mk
 -include src/hardware/audio/music_parameter/subdir.mk
+-include src/hardware/audio_looper/subdir.mk
 -include src/subdir.mk
 -include startup/subdir.mk
 -include objects.mk
@@ -87,7 +88,7 @@ all: BG_card_RTOS.adx secondary-outputs
 BG_card_RTOS.adx: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_card_RTOS/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_card_RTOS/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BG_card_RTOS.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/C/Users/BanGO/Desktop/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BG_card_RTOS.adx" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
