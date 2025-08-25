@@ -19,7 +19,7 @@ static const uint8_t DmaChannelMap[29] = {
 	255,//PERIPHERAL_ID_UART0_RX,		//5
 	255,//PERIPHERAL_ID_TIMER1,			//6
 	255,//PERIPHERAL_ID_TIMER2,			//7
-	255,//PERIPHERAL_ID_SDPIF_RX,			//8 SPDIF_RX /TX需要使用同一通道
+	255,//PERIPHERAL_ID_SDPIF_RX,			//8 SPDIF_RX /TX閿熸枻鎷疯浣块敓鏂ゆ嫹鍚屼竴閫氶敓鏂ゆ嫹
 	255,//PERIPHERAL_ID_SDPIF_TX,			//8
 	255,//PERIPHERAL_ID_SPIM_RX,			//10
 	255,//PERIPHERAL_ID_SPIM_TX,			//11
@@ -52,7 +52,7 @@ uint32_t DAC1FIFO[DAC1_FIFO_LEN/4];
 uint32_t MICFIFO[MIC_FIFO_LEN/4];
 
 
-#define ONE_MS_SAMPLE	48
+#define ONE_MS_SAMPLE	96  // 48kHz * 1ms * 2channels = 96 samples
 uint32_t dac_play_buf[ONE_MS_SAMPLE];
 uint32_t adc_play_buf[ONE_MS_SAMPLE];
 uint32_t mix_play_buf[ONE_MS_SAMPLE];

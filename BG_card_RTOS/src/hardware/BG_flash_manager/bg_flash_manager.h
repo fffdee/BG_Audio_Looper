@@ -39,17 +39,21 @@
 #define FLASH_WP_DISABLE()    GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA17);
 
 #define FLASH_STATUS_OK 0
+#define FLASH_STATUS_ERROR 1
 
-#define SECTOR_SIZE (4 * 1024*8) // 每个扇区的大小是32KBit
+#define SECTOR_SIZE (4 * 1024*8) // 每锟斤拷锟斤拷锟斤拷锟侥达拷小锟斤拷32KBit
 
 #define DEVICE_ID_64MBIT  0x17
 #define DEVICE_ID_128MBIT 0x16
 #define DEVICE_ID_256MBIT 0x14
 #define DEVICE_ID_512MBIT 0x13
 #define DEVICE_ID_1GBIT   0x12
+#define DEVICE_ID_2GBIT   0x22  // W25N02 2Gbit NAND Flash
+#define DEVICE_ID_W25N02  0xAA  // W25N02 alternative device ID
 
 #define PAGE_SIZE 256
-// FLASH命令定义
+#define NAND_PAGE_SIZE 2048  // W25N02 NAND Flash椤甸潰澶у皬
+// FLASH锟斤拷锟筋定锟斤拷
 #define FLASH_CMD_JEDEC_ID 	   0x9F
 #define FLASH_CMD_WRITE_ENABLE     0x06
 #define FLASH_CMD_WRITE_DISABLE    0x04
@@ -66,6 +70,13 @@
 #define FLASH_CMD_RELEASE_POWER_DOWN 0xAB
 #define FLASH_CMD_JEDEC_ID         0x9F
 #define NAND_CMD_JEDEC_ID         0x90
+#define NAND_CMD_PAGE_DATA_READ   0x13  // W25N02 Page Data Read鍛戒护
+#define NAND_CMD_RANDOM_DATA_READ 0x03  // W25N02 Random Data Read鍛戒护
+#define NAND_CMD_PROGRAM_LOAD     0x02  // W25N02 Program Load鍛戒护
+#define NAND_CMD_PROGRAM_EXECUTE  0x10  // W25N02 Program Execute鍛戒护
+#define NAND_CMD_BLOCK_ERASE      0xD8  // W25N02 Block Erase鍛戒护
+#define NAND_CMD_GET_FEATURE      0x0F  // W25N02 Get Feature鍛戒护锛堣鐘舵�侊級
+#define NAND_CMD_SET_FEATURE      0x1F  // W25N02 Set Feature鍛戒护锛堝啓鐘舵�侊級
 
 typedef struct{
 
@@ -83,5 +94,18 @@ typedef struct{
 
 extern BG_Flash_Manager BG_flash_manager;
 
+// 鍧忓潡绠＄悊鍑芥暟澹版槑
+uint8_t nand_check_bad_block(uint32_t block_address, uint8_t dev);
+uint8_t nand_mark_bad_block(uint32_t block_address, uint8_t dev);
+uint32_t nand_find_next_good_block(uint32_t start_block, uint8_t dev);
+uint32_t nand_get_safe_write_address(uint32_t current_address, uint32_t bytes_to_write, uint8_t dev);
+
+// NAND Flash闊抽浼樺寲鍐欏叆鍑芥暟
+uint8_t nand_audio_write_buffered(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev);
+uint8_t nand_audio_flush_buffer(uint8_t dev);
+
+// 娴嬭瘯鍑芥暟澹版槑
+void flash_test_w25n02_registers(void);
+void flash_test_spi_loopback(void);
 
 #endif

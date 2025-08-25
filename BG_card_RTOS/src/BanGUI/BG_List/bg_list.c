@@ -168,7 +168,7 @@ void BG_timer_update(BG_List *list){
 
 uint8_t BG_List_Exit(BG_List *list){
 
-   
+
     return list->Data.exit_flag;
 }
 
@@ -197,7 +197,7 @@ void ShowList(BG_List *list)
                 BG_lcd.DrawPoint(x, y, 0xCC70);
             }
         }
-         
+
         BGUI_tool.DrawLine(0, 0, LCD_WIDTH, 0, 0xFFFFFF);
         BGUI_tool.DrawLine(0, 0, 0, 16, 0xFFFFFF);
         BGUI_tool.ShowString(LCD_WIDTH / 2 - (strlen(list->Data.title)) * 4, 1, (uint8_t *)list->Data.title, 0x00);
@@ -209,19 +209,19 @@ void ShowList(BG_List *list)
         BGUI_tool.ShowString(LCD_WIDTH / 2 - 4 * 4, LCD_HEIGHT - 16, "EXIT", 0xFFFFFF);
         BGUI_tool.DrawLine(LCD_WIDTH / 2 + 4 * 4 + 2, LCD_HEIGHT - 16, LCD_WIDTH / 2 + 4 * 4 + 2, LCD_HEIGHT, 0xFFFFFF);
         BGUI_tool.DrawLine(LCD_WIDTH / 2 - 5 * 4, LCD_HEIGHT - 1, LCD_WIDTH / 2 + 4 * 4 + 2, LCD_HEIGHT - 1, 0xFFFFFF);
-        
+
         Node *current = list->head; // 浣跨敤涓存椂鎸囬拡鏉ラ亶鍘嗛摼琛�        //  if( list->head ==NULL)
-     
+
         while (current != NULL)
         {
            // printf("Data.min_show_count = %d\n", current->id);
             if (current->id - list->Data.min_show_count > 0 && current->id - list->Data.min_show_count <= list->Data.max_show_count)
-            {   
-               
+            {
+
                 uint16_t x = LCD_WIDTH - LCD_WIDTH / 40 - 1 - strlen(current->unit) * 8;
                 if (list->Data.current_id == current->id)
                 {
-                     
+
                     if (list->Data.flash_flag == FLASH_ON || list->Data.flash_flag == FLASH_DISABLE)
                     {
 
@@ -229,7 +229,7 @@ void ShowList(BG_List *list)
                         BGUI_tool.ShowString(5, (current->id - list->Data.min_show_count) * 16, (uint8_t *)current->name, 0x00);
                         BGUI_tool.ShowString(x, (current->id - list->Data.min_show_count) * 16, (uint8_t *)current->unit, 0x00);
                         BGUI_tool.ShowNum(x-get_num_bit(current->data)*9,(current->id - list->Data.min_show_count) * 16,current->data,0x00);
-                         
+
                     }
                     else if (list->Data.flash_flag == FLASH_OFF)
                     {
@@ -237,7 +237,7 @@ void ShowList(BG_List *list)
                         BGUI_tool.ShowString(x, (current->id - list->Data.min_show_count) * 16, (uint8_t *)current->unit, 0xFFFFFF);
                         BGUI_tool.ShowNum(x-get_num_bit(current->data)*9,(current->id - list->Data.min_show_count) * 16,current->data,0xFFFFFF);
                     }
-                    
+
                     // printf("%d\n",x-get_num_bit(current->data)*8-4);
                     // printf("%d\n",get_num_bit(current->data)*8-4);
                 }
@@ -263,7 +263,7 @@ void ShowList(BG_List *list)
                 BGUI_tool.ShowString(LCD_WIDTH / 2 - 4 * 4, LCD_HEIGHT - 16, "EXIT", 0x00);
                // printf("%d\n",LCD_HEIGHT - 16);
             }
-             
+
             BGUI_tool.DrawLine(0, (current->id) * 16, 0, (current->id + 1) * 16, 0xFFFFFF);
             BGUI_tool.DrawLine(0, (current->id + 1 - list->Data.min_show_count) * 16, LCD_WIDTH - LCD_WIDTH / 40 - 1, (current->id + 1 - list->Data.min_show_count) * 16, 0xFFFFFF);
             BGUI_tool.DrawLine(LCD_WIDTH - LCD_WIDTH / 40 - 1, (current->id) * 16, LCD_WIDTH - LCD_WIDTH / 40 - 1, (current->id + 1) * 16, 0xFFFFFF);
@@ -306,7 +306,7 @@ void ShowList(BG_List *list)
                 BGUI_tool.DrawLine(LCD_WIDTH - count - 2, y_start, LCD_WIDTH - count - 2, y_over, 0xFFFFFF);
             }
             /***************************************************************************slider_BAR******************************************************************/
-           
+
             current = current->next; // 绉诲姩鍒颁笅涓�釜鑺傜偣
         }
         list->Reflash();
@@ -322,7 +322,7 @@ void freeList(Node *head)
     {
         temp = head;
         head = head->next;
-        free(temp); 
+        free(temp);
     }
 }
 void Select_up(BG_List *list)
@@ -368,7 +368,7 @@ void Select_Enter(BG_List *list)
         list->Data.exit_flag = 1;
         list->Clear(0x00);
     }
-     
+
     if (list->Data.isEnter == 1)
     {
         list->Data.isEnter = 0;

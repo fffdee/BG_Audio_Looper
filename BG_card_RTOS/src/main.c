@@ -43,6 +43,7 @@
 #include "bg_encoder.h"
 #include "bg_flash_manager.h"
 #include "bg_lcd.h"
+#include "audio_looper.h"
 #include <math.h>
 #include <string.h>
 #include "otg_device_hcd.h"
@@ -75,6 +76,9 @@ uint8_t right_flag = false;
 
 BG_Page BG_page;
 uint8_t UI_count =0,UI_flag=0;
+
+uint8_t key_flag =1;
+uint16_t key_time;
 void Timer2Interrupt(void)
 {
 	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
@@ -89,6 +93,15 @@ void Timer2Interrupt(void)
 		right_time++;
 	else right_time=0;
 
+	if(key_flag==0){
+		key_time++;
+	}else{
+		key_time=0;
+	}
+
+	if(key_time>=1000){
+		key_flag = 1;
+	}
 	rea++;
 	time++;
 	UI_count++;
@@ -98,10 +111,11 @@ void Timer2Interrupt(void)
 		UI_flag=0;
 	}
 	if(time>65530)time=0;
-	if(record_flag==0){
-
-		record_flag=1;
-	}
+	
+	// 移除record_flag设置，录制现在基于音频数据可用性
+	// if(record_flag==0){
+	//     record_flag=1;  // 不再需要定时器控制录制
+	// }
 
 	// 更新loop状态 - 在1ms定时中断中处理所有实时状态更新
 	loop_timer_update();
@@ -124,10 +138,10 @@ uint32_t AudioADC1Buf[1024] = {0}; //1024 * 4 = 4K
 uint32_t AudioADC2Buf[1024] = {0}; //1024 * 4 = 4K
 uint32_t AudioDACBuf[1024] = {0}; //1024 * 4 = 4K
 
-static uint32_t PcmBuf1[100] = {0};
-static uint32_t PcmBuf2[100] = {0};
-static uint32_t PcmBuf3[100] = {0};
-static uint32_t PcmBuf4[100] = {0};
+static uint32_t PcmBuf1[512] = {0};  // 增大缓冲区以支持更多数据
+static uint32_t PcmBuf2[512] = {0};
+static uint32_t PcmBuf3[512] = {0};
+static uint32_t PcmBuf4[512] = {0};
 int16_t CRC[100] = {0};
 int16_t WriteBufer[96] = {0};
 
@@ -408,18 +422,6 @@ void RecvTask(void)
 //    return output;
 //}
 
-void convertUint8ArrayToUint32Array(const uint8_t *input, uint32_t *output, size_t size) {
-
-	uint16_t i;
-	for (i = 0; i < size; i++) {
-        // 每4锟斤拷锟街斤拷锟斤拷锟揭伙拷锟絬int32_t
-        output[i] = (uint32_t)input[i * 4 ] << 24 |
-                    (uint32_t)input[i * 4 + 1] << 16 |
-                    (uint32_t)input[i * 4 + 2] << 8 |
-                    (uint32_t)input[i * 4 + 3];
-    }
-}
-
 void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, size_t size) {
     size_t i;
     for (i = 0; i < size; ++i) {
@@ -432,11 +434,23 @@ void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, size_t
 void convertUint32ArrayToUint8Array(const uint32_t *input, uint8_t *output, size_t size) {
 	size_t i;
 	for (i = 0; i < size; i++) {
-        // 每锟斤拷uint32_t锟街斤拷为4锟斤拷uint8_t
-        output[i * 4]     = (uint8_t)((input[i] >> 24) & 0xFF); // 锟斤拷取锟斤拷锟轿伙拷纸锟�
-        output[i * 4 + 1] = (uint8_t)((input[i] >> 16) & 0xFF); // 锟斤拷取锟轿革拷位锟街斤拷
-        output[i * 4 + 2] = (uint8_t)((input[i] >> 8) & 0xFF);  // 锟斤拷取锟轿碉拷位锟街斤拷
-        output[i * 4 + 3] = (uint8_t)(input[i] & 0xFF);         // 锟斤拷取锟斤拷锟轿伙拷纸锟�
+        // 每个uint32_t转换为4个uint8_t，保持双声道数据完整
+        // 假设系统是小端，uint32_t格式为: [右声道低8位][右声道高8位][左声道低8位][左声道高8位]
+        output[i * 4]     = (uint8_t)(input[i] & 0xFF);         // 右声道低8位
+        output[i * 4 + 1] = (uint8_t)((input[i] >> 8) & 0xFF);  // 右声道高8位
+        output[i * 4 + 2] = (uint8_t)((input[i] >> 16) & 0xFF); // 左声道低8位
+        output[i * 4 + 3] = (uint8_t)((input[i] >> 24) & 0xFF); // 左声道高8位
+    }
+}
+
+void convertUint8ArrayToUint32Array(const uint8_t *input, uint32_t *output, size_t size) {
+    size_t i;
+    for (i = 0; i < size; i++) {
+        // 将4个uint8_t重新组合为1个uint32_t，恢复双声道数据
+        output[i] = (uint32_t)input[i * 4] |
+                    ((uint32_t)input[i * 4 + 1] << 8) |
+                    ((uint32_t)input[i * 4 + 2] << 16) |
+                    ((uint32_t)input[i * 4 + 3] << 24);
     }
 }
 
@@ -447,7 +461,6 @@ void convertInt16ArrayToUint8Array(const int16_t *input, uint8_t *output, size_t
         output[i * 2] = (uint8_t)(input[i] & 0xFF); // 低8位
         output[i * 2 + 1] = (uint8_t)((input[i] >> 8) & 0xFF); // 高8位
     }
-
 }
 void AudioTask(void)
 {
@@ -503,10 +516,10 @@ void RecordTask(){
 
 		if(play_flag==1&&record_flag==1){
 
-			convertInt16ArrayToUint8Array(PcmBuf3,Buffer ,960);
+			convertUint32ArrayToUint8Array(PcmBuf3,Buffer ,240);  // 240个uint32样本 = 960字节 (240*4)
 							//DBG("{0x%08X, 0x%08X}\n",PcmBuf1[50],sectorAddress);
 							//BG_flash_manager.SectorErase(sectorAddress);
-							if(BG_flash_manager.PageProgram(sectorAddress, Buffer, 480,DEV_NOR)==0){
+							if(BG_flash_manager.PageProgram(sectorAddress, Buffer, 960,DEV_NOR)==0){  // 写入960字节
 
 									sectorAddress =sectorAddress+960;
 							}
@@ -520,11 +533,11 @@ void RecordTask(){
 		}else if(play_flag==0){
 							BG_flash_manager.ReadData(sectorAddress, Buffer, 960,DEV_NOR);
 
-							convertUint8ArrayToInt16Array(Buffer,PcmBuf2,480);
+							convertUint8ArrayToUint32Array(Buffer,PcmBuf2,240);  // 将960字节转换为240个uint32样本
 
 							//if(PcmBuf3[i]!=PcmBuf2[128])
 							//DBG("{0x%08X  ,0x%08X }\n",sectorAddress,PcmBuf2[50]);
-							AudioDAC_DataSet(DAC0, PcmBuf2, 480);
+							AudioDAC_DataSet(DAC0, PcmBuf2, 240);  // 播放240个uint32样本
 							sectorAddress +=960;
 							if(sectorAddress>BG_flash_manager.GetTotalByte(DEV_NOR))
 								sectorAddress = 0;
@@ -571,14 +584,167 @@ void FlashTask(void)
 	DBG("ID is %d%d%d\n", manufacturerID, memoryType, deviceID);
 	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID,DEV_NAND);
 
-		// 打印闪存ID
+	// 打印闪存ID
 	DBG("ID is %X%X%X\n", manufacturerID, memoryType, deviceID);
 
+	// ================== 第一个扇区读写测试 ==================
+	DBG("========== Flash Sector Test Start ==========\n");
+	
+	// 测试数据缓冲区
+	uint8_t write_buffer[256];
+	uint8_t read_buffer[256];
+	uint32_t test_address = 0x1000; // 使用第二个4K扇区，避开地址0
+	uint16_t test_size = 256;  // 测试数据大小
+	uint16_t i;
+	bool test_passed = true;
+	
+	// 1. 准备测试数据
+	DBG("Preparing test data...\n");
+	for(i = 0; i < test_size; i++) {
+		write_buffer[i] = (uint8_t)(0xA0 + (i & 0x0F)); // 模式：A0,A1,A2...AF,A0,A1... 更容易识别偏移
+	}
+	
+	// 打印写入数据（前32字节）
+	DBG("Write data (first 32 bytes):\n");
+	for(i = 0; i < 32 && i < test_size; i++) {
+		if(i % 16 == 0) DBG("\n0x%04X: ", i);
+		DBG("%02X ", write_buffer[i]);
+	}
+	DBG("\n");
+	
+	// 1.5 单字节测试 - 先进行简单的单字节读写测试
+	DBG("=== Single Byte Test ===\n");
+	uint8_t test_byte = 0xAA;
+	uint8_t read_byte;
+	
+	// 测试NOR Flash单字节
+	BG_flash_manager.SectorErase(test_address, DEV_NOR);
+	BG_flash_manager.PageProgram(test_address, &test_byte, 1, DEV_NOR);
+	BG_flash_manager.ReadData(test_address, &read_byte, 1, DEV_NOR);
+	DBG("NOR single byte: wrote 0x%02X, read 0x%02X\n", test_byte, read_byte);
+	
+	// 测试NAND Flash单字节
+	BG_flash_manager.SectorErase(test_address, DEV_NAND);
+	BG_flash_manager.PageProgram(test_address, &test_byte, 1, DEV_NAND);
+	BG_flash_manager.ReadData(test_address, &read_byte, 1, DEV_NAND);
+	DBG("NAND single byte: wrote 0x%02X, read 0x%02X\n", test_byte, read_byte);
+	DBG("=== End Single Byte Test ===\n");
+	
+	// 2. 擦除第一个扇区（NOR Flash）
+	DBG("Erasing first sector (NOR)...\n");
+	BG_flash_manager.SectorErase(test_address, DEV_NOR);
+	DBG("NOR sector erase completed\n");
+	
+	// 3. 写入测试数据到NOR Flash
+	DBG("Writing test data to NOR flash at address 0x%08lX...\n", (unsigned long)test_address);
+	if(BG_flash_manager.PageProgram(test_address, write_buffer, test_size, DEV_NOR) == 0) {
+		DBG("NOR write success, %d bytes written\n", test_size);
+	} else {
+		DBG("NOR write failed\n");
+		test_passed = false;
+	}
+	
+	// 4. 读取数据并验证（NOR Flash）
+	DBG("Reading data from NOR flash...\n");
+	memset(read_buffer, 0, sizeof(read_buffer)); // 清空读取缓冲区
 
-    BG_lcd.Clear(BLUE);
+	BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NOR);
+	DBG("NOR read completed, %d bytes read\n", test_size);
+	
+	// 打印读取数据（前32字节）
+	DBG("Read data (first 32 bytes):\n");
+	for(i = 0; i < 32 && i < test_size; i++) {
+		if(i % 16 == 0) DBG("\n0x%04X: ", i);
+		DBG("%02X ", read_buffer[i]);
+	}
+	DBG("\n");
+		
+	// 验证数据
+	bool nor_verify_ok = true;
+	uint16_t error_count = 0;
+	for(i = 0; i < test_size; i++) {
+		if(read_buffer[i] != write_buffer[i]) {
+			if(error_count < 10) { // 只打印前10个错误
+				DBG("NOR data mismatch at offset %d: wrote 0x%02X, read 0x%02X\n",
+					i, write_buffer[i], read_buffer[i]);
+			}
+			error_count++;
+			nor_verify_ok = false;
+			test_passed = false;
+		}
+	}
+	
+	if(nor_verify_ok) {
+		DBG("NOR data verification PASSED - All %d bytes match\n", test_size);
+	} else {
+		DBG("NOR data verification FAILED - %d errors found\n", error_count);
+	}
+	
+	// 5. 测试NAND Flash（如果可用）
+	DBG("Testing NAND flash...\n");
+	
+	// 擦除NAND第一个扇区
+	BG_flash_manager.SectorErase(test_address, DEV_NAND);
+	DBG("NAND sector erase completed\n");
+	
+	// 写入测试数据到NAND Flash
+	if(BG_flash_manager.PageProgram(test_address, write_buffer, test_size, DEV_NAND) == 0) {
+		DBG("NAND write success, %d bytes written\n", test_size);
+		
+		// 读取并验证NAND数据
+		memset(read_buffer, 0, sizeof(read_buffer));
+		BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NAND);
+		DBG("NAND read completed, %d bytes read\n", test_size);
+		
+		// 打印NAND读取数据（前32字节）
+		DBG("NAND read data (first 32 bytes):\n");
+		for(i = 0; i < 32 && i < test_size; i++) {
+			if(i % 16 == 0) DBG("\n0x%04X: ", i);
+			DBG("%02X ", read_buffer[i]);
+		}
+		DBG("\n");
+		
+		bool nand_verify_ok = true;
+		uint16_t nand_error_count = 0;
+		for(i = 0; i < test_size; i++) {
+			if(read_buffer[i] != write_buffer[i]) {
+				if(nand_error_count < 10) { // 只打印前10个错误
+					DBG("NAND data mismatch at offset %d: wrote 0x%02X, read 0x%02X\n",
+						i, write_buffer[i], read_buffer[i]);
+				}
+				nand_error_count++;
+				nand_verify_ok = false;
+				test_passed = false;
+			}
+		}
+		
+		if(nand_verify_ok) {
+			DBG("NAND data verification PASSED - All %d bytes match\n", test_size);
+		} else {
+			DBG("NAND data verification FAILED - %d errors found\n", nand_error_count);
+		}
+	} else {
+		DBG("NAND write failed\n");
+	}
+	
+	// 6. 显示测试结果
+	if(test_passed) {
+		DBG("========== Flash Test PASSED ==========\n");
+		BG_lcd.Clear(GREEN); // 绿色表示测试通过
+	} else {
+		DBG("========== Flash Test FAILED ==========\n");
+		BG_lcd.Clear(RED);   // 红色表示测试失败
+	}
+	
+	// 7. 显示Flash信息摘要
+	DBG("Flash Test Summary:\n");
+	DBG("- Test Address: 0x%08lX\n", (unsigned long)test_address);
+	DBG("- Test Size: %d bytes\n", test_size);
+	DBG("- NOR Flash ID: 0x%02X%02X%02X\n", manufacturerID, memoryType, deviceID);
+	DBG("- Address alignment: %s\n", (test_address % 256 == 0) ? "Page aligned" : "Not page aligned");
+	DBG("========== Flash Sector Test End ==========\n");
 
 }
-void audio_init(uint32_t SampleRate);
 void audio_process(void);
 void USBTask(){
 
@@ -615,8 +781,8 @@ void audio_Init(uint16_t SampleRate){
 		AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT);
 		AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT);
 
-		AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT, 32, 0);
-		AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT, 32, 0);
+		AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT, 16, 0);
+		AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT, 16, 0);
 		//LineIn2  digital
 		AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void*)AudioADC1Buf, sizeof(AudioADC1Buf));
 
@@ -630,9 +796,9 @@ void audio_Init(uint16_t SampleRate){
 		AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
 		AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
 
-		AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 12, 2);
-		AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 12, 2);
-		AudioDAC_DoutModeSet(AUDIO_DAC1, MODE0, WIDTH_16_BIT);
+		AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 15, 4);
+		AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 15, 4);
+		AudioDAC_DoutModeSet(AUDIO_DAC1, MODE2, WIDTH_16_BIT);
 
 		AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void*)AudioADC2Buf, sizeof(AudioADC2Buf));
 
@@ -670,7 +836,8 @@ void HardWareTask(void)
 	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX24);
 
 	while(1){
-
+		// 注释掉冲突的按键检测，使用EffectTask中的loop按键处理
+		/*
 		if(!BG_encoder.enter()){
 				DelayMs(50);
 				if(!BG_encoder.enter()){
@@ -680,7 +847,10 @@ void HardWareTask(void)
 					DBG("record is %d",record_flag);
 				}
 			}
-
+		*/
+		
+		// 让出CPU时间给其他任务
+		DelayMs(100);
 	}
 }
 
@@ -721,6 +891,12 @@ void EffectTask(){
 	GPIO_RegOneBitSet(GPIO_A_OE, GPIOA24);
 	GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA24);
 	GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA24);
+
+	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX1);
+	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX1);
+	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX1);
+	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX1);
+
 	BG_lcd.Init();
 	BG_lcd.Clear(RED);
 	BG_lcd.Clear(0x00);
@@ -743,22 +919,33 @@ void EffectTask(){
 	
 	play_flag = 0;
 	BG_flash_manager.Init();
-	BG_flash_manager.EraseAll(DEV_NOR);
-	
+	//BG_flash_manager.EraseAll(DEV_NOR);
+
 	// 初始化loop管理器
 	loop_init();
-	
+	loop_set_flash_type(FLASH_TYPE_NAND);
 	DBG("Loop manager is ready\n");
 	while(1){
 //
 
-		if(!BG_encoder.enter()){
-			DelayMs(100);
 			if(!BG_encoder.enter()){
 				// 使用loop函数处理按键
+//				loop_reset();
+//				BG_flash_manager.EraseAll(DEV_NOR);
+				if(key_flag==1){
 				loop_handle_button_press();
+				key_flag=0;
+
 			}
 		}
+//
+//		if(GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX1)==1 ){
+//			DelayMs(100);
+//			if(GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX1)==1 ){
+//				// 使用loop函数处理按键
+//				loop_handle_button_press();
+//			}
+//		}
 
 		if(AudioADC_DataLenGet(ADC0_MODULE) >= 48)
 			{
@@ -776,28 +963,43 @@ void EffectTask(){
 				}
 				//AudioEffectEchoApply(&gCtrlVars.echo_unit, PcmBuf1, PcmBuf2, n);
 				//memset(PcmBuf3,0x00,48);
+				// AudioEffectReverbApply期望int16_t*参数，而我们的缓冲区是uint32_t*
+				// 需要正确转换：n个uint32_t = n*2个int16_t样本
 				AudioEffectReverbApply(&gCtrlVars.reverb_unit, PcmBuf1, PcmBuf3, n);
-				// if(play_flag==0||play_flag==2||play_flag==3){
+				
+				// 处理录制（录制混响后的麦克风数据）
+				// 使用uint32_t格式录制，保持原始数据格式
+				loop_process_recording_uint32(PcmBuf3, Buffer, n);
 
-				convertInt16ArrayToUint8Array(PcmBuf3,Buffer ,96);
-				for(i=0;i<n;i++)
-					PcmBuf4[i] = PcmBuf3[i]+PcmBuf2[i];
+				// 初始化输出缓冲区为混响后的麦克风信号
+				memcpy((void*)PcmBuf4, (void*)PcmBuf3, n * sizeof(uint32_t));
+				
+				// 处理播放（将录音内容混合到输出缓冲区）
+				// 使用uint32_t格式播放
+				loop_process_playback_uint32(PcmBuf4, Buffer, n);
+
+				// 最终混合：(混响麦克风 + 播放内容) + Line输入
+				// 直接在uint32_t级别进行混合，保持原始32位格式
+				for(i = 0; i < n; i++) {
+					// 分别提取左右声道进行混合
+					int16_t mic_left = (int16_t)(PcmBuf3[i] & 0xFFFF);
+					int16_t mic_right = (int16_t)((PcmBuf3[i] >> 16) & 0xFFFF);
+					int16_t playback_left = (int16_t)(PcmBuf4[i] & 0xFFFF);
+					int16_t playback_right = (int16_t)((PcmBuf4[i] >> 16) & 0xFFFF);
+					int16_t line_left = (int16_t)(PcmBuf2[i] & 0xFFFF);
+					int16_t line_right = (int16_t)((PcmBuf2[i] >> 16) & 0xFFFF);
+
+					// 混合左右声道
+					int32_t mixed_left = (int32_t)mic_left + (int32_t)playback_left + (int32_t)line_left;
+					int32_t mixed_right = (int32_t)mic_right + (int32_t)playback_right + (int32_t)line_right;
+
+					// 重新组合为uint32_t
+					PcmBuf4[i] = ((uint32_t)__nds32__clips(mixed_right, 15) << 16) |
+					             ((uint32_t)__nds32__clips(mixed_left, 15) & 0xFFFF);
+				}
 				AudioDAC_DataSet(DAC0, PcmBuf4, n);
 
-			
-
-			// 	}
-			// 	else{
-			// //		AudioDAC_DataSet(DAC0, PcmBuf3, n);
-
-			// 	}
-
-
 			}
-
-			// 使用loop函数处理录制和播放
-			loop_process_recording(PcmBuf3, Buffer, 48);
-			loop_process_playback(PcmBuf3, Buffer, 48);
 
 	}
 }
