@@ -24,14 +24,14 @@
 00000000 t exception_vector	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:20
 000000a4 t exception_vector_end	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:350
 000000a4 T stub	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:349
-00000104 t FlashXmcResumeTimeGet	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:610
-00000120 t flash_udelay	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:609
-0000019c t flash_delayms	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:628
-000001b6 t FshcGpioSet	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:629
-000001d8 t FshcInit	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:631
-000001f2 t FshcSendCmd	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:635
-00000226 t FshcSpiIOModeCfg	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:641
-0000050e t SpiFlashResetCRM	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:745
+00000104 t FlashXmcResumeTimeGet	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:293
+00000120 t flash_udelay	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:292
+0000019c t flash_delayms	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:311
+000001b6 t FshcGpioSet	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:312
+000001d8 t FshcInit	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:314
+000001f2 t FshcSendCmd	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:318
+00000226 t FshcSpiIOModeCfg	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:324
+0000050e t SpiFlashResetCRM	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:428
 0000054a t SpiFlashResume	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6374
 0000057e t SpiFlashSuspend	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:6380
 000005b2 t SpiFlashReadId
@@ -229,30 +229,30 @@
 0000464e T Lcd_SetXY	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:123
 00004662 T gui_DrawLine	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:207
 000046fe T st7735_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/st7735.c:7
-00004964 t address_to_block	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:999
-00004968 t block_to_address	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:1005
-0000496e T flash_write_byte	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:168
-00004992 T flash_WriteEnable	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:404
-000049ee T flash_read_byte	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:173
-00004a12 T flash_ReadID	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:190
-00004bfa T flash_GetTotalByte	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:282
-00004ce4 T flash_read	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:180
-00004cfe T flash_write	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:185
-00004d18 T Windbond_GetCapacity	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:343
-00004d94 T flash_ReadStatusReg	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:426
-00004df0 T flash_WaitForWriteEnd	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:468
-00004e36 T flash_PageProgram	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:580
-00004f5a t save_bad_block_table	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:977
-00004f94 t mark_block_as_bad	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:918
-00005010 T flash_ReadData	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:637
-0000511c t load_bad_block_table	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:991
-0000513c t bad_block_manager_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:846
-00005212 T flash_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:76
-000053f4 t is_block_bad	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:901
-0000542e T flash_IsSectorErased	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:373
-00005454 T flash_GetRemainingCapacity	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:381
-000054d4 T flash_SectorErase	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:493
-000055aa T flash_EraseAll	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:531
+00004964 t address_to_block	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:1002
+00004968 t block_to_address	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:1008
+0000496e T flash_write_byte	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:171
+00004992 T flash_WriteEnable	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:407
+000049ee T flash_read_byte	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:176
+00004a12 T flash_ReadID	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:193
+00004bfa T flash_GetTotalByte	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:285
+00004ce4 T flash_read	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:183
+00004cfe T flash_write	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:188
+00004d18 T Windbond_GetCapacity	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:346
+00004d94 T flash_ReadStatusReg	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:429
+00004df0 T flash_WaitForWriteEnd	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:471
+00004e36 T flash_PageProgram	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:583
+00004f5a t save_bad_block_table	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:980
+00004f94 t mark_block_as_bad	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:921
+00005010 T flash_ReadData	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:640
+0000511c t load_bad_block_table	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:994
+0000513c t bad_block_manager_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:849
+00005212 T flash_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:79
+000053f4 t is_block_bad	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:904
+0000542e T flash_IsSectorErased	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:376
+00005454 T flash_GetRemainingCapacity	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:384
+000054d4 T flash_SectorErase	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:496
+000055aa T flash_EraseAll	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:534
 000056a2 T UsbAudioTimer1msProcess	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:295
 00005728 T AudioEffectReverbInit	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/audio_effect.c:1481
 00005798 T AudioEffectReverbApply	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/audio_effect.c:2747
@@ -263,218 +263,258 @@
 00005bee T Line3MicPinSet	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:1009
 00005c02 T DefaultParamgsInit	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:775
 00005ed8 T CtrlVarsInit	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:291
-0000646e T loop_reset	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:167
-000064b8 T loop_get_flash_device_id	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:345
-000064c4 T loop_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:61
-00006568 T loop_set_flash_type	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:308
-000065e0 T loop_timer_update	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:638
-000065fe T loop_start_new_segment	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1099
-000066ce T loop_stop_current_segment	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1149
-000067e6 T loop_clear_all_segments	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1223
-00006856 T loop_handle_button_press	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:196
-0000696c T loop_update_auto_test	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1267
-000069de T loop_process_recording_uint32	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:762
-00006bfc T loop_process_playback_uint32	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:888
-00006f0e T Timer2Interrupt	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:82
-00006fce T spi_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:202
-00007060 T convertUint32ArrayToUint8Array	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:434
-0000709e T convertUint8ArrayToUint32Array	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:446
-000070d6 T audio_Init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:766
-000071b6 T EffectTask	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:880
-000073aa T main	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:1007
-000074e2 W BLE_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W BT_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 t Default_Handler	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:47
-000074e2 W FFTInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W GpioInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W I2C_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W I2sInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W IRInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W RtcInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W SDIO0_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W SPIM_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W SPIS_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W SWInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W SpdifInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W Timer3Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W Timer4Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W Timer5Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W Timer6Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W UART0_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e2 W WakeupInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
-000074e4 T ExceptionCommHandler	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:53
-0000770c T __c_init	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:186
-00007740 T __cpu_init	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:213
-000077e2 T HardwareStackProtectEnable	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:316
-00007808 T __init	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:336
-0000782a T GIE_ENABLE	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:16
-00007834 T GIE_DISABLE	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:21
-00007842 T GIE_STATE_GET	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:27
-0000784a T NVIC_EnableIRQ	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:70
-00007862 t GetPswINTL	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:30
-00007870 W SwUartSend	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:25
-00007872 T putchar	/cygdrive/d/ADS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
-00007902 T nds_write	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:85
-00007922 T DbgUartInit	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:94
-00007946 T AudioADC_LREnable
-00007a48 T AudioADC_Enable
-00007a66 T AudioADC_Disable
-00007ab0 T AudioADC_HighPassFilterConfig
-00007ac4 T AudioADC_HighPassFilterSet
-00007afa T AudioADC_Clear
-00007b10 T AudioADC_SampleRateGet
-00007b94 T AudioADC_SampleRateSet
-00007cca T AudioADC_FadeTimeSet
-00007d26 T AudioADC_FadeEnable
-00007d5c T AudioADC_SoftMute
-00007de8 T AudioADC_VolSet
-00007e46 T AudioADC_AnaInit
-00007e86 T AudioADC_PGASel
-0000804e T AudioADC_PGAGainSet
-000081ba T AudioADC_MicBias1Enable
-000081dc T AudioADC_DynamicElementMatch
-0000823c T AudioADC_IsOverflow
-00008254 T AudioADC_OverflowClear
-00008276 T Chip_VMIDDetectDisable
-00008288 T Chip_Init
-00008328 T Chip_MemInit
-00008334 T Clock_Config
-000083b6 T WaitOscillateWork
-000083d0 T Clock_USBClkDivSet
-000083e2 T Clock_RcFreqGet
-00008488 T Clock_PllLock
-0000857e T Clock_APllLock
-00008674 T Clock_SysClkSelect
-00008702 T Clock_USBClkSelect
-0000872e T Clock_UARTClkSelect
-00008786 T Clock_Timer3ClkSelect
-000087b0 T Clock_Module1Enable
-000087c0 T Clock_Module2Enable
-000087d0 T Clock_Module3Enable
-000087e0 T Clock_AudioPllClockSet
-0000893c T Clock_AudioMclkSel
-00008a14 T EnableMPU
-00008a76 T EnableIDCache
-00008ab8 T DataCacheInvalidAll
-00008ac2 T DataCacheRangeInvalid
-00008b28 t AudioDAC0_ChannelEnable
-00008b90 t AudioDAC1_ChannelEnable
-00008bd4 T AudioDAC_Enable
-00008bf2 T AudioDAC_DitherDisable
-00008c10 T AudioDAC_ScrambleDisable
-00008c2e T AudioDAC_DoutModeSet
-00008c6e T AudioDAC_EdgeSet
-00008cb4 T AudioDAC_DsmOutdisModeSet
-00008ce2 T AudioDAC_ZeroNumSet
-00008cf6 T AudioDAC_SampleRateGet
-00008d7a T AudioDAC_SampleRateSet
-00008ec0 T AudioDAC_Reset
-00008ee2 T AudioDAC_FadeTimeSet
-00008f4a T AudioDAC_FadeEnable
-00008f7c T AudioDAC_DigitalMute
-00008fbc T AudioDAC_VolSet
-00009002 T AudioDAC_VmidChargeOp
-00009038 t AudioDAC0_PowerOn
-00009134 t AudioDAC1_PowerOn
-000091e8 T AudioDAC_ClkEnable
-00009216 T AudioDAC_FuncReset
-00009244 T AudioDAC_VIMDControl
-00009256 T AudioDAC_SCFMute
-0000929c T AudioDAC_IBSelect
-000092e6 T AudioDAC_AllPowerOn
-0000940a T AudioDAC_AllChannelEnable
-00009496 T AudioDAC_PowerOn
-000094b8 T AudioDAC_ChannelEnable
-000094d6 T DMA_ChannelAllocTableSet
-000094e8 T DMA_ChannelEnable
-00009514 T DMA_ChannelDisable
-00009542 T DMA_InterruptFlagGet
-00009596 T DMA_InterruptFlagClear
-0000963c T DMA_BlockConfig
-000097da T DMA_BlockBufSet
-000098bc T DMA_CircularConfig
-00009aa0 T DMA_CircularDataLenGet
-00009b12 T DMA_CircularSpaceLenGet
-00009bf2 T DMA_CircularWritePtrSet
-00009c26 T DMA_CircularDataPut
-00009d90 T DMA_CircularReadPtrSet
-00009dc2 T DMA_CircularDataGet
-00009f68 T Efuse_ReadData
-00009fce T GPIO_RegOneBitGet
-00009fe2 T GPIO_PortAModeSet
-0000ac6c T OTG_PortGetDP
-0000ac7a T OTG_PortGetDM
-0000ac88 T OTG_PortEnableDPPullUp
-0000acae T OTG_PortDisableDPPullUp
-0000acd4 T OTG_PortIsEnableDPPullUp
-0000ace4 T OTG_PortEnablePullDown
-0000ad0a T OTG_PortDisablePullDown
-0000ad30 T OTG_PortIsEnablePullDown
-0000ad3c T OTG_PortEnablePullUp500K
-0000ad62 T OTG_PortDisablePullUp500K
-0000ad88 T OTG_PortLinkCheck
-0000afcc T UsbInterrupt
-0000b028 T Remap_AddrRemapSet
-0000b0c2 T Remap_InitTcm
-0000b0f4 T SPIM_Init
-0000b1dc T SPIM_IoConfig
-0000b282 T SPIM_DMAStart
-0000b2bc T SPIM_GetIntFlag
-0000b2c8 T SPIM_ClrIntFlag
-0000b2da T SPIM_SetDmaEn
-0000b2f2 T SysTickInit
-0000b31c T SysTimerIntFlagClear
-0000b32a T ClockFreqGet
-0000b358 T Timer_Config
-0000b50c T Timer_Start
-0000b584 t UART_BaudClkGet
-0000b5da T UART0_Init
-0000b7a8 T UART1_Init
-0000b980 T UART0_SendByte
-0000b9c0 T UART1_SendByte
-0000ba00 T WDG_Disable
-0000ba24 T reverb_init
-0000bd6c T reverb_configure
-0000bed0 T reverb_apply
-0000c478 T floor
-0000c5a0 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
-0000c5e0 T __udivdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:818
-0000c5e4 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
-0000c63c T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
-0000c794 T __fixdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3666
-0000c7e8 T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
-0000cd78 T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
-0000d228 T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
-0000d228 T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
-0000d2cc T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
-0000d6b8 T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
-0000d724 T memcmp
-0000d75c T memcpy
-0000d788 T memset
-0000d7b8 T printf
-0000d7c2 T puts
-0000d814 T strlen
-0000d820 t vprintf_help
-0000d854 T vprintf
-0000d8a0 T do_printf
-0000dd48 t sep_frac
-0000dd7a T _printf_float
-0000e44c T strcpy
-0000e460 T abs
-0000e468 T _write
-0000e480 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
-0000e4a8 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
-0000e56c R F8x16	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/BanGUI/base_func/font.h:103
-0000eb5c R gImage_qq	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/BanGUI/base_func/picture.h:11
-000107d8 R GAIN_CONTROL_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:215
-000108d8 R EXPANDER_DEFAULT_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:206
-00010900 R DRC_DEFAULT_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:183
-000109e4 R EQ_DEFAULT_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:159
-00010c44 R SupportSampleRateList	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:83
-00012054 R MPUConfigTable	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:379
-000121d0 r COMB_SIZE
-00012220 A __data_lmastart
-00012768 A EILM_SIZE
+0000646e t AudioLooper_GetStatus	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1668
+000064a0 t AudioLooper_TimerUpdate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1721
+000064a2 T convertUint8ArrayToInt16Array	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:59
+000064ca T convertUint32ArrayToUint8Array	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:68
+00006508 T convertUint8ArrayToUint32Array	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:80
+00006540 T convertInt16ArrayToUint8Array	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:91
+00006562 T loop_reset	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:206
+000065a2 t AudioLooper_Reset	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1581
+000065b4 T loop_get_flash_device_id	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:386
+000065c0 T loop_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:102
+0000665e t AudioLooper_Init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1567
+00006670 T loop_init_with_flash_type	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:156
+00006730 t AudioLooper_InitWithFlashType	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1574
+00006742 T loop_handle_encoder_right	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:319
+000067a8 t AudioLooper_EncoderRight	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1624
+000067bc T loop_set_flash_type	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:349
+00006834 t AudioLooper_SetFlashType	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1588
+00006848 T loop_stop_recording	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:398
+0000688e t AudioLooper_StopRecording	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1632
+000068a2 T loop_process_recording	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:429
+00006a68 t AudioLooper_ProcessRecording	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1640
+00006a7a T loop_process_playback	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:557
+00006c0c t AudioLooper_ProcessPlayback	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1647
+00006c1e T loop_is_recording	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:699
+00006c2a t AudioLooper_IsRecording	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1686
+00006c3c T loop_is_playing	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:707
+00006c48 t AudioLooper_IsPlaying	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1693
+00006c5a T loop_get_current_address	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:715
+00006c6e t AudioLooper_GetCurrentAddress	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1700
+00006c80 T loop_get_record_length	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:724
+00006c86 t AudioLooper_GetRecordLength	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1707
+00006c98 T loop_verify_flash_data	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:734
+00006d8a t AudioLooper_VerifyFlashData	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1714
+00006d9c T loop_start_new_segment	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1076
+00006e5e T loop_stop_current_segment	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1132
+00006f6a T loop_clear_all_segments	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1209
+00006fe8 T loop_handle_encoder_left	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:304
+0000700e t AudioLooper_EncoderLeft	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1616
+00007022 T loop_update_auto_test	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1255
+00007094 T loop_process_playback_uint32	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:886
+0000741a t AudioLooper_ProcessPlayback32	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1661
+0000742c T loop_set_segment_recording	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1385
+000074d6 T loop_set_segment_playing	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1433
+00007564 T loop_set_segment_stopped	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1471
+0000766c T loop_process_recording_uint32	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:798
+000077a2 t AudioLooper_ProcessRecording32	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1654
+000077b4 T loop_handle_segment_button	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1313
+00007888 T loop_handle_button_press	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:235
+00007990 t AudioLooper_SegmentButtonPress	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1605
+000079b0 t AudioLooper_ButtonPress	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1596
+000079c6 T Timer2Interrupt	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:73
+00007a30 T spi_init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:178
+00007ac2 T audio_Init	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:432
+00007ba4 T EffectTask	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:477
+00007e1c T main	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:628
+00007f54 W BLE_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W BT_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 t Default_Handler	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:47
+00007f54 W FFTInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W GpioInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W I2C_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W I2sInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W IRInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W RtcInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W SDIO0_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W SPIM_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W SPIS_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W SWInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W SpdifInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W Timer3Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W Timer4Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W Timer5Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W Timer6Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W UART0_Interrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f54 W WakeupInterrupt	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:49
+00007f56 T ExceptionCommHandler	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:53
+0000817e T __c_init	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:186
+000081b2 T __cpu_init	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:213
+00008254 T HardwareStackProtectEnable	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:316
+0000827a T __init	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:336
+0000829c T GIE_ENABLE	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:16
+000082a6 T GIE_DISABLE	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:21
+000082b4 T GIE_STATE_GET	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:27
+000082bc T NVIC_EnableIRQ	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c:70
+000082d4 t GetPswINTL	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:30
+000082e2 W SwUartSend	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:25
+000082e4 T putchar	/cygdrive/d/ADS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
+00008374 T nds_write	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:85
+00008394 T DbgUartInit	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:94
+000083b8 T AudioADC_LREnable
+000084ba T AudioADC_Enable
+000084d8 T AudioADC_Disable
+00008522 T AudioADC_HighPassFilterConfig
+00008536 T AudioADC_HighPassFilterSet
+0000856c T AudioADC_Clear
+00008582 T AudioADC_SampleRateGet
+00008606 T AudioADC_SampleRateSet
+0000873c T AudioADC_FadeTimeSet
+00008798 T AudioADC_FadeEnable
+000087ce T AudioADC_SoftMute
+0000885a T AudioADC_VolSet
+000088b8 T AudioADC_AnaInit
+000088f8 T AudioADC_PGASel
+00008ac0 T AudioADC_PGAGainSet
+00008c2c T AudioADC_MicBias1Enable
+00008c4e T AudioADC_DynamicElementMatch
+00008cae T AudioADC_IsOverflow
+00008cc6 T AudioADC_OverflowClear
+00008ce8 T Chip_VMIDDetectDisable
+00008cfa T Chip_Init
+00008d9a T Chip_MemInit
+00008da6 T Clock_Config
+00008e28 T WaitOscillateWork
+00008e42 T Clock_USBClkDivSet
+00008e54 T Clock_RcFreqGet
+00008efa T Clock_PllLock
+00008ff0 T Clock_APllLock
+000090e6 T Clock_SysClkSelect
+00009174 T Clock_USBClkSelect
+000091a0 T Clock_UARTClkSelect
+000091f8 T Clock_Timer3ClkSelect
+00009222 T Clock_Module1Enable
+00009232 T Clock_Module2Enable
+00009242 T Clock_Module3Enable
+00009252 T Clock_AudioPllClockSet
+000093ae T Clock_AudioMclkSel
+00009486 T EnableMPU
+000094e8 T EnableIDCache
+0000952a T DataCacheInvalidAll
+00009534 T DataCacheRangeInvalid
+0000959a t AudioDAC0_ChannelEnable
+00009602 t AudioDAC1_ChannelEnable
+00009646 T AudioDAC_Enable
+00009664 T AudioDAC_DitherDisable
+00009682 T AudioDAC_ScrambleDisable
+000096a0 T AudioDAC_DoutModeSet
+000096e0 T AudioDAC_EdgeSet
+00009726 T AudioDAC_DsmOutdisModeSet
+00009754 T AudioDAC_ZeroNumSet
+00009768 T AudioDAC_SampleRateGet
+000097ec T AudioDAC_SampleRateSet
+00009932 T AudioDAC_Reset
+00009954 T AudioDAC_FadeTimeSet
+000099bc T AudioDAC_FadeEnable
+000099ee T AudioDAC_DigitalMute
+00009a2e T AudioDAC_VolSet
+00009a74 T AudioDAC_VmidChargeOp
+00009aaa t AudioDAC0_PowerOn
+00009ba6 t AudioDAC1_PowerOn
+00009c5a T AudioDAC_ClkEnable
+00009c88 T AudioDAC_FuncReset
+00009cb6 T AudioDAC_VIMDControl
+00009cc8 T AudioDAC_SCFMute
+00009d0e T AudioDAC_IBSelect
+00009d58 T AudioDAC_AllPowerOn
+00009e7c T AudioDAC_AllChannelEnable
+00009f08 T AudioDAC_PowerOn
+00009f2a T AudioDAC_ChannelEnable
+00009f48 T DMA_ChannelAllocTableSet
+00009f5a T DMA_ChannelEnable
+00009f86 T DMA_ChannelDisable
+00009fb4 T DMA_InterruptFlagGet
+0000a008 T DMA_InterruptFlagClear
+0000a0ae T DMA_BlockConfig
+0000a24c T DMA_BlockBufSet
+0000a32e T DMA_CircularConfig
+0000a512 T DMA_CircularDataLenGet
+0000a584 T DMA_CircularSpaceLenGet
+0000a664 T DMA_CircularWritePtrSet
+0000a698 T DMA_CircularDataPut
+0000a802 T DMA_CircularReadPtrSet
+0000a834 T DMA_CircularDataGet
+0000a9da T Efuse_ReadData
+0000aa40 T GPIO_RegOneBitGet
+0000aa54 T GPIO_PortAModeSet
+0000b6de T OTG_PortGetDP
+0000b6ec T OTG_PortGetDM
+0000b6fa T OTG_PortEnableDPPullUp
+0000b720 T OTG_PortDisableDPPullUp
+0000b746 T OTG_PortIsEnableDPPullUp
+0000b756 T OTG_PortEnablePullDown
+0000b77c T OTG_PortDisablePullDown
+0000b7a2 T OTG_PortIsEnablePullDown
+0000b7ae T OTG_PortEnablePullUp500K
+0000b7d4 T OTG_PortDisablePullUp500K
+0000b7fc T OTG_PortLinkCheck
+0000ba40 T UsbInterrupt
+0000ba9c T Remap_AddrRemapSet
+0000bb36 T Remap_InitTcm
+0000bb68 T SPIM_Init
+0000bc50 T SPIM_IoConfig
+0000bcf6 T SPIM_DMAStart
+0000bd30 T SPIM_GetIntFlag
+0000bd3c T SPIM_ClrIntFlag
+0000bd4e T SPIM_SetDmaEn
+0000bd66 T SysTickInit
+0000bd90 T SysTimerIntFlagClear
+0000bd9e T ClockFreqGet
+0000bdcc T Timer_Config
+0000bf80 T Timer_Start
+0000bff8 t UART_BaudClkGet
+0000c04e T UART0_Init
+0000c21c T UART1_Init
+0000c3f4 T UART1_Recv
+0000c44e T UART1_Send
+0000c4c0 T UART0_SendByte
+0000c500 T UART1_SendByte
+0000c540 T UART1_IOCtl
+0000ca7c T WDG_Disable
+0000caa0 T reverb_init
+0000cde8 T reverb_configure
+0000cf4c T reverb_apply
+0000d4f4 T floor
+0000d61c T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
+0000d65c T __udivdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:818
+0000d660 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
+0000d6b8 T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
+0000d810 T __fixdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3666
+0000d864 T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
+0000ddf4 T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
+0000e2a4 T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
+0000e2a4 T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
+0000e348 T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
+0000e734 T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
+0000e79e T __extendsfdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/extendsfdf2.c:36
+0000e844 T memcmp
+0000e87c T memcpy
+0000e8a8 T memset
+0000e8d8 T printf
+0000e8e2 T puts
+0000e934 T strlen
+0000e940 t vprintf_help
+0000e974 T vprintf
+0000e9c0 T do_printf
+0000ee68 t sep_frac
+0000ee9a T _printf_float
+0000f56c T strcpy
+0000f580 T abs
+0000f588 T _write
+0000f5a0 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
+0000f5c8 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
+0000f68c R F8x16	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/BanGUI/base_func/font.h:103
+0000fc7c R gImage_qq	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/BanGUI/base_func/picture.h:11
+0001191c R GAIN_CONTROL_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:215
+00011a1c R EXPANDER_DEFAULT_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:206
+00011a44 R DRC_DEFAULT_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:183
+00011b28 R EQ_DEFAULT_TABLE	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:159
+00011d88 R SupportSampleRateList	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:83
+00013294 R MPUConfigTable	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c:379
+00013410 r COMB_SIZE
+00013460 A __data_lmastart
+00013b60 A EILM_SIZE
 20004000 D UARTS_SendByte_MAP	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:267
 20004000 D __data_start
 20004000 A _stack
@@ -484,150 +524,144 @@
 20004030 D BG_encoder	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:48
 20004050 D task_run	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_Encoder/bg_encoder.c:31
 2000405c D BG_lcd	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_Lcd/bg_lcd.c:25
-20004080 D BG_flash_manager	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:61
+20004080 D BG_flash_manager	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:64
 200040a4 D gain_unit_aggregate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:279
 200040e4 D eq_param_aggregate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:276
 20004104 D expander_unit_aggregate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:274
 2000410c D drc_unit_aggregate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:273
 20004118 D eq_unit_aggregate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:271
-20004138 d DmaChannelMap	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:170
-20004158 D spimIO	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:162
-20004178 D key_flag	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:80
-2000417c D gSramEndAddr	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:15
-20004180 D BtHoscClkDiv
-20004182 D IsApllFreeRun
-20004183 D IsDpllFreeRun
-20004184 D rc_clk_freq
-20004188 D gSOCInFreq
-2000418c D gAPLLWorkFreq
-20004190 D gPLLWorkFreq
-20004194 D DMAEintTable
-200041b4 D DMATintTable
-200041d4 D DMADintTable
-200041f4 D DMAConfigTable
-20004520 D DMAChannelAllocMap
-20004540 D OtgPortDeviceEnable
-20004541 D OtgPortHostEnable
-20004542 D OtgPortDeviceSofTimeOut
-20004544 D OtgPortLinkState
-20004548 S __bss_start
-20004548 S _edata
-20004548 S user_rLen	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2619
-2000454a S key_time	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:81
-2000454c S OtgPortDeviceDetectTime
-2000454e S OtgPortLinkHoldTime
-20004550 S SysemMipsPercent	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:224
-20004554 S List	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/BanGUI/page/page_manager.c:53
-20004558 S UsbSraObj	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:39
-20004560 S pUserData	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2620
-20004564 S user_offset	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2618
-20004568 S cbuf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:44
-20004570 S xQueue	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:129
-20004578 b xBlockAllocatedBit	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:167
-2000457c b xMinimumEverFreeBytesRemaining	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:161
-20004580 b xFreeBytesRemaining	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:160
-20004584 b pxEnd	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
-20004588 b xStart	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
-2000459c b head	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:139
-200045b0 B psw_1	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:263
-200045b4 b psw_0	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:262
-200045b8 B ulCriticalNesting	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:261
-200045bc b ulTotalRunTime	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:241
-200045c0 b ulTaskSwitchedInTime	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:240
-200045c4 b uxSchedulerSuspended	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:236
-200045c8 b uxTaskNumber	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:225
-200045cc b xNumOfOverflows	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:224
-200045d0 b xYieldPending	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:223
-200045d4 b uxPendedTicks	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:222
-200045d8 b xSchedulerRunning	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:221
-200045dc b uxTopReadyPriority	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:220
-200045e0 b xTickCount	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:219
-200045e4 b uxCurrentNumberOfTasks	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:218
-200045e8 b uxTasksDeleted	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:201
-200045ec b xTasksWaitingTermination	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:200
-20004600 b xPendingReadyList	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:196
-20004614 b pxOverflowDelayedTaskList	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:195
-20004618 b pxDelayedTaskList	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:194
-2000461c b xDelayedTaskList2	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:193
-20004630 b xDelayedTaskList1	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:192
-20004644 b pxReadyTasksLists	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:191
-2000470c B pxCurrentTCB	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:188
-20004710 b AllTaskCycle	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
-20004714 b IdleTaskCycle	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
-20004718 b encoder_range.3163
-2000471c b bad_block_manager	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:74
-2000493c b FramCount	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:59
-20004940 B IsUsbAudioMode	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:56
-20004944 B usb_mic_enable	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:41
-20004948 B usb_speaker_enable	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:40
-2000494c B communic_buf_w	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:43
-20004950 B effect_list_addr	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:41
-200049c8 B effect_addr	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:39
-20004ab8 B effect_list	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:38
-20004b30 B effect_sum	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:37
-20004b34 b memory_data_length	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:37
-20004b38 b memory_read_pos	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:36
-20004b3c b memory_write_pos	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:35
-20004b40 b memory_buffer	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:34
-200070c0 B g_loop_manager	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:30
-200071e0 B spimMode	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:156
-200071e1 B spimRate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:155
-200071e4 B sectorAddress	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:150
-200071e8 b PcmBuf4	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:144
-200079e8 b PcmBuf3	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:143
-200081e8 b PcmBuf2	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:142
-200089e8 b PcmBuf1	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:141
-200091e8 B AudioDACBuf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:139
-20009728 W _FP_BASE_
-20009728 W _SDA_BASE_
-2000a1e8 B AudioADC2Buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:138
-2000b1e8 B AudioADC1Buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:137
-2000c1e8 B UI_flag	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:78
-2000c1e9 B UI_count	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:78
-2000c1ea B right_flag	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:75
-2000c1eb B left_flag	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:74
-2000c1ec B right_time	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:73
-2000c1ee B left_time	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:72
-2000c1f0 B time	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:71
-2000c1f2 B play	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:70
-2000c1f4 B rea	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:70
-2000c1f6 B rec	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:70
-2000c1f8 B play_flag	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:69
-2000c1f9 B IsSwUartActedAsUARTFlag	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:17
-2000c1fa B DebugPrintPort	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:14
-2000c1fb b sIsDac1InitOK
-2000c1fc b sIsDac0InitOK
-2000c1fd B OtgPortDetectPause
-2000c1fe B gIsUsbRemove_USB1
-2000c1ff B UsbIntEn
-2000c200 b XmcResumeCnt
-2000c204 b FlashBusyFlag
-2000c208 b EsmtFlag
-2000c20c B gSysTick
-2000c210 B _NDS32_REENT__errno
-2000c214 b output_idx
-2000c218 b output_buff
-2000c21c B pcm_out_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:43
-2000ca1c B UsbAudioSpeaker	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:36
-2000ca6c B usb_in_buff	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:41
-2000d26c B UsbAudioMic	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:37
-2000d2bc B pcm_in_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:42
-2000d6bc B usb_speak_buff	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:40
-2000d6cc B iso_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:38
-2000d78c B eq_hfp_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:902
-2000d7dc B eq3_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:895
-2000d82c B eq4_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:896
-2000d87c B eq2_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:894
-2000d8cc B eq5_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:897
-2000d91c B eq8_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:900
-2000d96c B eq7_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:899
-2000d9bc B eq1_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:893
-2000da0c B eq6_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:898
-2000da5c B EffectChangeTimer	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:48
-2000da68 B user_rx_data	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2617
-2000da88 B communic_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:42
-2000dc88 B eff_addr_compare	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:40
-2000dd78 B gCtrlVars	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:33
-2000ee2c B FpUsbIntProcess
-2000ee44 B SpiFlashInfo
-2000ee58 B _end
+20004138 D AudioLooper	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:1728
+20004198 D g_loop_manager	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:22
+200042f0 d DmaChannelMap	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:146
+20004310 D spimIO	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:138
+20004330 D key_flag	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:71
+20004334 D gSramEndAddr	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:15
+20004338 D BtHoscClkDiv
+2000433a D IsApllFreeRun
+2000433b D IsDpllFreeRun
+2000433c D rc_clk_freq
+20004340 D gSOCInFreq
+20004344 D gAPLLWorkFreq
+20004348 D gPLLWorkFreq
+2000434c D DMAEintTable
+2000436c D DMATintTable
+2000438c D DMADintTable
+200043ac D DMAConfigTable
+200046d8 D DMAChannelAllocMap
+200046f8 D OtgPortDeviceEnable
+200046f9 D OtgPortHostEnable
+200046fa D OtgPortDeviceSofTimeOut
+200046fc D OtgPortLinkState
+20004700 S __bss_start
+20004700 S _edata
+20004700 S user_rLen	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2619
+20004702 S key_time	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:72
+20004704 S OtgPortDeviceDetectTime
+20004706 S OtgPortLinkHoldTime
+20004708 S SysemMipsPercent	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:224
+2000470c S List	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/BanGUI/page/page_manager.c:53
+20004710 S UsbSraObj	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:39
+20004718 S pUserData	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2620
+2000471c S user_offset	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2618
+20004720 S cbuf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:44
+20004728 S xQueue	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:113
+20004730 b xBlockAllocatedBit	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:167
+20004734 b xMinimumEverFreeBytesRemaining	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:161
+20004738 b xFreeBytesRemaining	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:160
+2000473c b pxEnd	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
+20004740 b xStart	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:156
+20004754 b head	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:139
+20004768 B psw_1	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:263
+2000476c b psw_0	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:262
+20004770 B ulCriticalNesting	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:261
+20004774 b ulTotalRunTime	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:241
+20004778 b ulTaskSwitchedInTime	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:240
+2000477c b uxSchedulerSuspended	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:236
+20004780 b uxTaskNumber	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:225
+20004784 b xNumOfOverflows	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:224
+20004788 b xYieldPending	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:223
+2000478c b uxPendedTicks	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:222
+20004790 b xSchedulerRunning	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:221
+20004794 b uxTopReadyPriority	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:220
+20004798 b xTickCount	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:219
+2000479c b uxCurrentNumberOfTasks	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:218
+200047a0 b uxTasksDeleted	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:201
+200047a4 b xTasksWaitingTermination	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:200
+200047b8 b xPendingReadyList	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:196
+200047cc b pxOverflowDelayedTaskList	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:195
+200047d0 b pxDelayedTaskList	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:194
+200047d4 b xDelayedTaskList2	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:193
+200047e8 b xDelayedTaskList1	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:192
+200047fc b pxReadyTasksLists	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:191
+200048c4 B pxCurrentTCB	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:188
+200048c8 b AllTaskCycle	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
+200048cc b IdleTaskCycle	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
+200048d0 b encoder_range.3163
+200048d4 b bad_block_manager	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/BG_flash_manager/bg_flash_manager.c:77
+20004af4 b FramCount	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:59
+20004af8 B IsUsbAudioMode	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:56
+20004afc B usb_mic_enable	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:41
+20004b00 B usb_speaker_enable	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/usb_audio_api.c:40
+20004b04 B communic_buf_w	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:43
+20004b08 B effect_list_addr	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:41
+20004b80 B effect_addr	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:39
+20004c70 B effect_list	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:38
+20004ce8 B effect_sum	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:37
+20004cec b debug_counter.4372
+20004cf0 b g_loop_stats	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:56
+20004cfc b ReadBuf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:48
+20004dbc b memory_data_length	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:45
+20004dc0 b memory_read_pos	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:44
+20004dc4 b memory_write_pos	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:43
+20004dc8 b memory_buffer	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio_looper/audio_looper.c:42
+20007348 B spimMode	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:132
+20007349 B spimRate	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:131
+2000734c b PcmBuf4	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:128
+20007b4c b PcmBuf3	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:127
+2000834c b PcmBuf2	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:126
+20008b4c b PcmBuf1	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:125
+2000934c B AudioDACBuf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:123
+200097d0 W _FP_BASE_
+200097d0 W _SDA_BASE_
+2000a34c B AudioADC2Buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:122
+2000b34c B AudioADC1Buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:121
+2000c34c B UI_flag	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:69
+2000c34d B UI_count	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/main.c:69
+2000c34e B IsSwUartActedAsUARTFlag	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:17
+2000c34f B DebugPrintPort	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c:14
+2000c350 b sIsDac1InitOK
+2000c351 b sIsDac0InitOK
+2000c352 B OtgPortDetectPause
+2000c353 B gIsUsbRemove_USB1
+2000c354 B UsbIntEn
+2000c355 b XmcResumeCnt
+2000c358 b FlashBusyFlag
+2000c35c b EsmtFlag
+2000c360 B gSysTick
+2000c364 B _NDS32_REENT__errno
+2000c368 b output_idx
+2000c36c b output_buff
+2000c370 B pcm_out_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:43
+2000cb70 B UsbAudioSpeaker	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:36
+2000cbc0 B usb_in_buff	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:41
+2000d3c0 B UsbAudioMic	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:37
+2000d410 B pcm_in_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:42
+2000d810 B usb_speak_buff	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:40
+2000d820 B iso_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/USB/src/otg_device_audio.c:38
+2000d8e0 B eq_hfp_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:902
+2000d930 B eq3_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:895
+2000d980 B eq4_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:896
+2000d9d0 B eq2_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:894
+2000da20 B eq5_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:897
+2000da70 B eq8_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:900
+2000dac0 B eq7_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:899
+2000db10 B eq1_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:893
+2000db60 B eq6_filter_buf	/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/src/hardware/audio/ctrlvars.h:898
+2000dbb0 B EffectChangeTimer	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:48
+2000dbbc B user_rx_data	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:2617
+2000dbdc B communic_buf	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:42
+2000dddc B eff_addr_compare	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/communication.c:40
+2000decc B gCtrlVars	/cygdrive/c/Users/Hasee/Desktop/BG_Audio_Looper2/BG_card_RTOS/Debug/../src/hardware/audio/ctrlvars.c:33
+2000ef80 B FpUsbIntProcess
+2000ef98 B SpiFlashInfo
+2000efac B _end

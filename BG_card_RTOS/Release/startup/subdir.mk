@@ -4,12 +4,12 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-I:/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/init-default.c \
-I:/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/interrupt.c \
-I:/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/retarget.c 
+C:/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c \
+C:/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c \
+C:/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c 
 
 S_UPPER_SRCS += \
-I:/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/crt0.S 
+C:/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/crt0.S 
 
 OBJS += \
 ./startup/crt0.o \
@@ -27,28 +27,28 @@ S_UPPER_DEPS += \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-startup/crt0.o: /cygdrive/I/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/crt0.S
+startup/crt0.o: /cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/crt0.S
 	@echo 'Building file: $<'
 	@echo 'Invoking: Andes C Compiler'
 	$(CROSS_COMPILE)gcc -Os -mcmodel=medium -Wall -mcpu=d1088-spu -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d) $(@:%.o=%.o)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
-startup/init-default.o: /cygdrive/I/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/init-default.c
+startup/init-default.o: /cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/init-default.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: Andes C Compiler'
 	$(CROSS_COMPILE)gcc -Os -mcmodel=medium -Wall -mcpu=d1088-spu -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d) $(@:%.o=%.o)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
-startup/interrupt.o: /cygdrive/I/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/interrupt.c
+startup/interrupt.o: /cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/interrupt.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: Andes C Compiler'
 	$(CROSS_COMPILE)gcc -Os -mcmodel=medium -Wall -mcpu=d1088-spu -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d) $(@:%.o=%.o)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
-startup/retarget.o: /cygdrive/I/MVsB1_BT_Audio_SDK_v0.1.12+P05/MVsB1_Base_SDK/startup/retarget.c
+startup/retarget.o: /cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/startup/retarget.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: Andes C Compiler'
 	$(CROSS_COMPILE)gcc -Os -mcmodel=medium -Wall -mcpu=d1088-spu -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d) $(@:%.o=%.o)" -o "$@" "$<"

@@ -8,3 +8,5 @@ encoding//src/hardware/USB/src/audio_api.c=UTF-8
 encoding//src/hardware/audio_looper/audio_looper.c=UTF-8
 encoding//src/hardware/audio_looper/audio_looper.h=UTF-8
 encoding//src/main.c=UTF-8
+encoding/<project>=UTF-8
+separateDerivedEncodings=true

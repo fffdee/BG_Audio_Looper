@@ -57,6 +57,9 @@ static void load_bad_block_table(uint8_t dev);
 static uint32_t address_to_block(uint32_t address, uint8_t dev);
 static uint32_t block_to_address(uint32_t block, uint8_t dev);
 
+// 智能音频缓冲区函数声明
+static uint8_t nand_audio_flush_buffer(uint8_t dev);
+
 // 全局变量
 BG_Flash_Manager BG_flash_manager = {
 	.Init = flash_init,
@@ -1108,6 +1111,22 @@ uint8_t nand_audio_write_buffered(uint32_t address, uint8_t* data, uint16_t size
     return FLASH_STATUS_OK;
 }
 
+// 初始化NAND智能音频缓冲系统
+void nand_smart_audio_init(void) {
+    nand_audio_buffer.buffer_pos = 0;
+    nand_audio_buffer.current_page_address = 0;
+    nand_audio_buffer.initialized = true;
+    DBG("NAND smart audio buffer initialized\n");
+}
+
+// 获取当前NAND音频写入地址
+uint32_t nand_smart_audio_get_address(void) {
+    if (!nand_audio_buffer.initialized) {
+        return 0;
+    }
+    return nand_audio_buffer.current_page_address + nand_audio_buffer.buffer_pos;
+}
+
 uint8_t nand_audio_flush_buffer(uint8_t dev) {
     if (!nand_audio_buffer.initialized || nand_audio_buffer.buffer_pos == 0) {
         return FLASH_STATUS_OK;
@@ -1139,7 +1158,26 @@ uint8_t nand_audio_flush_buffer(uint8_t dev) {
     } else {
         // 写入失败，标记坏块并重试
         mark_block_as_bad(block, dev);
-        DBG("Audio buffer flush failed, marked block %u as bad\n", block);
+        DBG("Audio buffer flush failed, marked block %lu as bad\n", (unsigned long)block);
         return FLASH_STATUS_ERROR;
     }
+}
+
+// NAND智能音频写入
+uint8_t nand_smart_audio_write(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev) {
+    // 直接使用现有的缓冲写入功能
+    return nand_audio_write_buffered(address, data, size, dev);
+}
+
+// NAND智能音频读取
+uint8_t nand_smart_audio_read(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev) {
+    // 对于读取，直接使用标准Flash读取
+    // TODO: 如果需要，可以添加智能读取逻辑（考虑页面映射等）
+    BG_flash_manager.ReadData(address, data, size, dev);
+    return FLASH_STATUS_OK;
+}
+
+// NAND智能音频刷新
+uint8_t nand_smart_audio_flush(uint8_t dev) {
+    return nand_audio_flush_buffer(dev);
 }

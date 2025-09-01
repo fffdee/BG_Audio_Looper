@@ -100,9 +100,12 @@ uint8_t nand_mark_bad_block(uint32_t block_address, uint8_t dev);
 uint32_t nand_find_next_good_block(uint32_t start_block, uint8_t dev);
 uint32_t nand_get_safe_write_address(uint32_t current_address, uint32_t bytes_to_write, uint8_t dev);
 
-// NAND Flash音频优化写入函数
-uint8_t nand_audio_write_buffered(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev);
-uint8_t nand_audio_flush_buffer(uint8_t dev);
+// NAND Flash智能音频函数
+void nand_smart_audio_init(void);
+uint8_t nand_smart_audio_write(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev);
+uint8_t nand_smart_audio_read(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev);
+uint8_t nand_smart_audio_flush(uint8_t dev);
+uint32_t nand_smart_audio_get_address(void);
 
 // 测试函数声明
 void flash_test_w25n02_registers(void);

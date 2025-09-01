@@ -24,13 +24,21 @@ S_UPPER_DEPS :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 driver/driver_api/src \
+middleware/audio/src \
 middleware/mv_utils/src \
 middleware/rtos/freertos/src \
 middleware/rtos/rtos_api \
+src/BanGUI/BG_List \
+src/BanGUI/base_func \
+src/BanGUI/page \
 src/hardware/BG_Encoder \
 src/hardware/BG_Lcd \
 src/hardware/BG_flash_manager \
 src/hardware/USB/src \
+src/hardware/audio \
+src/hardware/audio/effect_parameter \
+src/hardware/audio/music_parameter \
+src/hardware/audio_looper \
 src \
 startup \
 
