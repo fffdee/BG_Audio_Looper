@@ -220,8 +220,6 @@ void BTSetRemDevExitSniffMode(uint8_t * remAddr);
 bool BTDisconnect(void);
 bool BTHciDisconnectCmd(uint8_t *addr);
 
-void BTHciCreateConnectionCancel(uint8_t *addr);
-
 /**
  * @brief  User Command: set page timeout params
  * @param  timeout(ms)
@@ -239,26 +237,6 @@ bool BTSetPageTimeout(uint16_t timeout);
  *
  */	
 void SetBtClassOfDevice(uint32_t BtCod);
-
-
-/**
- * @brief  bt bqb test: 
- * @param  value: 1=enable  0=disable
- * @return NONE
- * @Note AVDTP/SNK/ACP/SIG/SMG/BI-05-C BI-33-C ²âÊÔ±êÖ¾
- *
- */	
-void BTBqbAvdtpSmgSet(unsigned char value);
-
-
-/**
- * @brief  bt bqb test: 
- * @param  value: 1=enable  0=disable
- * @return NONE
- * @Note AVDTP/SNK/ACP/SIG/SMG/BI-38-C
- *
- */	
-void BTBqbAvdtpSmgBI38CSet(unsigned char value);
 
 
 

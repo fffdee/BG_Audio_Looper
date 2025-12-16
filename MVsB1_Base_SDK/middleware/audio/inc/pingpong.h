@@ -14,7 +14,7 @@
 #define __PINGPONG_H__
 
 #include <stdint.h>
-#include <math.h>
+
 
 /** error code for echo effect */
 typedef enum _PINGPONG_ERROR_CODE

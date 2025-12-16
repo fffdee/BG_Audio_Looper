@@ -13,7 +13,6 @@
 #ifndef __AUDIO_EFFECT_LIBRARY_H__
 #define __AUDIO_EFFECT_LIBRARY_H__
 
-
 // audio effect headers
 #include "auto_tune.h"
 #include "auto_wah.h"
@@ -44,7 +43,7 @@
 #include "voice_changer.h"
 #include "voice_changer_pro.h"
 
-#include "math.h"
+
 
 // audio effect library version
 #define AUDIO_EFFECT_LIBRARY_VERSION "1.35.1"

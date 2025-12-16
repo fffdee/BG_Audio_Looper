@@ -1,0 +1,2 @@
+   text (code + rodata)	   data	    bss	    dec	    hex	filename
+  31314 (29506 +   1808)	   1008	  18476	  50798	   c66e	Example_AudioADC.adx

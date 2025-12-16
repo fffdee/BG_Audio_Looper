@@ -3,39 +3,39 @@
  */
 enum
 {
-	// The followings are unrecoverable errors, i.e. decoder can't continue
-	ERR_AAC_UNRECOVERABLE                 = -256,
-	ERR_AAC_END_OF_STREAM,    		                /**< file or bit stream end */
-	ERR_AAC_INIT_FAIL,
-	ERR_AAC_INCORECT_MP4_FTYP,
-	ERR_AAC_INCORRECT_ADIF_ID,
-	ERR_AAC_INVALID_ADIF_HEADER,
-	ERR_AAC_UNSUPPORTED_AUDIO_OBJECT_TYPE,
-	ERR_AAC_UNSUPPORTED_FRAME_LENGTH,
-	ERR_AAC_UNSUPPORTED_SAMPLING_RATE,
-	ERR_AAC_UNSUPPORTED_CHANNEL_MODE,
-	ERR_AAC_CHANNEL_MAP,
-	ERR_AAC_INVALID_ATOM_HEADER,
-	ERR_AAC_UNSUPPORTED_STSC_ENTRIES_MODE,
-	ERR_AAC_FSEEK_FAIL,
+    // The followings are unrecoverable errors, i.e. decoder can't continue
+    ERR_AAC_UNRECOVERABLE                 = -256,
+    ERR_AAC_END_OF_STREAM,    		                /**< file or bit stream end */
+    ERR_AAC_INIT_FAIL,
+    ERR_AAC_INCORECT_MP4_FTYP,
+    ERR_AAC_INCORRECT_ADIF_ID,
+    ERR_AAC_INVALID_ADIF_HEADER,
+    ERR_AAC_UNSUPPORTED_AUDIO_OBJECT_TYPE,
+    ERR_AAC_UNSUPPORTED_FRAME_LENGTH,
+    ERR_AAC_UNSUPPORTED_SAMPLING_RATE,
+    ERR_AAC_UNSUPPORTED_CHANNEL_MODE,
+    ERR_AAC_CHANNEL_MAP,
+    ERR_AAC_INVALID_ATOM_HEADER,
+    ERR_AAC_UNSUPPORTED_STSC_ENTRIES_MODE,
+    ERR_AAC_FSEEK_FAIL,
 
-	// The followings are recoverable errors, i.e. decoder can continue
-	ERR_AAC_RECOVERABLE                   = -128,	/**< decoder can continue   */
-	ERR_AAC_STREAM_EMPTY,			                /**< stream empty           */
-	ERR_AAC_INCORRECT_ADTS_SYNCWORD,
-	ERR_AAC_INVALID_ADTS_HEADER,
-	ERR_AAC_SBR_BITSTREAM,
-	ERR_AAC_SBR_DATA,
-	ERR_AAC_UNSUPPORTED_SBR_SAMPLING_RATE,
-	ERR_AAC_SBR_PCM_FORMAT,
-	ERR_AAC_ADTS_BAD_HEADER,
-	ERR_AAC_ADTS_CHANNEL_MAPPING_FAIL,
-	ERR_AAC_ADTS_UNSUPPORTED_CHANNEL_MODE,
+    // The followings are recoverable errors, i.e. decoder can continue
+    ERR_AAC_RECOVERABLE                   = -128,	/**< decoder can continue   */
+    ERR_AAC_STREAM_EMPTY,			                /**< stream empty           */
+    ERR_AAC_INCORRECT_ADTS_SYNCWORD,
+    ERR_AAC_INVALID_ADTS_HEADER,
+    ERR_AAC_SBR_BITSTREAM,
+    ERR_AAC_SBR_DATA,
+    ERR_AAC_UNSUPPORTED_SBR_SAMPLING_RATE,
+    ERR_AAC_SBR_PCM_FORMAT,
+    ERR_AAC_ADTS_BAD_HEADER,
+    ERR_AAC_ADTS_CHANNEL_MAPPING_FAIL,
+    ERR_AAC_ADTS_UNSUPPORTED_CHANNEL_MODE,
 	ERR_AAC_LATM_UNSUPPORTED_VALUE,
 
 
-	// No Error
-	ERR_AAC_NONE                          =   0
+    // No Error
+    ERR_AAC_NONE                          =   0
 };
 
 
@@ -45,13 +45,13 @@ enum
 typedef enum _AIF_DECODE_ERROR_CODE
 {
 	// The followings are unrecoverable errors, i.e. decoder can't continue
-	AIF_ERROR_UNRECOVERABLE = -256,		    /**< decoder can not continue       */
+    AIF_ERROR_UNRECOVERABLE = -256,		    /**< decoder can not continue       */
 	AIF_ERROR_END_OF_STREAM,		        /**< file or bit stream end         */
-	AIF_ERROR_INVALID_CKID_FORM,            /**< Invalid form chunk id          */
-	AIF_ERROR_INVAILD_FORM_TYPE,            /**< Invalid form type              */
-	AIF_ERROR_UNSUPPORTED_CHANNEL_MODE,     /**< Unsupported channel mode       */
-	AIF_ERROR_INVAILD_BITS_PER_SAMPLE,      /**< Invalid bits_per_sample        */
-	AIF_ERROR_UNSUPPORTED_COMPRESSION_TYPE, /**< Unsupported compression type   */
+    AIF_ERROR_INVALID_CKID_FORM,            /**< Invalid form chunk id          */
+    AIF_ERROR_INVAILD_FORM_TYPE,            /**< Invalid form type              */
+    AIF_ERROR_UNSUPPORTED_CHANNEL_MODE,     /**< Unsupported channel mode       */
+    AIF_ERROR_INVAILD_BITS_PER_SAMPLE,      /**< Invalid bits_per_sample        */
+    AIF_ERROR_UNSUPPORTED_COMPRESSION_TYPE, /**< Unsupported compression type   */
 
 	// The followings are recoverable errors, i.e. decoder can continue
 	AIF_ERROR_RECOVERABLE = -128,		    /**< decoder can continue  */
@@ -67,20 +67,20 @@ typedef enum _AIF_DECODE_ERROR_CODE
  */
 enum AMR_DECODER_ERROR_CODE
 {
-	// The followings are unrecoverable errors, i.e. decoder can't continue
-	AMR_ERROR_UNRECOVERABLE                 = -256,
-	AMR_ERROR_END_OF_STREAM,
-	AMR_UNKOWN_STREAM_TYPE,
-	AMR_NB_ERROR_NOT_SUPPORTED,
-	AMR_WB_ERROR_NOT_SUPPORTED,
-	AMR_WB_PLUS_ERROR_NOT_SUPPORTED,
+    // The followings are unrecoverable errors, i.e. decoder can't continue
+    AMR_ERROR_UNRECOVERABLE                 = -256,
+    AMR_ERROR_END_OF_STREAM,
+    AMR_UNKOWN_STREAM_TYPE,
+    AMR_NB_ERROR_NOT_SUPPORTED,
+    AMR_WB_ERROR_NOT_SUPPORTED,
+    AMR_WB_PLUS_ERROR_NOT_SUPPORTED,
 
-	// The followings are recoverable errors, i.e. decoder can continue
-	AMR_ERROR_RECOVERABLE                   = -128,	/**< decoder can continue   */
-	AMR_ERROR_EMPTY_OF_STREAM,
+    // The followings are recoverable errors, i.e. decoder can continue
+    AMR_ERROR_RECOVERABLE                   = -128,	/**< decoder can continue   */
+    AMR_ERROR_EMPTY_OF_STREAM,
 
-	// No Error
-	AMR_ERROR_NONE                          = 0
+    // No Error
+    AMR_ERROR_NONE                          = 0
 
 };
 
@@ -103,7 +103,7 @@ typedef enum _APE_DECODE_ERROR_CODE
 
 	// The followings are recoverable errors, i.e. decoder can continue
 	APE_ERROR_RECOVERABLE = -128,
-
+	
 
 	// No Error
 	APE_ERROR_OK = 0,
@@ -171,46 +171,46 @@ typedef enum _FLAC_DECODE_ERROR_CODE
  */
 typedef enum _MPX_DECODE_ERROR_CODE
 {
-	// The followings are unrecoverable errors, i.e. decoder can't continue
+    // The followings are unrecoverable errors, i.e. decoder can't continue
 	MPX_ERROR_UNRECOVERABLE = -256,
-	MPX_ERROR_END_OF_FILE,
+    MPX_ERROR_END_OF_FILE,
 
-	// The followings are recoverable errors, i.e. decoder can continue
+    // The followings are recoverable errors, i.e. decoder can continue
 	MPX_ERROR_RECOVERABLE   = -128,
 	MPX_ERROR_STREAM_EMPTY,
-	MPX_ERROR_INBUFFER_EMPTY,
-	MPX_ERROR_SYNC_INCORRECT,
-	MPX_ERROR_MPEG_VERSION_INCORRECT,
-	MPX_ERROR_MPEG_LAYER_INCORRECT,
-	MPX_ERROR_BITRATE_INDEX_INCORRECT,
-	MPX_ERROR_UNSUPPORT_FREE_BITRATE,
-	MPX_ERROR_SAMPLE_RATE_INDEX_INCORRECT,
-	MPX_ERROR_ILLEGALITY_FRAME_SIZE,
-	MPX_ERROR_NEXT_FRAME_SYNC_INCORRECT,
-	MPX_ERROR_UNSUPPORT_MPEG_LAYER,
+    MPX_ERROR_INBUFFER_EMPTY,
+    MPX_ERROR_SYNC_INCORRECT,
+    MPX_ERROR_MPEG_VERSION_INCORRECT,
+    MPX_ERROR_MPEG_LAYER_INCORRECT,
+    MPX_ERROR_BITRATE_INDEX_INCORRECT,
+    MPX_ERROR_UNSUPPORT_FREE_BITRATE,
+    MPX_ERROR_SAMPLE_RATE_INDEX_INCORRECT,
+    MPX_ERROR_ILLEGALITY_FRAME_SIZE,
+    MPX_ERROR_NEXT_FRAME_SYNC_INCORRECT,
+    MPX_ERROR_UNSUPPORT_MPEG_LAYER,
 
-	MP2_ERROR_UNSUPPORT_BITRATE,
-	MP2_ERROR_BUFFER_OVERFLOW,
-	MP2_ERROR_SAMPLES_DECODE_OVERRUN,
+    MP2_ERROR_UNSUPPORT_BITRATE,
+    MP2_ERROR_BUFFER_OVERFLOW,
+    MP2_ERROR_SAMPLES_DECODE_OVERRUN,
 
-	MP3_ERROR_INVALID_MAIN_DATA_BEGIN,
-	MP3_ERROR_INVALID_BIG_VALUES,
-	MP3_ERROR_INVALID_BLOCK_TYPE,
-	MP3_ERROR_INVALID_SCFSI,
-	MP3_ERROR_INVALID_TABLE_SELECT,
-	MP3_ERROR_INVALID_SCALEFACTOR,
+    MP3_ERROR_INVALID_MAIN_DATA_BEGIN,
+    MP3_ERROR_INVALID_BIG_VALUES,
+    MP3_ERROR_INVALID_BLOCK_TYPE,
+    MP3_ERROR_INVALID_SCFSI,
+    MP3_ERROR_INVALID_TABLE_SELECT,
+    MP3_ERROR_INVALID_SCALEFACTOR,
 	MP3_ERROR_HUFFMAN_BIG_VALUE_OVERRUN,
 
-	MPX_ERROR_HARDWARE_DECODE_FAIL,
+    MPX_ERROR_HARDWARE_DECODE_FAIL,
+    
+    /*--------The follow error code actually means no error-------*/
+    
+    MPX_ERROR_RUN_SOFTWARE_DECODER,
+    MPX_ERROR_RUN_HARDWARE_DECODER,
 
-	/*--------The follow error code actually means no error-------*/
-
-	MPX_ERROR_RUN_SOFTWARE_DECODER,
-	MPX_ERROR_RUN_HARDWARE_DECODER,
-
-	MPX_DECODE_OK = 0,
-	MP2_DECODE_OK = 0,
-	MP3_DECODE_OK = 0
+    MPX_DECODE_OK = 0,
+    MP2_DECODE_OK = 0,
+    MP3_DECODE_OK = 0
 
 }MPX_DECODE_ERROR_CODE;
 
@@ -221,7 +221,7 @@ typedef enum _MPX_DECODE_ERROR_CODE
 typedef enum _SBC_DECODE_ERROR_CODE
 {
 	// The followings are unrecoverable errors, i.e. decoder can't continue
-	SBC_ERROR_UNRECOVERABLE = -256,
+    SBC_ERROR_UNRECOVERABLE = -256,
 	SBC_ERROR_END_OF_STREAM,    		/**< file or bit stream end */
 
 	// The followings are recoverable errors, i.e. decoder can continue
@@ -231,7 +231,7 @@ typedef enum _SBC_DECODE_ERROR_CODE
 	SBC_ERROR_BITPOOL_OUT_BOUNDS,		/**< bitpool out of bounds */
 	SBC_ERROR_CRC8_INCORRECT,			/**< CRC8 check incorrect  */
 	SBC_ERROR_STREAM_EMPTY,			    /**< stream empty          */
-	SBC_ERROR_PACKET_LOSS,
+    SBC_ERROR_PACKET_LOSS,
 
 	// No Error
 	SBC_ERROR_OK = 0,					/**< no error              */
@@ -245,24 +245,22 @@ typedef enum _SBC_DECODE_ERROR_CODE
 typedef enum _WAV_DECODE_ERROR_CODE
 {
 	// The followings are unrecoverable errors, i.e. decoder can't continue
-	WAV_ERROR_UNRECOVERABLE = -256,		    /**< decoder can not continue       */
+    WAV_ERROR_UNRECOVERABLE = -256,		    /**< decoder can not continue       */
 	WAV_ERROR_END_OF_STREAM,		        /**< file or bit stream end         */
-	WAV_ERROR_INVALID_RIFF_ID,              /**< Invalid RIFF id                */
-	WAV_ERROR_INVALID_WAVE_FORMAT,          /**< Invalid wave format            */
-	WAV_ERROR_INVALID_FMT_CHUNK_ID,         /**< Invalid fmt chunk id           */
+    WAV_ERROR_INVALID_RIFF_ID,              /**< Invalid RIFF id                */
+	WAV_ERROR_INVAILD_WAVE_FORMAT,          /**< Invalid wave format            */
+	WAV_ERROR_INVAILD_FMT_CHUNK_ID,         /**< Invalid fmt chunk id           */
 	WAV_ERROR_UNSUPPORTED_FMT_CHUNK_SIZE,   /**< Unsupported format chunk size  */
 	WAV_ERROR_UNSUPPORTED_FORMAT_CODE,      /**< Unsupported format code        */
 	WAV_ERROR_UNSUPPORTED_SAMPLE_RATE,      /**< Unsupported sample rate        */
 	WAV_ERROR_UNSUPPORTED_BITS_PER_SAMPLE,  /**< Unsupported bits per sample    */
-	WAV_ERROR_INVALID_FACT_CHUNK_ID,        /**< Invalid fact chunk id          */
-	WAV_ERROR_INVALID_DATA_CHUNK_ID,        /**< Invalid data chunk id          */
-	WAV_ERROR_UNSUPPORTED_DTS_FORMAT,       /**< Unsupported DTS stream format  */
-	WAV_ERROR_INVALID_EXTENSION_SIZE,       /**< Invalid extension size         */
-	WAV_ERROR_INVALID_BLOCK_PREDICTOR,		/**< Invalid block predictor        */
+	WAV_ERROR_INVAILD_FACT_CHUNK_ID,        /**< Invalid fact chunk id          */
+	WAV_ERROR_INVAILD_DATA_CHUNK_ID,        /**< Invalid data chunk id          */
+    WAV_ERROR_UNSUPPORTED_DTS_FORMAT,       /**< Unsupported DTS stream format  */
 
 	// The followings are recoverable errors, i.e. decoder can continue
 	WAV_ERROR_RECOVERABLE = -128,		    /**< decoder can continue  */
-	WAV_ERROR_EMPTY_OF_STREAM,
+    WAV_ERROR_EMPTY_OF_STREAM,
 
 	// No Error
 	WAV_ERROR_OK = 0,					    /**< no error              */
@@ -275,20 +273,18 @@ typedef enum _WAV_DECODE_ERROR_CODE
  */
 enum _WMA_DECODER_ERROR_CODE
 {
-	// The followings are unrecoverable errors, i.e. decoder can't continue
-	WMA_DECODER_ERROR_CODE_UNRECOVERABLE = -256,
-	WMA_DECODER_ERROR_CODE_END_OF_FILE,
-	WMA_DECODER_ERROR_CODE_INVALID_ASF_HEADER_GUID,
-	WMA_DECODER_ERROR_CODE_INVALID_ASF_HEADER_SIZE,
-	WMA_DECODER_ERROR_CODE_INVALID_ASF_HEADER_OBJECTS_COUNT,
-	WMA_DECODER_ERROR_CODE_INVALID_STREAM_PROPERTIES_OBJECT_SIZE,
-	WMA_DECODER_ERROR_CODE_UNSUPPORTED_CODEC_ID,
-	WMA_DECODER_ERROR_CODE_DRM_PROTECTED,
-	WMA_DECODER_ERROR_CODE_ASF_HEADER_PARSE_FAILED,
-	WMA_DECODER_ERROR_CODE_INVALID_ASF_DATA_GUID,
+    // The followings are unrecoverable errors, i.e. decoder can't continue
+    WMA_DECODER_ERROR_CODE_UNRECOVERABLE = -256,
+    WMA_DECODER_ERROR_CODE_END_OF_FILE,
+    WMA_DECODER_ERROR_CODE_INVALID_ASF_HEADER_GUID,
+    WMA_DECODER_ERROR_CODE_INVALID_ASF_HEADER_SIZE,
+    WMA_DECODER_ERROR_CODE_INVALID_ASF_HEADER_OBJECTS_COUNT,
+    WMA_DECODER_ERROR_CODE_INVALID_STREAM_PROPERTIES_OBJECT_SIZE,
+    WMA_DECODER_ERROR_CODE_UNSUPPORTED_CODEC_ID,
+    WMA_DECODER_ERROR_CODE_DRM_PROTECTED,
+    WMA_DECODER_ERROR_CODE_ASF_HEADER_PARSE_FAILED,
+    WMA_DECODER_ERROR_CODE_INVALID_ASF_DATA_GUID,
 
-	// The followings are recoverable errors, i.e. decoder can continue
-	WMA_DECODER_ERROR_CODE_RECOVERABLE = -128,
 	WMA_DECODER_ERROR_CODE_SKIP_BUFFER_FAILED,
 	WMA_DECODER_ERROR_CODE_INVALID_ERROR_CORRECTION,
 	WMA_DECODER_ERROR_CODE_ILLEGAL_PAYLOAD_PROPERTY_FLAGS,
@@ -306,5 +302,8 @@ enum _WMA_DECODER_ERROR_CODE
 	WMA_DECODER_ERROR_CODE_NO_BITS_TO_PARSE,
 	WMA_DECODER_ERROR_CODE_RUNLEVEL_OVERFLOW,
 
-	WMA_DECODER_ERROR_CODE_OK = 0
+    // The followings are recoverable errors, i.e. decoder can continue
+    WMA_DECODER_ERROR_CODE_RECOVERABLE   = -128,
+
+    WMA_DECODER_ERROR_CODE_OK = 0
 };

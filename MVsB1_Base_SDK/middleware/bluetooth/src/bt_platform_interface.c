@@ -126,14 +126,6 @@ static bool OpenBtRecord(const uint8_t * localBdAddr)
 		APP_DBG("last device addr %x:%x:%x:%x:%x:%x, profile:0x%02x\n", GetBtManager()->btDdbLastAddr[0],GetBtManager()->btDdbLastAddr[1],GetBtManager()->btDdbLastAddr[2],
 			GetBtManager()->btDdbLastAddr[3],GetBtManager()->btDdbLastAddr[4],GetBtManager()->btDdbLastAddr[5], GetBtManager()->btDdbLastProfile);
 	}
-	
-#ifdef BT_PROFILE_BQB_ENABLE
-		GetBtManager()->btDdbLastProfile = (BT_PROFILE_SUPPORTED_A2DP | BT_PROFILE_SUPPORTED_AVRCP
-#if (BT_HFP_SUPPORT == ENABLE)
-			 | BT_PROFILE_SUPPORTED_HFP
-#endif
-			 );
-#endif
 
 	GetBtManager()->twsFlag = BtDdb_GetTwsDeviceAddr(GetBtManager()->btTwsDeviceAddr);
 

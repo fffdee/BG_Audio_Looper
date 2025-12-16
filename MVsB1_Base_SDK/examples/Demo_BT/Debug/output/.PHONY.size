@@ -1,0 +1,2 @@
+   text (code + rodata)	   data	    bss	    dec	    hex	filename
+ 638702 (570866 +  67836)	   1136	 127156	 766994	  bb412	Demo_BT.adx

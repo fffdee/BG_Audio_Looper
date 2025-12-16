@@ -86,8 +86,6 @@ void SetBtStackDebugInfo(BtStackDbgInfo mask);
  */
 typedef struct _BtStackParams
 {
-	uint8_t				bqbTestMode;		//bqb≤‚ ‘±Í÷æ
-	
 	uint8_t				*localDevName;
 	
 	uint32_t			supportProfiles;

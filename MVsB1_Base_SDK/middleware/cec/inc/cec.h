@@ -4,7 +4,7 @@
  * @brief   cec
  *
  * @author  Cecilia Wang
- * @version V1.3.1
+ * @version V1.1.0
  *
  * $Created: 2019-6-25 11:40:00$
  *
@@ -46,7 +46,6 @@ typedef struct __CECMsg
     uint8_t 		Addr;              //地址
     uint8_t 		Operand[16];       //操作数, 最大参数长度可达14bytes，改长度为16
     uint8_t 		Len;               //操作数长度
-    uint8_t         EndFlg;
 
 } CECMsg;
 
@@ -114,8 +113,6 @@ typedef struct __CECInitTypeDef
 	uint32_t        hpd_status_io;
 	uint32_t        hpd_status_io_pin;
 
-	uint8_t			cec_check_flag;
-
 	CECInfo         cec_info;
 
 } CECInitTypeDef;
@@ -128,39 +125,18 @@ typedef struct __CECInitTypeDef
 void HDMI_CEC_Init(CECInitTypeDef *ct);
 
 /**
- * @brief Set HDMI HPD active level,and should be placed after HDMI_CEC_Init()
- * @param IsHighLevel: 1-High Level Active 0:Low Level Active
- * @return None
- */
-void HDMI_CEC_HPDActiveLevelSet(uint8_t IsHighLevel);
-
-/**
- * @brief  Get cec line current status
- * @param  isHPDActive: hpd line status
- * @return CEC_IS_IDLE / CEC_IS_WORKING / CEC_IS_INACTIVE
- */
-CEC_WORK_STATUS HDMI_CEC_StatusGet(uint8_t isHPDActive);
-
-/**
  * @brief  Judging CEC line whether to work or not
  * @param  None
- * @return CEC_IS_IDLE / CEC_IS_WORKING 
+ * @return CEC_IS_IDLE / CEC_IS_WORKING / CEC_IS_INACTIVE
  */
 CEC_WORK_STATUS HDMI_CEC_IsWorking(void);
 
 /**
- * @brief  Judging CEC ready to deepsleep and Using internal HPD parameter.
+ * @brief  Is CEC ready to deepsleep.
  * @param  Timeout_Ms: Timeout
- * @return 0/1
+ * @return CEC_IS_IDLE / CEC_IS_WORKING / CEC_IS_INACTIVE
  */
 bool HDMI_CEC_IsReadytoDeepSleep(uint8_t Timeout_Ms);
-
-/**
- * @brief  Judging CEC ready to deepsleep and Using external HPD parameter.
- * @param  Timeout_Ms: Timeout
- * @return 0/1
- */
-bool HDMI_CEC_IsReadytoDeepSleepwithExHPD(uint8_t Timeout_Ms, uint8_t isHPDActive);
 
 /**
  * @brief  Get CEC messages.
@@ -168,14 +144,6 @@ bool HDMI_CEC_IsReadytoDeepSleepwithExHPD(uint8_t Timeout_Ms, uint8_t isHPDActiv
  * @return length of operandValue
  */
 uint8_t HDMI_CEC_MessageDataGet(uint8_t *operandValue);
-
-/**
- * @brief  Get tv maufacturer messages.
- * @param  in_ddc: input buf address, length = 128 Bytes.
- * @param  out_buf: output buf address, length = 5 Bytes;
- * @return length of operandValue
- */
-void HDMI_DDC_TVManufacturerGet(uint8_t in_ddc[128], uint8_t out_buf[5]);
 
 /**
  * @brief  HDMI CEC DeInit
@@ -195,7 +163,7 @@ void HDMI_CEC_ReportOSDNameWithParam(uint8_t *osdname_buf, uint8_t osdname_len);
 void HDMI_CEC_SetSystemAudioModeOn(void);
 void HDMI_CEC_SetSystemAudioModeoff(void);
 void HDMI_CEC_DeviceVendorID(void);
-bool HDMI_CEC_SystemAudioModeStatus(uint8_t Vol);
+void HDMI_CEC_SystemAudioModeStatus(uint8_t Vol);
 void HDMI_CEC_SystemPowerOn(void);
 void HDMI_CEC_Version(void);
 void HDMI_CEC_FeatureAbort(uint8_t code, uint8_t reason);
@@ -209,7 +177,7 @@ void HDMI_CEC_TerminationARC(void);
 //pwm_tx_fifo需要的大小为: (90 + 480 + 480 * 1 + 480 * param_len)bytes
 void HDMI_CEC_UserDefined(uint8_t logical_addr, uint8_t opcode_value, uint8_t* param_buf, uint8_t param_len);
 
-void HDMI_Arbitration_Time_Process(uint8_t get_time, uint8_t send_time);
+void HDMI_Arbitration_Time_Process(void);
 
 const unsigned char *GetLibVersionCEC(void);
 

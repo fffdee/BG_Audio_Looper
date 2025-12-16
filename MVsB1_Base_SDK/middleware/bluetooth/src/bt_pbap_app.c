@@ -12,11 +12,9 @@
 //显示PBAP接收的数据
 //#define PBAP_INFO_DEBUG
 
-uint8_t gBtPbapGetContinueFlag = 0;	//接收到数据后,延时发送Get标志
-
 #ifdef PBAP_INFO_DEBUG
 uint8_t temp[1024];
-char *vcard_begin = "BEGIN:VCARD";//"N;CHARSET=UTF-8:";
+char *vcard_begin = "N;CHARSET=UTF-8:";
 char *vcard_end = "END:VCARD";
 char *pb_name = "PRINTABLE:";
 #endif
@@ -264,7 +262,6 @@ void BtPbapCallback(BT_PBAP_CALLBACK_EVENT event, BT_PBAP_CALLBACK_PARAMS * para
 
 		case BT_STACK_EVENT_PBAP_CONNECTED:
 			APP_DBG("PBAP EVENT:connected\n");
-			gBtPbapGetContinueFlag = 0;
 			SetPbapState(BT_PBAP_STATE_CONNECTED);
 		#ifdef PBAP_INFO_DEBUG
 			memset(temp,0,1024);
@@ -277,7 +274,6 @@ void BtPbapCallback(BT_PBAP_CALLBACK_EVENT event, BT_PBAP_CALLBACK_PARAMS * para
 
 		case BT_STACK_EVENT_PBAP_DISCONNECT:
 			APP_DBG("PBAP EVENT:disconnect \n");
-			gBtPbapGetContinueFlag = 0;
 			SetPbapState(BT_PBAP_STATE_NONE);
 			break;
 
@@ -321,13 +317,6 @@ void BtPbapCallback(BT_PBAP_CALLBACK_EVENT event, BT_PBAP_CALLBACK_PARAMS * para
  		case BT_STACK_EVENT_PBAP_PACKET_END:
 			APP_DBG("PBAP Received ok\n");
  			break;
-
-		case BT_STACK_EVENT_PBAP_CONTINUE_FLAG:
-			APP_DBG("continue...  \n");
-			gBtPbapGetContinueFlag = 1;//延时获取PBAP数据,可以使用此标志进行判断,并及时清零
-			//可以延时调用此函数,待PBAP数据缓存结束后,再继续获取后续PBAP数据
-			PBAP_PullPhoneBook_Continue();
-			break;
 	}
 }
 

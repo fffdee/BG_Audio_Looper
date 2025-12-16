@@ -1,0 +1,311 @@
+00000000 a EILM_BEGIN
+00000000 a NDS_SAG_LMA_EILM
+00000000 W _ITB_BASE_
+00000000 W _RELAX_END_	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:20
+00000000 T _start	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:20
+00000000 t exception_vector	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:20
+000000a4 t exception_vector_end	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:350
+000000a4 T stub	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:349
+00000104 t flash_udelay
+00000180 t flash_delayms
+0000019a t FshcGpioSet
+000001bc t FshcInit
+000001d6 t FshcSendCmd
+0000020a t FshcSpiIOModeCfg
+000004f2 t SpiFlashResetCRM
+0000052e t SpiFlashResume
+00000562 t SpiFlashSuspend
+00000596 t SpiFlashReadId
+000006a2 t SpiFlashReadStatus
+00000748 t SpiFlashIsBusy
+00000764 t SpiFlashWriteStatus
+000008f2 t SpiFlashIOModeCfg
+00000966 t SpiFlashDeepPowerDown
+00000996 t SpiFlashReleaseFromDeepPowerDown
+000009b6 t SpiFlashWriteUnLock
+00000afc t SpiFlashWriteLock
+00000c40 T IsFlashBusy
+00000c4c T SetFlashBusy
+00000c54 T ClearFlashBusy
+00000c5c W vTaskDelay
+00000c5e t Flash_Memset
+00000c6e T FshcClkSwitch
+00000cf8 T SpiFlashResumDelaySet
+00000d6c T SpiFlashClkSwitch
+00000d80 t flash_exit_2bitcrm
+00000daa T ByteRecombineToDword
+00000dc6 T SpiFlashRead
+00000eee T SpiFlashEraseResume
+00000f6c T SpiFlashWrite
+0000120a T SpiFlashGetStatus
+00001240 T SpiFlashFshcStatusSetIdle
+0000128c T SpiFlashErase
+000013b2 T FlashErase
+0000146c T SpiFlashInit
+00001546 T SpiFlashInfoGet
+0000154c T SpiFlashIOCtrl
+00001604 r SpiFlash
+00001748 t ISR_TABLE	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:52
+000017c4 t OS_Trap_TLB_Fill	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:94
+000017d4 t OS_Trap_PTE_Not_Present	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:103
+000017e4 t OS_Trap_TLB_Misc	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:111
+000017f4 t OS_Trap_TLB_VLPT_Miss	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:120
+00001804 t OS_Trap_Machine_Error	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:128
+00001814 t OS_Trap_Debug_Related	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:136
+00001824 t OS_Trap_General_Exception	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:144
+00001834 t OS_Trap_Syscall	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:152
+00001844 t OS_Trap_Int_Comm	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:159
+0000192e t OS_Trap_Interrupt_HW0	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:169
+00001938 t OS_Trap_Interrupt_HW1	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:174
+00001942 t OS_Trap_Interrupt_HW2	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:179
+0000194c t OS_Trap_Interrupt_HW3	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:184
+00001956 t OS_Trap_Interrupt_HW4	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:189
+00001960 t OS_Trap_Interrupt_HW5	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:200
+00001986 t OS_Trap_Interrupt_HW6	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:205
+00001990 t OS_Trap_Interrupt_HW7	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:210
+0000199a t OS_Trap_Interrupt_HW8	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:215
+000019a4 t OS_Trap_Interrupt_HW9	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:220
+000019ae t OS_Trap_Interrupt_HW10	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:225
+000019b8 t OS_Trap_Interrupt_HW11	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:230
+000019c2 t OS_Trap_Interrupt_HW12	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:235
+000019cc t OS_Trap_Interrupt_HW13	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:240
+000019d6 t OS_Trap_Interrupt_HW14	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:245
+000019e0 t OS_Trap_Interrupt_HW15	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:250
+000019ea t OS_Trap_Interrupt_HW16	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:255
+000019f4 t OS_Trap_Interrupt_HW17	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:260
+000019fe t OS_Trap_Interrupt_HW18	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:265
+00001a08 t OS_Trap_Interrupt_HW19	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:270
+00001a12 t OS_Trap_Interrupt_HW20	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:275
+00001a1c t OS_Trap_Interrupt_HW21	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:280
+00001a26 t OS_Trap_Interrupt_HW22	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:285
+00001a30 t OS_Trap_Interrupt_HW23	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:290
+00001a3a t OS_Trap_Interrupt_HW24	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:295
+00001a44 t OS_Trap_Interrupt_HW25	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:300
+00001a4e t OS_Trap_Interrupt_HW26	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:305
+00001a58 t OS_Trap_Interrupt_HW27	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:310
+00001a62 t OS_Trap_Interrupt_HW28	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:315
+00001a6c t OS_Trap_Interrupt_HW29	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:320
+00001a76 t OS_Trap_Interrupt_HW30	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:325
+00001a80 t OS_Trap_Interrupt_HW31	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:330
+00001a8c t ___start	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/crt0.S:350
+00001adc T Clock_DeepSleepSysClkSelect
+00001be0 T Clock_CoreClkDivSet
+00001bf8 T Clock_CoreClkDivGet
+00001c02 T Clock_SysClkDivGet
+00001c20 T Clock_PllFreqGet
+00001c26 T Clock_APllFreqGet
+00001c2c T Clock_CoreClockFreqGet
+00001c98 T Clock_SysClockFreqGet
+00001cce T Clock_SysClkDivSet
+00001d28 T GPIO_RegOneBitSet
+00001d38 T GPIO_RegOneBitClear
+00001d4c T DelayMs
+00001d9e T __udelay
+00001df0 T DMA0_Interrupt
+00001e70 T DMA1_Interrupt
+00001f0a T DMA2_Interrupt
+00001fa4 T DMA3_Interrupt
+0000203e T DMA4_Interrupt
+000020d8 T DMA5_Interrupt
+00002172 T DMA6_Interrupt
+0000220c T DMA7_Interrupt
+000022a6 T GetSysTick1MsCnt
+000022ac T PastTimeGet
+000022c0 T TimeOutSet
+000022e0 T IsTimeOut
+00002396 W UART1_Interrupt
+0000241c T AudioADC_DigitalInit	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:35
+000025de T AudioADC_DataLenGet	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:143
+0000260a T AudioADC_DataGet	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:161
+0000266c T AudioDAC_Init	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:14
+000028cc T AudioDAC_DataSpaceLenGet	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:237
+00002908 T AudioDAC_DataSet	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:250
+00002936 T UART0_InitWpr	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:31
+00002948 T UART1_InitWpr	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:36
+0000295a T UART0_SendByteWpr	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:90
+0000296c T UART1_SendByteWpr	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:103
+0000297e t AudioMixerExample	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:167
+00002aea T main	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:243
+00002bba W BLE_Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W BT_Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba t Default_Handler	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:47
+00002bba W FFTInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W GpioInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W I2C_Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W I2sInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W IRInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W OS_Trap_Interrupt_SWI	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W RtcInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W SDIO0_Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W SPIM_Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W SPIS_Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W SWInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W SpdifInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W Timer2Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W Timer3Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W Timer4Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W Timer5Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W Timer6Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W UART0_Interrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W UsbInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bba W WakeupInterrupt	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:49
+00002bbc T ExceptionCommHandler	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:53
+00002de4 T __c_init	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:186
+00002e18 T __cpu_init	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:213
+00002eba T HardwareStackProtectEnable	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:316
+00002ee0 T __init	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:336
+00002f02 T GIE_ENABLE	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/interrupt.c:16
+00002f0c T GIE_DISABLE	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/interrupt.c:21
+00002f1a T GIE_STATE_GET	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/interrupt.c:27
+00002f22 t GetPswINTL	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:30
+00002f30 W SwUartSend	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:25
+00002f32 T putchar	/cygdrive/d/ADS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
+00002fc2 T nds_write	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:85
+00002fe2 T DbgUartInit	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:94
+00003006 T AudioADC_LREnable
+00003108 T AudioADC_Enable
+00003126 T AudioADC_Disable
+00003170 T AudioADC_HighPassFilterConfig
+00003184 T AudioADC_HighPassFilterSet
+000031ba T AudioADC_Clear
+000031d0 T AudioADC_SampleRateGet
+00003254 T AudioADC_SampleRateSet
+0000338a T AudioADC_FadeTimeSet
+000033e6 T AudioADC_FadeEnable
+0000341c T AudioADC_SoftMute
+000034a8 T AudioADC_VolSet
+00003506 T AudioADC_AnaInit
+00003546 T AudioADC_PGASel
+0000370e T AudioADC_PGAGainSet
+0000387a T AudioADC_MicBias1Enable
+00003890 T AudioADC_DynamicElementMatch
+000038f0 T AudioADC_IsOverflow
+00003908 T AudioADC_OverflowClear
+0000392a T Chip_VMIDDetectDisable
+0000393c T Chip_Init
+000039d2 T Chip_MemInit
+000039de T Clock_Config
+00003a60 T WaitOscillateWork
+00003a7a T Clock_RcFreqGet
+00003b20 T Clock_PllLock
+00003c16 T Clock_APllLock
+00003d0c T Clock_SysClkSelect
+00003d9a T Clock_UARTClkSelect
+00003df2 T Clock_Module1Enable
+00003e02 T Clock_Module2Enable
+00003e12 T Clock_Module3Enable
+00003e22 T Clock_AudioPllClockSet
+00003f7e T Clock_AudioMclkSel
+00004056 T EnableMPU
+000040b8 T EnableIDCache
+000040fa T DataCacheInvalidAll
+00004104 T DataCacheRangeInvalid
+0000416a t AudioDAC0_ChannelEnable
+000041d2 t AudioDAC1_ChannelEnable
+00004216 T AudioDAC_Enable
+00004234 T AudioDAC_DitherDisable
+00004252 T AudioDAC_ScrambleDisable
+00004270 T AudioDAC_DoutModeSet
+000042b0 T AudioDAC_EdgeSet
+000042f6 T AudioDAC_DsmOutdisModeSet
+00004324 T AudioDAC_ZeroNumSet
+00004338 T AudioDAC_SampleRateGet
+000043bc T AudioDAC_SampleRateSet
+00004502 T AudioDAC_Reset
+00004524 T AudioDAC_FadeTimeSet
+0000458c T AudioDAC_FadeEnable
+000045be T AudioDAC_DigitalMute
+000045fe T AudioDAC_VolSet
+00004644 T AudioDAC_VmidChargeOp
+0000467a t AudioDAC0_PowerOn
+00004776 t AudioDAC1_PowerOn
+0000482a T AudioDAC_ClkEnable
+00004858 T AudioDAC_FuncReset
+00004886 T AudioDAC_VIMDControl
+00004898 T AudioDAC_SCFMute
+000048de T AudioDAC_IBSelect
+00004928 T AudioDAC_AllPowerOn
+00004a4c T AudioDAC_AllChannelEnable
+00004ad8 T AudioDAC_PowerOn
+00004afa T AudioDAC_ChannelEnable
+00004b18 T DMA_ChannelAllocTableSet
+00004b2a T DMA_ChannelEnable
+00004b56 T DMA_ChannelDisable
+00004b84 T DMA_InterruptFlagClear
+00004c2a T DMA_CircularConfig
+00004e0e T DMA_CircularDataLenGet
+00004e80 T DMA_CircularSpaceLenGet
+00004f60 T DMA_CircularWritePtrSet
+00004f94 T DMA_CircularDataPut
+000050fe T DMA_CircularReadPtrSet
+00005130 T DMA_CircularDataGet
+000052d6 T Efuse_ReadData
+0000533c T GPIO_PortAModeSet
+00005fc6 T Remap_AddrRemapSet
+00006060 T Remap_InitTcm
+00006090 W SystickInterrupt
+000060a8 t UART_BaudClkGet
+000060fe T UART0_Init
+000062be T UART1_Init
+0000647e T UART0_SendByte
+000064be T UART1_SendByte
+000064fe T WDG_Disable
+00006524 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
+00006564 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
+000065bc T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
+00006714 T memcpy
+00006740 T memset
+00006770 T printf
+0000677a T puts
+000067ca t vprintf_help
+000067fe T vprintf
+0000684c T do_printf
+00006cf4 t sep_frac
+00006d26 T _printf_float
+000073f8 T strcpy
+0000740c T strlen
+00007418 T abs
+00007420 T _write
+00007438 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
+00007460 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
+00007900 R MPUConfigTable	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/init-default.c:379
+00007a60 A __data_lmastart
+00007e50 A EILM_SIZE
+20004000 D UARTS_SendByte_MAP	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:267
+20004000 D __data_start
+20004000 A _stack
+20004008 D UARTS_Init_MAP	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:263
+20004010 d DmaChannelMap	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:47
+20004030 D BtHoscClkDiv
+20004032 D IsApllFreeRun
+20004033 D IsDpllFreeRun
+20004034 D rc_clk_freq
+20004038 D gSOCInFreq
+2000403c D gAPLLWorkFreq
+20004040 D gPLLWorkFreq
+20004044 D DMAEintTable
+20004064 D DMATintTable
+20004084 D DMADintTable
+200040a4 d DMAConfigTable
+200043d0 d DMAChannelAllocMap
+200043f0 b PcmBuf3	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:45
+200043f0 B __bss_start
+200043f0 B _edata
+20004bf0 b PcmBuf2	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:44
+200053f0 b PcmBuf1	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:43
+20005bf0 B AudioDACBuf	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:41
+20006608 W _FP_BASE_
+20006608 W _SDA_BASE_
+20006bf0 B AudioADC2Buf	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:40
+20007bf0 B AudioADC1Buf	/cygdrive/f/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/examples/Example_AudioADC/Debug/../src/audioadc_example.c:39
+20008bf0 B IsSwUartActedAsUARTFlag	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:17
+20008bf1 B DebugPrintPort	/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/startup/retarget.c:14
+20008bf2 b sIsDac1InitOK
+20008bf3 b sIsDac0InitOK
+20008bf4 b FlashBusyFlag
+20008bf8 b SpiFlashInfo
+20008c0c B gSysTick
+20008c10 b output_idx
+20008c14 b output_buff
+20008c18 B _NDS32_REENT__errno
+20008c1c B _end

@@ -77,7 +77,3 @@ typedef int16_t (*FUNC_SAVE_SCO_DATA)(uint8_t* Param, uint16_t ParamLen);
 void BtAppiFunc_SaveScoData(FUNC_SAVE_SCO_DATA CallbackFunc);
 extern FUNC_SAVE_SCO_DATA SaveHfpScoDataToBuffer;
 
-//tws sdk单独的sbc解码初始化接口
-typedef void (*FUNC_TWS_SBC_DECOER)(void);
-extern FUNC_TWS_SBC_DECOER tws_sbc_decoer_init_func;
-#define TWS_sbc_decoer_init()	if(tws_sbc_decoer_init_func) tws_sbc_decoer_init_func();

@@ -114,7 +114,6 @@ int osPortRemainMem(void);
 #define osWaitForever     			0xFFFFFFFF     ///< wait forever timeout value
 #define osMutexCreate()				xSemaphoreCreateMutex()
 #define osMutexLock( mutex_id )		xSemaphoreTake(( mutex_id ), ( osWaitForever ))
-#define osMutexLock_5ms( mutex_id )			xSemaphoreTake(( mutex_id ), ( 5 ))
 #define osMutexLock_1000ms( mutex_id )		xSemaphoreTake(( mutex_id ), ( 1000 ))
 #define osMutexUnlock( mutex_id )	xSemaphoreGive( mutex_id )
 

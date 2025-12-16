@@ -140,7 +140,6 @@ typedef struct _BLE_APP_CONTEXT
 {
 	uint8_t				ble_device_addr[6];
 	BLE_DEVICE_ROLE		ble_device_role;
-	uint8_t				use_random_addr_flag; //0=public, 1=random  (BLE ADDR SELECT: random or public)
 }BLE_APP_CONTEXT;
 
 

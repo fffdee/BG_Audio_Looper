@@ -137,10 +137,6 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 				btEventListB0Count += 5000;//ÑÓÊ±5s
 				btCheckEventList |= BT_EVENT_AVRCP_DISCONNECT;
 			}
-#ifdef BT_PROFILE_BQB_ENABLE
-#include "bt_stack_api.h"
-			GetBtManager()->btDdbLastProfile &= ~(BT_PROFILE_SUPPORTED_A2DP);
-#endif
 		}
 		break;
 
@@ -178,7 +174,7 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 #ifdef BT_TWS_SUPPORT
 			tws_init();
 #endif
-			//if(GetAvrcpState() != BT_AVRCP_STATE_CONNECTED)
+			if(GetAvrcpState() != BT_AVRCP_STATE_CONNECTED)
 				BtMidMessageSend(MSG_BT_MID_PLAY_STATE_CHANGE, 1);
 			
 #ifndef BT_TWS_SUPPORT
@@ -190,25 +186,24 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 				SpecialDeviceFunc();
 			}
 #endif
+#else
+			a2dp_sbc_decoer_init();
 #endif
-			TWS_sbc_decoer_init();
 		}
 		break;
 
 		case BT_STACK_EVENT_A2DP_STREAM_SUSPEND:
 		{
-			extern void set_a2dp_stream_suspend(void);
 			APP_DBG("A2dp suspend\n");
-
-			set_a2dp_stream_suspend();
 #ifdef BT_TWS_SUPPORT
-		//	if(IsBtAudioMode())
-		//	{
-		//		AudioCoreSourceDisable(1);
-		//	}
+			if(IsBtAudioMode())
+			{
+				AudioCoreSourceDisable(1);
+			}
 #endif
-		//	SetA2dpState(BT_A2DP_STATE_CONNECTED);
-		//	BtMidMessageSend(MSG_BT_MID_PLAY_STATE_CHANGE, 2);
+			SetA2dpState(BT_A2DP_STATE_CONNECTED);
+
+			BtMidMessageSend(MSG_BT_MID_PLAY_STATE_CHANGE, 2);
 		}
 		break;
 

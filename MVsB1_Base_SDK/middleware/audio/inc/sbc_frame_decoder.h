@@ -4,7 +4,7 @@
  * @brief	SBC Frame Decoder
  *
  * @author	Zhao Ying (Alfred)
- * @version	v2.0.1
+ * @version	v2.0.0
  *
  * &copy; Shanghai Mountain View Silicon Technology Co.,Ltd. All rights reserved.
  */

@@ -148,7 +148,6 @@ typedef struct _A2dpAppFeatures
 {
 	A2dpAudioDataFormat	a2dpAudioDataFormat;
 	BTA2dpCallbackFunc	a2dpAppCallback;
-	uint8_t	a2dpContentProtection; //1=enable
 }A2dpAppFeatures;
 
 /**

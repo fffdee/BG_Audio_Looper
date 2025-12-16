@@ -3,7 +3,6 @@
 #include "adc.h"
 #include "clk.h"
 #include "backup.h"
-#include "powercontroller.h"
 #ifdef CFG_APP_CONFIG
 #include "app_config.h"
 #else
@@ -37,7 +36,7 @@ int16_t SarADC_LDOINVolGet(void)
 
 	DC_Data1 = ADC_SingleModeDataGet(ADC_CHANNEL_VIN);
 	DC_Data2 = ADC_SingleModeDataGet(ADC_CHANNEL_VDD1V2);
-	DC_Data1 = (DC_Data1 * 2 * Power_LDO12Get()) / DC_Data2;
+	DC_Data1 = (DC_Data1 * 2 * 1200) / DC_Data2;
 	if(DC_Data1 < 3200)
 	{
 		DC_Data1 += 30;//电压低于3.3V之后，采样计算值偏低

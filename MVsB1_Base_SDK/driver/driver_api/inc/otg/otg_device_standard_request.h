@@ -63,7 +63,6 @@ extern "C"{
 #define MIC_READER			5
 #define AUDIO_MIC_READER	6
 #define HID					7
-#define AUDIO_MIC_PHONE		8
 #define USBPID(x)			(USB_PID_BASE + x)
 
 //用于在线调音

@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 
-#include "math.h"
+
 /** error code for DRC */
 typedef enum _DRC_ERROR_CODE
 {

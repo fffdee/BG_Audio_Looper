@@ -60,8 +60,7 @@ typedef enum{
 	BT_STACK_EVENT_HFP_CODEC_TYPE,
 	BT_STACK_EVENT_HFP_MANUFACTORY_INFO,
 	BT_STACK_EVENT_HFP_DEVICE_TYPE,
-	BT_STACK_EVENT_HFP_UNSOLICITED_DATA,
-	BT_STACK_EVENT_HFP_DEVICE_TIME
+	BT_STACK_EVENT_HFP_UNSOLICITED_DATA
 }BT_HFP_CALLBACK_EVENT;
 
 /**
@@ -122,7 +121,6 @@ typedef struct _BT_HFP_CALLBACK_PARAMS
 		uint8_t 				*hfpUnsolicitedData;
 		const char				*hfpRemoteManufactory;
 		const char				*hfpRemoteDeviceType;
-		const char				*hfpRemoteDeviceTime;
 		uint8_t 				*scoReceivedData;
 		uint8_t 				*scoSentData;
 		HfpAudioDataFormat		scoCodecType;
@@ -300,8 +298,6 @@ bool HfpGetRemoteDeviceManufactory(void);
  *		
  */
 bool HfpGetRemoteDeviceType(void);
-
-bool HfpGetAppleDeviceTime(void);
 
 /**
  * @brief Set apple battery status

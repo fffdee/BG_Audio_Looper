@@ -55,9 +55,6 @@ uint32_t btEventListCount = 0;
 
 uint32_t btReConProtectCnt; //开机蓝牙回连和主动连接冲突时,保护时间5s;对方远端设备先发起连接,5s内不能发起回连
 
-uint32_t gBtReconBusyCnt = 0;//busy检测冲突次数维护寄存器
-
-
 #ifdef BT_TWS_SUPPORT
 extern uint32_t gBtEnterDeepSleepFlag;
 
@@ -66,8 +63,6 @@ uint32_t SReconnectTwsFlag=0;//slave回连master标志
 bool BtReconProcessCheck(void);
 bool BtTwsReconProcessCheck(void);
 extern bool tws_connect_cmp(uint8_t * addr);
-
-extern uint8_t BB_link_state_is_used(uint8_t *addr);
 
 /***********************************************************************************
  * 配置可见性函数接口
@@ -363,18 +358,13 @@ void load_tws_filter_infor(uint8_t *infor)
  ****************************************************************************************/
 void BtLinkStateConnect(void)
 {
-#ifdef BT_PROFILE_BQB_ENABLE
-	if(!btManager.btLinkState)
-#else
 	if((!btManager.btLinkState)
 		&&(GetA2dpState() >= BT_A2DP_STATE_CONNECTED)
 		&& (GetAvrcpState() >= BT_AVRCP_STATE_CONNECTED)
 		)
-#endif
 	{
-		btManager.btLinkState = 1;
-		btManager.fristBtLinkState = 1;
 		BtMidMessageSend(MSG_BT_MID_STATE_CONNECTED, 0);
+		btManager.btLinkState = 1;
 #ifndef BT_TWS_SUPPORT
 		btReConProtectCnt = 0;
 #endif
@@ -416,14 +406,6 @@ void BtLinkStateConnect(void)
 
 void BtLinkStateDisconnect(void)
 {
-	if( (GetAvrcpState() == BT_AVRCP_STATE_NONE)
-		&& (GetA2dpState() == BT_A2DP_STATE_NONE)
-		&& (GetHfpState() == BT_HFP_STATE_NONE)
-	)
-	{
-		btManager.btLastAddrUpgradeIgnored = 0;
-	}
-
 	if( btManager.btLinkState
 		&& (GetAvrcpState() == BT_AVRCP_STATE_NONE)
 		&& (GetA2dpState() == BT_A2DP_STATE_NONE)
@@ -436,7 +418,6 @@ void BtLinkStateDisconnect(void)
 */
 		BtMidMessageSend(MSG_BT_MID_STATE_DISCONNECT, 0);
 		btManager.btLinkState = 0;
-		btManager.fristBtLinkState = 0;
 		BtStopReconnect();
 		
 #ifdef BT_TWS_SUPPORT
@@ -550,8 +531,6 @@ void BtCancelConnect(void)
 		btManager.btReconnectTryCount = 0;
 		btManager.btReconnectIntervalTime = 0;
 		btManager.btReconnectedFlag = 0;
-
-		gBtReconBusyCnt = 0;
 	}
 #ifdef BT_TWS_SUPPORT
 	if(btManager.btTwsReconnectTimer.timerFlag)
@@ -573,7 +552,6 @@ void BtCancelReconnect(void)
 		btManager.btReconnectedFlag = 0;
 
 		btReConProtectCnt = 1;
-		gBtReconBusyCnt = 0;
 	}
 #endif
 }
@@ -583,16 +561,6 @@ void BtCancelReconnect(void)
 {
 }
 #endif
-
-
-/*****************************************************************************************
- * 链路断连
- ****************************************************************************************/
-//此函数底层调用
-void BtLmAclLinkDisCb(uint8_t *addr)
-{
-	btManager.btLastAddrUpgradeIgnored = 0;
-}
 
 /*****************************************************************************************
  * 
@@ -807,14 +775,8 @@ void BtAccessModeUpdate(BtAccessMode accessMode)
 		{
 			SetBtStackState(BT_STACK_STATE_READY);
 		}
-        
-        if((btManager.btLastAddrUpgradeIgnored)&&(btManager.btLinkState))
-        {
-            BTSetAccessMode(BtAccessModeNotAccessible);
-            return;
-        }
-        
-		//btManager.btLastAddrUpgradeIgnored = 0;
+
+		btManager.btLastAddrUpgradeIgnored = 0;
 
 		if((btManager.twsFlag)&&(btManager.twsRole == BT_TWS_SLAVE)&&(SReconnectTwsFlag))
 		{
@@ -2564,47 +2526,22 @@ static void BtReconnectDelay(void)
 {
 	APP_DBG("Busy\n");
 	TimeOutSet(&btManager.btReconnectTimer.timerHandle, 500);
-	gBtReconBusyCnt++;
 
 	btManager.btReconnectTimer.timerFlag |= TIMER_STARTED;
 }
 
 uint32_t BtReconnectProfile(void)
 {
-	uint32_t reconnectProfile = GetSupportProfiles();
+	uint32_t reconnectProfile = 0;
+	reconnectProfile = GetSupportProfiles();
 	reconnectProfile &= (BT_PROFILE_SUPPORTED_HFP | BT_PROFILE_SUPPORTED_A2DP | BT_PROFILE_SUPPORTED_AVRCP);
-
-	if((GetA2dpState() == BT_A2DP_STATE_NONE)&&(GetAvrcpState() == BT_AVRCP_STATE_NONE)
-#if (BT_HFP_SUPPORT == ENABLE)
-		&&(GetHfpState() == BT_HFP_STATE_NONE)
-#endif
-		)
-    {
-        //当前链路存在,则应用层停止发起新的连接,等待超时后再发起连接
-        if(lm_env_link_state(btManager.btDdbLastAddr))
-        {
-	        printf("link exist, delay2s reconnect device...\n");
-			TimeOutSet(&btManager.btReconnectTimer.timerHandle, 2000);
-			btManager.btReconnectTimer.timerFlag |= TIMER_STARTED;
-			return reconnectProfile;
-        }
-    }
-	
-	//当前链路已被使用,并且不是当前的设备,则停止回连流程
-	if(BB_link_state_is_used(btManager.btDdbLastAddr))
-	{
-		reconnectProfile &= ~(BT_PROFILE_SUPPORTED_HFP | BT_PROFILE_SUPPORTED_A2DP | BT_PROFILE_SUPPORTED_AVRCP);
-		APP_DBG("!!!  lm link used, stop reconnect...\n");
-		BtStopReconnect();
-		return reconnectProfile;
-	}
 
 	//在回连手机时,打开手机蓝牙功能;安卓手机会自动回连;
 	//某些安卓手机回连非常快,会导致sdp channel复用,导致异常;
 	//在发起回连时,确定sdp server是不是被使用,未使用则开始进行回连
 	if((reconnectProfile & BT_PROFILE_SUPPORTED_HFP)&&(GetHfpState() < BT_HFP_STATE_CONNECTED) &&(btManager.btDdbLastProfile & BT_PROFILE_SUPPORTED_HFP))
 	{
-		if(!IsBtReconnectReady() && (gBtReconBusyCnt<=3))
+		if(!IsBtReconnectReady())
 		{
 			BtReconnectDelay();
 			return reconnectProfile;
@@ -2615,27 +2552,18 @@ uint32_t BtReconnectProfile(void)
 	{
 		reconnectProfile &= ~BT_PROFILE_SUPPORTED_HFP;
 		
-		if(!IsBtReconnectReady()  && (gBtReconBusyCnt<=3))
+		if(!IsBtReconnectReady())
 		{
 			BtReconnectDelay();
 			return reconnectProfile;
 		}
-
-		extern uint32_t gL2capCloseChannelCnt;
-		if(gL2capCloseChannelCnt)
-		{
-			printf("+++ l2cap close channel, delay......\n");
-			BtReconnectDelay();
-			return reconnectProfile;
-		}
-		
 		BtA2dpConnect(GetBtManager()->btDdbLastAddr);
 	}
 	else if((reconnectProfile & BT_PROFILE_SUPPORTED_AVRCP)&&(GetAvrcpState() != BT_AVRCP_STATE_CONNECTED) &&(btManager.btDdbLastProfile & BT_PROFILE_SUPPORTED_AVRCP))
 	{
 		reconnectProfile &= ~(BT_PROFILE_SUPPORTED_HFP | BT_PROFILE_SUPPORTED_A2DP);
 		
-		if(!IsBtReconnectReady() && (gBtReconBusyCnt<=3))
+		if(!IsBtReconnectReady())
 		{
 			BtReconnectDelay();
 			return reconnectProfile;
@@ -2669,7 +2597,6 @@ void BtWaitingForReconDevice(void)
 //2.在BB连接丢失(设备拿远后)，需要回连设备
 void BtStartReconnectDevice(uint8_t mode)
 {
-	gBtReconBusyCnt = 0;
 	if(mode == 1)
 	{
 	#ifdef BT_POWERON_RECONNECTION
@@ -2755,7 +2682,6 @@ void BtStopReconnectReg(void)
 	btManager.btReconnectType &= ~RECONNECT_DEVICE;
 #endif
 	btManager.btReconnectedFlag = 0;
-	gBtReconBusyCnt = 0;
 }
 
 void BtStopReconnect(void)
@@ -2764,7 +2690,6 @@ void BtStopReconnect(void)
 	btManager.btReconnectTryCount = 0;
 	btManager.btReconnectIntervalTime = 0;
 	btManager.btReconnectedFlag = 0;
-	gBtReconBusyCnt = 0;
 #ifdef BT_TWS_SUPPORT
 	btManager.btReconnectType &= ~RECONNECT_DEVICE;
 	APP_DBG("BtStopReconnect\n");

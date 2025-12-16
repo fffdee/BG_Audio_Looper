@@ -192,8 +192,6 @@ FRESULT f_scan_dir_by_win_fast(char *volume, uint32_t start_num, uint32_t stop_n
 #endif
 
 void ffpresearch_break_callback_set(ff_scan_break_callback bcb);
-
-void ffpresearch_fattrib_set(BYTE attrib);
 #endif
 
 /**

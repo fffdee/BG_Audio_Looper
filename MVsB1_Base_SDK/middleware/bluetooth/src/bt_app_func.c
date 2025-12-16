@@ -297,7 +297,7 @@ void LoadBtConfigurationParams(void)
 	ret = CheckBtName(btStackConfigParams->bt_LocalDeviceName);
 	if(ret != 0)
 	{
-		//paramsUpdate = 1;
+		paramsUpdate = 1;
 		strcpy((void *)btStackConfigParams->bt_LocalDeviceName, BT_NAME);
 	}
 #endif //#if defined(BT_TWS_SUPPORT)
@@ -314,7 +314,7 @@ void LoadBtConfigurationParams(void)
 	ret = CheckBtName(btStackConfigParams->ble_LocalDeviceName);
 	if(ret != 0)
 	{
-		//paramsUpdate = 1;
+		paramsUpdate = 1;
 		strcpy((void *)btStackConfigParams->ble_LocalDeviceName, BT_NAME);
 	}
 #ifdef	CFG_XIAOAI_AI_EN
@@ -327,20 +327,35 @@ void LoadBtConfigurationParams(void)
 	ret = CheckBtParamHeader(btStackConfigParams->bt_ConfigHeader);
 	if(ret != 0)
 	{
-		APP_DBG("used default trim value, not save to flash\n");
-		//header不匹配,使用代码默认的频偏值,但是不保存到flash
-		//paramsUpdate = 1;
-		//btStackConfigParams->bt_ConfigHeader[0]='M';
-		//btStackConfigParams->bt_ConfigHeader[1]='V';
-		//btStackConfigParams->bt_ConfigHeader[2]='B';
-		//btStackConfigParams->bt_ConfigHeader[3]='T';
+		paramsUpdate = 1;
+		
+		btStackConfigParams->bt_ConfigHeader[0]='M';
+		btStackConfigParams->bt_ConfigHeader[1]='V';
+		btStackConfigParams->bt_ConfigHeader[2]='B';
+		btStackConfigParams->bt_ConfigHeader[3]='T';
+		
+		//note:在使用默认参数时，trimValue一定不能为0xff，否则会导致bb工作不起来；
+		btStackConfigParams->bt_trimValue = BT_TRIM;
 
-		if(CHIP_VERSION_ECO0 == Chip_Version())
-			btStackConfigParams->bt_trimValue = BT_TRIM_ECO0;
-		else
-			btStackConfigParams->bt_trimValue = BT_TRIM;
+#if 0
+		btStackConfigParams->bt_TxPowerValue = BT_TX_POWER_LEVEL;
+		
+		btStackConfigParams->bt_SupportProfile = GetSupportProfiles();
+		
+		//simple Pairing enable
+		//当simplePairing=1时,pinCode无效;反之亦然
+		btStackConfigParams->bt_simplePairingFunc = 1;
+		strcpy((char*)btStackConfigParams->bt_pinCode,BT_PINCODE);
+		
+		//inquiry scan params
+		btStackConfigParams->bt_InquiryScanInterval = BT_INQUIRYSCAN_INTERVAL;
+		btStackConfigParams->bt_InquiryScanWindow = BT_INQUIRYSCAN_WINDOW;
+		
+		//page scan params
+		btStackConfigParams->bt_PageScanInterval = BT_PAGESCAN_INTERVAL;
+		btStackConfigParams->bt_PageScanWindow = BT_PAGESCAN_WINDOW;
+#endif
 	}
-
 	{
 		//蓝牙公共配置参数,暂时按照宏定义默认的参数进行配置 bt_config.h,频偏值保留flash中数据
 		//如后续有需要能动态调整,或者上位机工具修改的,就需要保存到flash中进行管理
@@ -411,7 +426,7 @@ void ConfigBtBbParams(BtBbParams *params)
 
 	SetRfTxPwrMaxLevel(pTxPower, pPageTxPower);
 	
-	BtSetLinkSupervisionTimeout(BT_LSTO_DFT);
+	//BtSetLinkSupervisionTimeout(0x1F40); //5s
 }
 
 
@@ -497,13 +512,6 @@ void ConfigBtStackParams(BtStackParams *stackParams)
 #endif
 
 	stackParams->a2dpFeatures.a2dpAppCallback = BtA2dpCallback;
-
-#ifdef BT_SCMS_ENABLE
-	stackParams->a2dpFeatures.a2dpContentProtection = 1;
-#else
-	stackParams->a2dpFeatures.a2dpContentProtection = 0;
-#endif
-
 #else
 	stackParams->a2dpFeatures.a2dpAppCallback = NULL;
 #endif
@@ -521,12 +529,6 @@ void ConfigBtStackParams(BtStackParams *stackParams)
 	stackParams->avrcpFeatures.avrcpAppCallback = BtAvrcpCallback;
 #else
 	stackParams->avrcpFeatures.avrcpAppCallback = NULL;
-#endif
-
-#ifdef BT_PROFILE_BQB_ENABLE
-	stackParams->bqbTestMode = 1;
-#else
-	stackParams->bqbTestMode = 0;
 #endif
 
 }
@@ -588,14 +590,6 @@ bool BtStackInit(void)
 		APP_DBG("Obex Init Error!\n");
 		return FALSE;
 	}
-	else
-	{
-		if(ObexAppMtuSizeSet(0x0f) == 0)//set obex mtu size //mtu-msb default:0x3f
-		{
-			APP_DBG("Obex mtu size set error!\n");
-			return FALSE;
-		}
-	}
 #endif
 	
 #if BT_PBAP_SUPPORT == ENABLE
@@ -604,14 +598,6 @@ bool BtStackInit(void)
 	{
 		APP_DBG("Pbap Init Error!\n");
 		return FALSE;
-	}
-	else
-	{
-		if(PBAP_MtuSizeSet(PBAP_MTU_SIZE))
-		{
-			APP_DBG("pbap mtu size set error!\n");
-			return FALSE;
-		}
 	}
 #endif
 
@@ -671,24 +657,8 @@ int32_t BtDeviceNameSet(uint8_t* deviceName, uint8_t deviceLen)
 		APP_DBG("ERROR: Ram is not enough!\n");
 		return -2;//RAM不够
 	}
-	//memcpy(btParams, btStackConfigParams, sizeof(BT_CONFIGURATION_PARAMS));
-	memset(btParams, 0, sizeof(BT_CONFIGURATION_PARAMS));
+	memcpy(btParams, btStackConfigParams, sizeof(BT_CONFIGURATION_PARAMS));
 	
-	//2.重新从flash中读取数据，再次进行对比
-	ret = BtDdb_LoadBtConfigurationParams(btParams);
-	if(ret == -3)
-	{
-		//读取异常，read again
-		ret = BtDdb_LoadBtConfigurationParams(btParams);
-		if(ret == -3)
-		{
-			APP_DBG("bt database read error!\n");
-			APP_DBG("save NG!\n");
-			osPortFree(btParams);
-			return -3;//读取失败
-		}
-	}
-
 	//2.将pin code更新
 	memset(btStackConfigParams->bt_LocalDeviceName, 0, BT_NAME_SIZE);
 	memset(btParams->bt_LocalDeviceName, 0, BT_NAME_SIZE);
@@ -714,8 +684,7 @@ int32_t BtDeviceNameSet(uint8_t* deviceName, uint8_t deviceLen)
 		}
 	}
 
-	//ret = memcmp(btStackConfigParams, btParams,sizeof(BT_CONFIGURATION_PARAMS));
-	ret = memcmp(btStackConfigParams->bt_LocalDeviceName, btParams->bt_LocalDeviceName, BT_NAME_SIZE);
+	ret = memcmp(btStackConfigParams, btParams,sizeof(BT_CONFIGURATION_PARAMS));
 	if(ret == 0)
 	{
 		APP_DBG("save ok!\n");
@@ -754,23 +723,7 @@ int32_t BtDeviceBleNameSet(uint8_t* deviceName, uint8_t deviceLen)
 		APP_DBG("ERROR: Ram is not enough!\n");
 		return -2;//RAM不够
 	}
-	//memcpy(btParams, btStackConfigParams, sizeof(BT_CONFIGURATION_PARAMS));
-	memset(btParams, 0, sizeof(BT_CONFIGURATION_PARAMS));
-	
-	ret = BtDdb_LoadBtConfigurationParams(btParams);
-	if(ret == -3)
-	{
-		//读取异常，read again
-		ret = BtDdb_LoadBtConfigurationParams(btParams);
-		if(ret == -3)
-		{
-			APP_DBG("bt database read error!\n");
-			APP_DBG("save NG!\n");
-			osPortFree(btParams);
-			return -3;//读取失败
-		}
-	}
-	
+	memcpy(btParams, btStackConfigParams, sizeof(BT_CONFIGURATION_PARAMS));
 	
 	//2.将pin code更新
 	memset(btStackConfigParams->ble_LocalDeviceName, 0, BT_NAME_SIZE);
@@ -797,8 +750,7 @@ int32_t BtDeviceBleNameSet(uint8_t* deviceName, uint8_t deviceLen)
 		}
 	}
 
-	//ret = memcmp(btStackConfigParams, btParams,sizeof(BT_CONFIGURATION_PARAMS));
-	ret = memcmp(btStackConfigParams->ble_LocalDeviceName, btParams->ble_LocalDeviceName,BT_NAME_SIZE);
+	ret = memcmp(btStackConfigParams, btParams,sizeof(BT_CONFIGURATION_PARAMS));
 	if(ret == 0)
 	{
 		APP_DBG("save ok!\n");
@@ -842,22 +794,7 @@ int32_t BtPinCodeSet(uint8_t *pinCode)
 		APP_DBG("ERROR: Ram is not enough!\n");
 		return -2;//RAM不够
 	}
-	//memcpy(btParams, btStackConfigParams, sizeof(BT_CONFIGURATION_PARAMS));
-	memset(btParams, 0, sizeof(BT_CONFIGURATION_PARAMS));
-
-	ret = BtDdb_LoadBtConfigurationParams(btParams);
-	if(ret == -3)
-	{
-		//读取异常，read again
-		ret = BtDdb_LoadBtConfigurationParams(btParams);
-		if(ret == -3)
-		{
-			APP_DBG("bt database read error!\n");
-			APP_DBG("save NG!\n");
-			osPortFree(btParams);
-			return -3;//读取失败
-		}
-	}
+	memcpy(btParams, btStackConfigParams, sizeof(BT_CONFIGURATION_PARAMS));
 	
 	//3.将pin code更新
 	memcpy(btStackConfigParams->bt_pinCode, pinCode, 4);
@@ -881,8 +818,7 @@ int32_t BtPinCodeSet(uint8_t *pinCode)
 		}
 	}
 
-	//ret = memcmp(btStackConfigParams, btParams,sizeof(BT_CONFIGURATION_PARAMS));
-	ret = memcmp(btStackConfigParams->bt_pinCode, btParams->bt_pinCode,sizeof(btParams->bt_pinCode));
+	ret = memcmp(btStackConfigParams, btParams,sizeof(BT_CONFIGURATION_PARAMS));
 	if(ret == 0)
 	{
 		APP_DBG("save ok!\n");
@@ -896,55 +832,4 @@ int32_t BtPinCodeSet(uint8_t *pinCode)
 		return -4;//保存失败
 	}
 }
-
-
-
-/***********************************************************************************
- * 更新 蓝牙TrimValue到flash
- **********************************************************************************/
-int32_t BtDeviceTrimValueSet(uint8_t TrimValue)
-{
-	BT_CONFIGURATION_PARAMS		*btParams = NULL;
-	int8_t ret=0;
-	APP_DBG("device TrimValue set!\n");
-
-	//1.申请RAM
-	btParams = (BT_CONFIGURATION_PARAMS*)osPortMalloc(sizeof(BT_CONFIGURATION_PARAMS));
-	if(btParams == NULL)
-	{
-		APP_DBG("ERROR: Ram is not enough!\n");
-		return -2;//RAM不够
-	}
-	memset(btParams, 0, sizeof(BT_CONFIGURATION_PARAMS));
-
-	//2.读取4K数据
-	ret = BtDdb_LoadBtConfigurationParams(btParams);
-	if(ret == -3)
-	{
-		//读取异常，read again
-		ret = BtDdb_LoadBtConfigurationParams(btParams);
-		if(ret == -3)
-		{
-			APP_DBG("bt database read error!\n");
-			APP_DBG("save NG!\n");
-			osPortFree(btParams);
-			return -3;//读取失败
-		}
-	}
-	
-	//3.仅更新trim值和header
- 	btParams->bt_trimValue = TrimValue; 
-	btParams->bt_ConfigHeader[0]='M';
-	btParams->bt_ConfigHeader[1]='V';
-	btParams->bt_ConfigHeader[2]='B';
-	btParams->bt_ConfigHeader[3]='T';
-	memcpy(btStackConfigParams->bt_ConfigHeader, btParams->bt_ConfigHeader, 4);
-
-	//4.将更新数据保存到flash
-	BtDdb_SaveBtConfigurationParams(btParams);
-
-	osPortFree(btParams);
-	return 0;
-}
-
 

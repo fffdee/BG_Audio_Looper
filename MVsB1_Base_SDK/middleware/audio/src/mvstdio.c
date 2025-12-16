@@ -539,21 +539,21 @@ uint32_t mv_fread(void *buffer, uint32_t size, uint32_t count, void *fp)
 {
     uint32_t rt_value;
     
-    if(FR_OK == f_read((MvFile*)fp,buffer,size*count,(UINT*)&rt_value))
-    {
-        return rt_value/size;
-    }
+//    if(FR_OK == f_read((MvFile*)fp,buffer,size*count,&rt_value))
+//    {
+//        return rt_value/size;
+//    }
 
     return 0;
 }
 
 uint32_t mv_fwrite(const void *buffer, uint32_t size, uint32_t count, void *fp)
 {
-    uint16_t rt_value;
-    if(FR_OK == f_write((MvFile*)fp,buffer,size*count,(UINT*)&rt_value))
-    {
-        return rt_value/size;
-    }
+    uint32_t rt_value;
+//    if(FR_OK == f_write((MvFile*)fp,buffer,size*count,&rt_value))
+//    {
+//        return rt_value/size;
+//    }
 
     return 0;
 }
@@ -583,7 +583,8 @@ int32_t mv_fseek(void *fp, int32_t offset, int32_t origin)
         break;
     }
 
-    return f_lseek((MvFile*)fp,ofs);
+    //return f_lseek((MvFile*)fp,ofs);
+    return 0;
 }
 
 int32_t mv_feof(void *fp)

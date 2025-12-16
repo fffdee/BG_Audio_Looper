@@ -4,7 +4,7 @@
  * @brief	Opus codec (encoder & decoder) API for mono signals
  *
  * @author	Zhao Ying (Alfred)
- * @version	V2.2.0
+ * @version	V2.0.0
  *
  * &copy; Shanghai Mountain View Silicon Technology Co.,Ltd. All rights reserved.
  */
@@ -22,10 +22,9 @@
 #define OPUS_MAX_CH 1					// maximum number of channels
 
 #if OPUS_MAX_CH == 1
-#define OPUS_ENCODER_CORE_SIZE 15908	// for max. 1 channel (ENCODER_NUM_CHANNELS==1, #define DISABLE_FLOAT_API)
-#define OPUS_DECODER_CORE_SIZE 13512	// for max. 1 channel (DECODER_NUM_CHANNELS==1)
+#define OPUS_ENCODER_CORE_SIZE 38556	// for max. 1 channel
+#define OPUS_DECODER_CORE_SIZE 17900	// for max. 1 channel (17827 is found other than reported 17776)
 #else
-#define OPUS_ENCODER_CORE_SIZE 38556	// for max. 2 channel
 #define OPUS_DECODER_CORE_SIZE 26600	// for max. 2 channels (26547 is found other than reported 26496)
 #endif
 #define OPUS_MAX_FRAME_SIZE 960			// PCM samples. =20ms@48000Hz
@@ -145,7 +144,7 @@ int32_t	opus_encoder_frame_initialize(OpusEncoderFrameContext *ct, int32_t num_c
  * @param[in] frame_size Number of samples per channel in the frame. Range: (2.5ms ~ 20ms) * sample_rate. For example at 48kHz, the frame size can be set between 120 (=2.5*48)  and 960 (=20*48) samples. This value can vary between frames.
  * @param[out] data Data buffer to receive the encoded Opus frame.
  * @param[out] length Length of the encoded Opus frame in bytes. This value will be no more than OPUS_MAX_PACKET_SIZE.
- * @param[in] bitrate Bit rate in bps(bits per second). Supported bit rates: 500 ~ 512000 bps. This value can vary between frames.
+ * @param[in] bitrate Bit rate in kbps. Supported bit rates: 6 ~ 510 kbps. This value can vary between frames.
  * @return encoding result. OPUS_ERROR_OK means OK, other codes indicate error.
  * @note Usually the larger frame_size is, the better the encoding quality. Select 20ms@48kHz==960 samples as your first choice unless you expect lower delay in certain applications.
  */

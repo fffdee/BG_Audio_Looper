@@ -68,22 +68,6 @@
 	! Restore to new task's context
 CtxRestore:
 		TCBRestoreMacro
-#if ( configHSP_ENABLE ==1 )
-     	la		 $r0, pxCurrentTCB
-     	lwi     $r1, [$r0]
-     	lwi     $r0, [$r1 + StackOffset_TCB]
-	 	mtsr    $r0, $SP_BOUND
-#if( configRECORD_STACK_HIGH_ADDRESS == 1 )
-		la      $r0, pxCurrentTCB
-		lwi     $r1, [$r0]
-		lwi     $r0, [$r1 + EndStackOffset_TCB]
-		mtsr    $r0, $SP_BASE
-		movi    $r0, 0x85
-#else
-		movi    $r0, 0x05
-#endif
-		mtsr    $r0, $HSP_CTL
-#endif
 		RESTORE_ALL_OS
 		popm $r0, $r1
 		iret
@@ -114,11 +98,6 @@ OS_Trap_Interrupt_SWI:
 
 	SAVE_ALL_OS
 
-#if ( configHSP_ENABLE ==1 )
-	movi    $r0, 0x0
-	mtsr    $r0, $HSP_CTL
-#endif
-
 	mfsr $r1,$psw
 	movi $r0,#0xfff8fff8
 	and33 $r1,$r0
@@ -135,23 +114,6 @@ OS_Trap_Interrupt_SWI:
 
     setgie.d
     dsb
-
-#if ( configHSP_ENABLE ==1 )
-     la		 $r0, pxCurrentTCB
-     lwi     $r1, [$r0]
-     lwi     $r0, [$r1 + StackOffset_TCB]
-	 mtsr    $r0, $SP_BOUND
-#if( configRECORD_STACK_HIGH_ADDRESS == 1 )
-	la      $r0, pxCurrentTCB
-	lwi     $r1, [$r0]
-	lwi     $r0, [$r1 + EndStackOffset_TCB]
-	mtsr    $r0, $SP_BASE
-	movi    $r0, 0x85
-#else
-	movi    $r0, 0x05
-#endif
-	mtsr    $r0, $HSP_CTL
-#endif
 
 	RESTORE_ALL_OS
 	popm $r0, $r1

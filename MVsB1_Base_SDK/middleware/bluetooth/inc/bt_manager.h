@@ -40,7 +40,7 @@ extern uint32_t btEventListB1State;//Òì³£Ç°²¥·Å×´Ì¬µÄ±£´æ£¬È·¶¨ÔÚ»ØÁ¬ºóÊÇ·ñĞèÒª·
 extern uint32_t btEventListB2Count;
 extern uint32_t btEventListCount;
 
-typedef uint8_t (*Name_Confirm_Callback_t)(uint8_t *addr);
+typedef uint8_t (*Name_Confirm_Callback_t)(uint8_t name[6]);
 typedef uint8_t (*Other_Confirm_Callback_t)(void);
 // Èç¹ûĞèÒª¹ıÂËÄ³Ğ©ÊÖ»ú²»ÈÃËûÃÇÁ¬½ÓÎÒÃÇ°å×Ó£¬bt_stack_server³õÊ¼»¯Ê±ºò£¬ÉèÖÃº¯ÊıÖ¸Õë¸øµ×²ãÈ¥×öÅĞ¶¨Ìõ¼ş
 // ¾ßÌåµÄÅĞ¾öÄÚÈİÔÚº¯ÊıBtConnectDecideÖĞÊµÏÖ
@@ -421,8 +421,6 @@ typedef struct _BT_MANAGER_ST
 #endif
 
 	uint32_t				btDutModeEnable;		//DUTÄ£Ê½
-
-	uint8_t 				fristBtLinkState;
 } BT_MANAGER_ST;
 
 extern BT_MANAGER_ST		btManager;
@@ -632,16 +630,6 @@ void OpenBtHfpVoiceRecognitionFunc(void);
  * 
  */
 int16_t GetBtHfpVoiceRecognition(bool * flag);
-
-/**
- * @brief  Get apple device time
- * @param  NONE
- * @return NONE
- * @Note
- * 
- */
-void GetBtAppleDeviceTime(void);
-
 
 /*A2DP*/
 /**

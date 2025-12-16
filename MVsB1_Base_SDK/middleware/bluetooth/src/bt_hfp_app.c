@@ -19,7 +19,6 @@
  */
 #include "type.h"
 #include "debug.h"
-#include "stdlib.h"
 #ifdef CFG_APP_CONFIG
 #include "app_config.h"
 #include "main_task.h"
@@ -62,7 +61,6 @@ extern void EnterBtHfMode(void);
 extern uint32_t hfModeRestart;
 extern uint32_t hfModeSuspend;
 extern uint32_t gHfCodecTypeUpdate;
-extern uint32_t hfMode3WayActiveCallState;
 #else
 #define BtHfMsgToParent
 #define ExitBtHfMode()				// 用于注销代码
@@ -71,10 +69,6 @@ extern uint32_t hfMode3WayActiveCallState;
 #endif
 
 static uint16_t testRecvLen = 0;
-
-static uint32_t CallStateCount = 0;
-static uint32_t Caller1Count = 0;
-static uint32_t Caller2Count = 0;
 
 extern uint32_t gSpecificDevice;
 
@@ -133,10 +127,6 @@ void SetBtHfpBatteryLevel(PWR_LEVEL level, uint8_t flag)
 uint32_t gSysRecordMode2HfMode = 0;
 #endif
 
-#ifdef BT_PROFILE_BQB_ENABLE
-uint32_t LinkScoFlag = 0;
-#endif
-
 void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 {
 	switch(event)
@@ -178,23 +168,7 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 				
 				btManager.hfpVoiceState = 0;
 
-#ifdef BT_REMOTE_AEC_DISABLE
-				HfpDisableNREC();
-#endif
-				extern uint32_t getBtHfModeEnterFlag(void);
-				if(getBtHfModeEnterFlag() == 0)
-				{
-					BtMidMessageSend(MSG_BT_MID_HFP_CONNECTED, 0);
-				}
-
-#ifdef BT_PROFILE_BQB_ENABLE
-				BtLinkStateConnect();
-				if(LinkScoFlag)//BQB  HF/ATH/BV-05-I  HF/OOR/BV-01-I
-				{
-					LinkScoFlag = 0;
-					HfpAudioConnect();
-				}
-#endif
+				BtMidMessageSend(MSG_BT_MID_HFP_CONNECTED, 0);
 			}
 			break;
 
@@ -209,7 +183,7 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 
 #if !defined(BT_HFP_MODE_DISABLE) && defined(CFG_APP_CONFIG)
 				//断开HFP，同步退出通话模式
-				//if(GetSystemMode() == AppModeBtHfPlay)
+				if(GetSystemMode() == AppModeBtHfPlay)
 				{
 					ExitBtHfMode();
 				}
@@ -222,13 +196,6 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 #endif
 
 				BtLinkStateDisconnect();
-
-#ifdef BT_PROFILE_BQB_ENABLE
-#include "bt_stack_api.h"
-				GetBtManager()->btDdbLastProfile &= ~(BT_PROFILE_SUPPORTED_HFP);
-				if(btManager.btReconnectTimer.timerFlag)
-						BtReconnectCB();
-#endif
 			}
 			break;
 
@@ -290,21 +257,21 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 				if(flag)
 				{
 					SetHfpState(BT_HFP_STATE_CONNECTED);
-					SetScoConnectFlag(FALSE);
 					#ifdef BT_RECORD_FUNC_ENABLE
-					if(GetSystemMode() == AppModeBtRecordPlay)
-					{
-						BtMidMessageSend(MSG_BT_MID_HFP_RECORD_MODE_EXIT, 0);
-					}
-					else
-					{
-						#if(BT_HFP_SUPPORT == ENABLE)
-						DelayExitBtHfModeSet();
-						#endif
-						break;
-					}
+						if(GetSystemMode() == AppModeBtRecordPlay)
+						{
+							BtMidMessageSend(MSG_BT_MID_HFP_RECORD_MODE_EXIT, 0);
+						}
+						else
+						{
+#if(BT_HFP_SUPPORT == ENABLE)
+							DelayExitBtHfModeSet();
+#endif
+							break;
+						}
 					#else
-					DelayExitBtHfModeSet();
+						//ExitBtHfMode();
+//						DelayExitBtHfModeSet();
 					#endif
 				}
 				else
@@ -336,9 +303,9 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 #endif
 				}
 				
-				#ifdef BT_RECORD_FUNC_ENABLE
+			#ifdef BT_RECORD_FUNC_ENABLE
 				BtMidMessageSend(MSG_BT_MID_HFP_RECORD_MODE_EXIT, 0);
-				#endif
+			#endif
 #endif
 			}
 			break;
@@ -350,30 +317,34 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 #if  defined(CFG_APP_CONFIG)
 				hfModeSuspend = 1;
 #endif
-			}	
+			}
+
+// 下面逻辑移到bt_hf_mode中去处理	
+//#ifdef CFG_RES_AUDIO_DAC0_EN
+			//AudioDAC_SoftMute(DAC0, 1, 1);	//增加mute， 消除下通话断开有一下杂音
+//#endif
+
+//#ifdef CFG_RES_AUDIO_DACX_EN
+            //AudioDAC_SoftMute(DAC1, 1, 1);
+
+//#endif		
 			break;
 #endif
 
 		case BT_STACK_EVENT_HFP_CALL_CONNECTED:
 			{
 				APP_DBG("Hfp call connected\n");
-#ifdef BT_PROFILE_BQB_ENABLE
-				if(GetHfpState() < BT_HFP_STATE_CONNECTED)
-				{
-					LinkScoFlag = 1;
-				}
-#endif
+
 				//if(GetHfpState() < BT_HFP_STATE_CONNECTED)
-					//break;
+				//	break;
 #ifndef BT_HFP_MODE_DISABLE				
 				if(GetHfpState() > BT_HFP_STATE_ACTIVE)
 				{
 					SetHfpState(BT_HFP_STATE_3WAY_ATCTIVE_CALL);
 				}
-				else if (GetHfpState() < BT_HFP_STATE_ACTIVE)
+				else
 				{
 					SetHfpState(BT_HFP_STATE_ACTIVE);
-					EnterBtHfMode();
 				}
 
 				if(GetBtConnectedProfile()&BT_CONNECTED_HFP_FLAG)
@@ -389,9 +360,9 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 #ifdef CFG_APP_CONFIG
 #ifdef BT_REMOTE_AEC_DISABLE
 					if(GetSystemMode() == AppModeBtHfPlay)
-					{
+					 {
 						HfpDisableNREC();
-					}
+					 }
 #endif
 #endif
 				}
@@ -403,7 +374,6 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 			{
 				BT_HFP_STATE	hfpState;
 				APP_DBG("Hfp call disconnect\n");
-				hfMode3WayActiveCallState = 0;
 #if defined(CFG_BT_RING_LOCAL)
 				APP_DBG("The call finished, soc disconnected, set the sco state to 0\n");
 				SetBtScoState(0);
@@ -416,19 +386,14 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 				switch(hfpState)
 				{
 					case BT_HFP_STATE_ACTIVE:
-					case BT_HFP_STATE_3WAY_ATCTIVE_CALL:	//2CALL ACTIVE
 						SetHfpState(BT_HFP_STATE_CONNECTED);
-						ExitBtHfMode();
 						break;
-					case BT_HFP_STATE_3WAY_INCOMING_CALL:	//1CALL ACTIVE, 1CALL INCOMING
-						SetHfpState(BT_HFP_STATE_INCOMING);
-						break;
-					case BT_HFP_STATE_3WAY_OUTGOING_CALL:	//1CALL ACTIVE, 1CALL OUTGOING
-						SetHfpState(BT_HFP_STATE_OUTGOING);
-						break;					
+
 					default:
 						break;
 				}
+				SetHfpState(BT_HFP_STATE_CONNECTED);
+				ExitBtHfMode();
 #endif
 			}
 			break;
@@ -486,9 +451,7 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 					case BT_HFP_STATE_3WAY_INCOMING_CALL:
 					case BT_HFP_STATE_3WAY_OUTGOING_CALL:
 						APP_DBG("3way calling,\n");
-						hfMode3WayActiveCallState = 2;
-						HfpGetCurrentCalls();
-						SetHfpState(BT_HFP_STATE_ACTIVE);
+						SetHfpState(BT_HFP_STATE_3WAY_ATCTIVE_CALL);
 						break;
 					
 					case BT_HFP_STATE_INCOMING:
@@ -571,8 +534,7 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 					break;
 				
 				APP_DBG("Hfp call setup alert\n");
-				if((GetHfpState() != BT_HFP_STATE_3WAY_INCOMING_CALL)&&(GetHfpState() != BT_HFP_STATE_3WAY_OUTGOING_CALL))
-					SetHfpState(BT_HFP_STATE_OUTGOING);
+				SetHfpState(BT_HFP_STATE_OUTGOING);
 #ifdef BT_RECORD_FUNC_ENABLE
 				BtMidMessageSend(MSG_BT_MID_HFP_RECORD_MODE_DEREGISTER, 0);
 #endif
@@ -607,78 +569,6 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 		case BT_STACK_EVENT_HFP_CURRENT_CALLS:
 			{
 				APP_DBG("Hfp caller %d, state :%d, num: %s\n", param->params.callListParms.index, param->params.callListParms.state, param->params.callListParms.number);
-
-				if (hfMode3WayActiveCallState)
-				{
-					hfMode3WayActiveCallState--;
-					if (param->params.callListParms.index == 2)
-					{
-						SetHfpState(BT_HFP_STATE_3WAY_ATCTIVE_CALL);
-						hfMode3WayActiveCallState = 0;
-					}
-				}
-
-				if(GetHfpState() < BT_HFP_STATE_ACTIVE)
-				{
-					if ((param->params.callListParms.state == 2) || (param->params.callListParms.state == 3))
-					{
-						SetHfpState(BT_HFP_STATE_OUTGOING);
-					}
-					else if(param->params.callListParms.state == 4)
-					{
-						SetHfpState(BT_HFP_STATE_INCOMING);
-					}
-					else if ((param->params.callListParms.state == 0) || (param->params.callListParms.state == 1))
-					{
-						SetHfpState(BT_HFP_STATE_ACTIVE);
-					}
-				}
-
-				if(GetHfpState() == BT_HFP_STATE_3WAY_ATCTIVE_CALL)
-				{
-					if(param->params.callListParms.index == 1)
-					{
-						Caller1Count++;
-					}
-					else if(param->params.callListParms.index == 2)
-					{
-						Caller2Count++;
-					}
-
-					if(abs(Caller1Count - Caller2Count) > 3)
-					{
-						APP_DBG("Caller1Count - Caller2Count > 3\n");
-						CallStateCount = 0;
-						Caller1Count = 0;
-						Caller2Count = 0;
-
-						SetHfpState(BT_HFP_STATE_ACTIVE);
-                        if(param->params.callListParms.state == 1)
-                        {
-                            //将手机hold的电话进行释放
-                            HfpCallHold(HF_HOLD_HOLD_ACTIVE_CALLS);
-                        }
-					}
-
-					if(param->params.callListParms.state != 0)
-					{
-						CallStateCount++;
-					}
-					else
-					{
-						CallStateCount = 0;
-					}
-
-					if(CallStateCount >= 5)
-					{
-						APP_DBG("CallStateCount >= 5\n");
-						CallStateCount = 0;
-						Caller1Count = 0;
-						Caller2Count = 0;
-
-						SetHfpState(BT_HFP_STATE_ACTIVE);
-					}
-				}
 			}
 			break;
 
@@ -766,24 +656,13 @@ void BtHfpCallback(BT_HFP_CALLBACK_EVENT event, BT_HFP_CALLBACK_PARAMS * param)
 				APP_DBG("%s\n", param->params.hfpRemoteManufactory);
 				btManager.appleDeviceFlag = 0;
 				if(strstr(param->params.hfpRemoteManufactory,"Apple Inc."))
-				{
 					btManager.appleDeviceFlag = 1;
-#ifdef BT_HFP_GET_APPLE_DEV_TIME
-					HfpGetAppleDeviceTime();
-#endif
-				}
 			}
 			break;
 
 		case BT_STACK_EVENT_HFP_DEVICE_TYPE:
 			{
 				APP_DBG("%s\n", param->params.hfpRemoteDeviceType);
-			}
-			break;
-		
-		case BT_STACK_EVENT_HFP_DEVICE_TIME:
-			{
-				APP_DBG("%s\n", param->params.hfpRemoteDeviceTime);
 			}
 			break;
 
@@ -1164,13 +1043,4 @@ int16_t GetBtHfpSpeakerVolume(uint8_t * gain)
 	return BT_MANAGER_HFP_ERROR_NONE;
 }
 
-//获取苹果手机的时间(安卓不支持)
-void GetBtAppleDeviceTime(void)
-{
-	if(btManager.appleDeviceFlag)
-	{
-		APP_DBG("HfpGetAppleDeviceTime\n");
-		HfpGetAppleDeviceTime();
-	}
-}
 

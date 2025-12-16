@@ -120,8 +120,7 @@ bool UDiskBulkTransport(uint8_t* Buf, uint16_t Len)
 	CSW csw;
 //	uint8_t Retry = 2;
 	uint32_t RxLen;
-	TIMER ComTimer;
-	TimeOutSet(&ComTimer, 3000);
+
 	cbw.DataTransferLength = CpuToLe16(Len);
 
 	//支持扇区大小不是512字节的U盘
@@ -137,10 +136,7 @@ bool UDiskBulkTransport(uint8_t* Buf, uint16_t Len)
 #ifdef FUNC_OS_EN
 		osTaskDelay(1);// sam add 20200916
 #endif
-		if(IsTimeOut(&ComTimer))
-		{
-			return FALSE;
-		}
+		return FALSE;
 		//continue;
 	}
 	if(Len)
@@ -150,16 +146,13 @@ bool UDiskBulkTransport(uint8_t* Buf, uint16_t Len)
 			//IN PACKET
 			//DBG("I");
 			UDiskDiscardPackets(gHeadLen);
-			if(OTG_HostBulkRead(&gUDisk.BulkInEp, Buf, Len, &RxLen, 10000 - PastTimeGet(&ComTimer)) != HOST_NONE_ERR)
+			if(OTG_HostBulkRead(&gUDisk.BulkInEp, Buf, Len, &RxLen, 10000) != HOST_NONE_ERR)
 			{
 #ifdef FUNC_OS_EN
 				osTaskDelay(1);// sam add 20200916
 #endif
 				//DBG("IN E\n");
-				if(IsTimeOut(&ComTimer))
-				{
-					return FALSE;
-				}
+				return FALSE;
 			}
 			UDiskDiscardPackets(gTailLen);
 		}
@@ -173,20 +166,17 @@ bool UDiskBulkTransport(uint8_t* Buf, uint16_t Len)
 			//DelayMs(1);
 #endif
 
-			if(OTG_HostBulkWrite(&gUDisk.BulkOutEp, Buf, Len, 10000 - PastTimeGet(&ComTimer)) != HOST_NONE_ERR)
+			if(OTG_HostBulkWrite(&gUDisk.BulkOutEp,Buf,Len,10000) != HOST_NONE_ERR)
 			{
 #ifdef FUNC_OS_EN
 				osTaskDelay(1);// sam add 20200916
 #endif
 				//DBG("OUT E\n");
-				if(IsTimeOut(&ComTimer))
-				{
-					return FALSE;
-				}
+				return FALSE;
 			}
 		}
 	}
-	if(OTG_HostBulkRead(&gUDisk.BulkInEp,(uint8_t*)&csw,sizeof(CSW),&RxLen, 3000 - PastTimeGet(&ComTimer)) != HOST_NONE_ERR)
+	if(OTG_HostBulkRead(&gUDisk.BulkInEp,(uint8_t*)&csw,sizeof(CSW),&RxLen,3000) != HOST_NONE_ERR)
 	{
 		//DBG("OTG read block\n");
 		return FALSE;

@@ -1,0 +1,39 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS += \
+../src/hardware/BG_AudioIO_Manager/USB/src/audio_api.c \
+../src/hardware/BG_AudioIO_Manager/USB/src/otg_device_audio.c \
+../src/hardware/BG_AudioIO_Manager/USB/src/otg_device_cdc.c \
+../src/hardware/BG_AudioIO_Manager/USB/src/otg_device_standard_request.c \
+../src/hardware/BG_AudioIO_Manager/USB/src/otg_device_stor.c \
+../src/hardware/BG_AudioIO_Manager/USB/src/usb_audio_api.c 
+
+OBJS += \
+./src/hardware/BG_AudioIO_Manager/USB/src/audio_api.o \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_audio.o \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_cdc.o \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_standard_request.o \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_stor.o \
+./src/hardware/BG_AudioIO_Manager/USB/src/usb_audio_api.o 
+
+C_DEPS += \
+./src/hardware/BG_AudioIO_Manager/USB/src/audio_api.d \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_audio.d \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_cdc.d \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_standard_request.d \
+./src/hardware/BG_AudioIO_Manager/USB/src/otg_device_stor.d \
+./src/hardware/BG_AudioIO_Manager/USB/src/usb_audio_api.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+src/hardware/BG_AudioIO_Manager/USB/src/%.o: ../src/hardware/BG_AudioIO_Manager/USB/src/%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: Andes C Compiler'
+	$(CROSS_COMPILE)gcc -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/fatfs/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/BanGUI/BG_List" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/BanGUI/page" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/audio" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/BG_Lcd" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/BanGUI/base_func" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/IIC" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/BG_AudioIO_Manager" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/BG_AudioIO_Manager/USB/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/BG_AudioIO_Manager/USB/src" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/BG_Encoder" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/BG_flash_manager" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/bluetooth/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/BanGUI/menu_slider" -Og -mcmodel=medium -g3 -Wall -mcpu=d1088-spu -c -fmessage-length=0 -ldsp -mext-dsp -fsingle-precision-constant -ffunction-sections -fdata-sections -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d) $(@:%.o=%.o)" -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+

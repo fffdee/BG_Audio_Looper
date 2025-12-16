@@ -28,19 +28,6 @@ Shanghai Mountain View Silicon Co. Ltd. Copyright 2018, All rights reserved.
 版本历史：（采用倒序排列，最新版置顶）
 
 ------------------------------
-*2022-04-26
-更新内容：
-    1、 更新了HDMI_CEC_IsReadytoDeepSleep函数；
-
-*2022-04-26
-更新内容：
-    1、增加HDMI_DDC_TVManufacturerGet函数接口；
-	2、增加HDMI_CEC_IsReadytoDeepSleepwithExHPD函数接口；
-
-*2021-7-6
-更新内容：
-    1、添加HPD有效电平设置的函数
-
 *2019-10-12
 
 更新内容：

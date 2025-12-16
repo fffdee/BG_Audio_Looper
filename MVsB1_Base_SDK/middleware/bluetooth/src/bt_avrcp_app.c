@@ -119,10 +119,6 @@ void BtAvrcpCallback(BT_AVRCP_CALLBACK_EVENT event, BT_AVRCP_CALLBACK_PARAMS * p
 					btCheckEventList &= ~BT_EVENT_AVRCP_DISCONNECT;
 					btEventListB0Count = 0;
 				}
-#ifdef BT_PROFILE_BQB_ENABLE
-#include "bt_stack_api.h"
-				GetBtManager()->btDdbLastProfile &= ~(BT_PROFILE_SUPPORTED_AVRCP);
-#endif
 			}
 			break;
 
@@ -275,7 +271,6 @@ void BtAvrcpCallback(BT_AVRCP_CALLBACK_EVENT event, BT_AVRCP_CALLBACK_PARAMS * p
 			//APP_DBG("BTVOL_CHANGE = [%d]\n", param->params.avrcpAdv.avrcpAdvVolumePercent);
 			GetBtManager()->avrcpSyncEnable = 1;
 			{
-				extern uint8_t BtAbsVolume2VolLevel(uint8_t absValue);
 				uint16_t VolumePercent = 0;//param->params.avrcpAdv.avrcpAdvVolumePercent;
 				//VolumePercent = VolumePercent*CFG_PARA_MAX_VOLUME_NUM/100;
 

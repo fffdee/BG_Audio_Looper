@@ -58,8 +58,6 @@ void BtObexCallback(BT_OBEX_CALLBACK_EVENT event, BT_OBEX_CALLBACK_PARAMS * para
 
 bool ObexAppInit(BTObexCallbackFunc callback);
 
-bool ObexAppMtuSizeSet(uint8_t size);
-
 #endif
 
 

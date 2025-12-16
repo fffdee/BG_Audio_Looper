@@ -1,0 +1,1 @@
+INDEX VERSION 1.127+C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper\.metadata\.plugins\org.eclipse.jdt.core

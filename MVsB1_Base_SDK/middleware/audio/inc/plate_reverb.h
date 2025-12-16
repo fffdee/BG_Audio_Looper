@@ -14,7 +14,7 @@
 #define __PLATE_REVERB_H__
 
 #include <stdint.h>
-#include <math.h>
+
 #define MAX_PLATE_REVERB_PREDELAY 4410 // max. 100ms @ 44.1kHz
 
 /** error code for reverb */

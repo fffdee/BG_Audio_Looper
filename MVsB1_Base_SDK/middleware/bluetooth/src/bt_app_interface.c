@@ -46,5 +46,3 @@ void BtAppiFunc_SaveScoData(FUNC_SAVE_SCO_DATA CallbackFunc)
 	SaveHfpScoDataToBuffer = CallbackFunc;
 }
 
-FUNC_TWS_SBC_DECOER tws_sbc_decoer_init_func = NULL;
-

@@ -142,13 +142,6 @@ FileType get_audio_type(TCHAR *string)
 		return FILE_TYPE_APE;
 	}
 #endif
-#ifdef USE_AMR_DECODER
-	if((string[len] == 'A') && (string[len + 1] == 'M') && (string[len + 2] == 'R'))
-	{
-		return FILE_TYPE_AMR;
-	}
-
-#endif
 #if FLASH_BOOT_EN 
 	if((string[len + 0] == 'M') && (string[len + 1] == 'V') && (string[len + 2] == 'A'))
 	{

@@ -10,7 +10,7 @@
 #ifdef CFG_APP_CONFIG
 #include "app_config.h"
 #endif
-#include "rtos_api.h"
+
 /**********************************************************************************************/
 /* 打印相应的信息 */
 /**********************************************************************************************/
@@ -95,7 +95,6 @@ static void ShowFlashLoadResult(int RecIdxFromZero, unsigned char *BtAddr,unsign
         t &= 0xFF;
         APP_DBG("%02x\n",t);
 #endif
-	APP_DBG("\n");
 }
 #endif //show bt pairing info
 
@@ -217,9 +216,6 @@ static int FlshLoad1of8Dev(int OneFullRecBlockSize, int RecIdxFromZero, uint8_t*
 #ifdef BT_TWS_SUPPORT
 							, uint8_t* Role, uint8_t* Profile
 #endif							
-#ifdef FLASH_SAVE_REMOTE_BT_NAME
-							, uint8_t* dbname
-#endif
 							)
 {
 	uint8_t Tmp[MVBT_DB_FLAG_SIZE];
@@ -255,19 +251,11 @@ static int FlshLoad1of8Dev(int OneFullRecBlockSize, int RecIdxFromZero, uint8_t*
 
 			//profile
 			SpiFlashRead(i + 24, Profile, 1, 0);
-			
-			#ifdef FLASH_SAVE_REMOTE_BT_NAME
-			SpiFlashRead(i + 25, dbname, BT_NAME_SIZE, 0);
-			#endif
-			
+
 #ifdef PRINT_RECORD_INFOR
             ShowFlashLoadResult(RecIdxFromZero, BtAddr,LinkKey,Property, Role, Profile);
 #endif      
 #else
-			#ifdef FLASH_SAVE_REMOTE_BT_NAME
-			SpiFlashRead(i + 23, dbname, BT_NAME_SIZE, 0);
-			#endif
-			
 #ifdef PRINT_RECORD_INFOR
             ShowFlashLoadResult(RecIdxFromZero, BtAddr,LinkKey,Property);
 #endif 
@@ -304,9 +292,6 @@ uint8_t BtDdb_Open(const uint8_t * localBdAddr)
 														   &btManager.btLinkDeviceInfo[count].tws_role,
 														   &btManager.btLinkDeviceInfo[count].remote_profile
 #endif														   
-#ifdef FLASH_SAVE_REMOTE_BT_NAME
-														   ,btManager.btLinkDeviceInfo[count].device.bdName
-#endif														   
 														   );
 		if(btManager.btLinkDeviceInfo[count].UsedFlag)
 		{
@@ -331,7 +316,7 @@ void BtDdb_PrintRecord(void)
 	uint32_t StartOffset = BTDB_TOTAL_RECORD_ADDR;	// 保存的时候是从高到低，读出的时候从低到高
 	BT_LINK_DEVICE_INFO info[8];
 
-	APP_DBG("print the remote name: 0x%lx\n", StartOffset);
+	APP_DBG("print the remote name: 0x%x\n", StartOffset);
 	for(i = StartOffset; i < (BTDB_TOTAL_RECORD_ADDR + BTDB_TOTAL_RECORD_MEM_SIZE - 4); i += Step)
 	{
 		SpiFlashRead(i, Tmp, MVBT_DB_LAST_FLAG_SIZE, 0);
@@ -360,7 +345,7 @@ void BtDdb_PrintRecord(void)
 					info[k].device.bdAddr[4],
 					info[k].device.bdAddr[5]);
 #else
-				APP_DBG("%lx:  Remote device [%d]  addr:%02X:%02X:%02X:%02X:%02X:%02X\n", i, k,
+				APP_DBG("%x:  Remote device [%d]  addr:%02X:%02X:%02X:%02X:%02X:%02X\n", i, k, 
 					info[k].device.bdAddr[0],
 					info[k].device.bdAddr[1],
 					info[k].device.bdAddr[2],
@@ -731,7 +716,6 @@ void BtDdb_LastBtAddrErase(void)
 /****************************************************************************************/
 bool BtDdb_Erase(void)
 {
-	uint8_t count;
 	APP_DBG("flash erase: bt record\n");
 
 	//配对设备信息
@@ -741,11 +725,6 @@ bool BtDdb_Erase(void)
 	//最后1次回连设备信息
 	SpiFlashErase(SECTOR_ERASE, BTDB_ALIVE_RECORD_ADDR /4096 , 1);
 	
-	for(count = 0 ; count < MAX_BT_DEVICE_NUM ; count ++)
-	{
-		memset(&btManager.btLinkDeviceInfo[count], 0, sizeof(BT_LINK_DEVICE_INFO));
-	}
-
 	return 1;
 }
 
@@ -758,27 +737,6 @@ bool BtDdb_Erase_BtConfig(void)
 	
 	return 1;
 }
-
-#ifdef BT_PROFILE_BQB_ENABLE
-void BtDdb_ClearAllPairedInfo(void)
-{
-	uint8_t count = 0;
-	for(count = 0 ; count < MAX_BT_DEVICE_NUM ; count ++)
-	{
-		memset(&btManager.btLinkDeviceInfo[count], 0, sizeof(BT_LINK_DEVICE_INFO));
-	}
-	
-	APP_DBG("BtDdb_ClearAllInfo\n");
-
-	//配对设备信息
-	SpiFlashErase(SECTOR_ERASE, BTDB_TOTAL_RECORD_ADDR /4096 , 1);
-	SpiFlashErase(SECTOR_ERASE, (BTDB_TOTAL_RECORD_ADDR + 4*1024) /4096 , 1);
-
-	//最后1次回连设备信息
-	SpiFlashErase(SECTOR_ERASE, BTDB_ALIVE_RECORD_ADDR /4096 , 1);
-	
-}
-#endif
 
 /****************************************************************************************/
 /* 对蓝牙参数配置表数据进行读，写操作 */
@@ -830,67 +788,33 @@ int8_t BtDdb_SaveBtConfigurationParams(BT_CONFIGURATION_PARAMS *params)
 /************************************************************************************************************/
 /* bt stack 初始化时加载錐lash中的蓝牙参数时不对flash中的 bt_ConfigHeader及bt_trimValue进行操作*/
 /************************************************************************************************************/
-//save addr
 int8_t BtDdb_InitBtConfigurationParams(BT_CONFIGURATION_PARAMS *params)
 {
 	SPI_FLASH_ERR_CODE ret=0;
-	BT_CONFIGURATION_PARAMS		*btStackConfigParamsBack = NULL;
 	
 	if(params == NULL)
 	{
 		APP_DBG("write error:params is null\n");
 		return -1;
 	}
-	
-	btStackConfigParamsBack = (BT_CONFIGURATION_PARAMS*)osPortMalloc(sizeof(BT_CONFIGURATION_PARAMS));
-	if(btStackConfigParamsBack == NULL)
-	{	
-		return -2;//
-	}
-	memset(btStackConfigParamsBack, 0, sizeof(BT_CONFIGURATION_PARAMS));
-
-	ret = BtDdb_LoadBtConfigurationParams(btStackConfigParamsBack);
-	if(ret == -3)
-	{
-		//读取异常，read again
-		ret = BtDdb_LoadBtConfigurationParams(btStackConfigParamsBack);
-		if(ret == -3)
-		{
-			APP_DBG("bt data read error!\n");
-			if(btStackConfigParamsBack)
-			{
-				osPortFree(btStackConfigParamsBack);
-				btStackConfigParamsBack = NULL;
-			}
-			return -2;
-		}
-	}
-
-	memcpy(btStackConfigParamsBack->bt_LocalDeviceAddr, params->bt_LocalDeviceAddr, BT_ADDR_SIZE);
-	memcpy(btStackConfigParamsBack->ble_LocalDeviceAddr, params->ble_LocalDeviceAddr, BT_ADDR_SIZE);
 
 	//1.erase
 	SpiFlashErase(SECTOR_ERASE, (BTDB_CONFIG_ADDR/4096), 1);
 
-	//2.write params
-	//ret = SpiFlashWrite(BTDB_CONFIG_ADDR, (uint8_t*)params, sizeof(BT_CONFIGURATION_PARAMS), 1);
-	ret = SpiFlashWrite(BTDB_CONFIG_ADDR, (uint8_t*)btStackConfigParamsBack, sizeof(BT_CONFIGURATION_PARAMS), 1);
+	//2.write params but un-include "config head" and "trimvalue"
+	ret = SpiFlashWrite(BTDB_CONFIG_ADDR, (uint8_t*)params, (sizeof(uint8_t) * 2 * 6 + sizeof(uint8_t) * 2 * 40), 1);
 	if(ret != FLASH_NONE_ERR)
 	{
-		APP_DBG("write error:%d\n", ret);
-		if(btStackConfigParamsBack)
-		{
-			osPortFree(btStackConfigParamsBack);
-			btStackConfigParamsBack = NULL;
-		}
+		APP_DBG("write addr&name error:%d\n", ret);
 		return -2;
 	}
-	
-	if(btStackConfigParamsBack)
+	ret = SpiFlashWrite(BTDB_CONFIG_ADDR + (sizeof(uint8_t) * 2 * 6 + sizeof(uint8_t) * 2 * 40 + sizeof(uint8_t) * 5), &params->bt_TxPowerValue, 
+			sizeof(BT_CONFIGURATION_PARAMS) - (sizeof(uint8_t) * 2 * 6 + sizeof(uint8_t) * 2 * 40 + sizeof(uint8_t) * 5), 1);
+	if(ret != FLASH_NONE_ERR)
 	{
-		osPortFree(btStackConfigParamsBack);
-		btStackConfigParamsBack = NULL;
-	}	
+		APP_DBG("write others error:%d\n", ret);
+		return -2;
+	}
 	
 	APP_DBG("write success\n");
 	return 0;
@@ -1022,7 +946,6 @@ bool BtDdb_ClearTwsDeviceRecord(void)
 
 	btManager.twsRole = 0xff;
 	btManager.twsFlag = 0;
-	return 0;
 }
 
 //清除DDB中TWS的配对信息
@@ -1216,7 +1139,7 @@ void SaveTotalDevRec2Flash(int OneFullRecBlockSize, int TotalRecNum)
     OneFullRecBlockSize += MVBT_DB_FLAG_SIZE;//including 3Bytes of sync data,zhouyi,20140411
 
 	StartOffset = FlshGetPairingInfoWriteOffset(StartOffset, OneFullRecBlockSize);
-	APP_DBG("-----------------------------------New0x%lx(%lu)\n", StartOffset, StartOffset);
+	APP_DBG("-----------------------------------New0x%lx(%d)\n", StartOffset, StartOffset);
 	Tmp[0] = 'M';
 	Tmp[1] = 'V';
 	Tmp[2] = 'B';
@@ -1238,9 +1161,7 @@ void SaveTotalDevRec2Flash(int OneFullRecBlockSize, int TotalRecNum)
 			if(i == (TotalRecNum - 1))
 			{
 				APP_DBG("Update the profile!!!\n");
-				#ifdef BT_TWS_SUPPORT
 				OneBtRec[24] = ~btManager.btDdbLastProfile;	//新接入的remote device更新profile
-				#endif
 			}
 			SpiFlashWrite(StartOffset, OneBtRec, BT_REC_INFO_LEN, 1);
 			StartOffset += BT_REC_INFO_LEN;

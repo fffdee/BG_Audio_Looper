@@ -137,12 +137,12 @@ void SystemPowerKeyInit(uint32_t Mode, uint16_t CountTime)
 			BACKUP_FastPowerDownEnable();
 			BACKUP_PowerKeyEnable();
 			if((PowerUpEvent & (1 << 2)) == VALID_POWERKEY_EVENT
-				|| (TRUE == BAKEUP_FirstFlag))//锟斤拷一锟斤拷锟较碉拷锟斤拷要锟斤拷锟斤拷PowerKey
+				|| (TRUE == BAKEUP_FirstFlag))//第一次上电需要按下PowerKey
 			{
 				DBG("first power on\n");
 				while(1)
 				{
-					//锟斤拷锟较低筹拷系锟酵憋拷锟阶owerKey锟斤拷锟斤拷系统锟较碉拷
+					//如果系统上电同时按住PowerKey，则系统上电
 					if(TRUE == BACKUP_PowerKeyTrigStateGet())
 					{
 						DBG("1212");
@@ -280,9 +280,7 @@ void SystemPowerDown(void)
 		DBG("Push Button\n");
 		DBG("do something ..., breakpoint\n");
 		DBG("System goto PowerDown\n");
-#ifdef  CFG_RES_POWERKEY_ADC_EN
-        ADC_PowerkeyChannelDisable();
-#endif
+
 		//Backup_PowerDown();
 		BACKUP_SystemPowerDown();
 		break;

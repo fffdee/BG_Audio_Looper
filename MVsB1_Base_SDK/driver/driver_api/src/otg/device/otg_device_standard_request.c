@@ -77,7 +77,6 @@ void OTG_DeviceModeSel(uint8_t Mode,uint16_t UsbVid,uint16_t UsbPid)
 }
 
 
-
 /**
  * @brief  发送控制传输命令的应答数据
  * @param  Resp 应答数据
@@ -136,7 +135,7 @@ void OTG_DeviceGetDescriptor(void)
 			{
 				UsbSendPtr = gDeviceString_Index;
 			}			
-			else 	//serial number
+			else 						//serial number
 			{
 				UsbSendPtr = (uint8_t*)gDeviceString_SerialNumber;
 			}
@@ -259,11 +258,7 @@ void OTG_DeviceStandardRequest()
 		case USB_REQ_SET_CONFIGURATION:
 #ifdef CFG_COMMUNICATION_BY_USB
 #ifndef CFG_BT_KARAOKE_APP
-			if((GetSystemMode() == AppModeUsbDevicePlay)
-#ifndef BT_TWS_SUPPORT
-			|| (GetSystemMode() == AppModeUsbPhone)
-#endif
-			)
+			if(GetSystemMode() == AppModeUsbDevicePlay)
 #endif
 #endif
 			{

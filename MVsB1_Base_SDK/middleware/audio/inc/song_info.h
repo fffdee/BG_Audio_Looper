@@ -4,7 +4,7 @@
  * @brief   Definition of song information (metadata) related structures
  *
  * @author  Alfred Zhao
- * @version v1.1.0
+ * @version v1.0.0
  *
  * &copy; Shanghai Mountain View Silicon Technology Co.,Ltd. All rights reserved.
  *
@@ -69,22 +69,21 @@ typedef enum _TagCharSet
  */
 typedef enum _StreamType
 {
-	STREAM_TYPE_UNKNOWN,	/**< Unknown stream   */
-	STREAM_TYPE_MP2,		/**< MP2 stream       */
-	STREAM_TYPE_MP3,		/**< MP3 stream       */
-	STREAM_TYPE_WMA,		/**< WMA stream       */
-	STREAM_TYPE_SBC,		/**< SBC stream       */
-	STREAM_TYPE_PCM,		/**< raw PCM stream   */
-	STREAM_TYPE_ADPCM,		/**< IMA_ADPCM stream */
-	STREAM_TYPE_FLAC,		/**< FLAC stream      */
-	STREAM_TYPE_APE,		/**< APE stream       */
-	STREAM_TYPE_AAC,		/**< AAC stream       */
-	STREAM_TYPE_ALAW,		/**< CCITT G711 A-law */
-	STREAM_TYPE_MULAW,		/**< CCITT G711 u-law */
-	STREAM_TYPE_AMR,		/**< AMR stream       */
-	STREAM_TYPE_DTS,		/**< DTS stream       */
-	STREAM_TYPE_OPUS,		/**< OPUS stream      */
-	STREAM_TYPE_A52,		/**< A52 stream       */
+	STREAM_TYPE_UNKNOWN, /**< UNKNOWN stream   */
+	STREAM_TYPE_MP2, /**< MP2 stream       */
+	STREAM_TYPE_MP3, /**< MP3 stream       */
+	STREAM_TYPE_WMA, /**< WMA stream       */
+	STREAM_TYPE_SBC, /**< SBC stream       */
+	STREAM_TYPE_PCM, /**< raw PCM stream   */
+	STREAM_TYPE_ADPCM, /**< IMA_ADPCM stream */
+	STREAM_TYPE_FLAC, /**< FLAC stream      */
+	STREAM_TYPE_APE, /**< APE stream       */
+	STREAM_TYPE_AAC, /**< AAC  stream      */
+	STREAM_TYPE_ALAW, /**< CCITT G711 A-law */
+	STREAM_TYPE_MULAW, /**< CCITT G711 u-law */
+	STREAM_TYPE_AMR, /**< AMR stream       */
+	STREAM_TYPE_DTS, /**< DTS stream       */
+	STREAM_TYPE_OPUS, /**< OPUS stream      */
 }StreamType;
 
 
