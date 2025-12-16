@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lDriver -lsra -lAudioEffectLibrary -lresampler -ldsp -lm
+LIBS := -lDriver -lsra -lAudioEffectLibrary -lresampler -ldsp -lm -lBtStack
 

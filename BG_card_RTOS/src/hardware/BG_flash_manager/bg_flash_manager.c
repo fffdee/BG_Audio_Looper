@@ -590,8 +590,9 @@ uint8_t flash_PageProgram(uint32_t address, uint8_t* data, uint16_t size,uint8_t
         flash_write_byte(address & 0xFF);          // 发送地址的低字节
 
         flash_write(data,size);
+        FLASH_CS_DISABLE();
         flash_WaitForWriteEnd(dev);  // 等待写操作完成
-        FLASH_CS_DISABLE();      // 释放片选信号
+        // 释放片选信号
 	}
 	if(dev==DEV_NAND){
 		// 检查块是否为坏块

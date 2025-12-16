@@ -3,7 +3,7 @@
 ################################################################################
 
 ifndef ANDESIGHT_ROOT
-ANDESIGHT_ROOT=/cygdrive/D/ADS
+ANDESIGHT_ROOT=/cygdrive/D/app/Andestech/AndeSight300RDS
 endif
 
 ifndef CROSS_COMPILE
@@ -31,6 +31,7 @@ RM := rm -rf
 -include src/BanGUI/BG_List/subdir.mk
 -include src/BanGUI/base_func/subdir.mk
 -include src/BanGUI/page/subdir.mk
+-include src/bluetooth/src/subdir.mk
 -include src/hardware/BG_Encoder/subdir.mk
 -include src/hardware/BG_Lcd/subdir.mk
 -include src/hardware/BG_flash_manager/subdir.mk
@@ -88,7 +89,7 @@ all: BG_card_RTOS.adx secondary-outputs
 BG_card_RTOS.adx: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/C/Users/Hasee/Desktop/BG_Audio_Looper2/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BG_card_RTOS.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/C/Users/BanGO/Downloads/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/C/Users/BanGO/Downloads/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio" -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_RTOS/src/bluetooth" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BG_card_RTOS.adx" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

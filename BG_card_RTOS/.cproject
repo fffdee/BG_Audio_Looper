@@ -48,6 +48,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_RTOS/src/BanGUI/BG_List}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_RTOS/src/BanGUI/page}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_RTOS/src/hardware/audio_looper}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_RTOS/src/bluetooth/inc}&quot;"/>
 								</option>
 								<option id="nds.c.compiler.option.optimization.lto.934303171" name="Link Time Optimization (-flto)" superClass="nds.c.compiler.option.optimization.lto" value="false" valueType="boolean"/>
 								<option id="nds.c.compiler.option.optimization.removesections.function.489783750" name="Remove unused function sections (-ffunction-sections)" superClass="nds.c.compiler.option.optimization.removesections.function" value="true" valueType="boolean"/>
@@ -67,10 +68,12 @@
 									<listOptionValue builtIn="false" value="resampler"/>
 									<listOptionValue builtIn="false" value="dsp"/>
 									<listOptionValue builtIn="false" value="m"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="BtStack"/>
 								</option>
 								<option id="nds.c.link.option.paths.1918021904" name="Library search path (-L)" superClass="nds.c.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/driver/driver}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/middleware/audio}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_RTOS/src/bluetooth}&quot;"/>
 								</option>
 								<option id="nds.c.linker.option.cmodel.315605540" name="Code Model" superClass="nds.c.linker.option.cmodel" value="-mcmodel=medium" valueType="string"/>
 								<option id="nds32le-elf-mculib-v3s.c.link.exe.debug.option.ldscript.335648752" name="Linker Script (-T)" superClass="nds32le-elf-mculib-v3s.c.link.exe.debug.option.ldscript" value="../nds32-ae210p.ld" valueType="string"/>

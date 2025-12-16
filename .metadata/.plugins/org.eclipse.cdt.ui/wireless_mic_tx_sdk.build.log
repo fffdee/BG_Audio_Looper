@@ -1,0 +1,70 @@
+09:59:52 **** Incremental Build of configuration Debug for project wireless_mic_tx_sdk ****
+make pre-build main-build 
+../tools/script.bat
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk\Debug>cd .. 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>if exist mpx (rd /s /q mpx ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>md mpx 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>for %i in (remind_res//*.mp3) do (tools\remind_script\ffmpeg.exe -i remind_res//%i -ar 44100 -ab 32000 -ac 1 mpx//%i.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//connect.mp3 -ar 44100 -ab 32000 -ac 1 mpx//connect.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//dianLdi.mp3 -ar 44100 -ab 32000 -ac 1 mpx//dianLdi.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//disconnect.mp3 -ar 44100 -ab 32000 -ac 1 mpx//disconnect.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//guanji.mp3 -ar 44100 -ab 32000 -ac 1 mpx//guanji.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//Jzao.mp3 -ar 44100 -ab 32000 -ac 1 mpx//Jzao.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//Jzaoguan.mp3 -ar 44100 -ab 32000 -ac 1 mpx//Jzaoguan.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//kaiji.mp3 -ar 44100 -ab 32000 -ac 1 mpx//kaiji.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//qiang.mp3 -ar 44100 -ab 32000 -ac 1 mpx//qiang.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>(tools\remind_script\ffmpeg.exe -i remind_res//zhongdeng.mp3 -ar 44100 -ab 32000 -ac 1 mpx//zhongdeng.mp3.mp2  1>>info.txt 2>&1 ) 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>del info.txt 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>cd mpx 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk\mpx>ren *.mp2 *. 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk\mpx>cd .. 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>tools\remind_script\MergeAudio2BinNew.exe -a 0x0 -i ..\..\mpx 
+Fri Sep 12 09:59:55 2025
+MergeAudio2Bin Tools version v4.1 for MVS SDK SoundRemind
+current path: C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk\tools\remind_script
+inputdir=..\..\mpx
+base address = 0x0
+connect : address = 00001000, size = 00001468, fullname = connect.mp3
+dianLdi : address = 00002468, size = 00000CA7, fullname = dianLdi.mp3
+disconne: address = 0000310F, size = 0000203E, fullname = disconnect.mp3
+guanji  : address = 0000514D, size = 00000B05, fullname = guanji.mp3
+Jzao    : address = 00005C52, size = 00000A34, fullname = Jzao.mp3
+Jzaoguan: address = 00006686, size = 00000E49, fullname = Jzaoguan.mp3
+kaiji   : address = 000074CF, size = 00000A34, fullname = kaiji.mp3
+qiang   : address = 00007F03, size = 00000892, fullname = qiang.mp3
+zhongden: address = 00008795, size = 00000A34, fullname = zhongdeng.mp3
+total file size=37321
+CRC16 = 0xF9B4
+finished...
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>rd /s /q mpx 
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>fc tools\remind_script\sound_remind_item.h audio\remind_sound_item.h 
+Comparing files TOOLS\REMIND_SCRIPT\sound_remind_item.h and AUDIO\REMIND_SOUND_ITEM.H
+FC: no differences encountered
+
+
+C:\Users\BanGO\Desktop\BP15\BP15_patch\BP15\MVsB5_wireless_mic_SDK_v2.2.2\wireless_mic_tx_sdk>if 0 == 1 (copy tools\remind_script\sound_remind_item.h audio\remind_sound_item.h ) 
+ 
+make: Nothing to be done for 'main-build'.
+
+09:59:55 Build Finished (took 2s.968ms)
+

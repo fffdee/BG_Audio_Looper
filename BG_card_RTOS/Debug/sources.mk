@@ -32,6 +32,7 @@ middleware/rtos/rtos_api \
 src/BanGUI/BG_List \
 src/BanGUI/base_func \
 src/BanGUI/page \
+src/bluetooth/src \
 src/hardware/BG_Encoder \
 src/hardware/BG_Lcd \
 src/hardware/BG_flash_manager \

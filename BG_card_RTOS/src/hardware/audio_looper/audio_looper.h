@@ -30,8 +30,34 @@ typedef enum {
     LOOP_STATE_RECORDING_AND_PLAYING = 3 // 边录制边播放状态
 } LoopState_t;
 
+
+// Loop状态枚举
+typedef enum {
+	SONG_MODE = 0,
+	FREE_STYLE,
+} Paly_Mode_t;
+
 // 多段录音支持
 #define MAX_SEGMENTS 4          // 最多支持4段录音
+
+// 节拍器常量定义
+#define METRONOME_MIN_BPM 60        // 最小BPM
+#define METRONOME_MAX_BPM 200       // 最大BPM
+#define METRONOME_DEFAULT_BPM 80   // 默认BPM
+#define METRONOME_DEFAULT_BEATS_PER_MEASURE 4   // 默认每小节拍数
+#define METRONOME_DEFAULT_DOWNBEAT_FREQ 1000    // 默认下拍频率（Hz）
+#define METRONOME_DEFAULT_REGULAR_BEAT_FREQ 800 // 默认普通拍频率（Hz）
+#define METRONOME_DEFAULT_BEAT_DURATION 60     // 默认节拍持续时间（ms）
+#define METRONOME_DEFAULT_VOLUME 0.01f           // 默认音量
+#define METRONOME_DEFAULT_SOUND_ENABLED 1       // 默认开启节拍器声音
+#define METRONOME_SAMPLE_RATE 48000             // 音频采样率
+#define METRONOME_MIN_BEATS_PER_MEASURE 2       // 最小每小节拍数
+#define METRONOME_MAX_BEATS_PER_MEASURE 8       // 最大每小节拍数
+
+// 数学常量
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
 
 // Flash类型枚举
 typedef enum {
@@ -53,15 +79,75 @@ typedef enum {
     LOOP_MODE_FREE = 1         // 自由模式：各段独立循环，无长度限制
 } LoopMode_t;
 
+// 节拍器状态枚举
+typedef enum {
+    METRONOME_OFF = 0,         // 节拍器关闭
+    METRONOME_ON = 1           // 节拍器开启
+} MetronomeState_t;
+
+// 节拍器拍子类型枚举
+typedef enum {
+    BEAT_TYPE_DOWNBEAT = 0,    // 下拍（强拍，每小节第一拍）
+    BEAT_TYPE_REGULAR = 1      // 普通拍
+} BeatType_t;
+
+typedef enum {
+    NONE = 0,      // 无属性
+    N_TYPE = 1,      // N属性
+    S_TYPE = 2      // S属性
+} MUTEX_t;
+
 // 段信息结构体
 typedef struct {
+
     uint32_t start_address;     // 段起始地址（页对齐）
     uint32_t length_pages;      // 段长度（页数）
     uint32_t length_bytes;      // 段长度（字节数）
     uint32_t play_position;     // 当前播放位置（字节）
+    uint32_t over_time;
     SegmentState_t state;       // 段当前状态
     uint8_t is_active;          // 段是否有效（保留兼容性）
+    MUTEX_t mutex;              // 段互斥
+    uint8_t is_first_loop;      // 是否为第一次循环
+
+
 } SegmentInfo_t;
+
+// 节拍器配置结构体
+typedef struct {
+    uint16_t bpm;               // 节拍速度（每分钟拍数），范围60-200
+    uint8_t beats_per_measure;  // 每小节拍数，通常为4
+    uint16_t downbeat_freq;     // 下拍频率（Hz），建议1000Hz
+    uint16_t regular_beat_freq; // 普通拍频率（Hz），建议800Hz
+    uint16_t beat_duration_ms;  // 节拍声音持续时间（毫秒），建议100ms
+    float volume;               // 音量系数，范围0.0-1.0
+    uint8_t sound_enabled;      // 是否开启节拍器声音（1=开启，0=关闭，只计数）
+} MetronomeConfig_t;
+
+// 小节信息结构体
+typedef struct {
+    uint32_t measure_number;    // 当前小节编号（从1开始）
+    uint8_t beat_in_measure;    // 当前小节内的拍子（从1开始）
+    uint32_t total_beats;       // 总拍数（跨所有小节）
+    uint32_t total_measures;    // 总小节数
+    uint8_t measure_complete;   // 当前小节是否完成（刚完成一个小节时为1）
+} MeasureInfo_t;
+
+// 节拍器状态结构体
+typedef struct {
+    MetronomeState_t state;     // 节拍器开关状态
+    MetronomeConfig_t config;   // 节拍器配置
+    MeasureInfo_t measure_info; // 小节信息
+    uint32_t beat_interval_samples;  // 节拍间隔（样本数）
+    uint32_t beat_duration_samples;  // 节拍持续时间（样本数）
+    uint32_t sample_counter;    // 样本计数器
+    uint32_t beat_sample_counter;    // 当前拍子样本计数器
+    uint8_t current_beat;       // 当前拍子索引（0-beats_per_measure-1）
+    uint8_t is_beat_active;     // 当前是否在播放节拍声音
+    BeatType_t current_beat_type;    // 当前拍子类型
+    float sine_phase;           // 正弦波相位累积器
+    uint8_t loop_reset_flag;    // 循环重置标志，用于检测循环重新开始
+} MetronomeState_Runtime_t;
 
 // Loop管理器结构体
 typedef struct {
@@ -73,7 +159,9 @@ typedef struct {
     uint32_t play_position;         // 播放位置
     uint8_t is_initialized;         // 是否已初始化
     uint8_t is_new_recording;       // 是否为新录制
-    uint8_t use_memory_buffer;      // 是否使用内存缓冲区(用于调试)
+
+    // 模式选择
+    Paly_Mode_t play_mode;
     
     // 多段录音支持
     SegmentInfo_t segments[MAX_SEGMENTS];  // 段信息数组
@@ -85,14 +173,12 @@ typedef struct {
     uint32_t master_segment_length; // 主段（最长段）长度，用于歌曲模式循环基准
     uint8_t master_segment_index;   // 主段索引
     
-    // 自动测试相关
-    uint8_t auto_test_mode;         // 自动测试模式
-    uint32_t auto_test_timer;       // 自动测试计时器
-    uint8_t auto_test_state;        // 自动测试状态: 0=录制中, 1=播放中
-    
     // 循环边界平滑处理
     uint32_t loop_boundary_samples[48];  // 存储循环边界的样本用于平滑处理
     uint8_t boundary_samples_valid;     // 边界样本是否有效
+    
+    // 节拍器支持
+    MetronomeState_Runtime_t metronome; // 节拍器运行时状态
 } LoopManager_t;
 
 // 全局Loop管理器
@@ -147,7 +233,6 @@ typedef struct {
     uint32_t (*GetRecordLength)(void);
     
     // 测试和调试
-    uint8_t (*VerifyFlashData)(uint32_t test_length);
     void (*TimerUpdate)(void);
     
     // 模式控制
@@ -156,74 +241,126 @@ typedef struct {
     uint8_t (*IsSongMode)(void);                    // 检查是否为歌曲模式
     uint8_t (*IsFreeMode)(void);                    // 检查是否为自由模式
     
+    // 节拍器控制
+    void (*MetronomeToggle)(void);                  // 切换节拍器开关
+    void (*MetronomeSetBPM)(uint16_t bpm);         // 设置BPM
+    void (*MetronomeSetBeatsPerMeasure)(uint8_t beats); // 设置每小节拍数
+    void (*MetronomeSetVolume)(float volume);       // 设置节拍器音量
+    void (*MetronomeSetSoundEnabled)(uint8_t enabled); // 设置是否开启节拍器声音
+    uint8_t (*MetronomeIsEnabled)(void);           // 检查节拍器是否开启
+    uint8_t (*MetronomeIsSoundEnabled)(void);      // 检查节拍器声音是否开启
+    uint16_t (*MetronomeGetBPM)(void);             // 获取当前BPM
+    uint8_t (*MetronomeGetBeatsPerMeasure)(void);  // 获取每小节拍数
+    
+    // 小节和拍子信息查询
+    uint32_t (*MetronomeGetCurrentMeasure)(void);  // 获取当前小节号
+    uint8_t (*MetronomeGetCurrentBeat)(void);      // 获取当前小节内拍子号
+    uint32_t (*MetronomeGetTotalBeats)(void);      // 获取总拍数
+    uint32_t (*MetronomeGetTotalMeasures)(void);   // 获取总小节数
+    uint8_t (*MetronomeIsMeasureComplete)(void);   // 检查当前小节是否刚完成
+    void (*MetronomeResetCounts)(void);            // 重置小节和拍子计数
+    void (*MetronomeOnLoopReset)(void);            // 循环重置时调用，增加小节数
+    
 } AudioLooper_t;
 
 // 全局Audio Looper模块实例
 extern AudioLooper_t AudioLooper;
 
-// 函数声明
-void loop_init(void);
-void loop_init_with_flash_type(FlashType_t flash_type);  // 新增：带Flash类型的初始化
-void loop_reset(void);
-void loop_handle_button_press(int8_t segment_index);
-void loop_handle_encoder_left(void);    // 编码器左转处理
-
-// Flash类型选择接口
-void loop_set_flash_type(FlashType_t flash_type);
-FlashType_t loop_get_flash_type(void);
-uint8_t loop_get_flash_device_id(void); // 获取当前Flash设备ID (DEV_NOR或DEV_NAND)
-
-// 自动测试函数
-void loop_start_auto_test(void);        // 启动自动测试
-void loop_update_auto_test(void);       // 更新自动测试状态
-void loop_stop_auto_test(void);         // 停止自动测试
-
-// 多段录音函数
-void loop_start_new_segment(void);      // 开始录制新段
-void loop_stop_current_segment(void);   // 停止当前段录制
-uint8_t loop_get_segment_count(void);   // 获取已录制段数
-void loop_clear_all_segments(void);     // 清除所有段
-void loop_reset_playback_position(void); // 重置播放位置到段头
-
-// 单段精细控制函数
-void loop_handle_segment_button(uint8_t segment_index);    // 处理指定段的按键
-SegmentState_t loop_get_segment_state(uint8_t segment_index);  // 获取段状态
-void loop_set_segment_recording(uint8_t segment_index);    // 设置段进入录制状态
-void loop_set_segment_playing(uint8_t segment_index);      // 设置段进入播放状态
-void loop_set_segment_stopped(uint8_t segment_index);      // 设置段进入停止状态
-uint8_t loop_is_segment_recording(uint8_t segment_index);  // 检查段是否在录制
-uint8_t loop_is_segment_playing(uint8_t segment_index);    // 检查段是否在播放
-
-// 循环模式控制接口
-void loop_set_mode(LoopMode_t mode);                       // 设置循环模式
-LoopMode_t loop_get_mode(void);                            // 获取当前循环模式
-uint8_t loop_is_song_mode(void);                           // 检查是否为歌曲模式
-uint8_t loop_is_free_mode(void);                           // 检查是否为自由模式
-void loop_update_master_segment_info(void);               // 更新主段信息（内部使用）
-
-// uint32_t版本的处理函数（主要使用）
-void loop_process_recording_uint32(uint32_t* audio_data, uint8_t* buffer, uint16_t length);
-void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16_t length);
-
-void loop_timer_update(void);
-
-// 状态查询函数
-LoopState_t loop_get_state(void);
-uint8_t loop_is_recording(void);
-uint8_t loop_is_playing(void);
-uint32_t loop_get_current_address(void);
-uint32_t loop_get_record_length(void);
-
-// 数据校验函数
-uint8_t loop_verify_flash_data(uint32_t test_length);
-
-// 数据转换函数声明
-void convertUint32ArrayToUint8Array(const uint32_t *input, uint8_t *output, size_t size);
-void convertUint8ArrayToUint32Array(const uint8_t *input, uint32_t *output, size_t size);
+// ============================================================================
+// 节拍器模块功能说明和使用示例
+// ============================================================================
+/**
+ * 节拍器模块新功能：
+ * 
+ * 1. 小节概念：
+ *    - 每个小节包含指定数量的拍子（默认4拍）
+ *    - 小节从1开始编号，拍子从1开始编号
+ *    - 每次循环重置时，小节数会增加
+ * 
+ * 2. 声音控制：
+ *    - 可以独立控制节拍器是否发出声音
+ *    - sound_enabled=1：正常节拍器声音
+ *    - sound_enabled=0：静音模式，只计数不发声
+ * 
+ * 3. 状态查询：
+ *    - 当前小节号：AudioLooper.MetronomeGetCurrentMeasure()
+ *    - 当前拍子号：AudioLooper.MetronomeGetCurrentBeat()
+ *    - 总拍数：AudioLooper.MetronomeGetTotalBeats()
+ *    - 总小节数：AudioLooper.MetronomeGetTotalMeasures()
+ * 
+ * 使用示例：
+ * ```c
+ * // 设置节拍器参数
+ * AudioLooper.MetronomeSetBPM(120);                    // 设置120 BPM
+ * AudioLooper.MetronomeSetBeatsPerMeasure(4);          // 4/4拍
+ * AudioLooper.MetronomeSetSoundEnabled(1);             // 开启声音
+ * AudioLooper.MetronomeToggle();                       // 启动节拍器
+ * 
+ * // 查询当前状态
+ * uint32_t measure = AudioLooper.MetronomeGetCurrentMeasure();  // 当前小节
+ * uint8_t beat = AudioLooper.MetronomeGetCurrentBeat();        // 当前拍子
+ * 
+ * // 在循环重置时调用
+ * AudioLooper.MetronomeOnLoopReset();                  // 增加小节计数
+ * 
+ * // 静音模式（只计数，不发声）
+ * AudioLooper.MetronomeSetSoundEnabled(0);             // 关闭声音
+ * ```
+ */
 
 // ============================================================================
-// AudioLooper接口实例声明
+// 节拍器相关函数声明（供外部调用）
 // ============================================================================
-extern AudioLooper_t AudioLooper;
+
+// 节拍器初始化和配置
+void metronome_init(void);
+void metronome_reset(void);
+void metronome_configure(const MetronomeConfig_t* config);
+
+// 节拍器控制
+void metronome_toggle(void);
+void metronome_enable(void);
+void metronome_disable(void);
+uint8_t metronome_is_enabled(void);
+
+// 声音控制
+void metronome_set_sound_enabled(uint8_t enabled);
+uint8_t metronome_is_sound_enabled(void);
+
+// 参数设置
+void metronome_set_bpm(uint16_t bpm);
+void metronome_set_beats_per_measure(uint8_t beats);
+void metronome_set_volume(float volume);
+void metronome_set_downbeat_freq(uint16_t freq);
+void metronome_set_regular_beat_freq(uint16_t freq);
+void metronome_set_beat_duration(uint16_t duration_ms);
+
+// 参数获取
+uint16_t metronome_get_bpm(void);
+uint8_t metronome_get_beats_per_measure(void);
+float metronome_get_volume(void);
+uint16_t metronome_get_downbeat_freq(void);
+uint16_t metronome_get_regular_beat_freq(void);
+uint16_t metronome_get_beat_duration(void);
+
+// 状态查询
+uint8_t metronome_get_current_beat(void);
+BeatType_t metronome_get_current_beat_type(void);
+uint8_t metronome_is_beat_active(void);
+
+// 小节和计数相关
+uint32_t metronome_get_current_measure(void);
+uint8_t metronome_get_current_beat_in_measure(void);
+uint32_t metronome_get_total_beats(void);
+uint32_t metronome_get_total_measures(void);
+uint8_t metronome_is_measure_complete(void);
+void metronome_reset_counts(void);
+void metronome_on_loop_reset(void);
+
+// 音频处理
+void metronome_process_audio(uint32_t* output_data, uint16_t length);
+void metronome_mix_audio(uint32_t* output_data, uint16_t length);
+
+
 
 #endif /* __AUDIO_LOOPER_H__ */

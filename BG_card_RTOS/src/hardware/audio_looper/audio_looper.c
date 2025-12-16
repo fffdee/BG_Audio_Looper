@@ -27,22 +27,11 @@ LoopManager_t g_loop_manager = {
     .play_position = 0,
     .is_initialized = 0,
     .is_new_recording = 0,
-    .use_memory_buffer = 0,
     .current_segment = 0,
     .active_segments = 0,
     .page_size = 256,
-    .auto_test_mode = 0,
-    .auto_test_timer = 0,
-    .auto_test_state = 0,
     .boundary_samples_valid = 0
 };
-
-// 内存缓冲区用于调试 (约0.1秒的48KHz单声道音频，极小测试)
-#define MEMORY_BUFFER_SIZE (4800)  // 0.1秒缓冲区，最小测试
-static int16_t memory_buffer[MEMORY_BUFFER_SIZE];
-static uint32_t memory_write_pos = 0;
-static uint32_t memory_read_pos = 0;
-static uint32_t memory_data_length = 0;
 
 // 校验相关变量（归纳到结构体）
 static int16_t ReadBuf[96];
@@ -55,8 +44,15 @@ static struct {
     int16_t first_playback_sample;
 } g_loop_stats = {0};
 
+// 前向声明（静态辅助函数）
+static void metronome_advance_beat(void);
+static void metronome_update_timing_params(void);
+static float metronome_generate_sine_sample(float freq, float* phase);
 
-void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, size_t size) {
+// 前向声明（非静态辅助函数）
+uint8_t loop_get_flash_device_id(void);
+
+static void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, size_t size) {
     size_t i;
     for (i = 0; i < size; ++i) {
             // 假设系统是小端
@@ -65,7 +61,7 @@ void convertUint8ArrayToInt16Array(const uint8_t *input, int16_t *output, size_t
         }
 }
 
-void convertUint32ArrayToUint8Array(const uint32_t *input, uint8_t *output, size_t size) {
+static void convertUint32ArrayToUint8Array(const uint32_t *input, uint8_t *output, size_t size) {
 	size_t i;
 	for (i = 0; i < size; i++) {
         // 每个uint32_t转换为4个uint8_t，保持双声道数据完整
@@ -77,7 +73,7 @@ void convertUint32ArrayToUint8Array(const uint32_t *input, uint8_t *output, size
     }
 }
 
-void convertUint8ArrayToUint32Array(const uint8_t *input, uint32_t *output, size_t size) {
+static void convertUint8ArrayToUint32Array(const uint8_t *input, uint32_t *output, size_t size) {
     size_t i;
     for (i = 0; i < size; i++) {
         // 将4个uint8_t重新组合为1个uint32_t，恢复双声道数据
@@ -88,7 +84,7 @@ void convertUint8ArrayToUint32Array(const uint8_t *input, uint32_t *output, size
     }
 }
 
-void convertInt16ArrayToUint8Array(const int16_t *input, uint8_t *output, size_t size) {
+static void convertInt16ArrayToUint8Array(const int16_t *input, uint8_t *output, size_t size) {
     size_t i;
     for (i = 0; i < size; ++i) {
         // 假设系统是小端
@@ -105,12 +101,12 @@ void loop_init(void)
     
     g_loop_manager.state = LOOP_STATE_IDLE;
     g_loop_manager.flash_type = FLASH_TYPE_NOR;  // 改为默认使用NAND Flash
+    g_loop_manager.mode = LOOP_MODE_FREE;        // 默认使用自由模式
     g_loop_manager.sector_address = 0;
     g_loop_manager.record_length = 0;
     g_loop_manager.play_position = 0;
     g_loop_manager.is_initialized = 1;
     g_loop_manager.is_new_recording = 0;
-    g_loop_manager.use_memory_buffer = 0;  // 暂时禁用内存缓冲区，使用Flash模式
     
     // 初始化多段录音参数
     g_loop_manager.current_segment = 0;
@@ -125,20 +121,14 @@ void loop_init(void)
         g_loop_manager.segments[i].is_active = 0;
     }
     
-    // 启动自动测试（初始化后自动录制10秒然后播放）
-    //loop_start_auto_test();
-    
-    // 清空内存缓冲区
-    memory_write_pos = 0;
-    memory_read_pos = 0;
-    memory_data_length = 0;
-    memset(memory_buffer, 0, sizeof(memory_buffer));
-    
     // 初始化统计信息
     g_loop_stats.recording_sample_count = 0;
     g_loop_stats.playback_sample_count = 0;
     g_loop_stats.last_recorded_sample = 0;
     g_loop_stats.first_playback_sample = 0;
+    
+    // 初始化节拍器
+    metronome_init();
     
     // 开机全片擦除Flash
     uint8_t flash_device_id = loop_get_flash_device_id();
@@ -159,12 +149,12 @@ void loop_init_with_flash_type(FlashType_t flash_type)
     
     g_loop_manager.state = LOOP_STATE_IDLE;
     g_loop_manager.flash_type = flash_type;  // 使用指定的Flash类型
+    g_loop_manager.mode = LOOP_MODE_FREE;    // 默认使用自由模式
     g_loop_manager.sector_address = 0;
     g_loop_manager.record_length = 0;
     g_loop_manager.play_position = 0;
     g_loop_manager.is_initialized = 1;
     g_loop_manager.is_new_recording = 0;
-    g_loop_manager.use_memory_buffer = 0;  // 暂时禁用内存缓冲区，使用Flash模式
     
     // 初始化多段录音参数
     g_loop_manager.current_segment = 0;
@@ -179,17 +169,14 @@ void loop_init_with_flash_type(FlashType_t flash_type)
         g_loop_manager.segments[i].is_active = 0;
     }
     
-    // 清空内存缓冲区
-    memory_write_pos = 0;
-    memory_read_pos = 0;
-    memory_data_length = 0;
-    memset(memory_buffer, 0, sizeof(memory_buffer));
-    
     // 初始化统计信息
     g_loop_stats.recording_sample_count = 0;
     g_loop_stats.playback_sample_count = 0;
     g_loop_stats.last_recorded_sample = 0;
     g_loop_stats.first_playback_sample = 0;
+    
+    // 初始化节拍器
+    metronome_init();
     
     // 开机全片擦除Flash（使用指定的Flash类型）
     uint8_t flash_device_id = loop_get_flash_device_id();
@@ -211,11 +198,6 @@ void loop_reset(void)
     g_loop_manager.play_position = 0;
     g_loop_manager.is_new_recording = 0;
     
-    // 重置内存缓冲区
-    memory_write_pos = 0;
-    memory_read_pos = 0;
-    memory_data_length = 0;
-    
     // 重置统计信息
     g_loop_stats.recording_sample_count = 0;
     g_loop_stats.playback_sample_count = 0;
@@ -234,11 +216,6 @@ void loop_reset(void)
  */
 void loop_handle_button_press(int8_t segment_index)
 {
-    // 自动测试模式下不响应按键
-    if (g_loop_manager.auto_test_mode) {
-        return;
-    }
-    
     if (!g_loop_manager.is_initialized) {
         DBG("Loop manager not initialized\n");
         return;
@@ -272,10 +249,26 @@ void loop_handle_button_press(int8_t segment_index)
             
         case LOOP_STATE_RECORDING:
             // 录制状态：停止当前段录制并开始混音播放
-            loop_stop_current_segment();
-            g_loop_manager.state = LOOP_STATE_PLAYING;
-            DBG("Stop recording segment %d, start playing %d segments\n",
-                g_loop_manager.current_segment + 1, g_loop_manager.active_segments);
+            // 查找正在录制的段
+            {
+                uint8_t recording_segment = MAX_SEGMENTS;
+                uint8_t i;
+                for (i = 0; i < MAX_SEGMENTS; i++) {
+                    if (g_loop_manager.segments[i].state == SEGMENT_RECORDING) {
+                        recording_segment = i;
+                        break;
+                    }
+                }
+                
+                if (recording_segment < MAX_SEGMENTS) {
+                    loop_stop_current_segment(recording_segment);
+                    DBG("Stop recording segment %d, start playing %d segments\n",
+                        recording_segment + 1, g_loop_manager.active_segments);
+                } else {
+                    DBG("No recording segment found\n");
+                    g_loop_manager.state = LOOP_STATE_PLAYING;
+                }
+            }
             break;
             
         case LOOP_STATE_PLAYING:
@@ -435,30 +428,8 @@ void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t lengt
     // 移除record_flag依赖，直接处理音频数据
     // 录制应该基于音频数据可用性，而不是定时器
     
-    if (g_loop_manager.use_memory_buffer) {
-        // 使用内存缓冲区录制
-        uint16_t i;
-        for (i = 0; i < length && memory_write_pos < MEMORY_BUFFER_SIZE; i++) {
-            memory_buffer[memory_write_pos++] = audio_data[i];
-        }
-        g_loop_stats.recording_sample_count++;
-        
-        // 检查缓冲区是否满
-        if (memory_write_pos >= MEMORY_BUFFER_SIZE) {
-            DBG("Memory buffer full, stop recording. Samples: %lu\n", (unsigned long)memory_write_pos);
-            memory_data_length = memory_write_pos;
-            memory_read_pos = 0;
-            
-            // 自动停止录制并开始播放
-            g_loop_manager.state = LOOP_STATE_PLAYING;
-
-        }
-        
-        // 调试信息（使用统计计数器）
-        if (g_loop_stats.recording_sample_count % 100 == 0) {
-           // DBG("Memory recording: %lu samples, pos: %lu\n", (unsigned long)g_loop_stats.recording_sample_count, (unsigned long)memory_write_pos);
-        }
-    } else {
+    // 只使用Flash录制模式
+    {
         // Flash录制逻辑 - 确保长度参数正确
         
         // 数据校验：检查输入音频数据是否有效
@@ -562,27 +533,8 @@ void loop_process_playback(int16_t* output_data, uint8_t* buffer, uint16_t lengt
     
     uint16_t i;
     
-    if (g_loop_manager.use_memory_buffer) {
-        // 使用内存缓冲区播放
-        if (memory_data_length == 0) {
-            DBG("No recorded data in memory buffer\n");
-            return;  // 没有录制数据，保持原始音频
-        }
-        
-        for (i = 0; i < length; i++) {
-            if (memory_read_pos < memory_data_length) {
-                // 混合音频数据
-                int32_t mixed = (int32_t)output_data[i] + (int32_t)memory_buffer[memory_read_pos];
-                output_data[i] = __nds32__clips(mixed, 15);  // 16位饱和限制
-                memory_read_pos++;
-            } else {
-                // 循环播放
-                memory_read_pos = 0;
-                g_loop_stats.playback_sample_count++;
-                break;
-            }
-        }
-    } else {
+    // 只使用Flash播放模式
+    {
         // Flash播放逻辑
         if (g_loop_manager.record_length == 0) {
             DBG("No recorded data in flash, record_length=0\n");
@@ -631,7 +583,7 @@ void loop_process_playback(int16_t* output_data, uint8_t* buffer, uint16_t lengt
         for (j = 0; j < valid_samples; j++) {
             if (ReadBuf[j] != 0) {
                 non_zero_read++;
-                read_amplitude_sum += abs(ReadBuf[j]);
+                read_amplitude_sum += (ReadBuf[j] < 0) ? -ReadBuf[j] : ReadBuf[j];  // 手动实现abs
             }
         }
         
@@ -652,16 +604,6 @@ void loop_process_playback(int16_t* output_data, uint8_t* buffer, uint16_t lengt
         g_loop_stats.playback_sample_count += samples_to_mix;
         g_loop_manager.play_position += bytes_to_read;
         
-        // 每播放50次打印一次调试信息，增加频率便于调试
-        static uint32_t debug_counter = 0;
-        debug_counter++;
-//        if (debug_counter % 50 == 0) {
-//            DBG("Playing: pos=%d/%d, read=%d, mix_samples=%d, nonzero=%d, avg_amp=%d, first=%d\n",
-//                g_loop_manager.play_position, g_loop_manager.record_length, bytes_to_read,
-//                samples_to_mix, non_zero_read,
-//                non_zero_read > 0 ? read_amplitude_sum / non_zero_read : 0, ReadBuf[0]);
-//        }
-        
         // 移除外部变量依赖
         // sectorAddress = g_loop_manager.play_position;
     }
@@ -681,7 +623,7 @@ void loop_timer_update(void)
     // 例如：LED指示、状态监控等
     
     // 移除外部变量同步
-    // sectorAddress = (g_loop_manager.state == LOOP_STATE_PLAYING) ? 
+    // sectorAddress = (g_loop_manager.state == LOOP_STATE_PLAYING) ?
     //                g_loop_manager.play_position : g_loop_manager.sector_address;
 }
 
@@ -698,7 +640,8 @@ LoopState_t loop_get_state(void)
  */
 uint8_t loop_is_recording(void)
 {
-    return (g_loop_manager.state == LOOP_STATE_RECORDING) ? 1 : 0;
+    return (g_loop_manager.state == LOOP_STATE_RECORDING || 
+            g_loop_manager.state == LOOP_STATE_RECORDING_AND_PLAYING) ? 1 : 0;
 }
 
 /**
@@ -706,7 +649,8 @@ uint8_t loop_is_recording(void)
  */
 uint8_t loop_is_playing(void)
 {
-    return (g_loop_manager.state == LOOP_STATE_PLAYING) ? 1 : 0;
+    return (g_loop_manager.state == LOOP_STATE_PLAYING ||
+            g_loop_manager.state == LOOP_STATE_RECORDING_AND_PLAYING) ? 1 : 0;
 }
 
 /**
@@ -726,348 +670,278 @@ uint32_t loop_get_record_length(void)
     return g_loop_manager.record_length;
 }
 
+// ============================================================================
+// 循环模式控制函数实现
+// ============================================================================
+
 /**
- * @brief Flash数据完整性检查
- * @param test_length 要检查的数据长度（字节）
- * @return 1=数据完整，0=数据损坏
+ * @brief 设置循环模式
+ * @param mode 要设置的循环模式
  */
-uint8_t loop_verify_flash_data(uint32_t test_length)
+void loop_set_mode(LoopMode_t mode)
 {
-    if (g_loop_manager.record_length == 0 || test_length == 0) {
-        DBG("No data to verify or invalid length\n");
-        return 0;
-    }
-    
-    uint32_t check_length = (test_length > g_loop_manager.record_length) ? 
-                           g_loop_manager.record_length : test_length;
-    
-    uint8_t test_buffer[96 * 2];  // 临时缓冲区
-    int16_t test_samples[96];
-    uint32_t total_samples = 0;
-    uint32_t non_zero_samples = 0;
-    uint32_t pos = 0;
-    
-    DBG("Verifying flash data: check_length=%lu, record_length=%lu\n", 
-        (unsigned long)check_length, (unsigned long)g_loop_manager.record_length);
-    
-    // 分块读取并验证
-    while (pos < check_length) {
-        uint32_t read_size = (check_length - pos > sizeof(test_buffer)) ? 
-                           sizeof(test_buffer) : (check_length - pos);
+    if (mode == LOOP_MODE_SONG || mode == LOOP_MODE_FREE) {
+        g_loop_manager.mode = mode;
+        DBG("Loop mode set to %s\n", mode == LOOP_MODE_SONG ? "SONG" : "FREE");
         
-        // 确保读取偶数字节（因为每个样本2字节）
-        if (read_size % 2 != 0) read_size--;
-        
-        uint8_t flash_device_id = loop_get_flash_device_id();
-        BG_flash_manager.ReadData(pos, test_buffer, read_size, flash_device_id);
-        convertUint8ArrayToInt16Array(test_buffer, test_samples, read_size/2);
-        
-        // 统计样本
-        uint16_t samples_in_block = read_size / 2;
-        total_samples += samples_in_block;
-        
-        uint16_t i;
-        for (i = 0; i < samples_in_block; i++) {
-            if (test_samples[i] != 0) {
-                non_zero_samples++;
-            }
+        // 如果切换到歌曲模式，需要重新计算主段信息
+        if (mode == LOOP_MODE_SONG) {
+            loop_update_master_segment_info();
         }
-        
-        pos += read_size;
     }
-    
-    float non_zero_ratio = (float)non_zero_samples / total_samples;
-    DBG("Flash verification: total_samples=%lu, non_zero=%lu, ratio=%.3f\n", 
-        (unsigned long)total_samples, (unsigned long)non_zero_samples, non_zero_ratio);
-    
-    // 如果非零样本比例太低，可能是数据损坏
-    if (non_zero_ratio < 0.001f) {  // 少于0.1%的非零样本认为异常
-        DBG("WARNING: Very low non-zero ratio, possible data corruption\n");
-        return 0;
-    }
-    
-    return 1;
 }
 
 /**
- * @brief 录制处理函数 - uint32_t版本
+ * @brief 获取当前循环模式
+ * @return 当前循环模式
+ */
+LoopMode_t loop_get_mode(void)
+{
+    return g_loop_manager.mode;
+}
+
+/**
+ * @brief 检查是否为歌曲模式
+ * @return 1如果是歌曲模式，0如果不是
+ */
+uint8_t loop_is_song_mode(void)
+{
+    return (g_loop_manager.mode == LOOP_MODE_SONG) ? 1 : 0;
+}
+
+/**
+ * @brief 检查是否为自由模式
+ * @return 1如果是自由模式，0如果不是
+ */
+uint8_t loop_is_free_mode(void)
+{
+    return (g_loop_manager.mode == LOOP_MODE_FREE) ? 1 : 0;
+}
+
+/**
+ * @brief 更新主段信息（内部使用）
+ * 在歌曲模式下，找到最长的段作为主段，用于循环基准
+ */
+void loop_update_master_segment_info(void)
+{
+    uint32_t max_length = 0;
+    uint8_t master_index = 0;
+    uint8_t i;
+    
+    // 找到最长的段
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        if (g_loop_manager.segments[i].is_active && 
+            g_loop_manager.segments[i].length_bytes > max_length) {
+            max_length = g_loop_manager.segments[i].length_bytes;
+            master_index = i;
+        }
+    }
+    
+    g_loop_manager.master_segment_length = max_length;
+    g_loop_manager.master_segment_index = master_index;
+    
+    if (max_length > 0) {
+        DBG("Master segment updated: index %u, length %u bytes\n", 
+            (unsigned int)master_index, (unsigned int)max_length);
+    }
+}
+
+/**
+ * @brief 段录制处理函数 - 基于段实例
+ * @param segment_index 要录制的段索引
+ * @param audio_data uint32_t格式的音频数据
+ * @param buffer 临时缓冲区用于数据转换
+ * @param length uint32_t数据的数量
+ */
+void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data, uint8_t* buffer, uint16_t length)
+{
+    if (segment_index >= MAX_SEGMENTS) {
+        return;  // 无效段索引
+    }
+    
+    SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
+    
+    if (segment->state != SEGMENT_RECORDING) {
+        return;  // 段不在录制状态
+    }
+    
+    uint32_t bytes_to_write = 192;  // 只存储192字节（48个uint32_t * 4字节）
+    uint8_t write_buffer[192];
+    
+    // 直接录制原始音频数据
+    convertUint32ArrayToUint8Array(audio_data, write_buffer, length);
+    uint32_t write_address = segment->start_address + 
+                            segment->length_pages * g_loop_manager.page_size;
+    uint8_t flash_device_id = loop_get_flash_device_id();
+    
+    uint8_t result = BG_flash_manager.PageProgram(write_address, write_buffer, bytes_to_write, flash_device_id);
+    
+    if (result == FLASH_STATUS_OK) {
+        segment->length_pages++;  // 更新段长度
+        // 只在段开始和结束时打印，避免频繁输出
+//        if (segment->length_pages == 1 || segment->length_pages % 100 == 0) {
+//            DBG("Segment %d recording: page %lu written\n", segment_index, (unsigned long)segment->length_pages);
+//        }
+    } else {
+        // 错误信息保留，因为不会频繁出现
+//        DBG("Segment %d recording error: %d at address 0x%lx\n",
+//            segment_index, result, (unsigned long)write_address);
+    }
+}
+
+/**
+ * @brief 总录制处理函数 - 处理所有正在录制的段
  * @param audio_data uint32_t格式的音频数据
  * @param buffer 临时缓冲区用于数据转换
  * @param length uint32_t数据的数量
  */
 void loop_process_recording_uint32(uint32_t* audio_data, uint8_t* buffer, uint16_t length)
 {
-    // 更新自动测试状态
-    loop_update_auto_test();
-    
-    if (g_loop_manager.state != LOOP_STATE_RECORDING) {
-        return;  // 不在录制状态
-    }
-    
-    if (g_loop_manager.use_memory_buffer) {
-        // 内存录制：需要转换为int16_t格式存储
-        uint16_t i;
-        for (i = 0; i < length && memory_write_pos < MEMORY_BUFFER_SIZE - 1; i++) {
-            // 提取左声道存储（简化处理）
-            int16_t sample = (int16_t)(audio_data[i] & 0xFFFF);
-            memory_buffer[memory_write_pos++] = sample;
-        }
-        g_loop_stats.recording_sample_count++;
-        
-        if (memory_write_pos >= MEMORY_BUFFER_SIZE - 1) {
-            DBG("Memory buffer full, stop recording. Samples: %lu\n", (unsigned long)memory_write_pos);
-            memory_data_length = memory_write_pos;
-            memory_read_pos = 0;
-            g_loop_manager.state = LOOP_STATE_PLAYING;
-
-        }
-    } else {
-        // Flash录制：检查当前录制段
-        uint8_t recording_segment = MAX_SEGMENTS;  // 初始化为无效值
-
-        // 查找正在录制的段
-        uint8_t i;
-        for (i = 0; i < MAX_SEGMENTS; i++) {
-            if (g_loop_manager.segments[i].state == SEGMENT_RECORDING) {
-                recording_segment = i;
-                break;
-            }
-        }
-        
-        if (recording_segment >= MAX_SEGMENTS) {
-            return;  // 没有段在录制
-        }
-        
-        uint32_t bytes_to_write = 192;  // 只存储192字节（48个uint32_t * 4字节）
-
-        // 正常录制模式：在录制过程中检测是否需要淡出（避免突然停止的"哒"声）
-        uint8_t write_buffer[192];
-        uint8_t need_fadeout = 0;
-        uint16_t fadeout_factor = 100;
-        
-        // 使用当前录制段的地址信息
-        SegmentInfo_t* current_segment = &g_loop_manager.segments[recording_segment];
-        
-        // 🔧 智能淡出：检测按键状态或长度，在即将停止录制时淡出
-        // 这里可以添加检测逻辑，比如检测按键状态或录制时长
-        // 目前先保持简单，依赖外部调用停止时的淡出
-        
-        convertUint32ArrayToUint8Array(audio_data, write_buffer, length);
-        uint32_t write_address = current_segment->start_address + 
-                                current_segment->length_pages * g_loop_manager.page_size;
-        uint8_t flash_device_id = loop_get_flash_device_id();
-        
-        uint8_t result = BG_flash_manager.PageProgram(write_address, write_buffer, bytes_to_write, flash_device_id);
-        
-        if (result == FLASH_STATUS_OK) {
-            current_segment->length_pages++;  // 更新段长度
-            g_loop_stats.recording_sample_count++;
-            
-            // 只在自动测试模式下进行长度限制
-            if (g_loop_manager.auto_test_mode && g_loop_manager.auto_test_state == 0) {
-                if (current_segment->length_pages >= 562) {  // 562页约3秒
-                    DBG("Auto-test: Segment %d reached length limit, auto-stop\n", recording_segment);
-                    loop_set_segment_stopped(recording_segment);
-                    g_loop_manager.state = LOOP_STATE_PLAYING;
-                }
-            }
-        } else {
-            DBG("Flash write error: %d at address 0x%lx\n", result, (unsigned long)write_address);
+    // 处理所有正在录制的段
+    uint8_t i;
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        if (g_loop_manager.segments[i].state == SEGMENT_RECORDING) {
+            loop_process_segment_recording(i, audio_data, buffer, length);
         }
     }
 }
 
 /**
- * @brief 播放处理函数 - uint32_t版本
+ * @brief 段播放处理函数 - 基于段实例
+ * @param segment_index 要播放的段索引
+ * @param output_data uint32_t格式的输出音频数据（用于混音）
+ * @param buffer 临时缓冲区用于数据转换
+ * @param length uint32_t数据的数量
+ * @return 1=成功播放, 0=无数据播放
+ */
+uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_data, uint8_t* buffer, uint16_t length)
+{
+    if (segment_index >= MAX_SEGMENTS) {
+        return 0;  // 无效段索引
+    }
+    
+    SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
+    
+    if (segment->state != SEGMENT_PLAYING || !segment->is_active) {
+        return 0;  // 段不在播放状态或未激活
+    }
+
+    if (segment->length_pages == 0) {
+        return 0;  // 段没有数据
+    }
+    
+    // 检查播放位置是否需要循环
+    if (segment->play_position >= segment->length_pages) {
+        // 只在循环重置时打印一次
+        if (segment->play_position == segment->length_pages) {
+            DBG("Segment %d loop: reset position from %lu to 0 (length=%lu)\n",
+                segment_index, (unsigned long)segment->play_position, (unsigned long)segment->length_pages);
+        }
+        segment->play_position = 0;  // 重置到段开头
+    }
+    
+    // 读取段数据
+    uint32_t segment_address = segment->start_address + segment->play_position * g_loop_manager.page_size;
+    uint8_t flash_device_id = loop_get_flash_device_id();
+    
+    BG_flash_manager.ReadData(segment_address, buffer, 192, flash_device_id);
+    uint32_t segment_data[48];
+    uint32_t samples_to_read = (length < 48) ? length : 48;
+    convertUint8ArrayToUint32Array(buffer, segment_data, samples_to_read);
+    
+    // 段开头淡入处理
+    if (segment->play_position == 0) {
+        uint16_t fade_samples = (samples_to_read < 16) ? samples_to_read : 16;
+        uint16_t j;
+        for (j = 0; j < fade_samples; j++) {
+            int16_t left = (int16_t)(segment_data[j] & 0xFFFF);
+            int16_t right = (int16_t)((segment_data[j] >> 16) & 0xFFFF);
+            
+            uint16_t fade_factor = (j * 100) / fade_samples;  // 0-100%淡入
+            left = (int16_t)((int32_t)left * fade_factor / 100);
+            right = (int16_t)((int32_t)right * fade_factor / 100);
+            
+            segment_data[j] = ((uint32_t)(uint16_t)right << 16) | ((uint32_t)(uint16_t)left & 0xFFFF);
+        }
+    }
+    
+    // 混音到输出数据
+    uint16_t j;
+    for (j = 0; j < samples_to_read; j++) {
+        int16_t seg_left = (int16_t)(segment_data[j] & 0xFFFF);
+        int16_t seg_right = (int16_t)((segment_data[j] >> 16) & 0xFFFF);
+        int16_t out_left = (int16_t)(output_data[j] & 0xFFFF);
+        int16_t out_right = (int16_t)((output_data[j] >> 16) & 0xFFFF);
+        
+        // 混音：每段贡献60%音量
+        int32_t new_left = (int32_t)out_left + ((int32_t)seg_left * 6 / 10);
+        int32_t new_right = (int32_t)out_right + ((int32_t)seg_right * 6 / 10);
+        
+        // 软限幅
+        new_left = __nds32__clips(new_left, 15);
+        new_right = __nds32__clips(new_right, 15);
+        
+        output_data[j] = ((uint32_t)(uint16_t)new_right << 16) | ((uint32_t)(uint16_t)new_left & 0xFFFF);
+    }
+    
+    // 更新段播放位置
+    segment->play_position++;
+
+    // 不频繁打印播放状态，避免卡顿
+    // DBG("Segment %d playback: position %lu/%lu\n",
+    //     segment_index, (unsigned long)segment->play_position, (unsigned long)segment->length_pages);
+
+    return 1;  // 成功播放
+}
+
+/**
+ * @brief 总播放处理函数 - 混音所有正在播放的段
  * @param output_data uint32_t格式的输出音频数据
  * @param buffer 临时缓冲区用于数据转换
  * @param length uint32_t数据的数量
  */
 void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16_t length)
 {
-    // 更新自动测试状态
-    loop_update_auto_test();
-    
-    if (g_loop_manager.state != LOOP_STATE_PLAYING && g_loop_manager.state != LOOP_STATE_RECORDING) {
-        return;  // 不在播放状态且不在录制状态，保持output_data为0
+    // 清零输出缓冲区
+    uint16_t i;
+    for (i = 0; i < length; i++) {
+        output_data[i] = 0;
     }
     
-    if (g_loop_manager.active_segments == 0) {
-        // 没有录制段，清零输出缓冲区确保静音
-        uint16_t i;
-        for (i = 0; i < length; i++) {
-            output_data[i] = 0;
+    // 统计播放的段数
+    uint8_t playing_count = 0;
+    
+    // 处理所有正在播放的段
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        if (loop_process_segment_playback(i, output_data, buffer, length)) {
+            playing_count++;
         }
-        return;
     }
     
-    if (g_loop_manager.use_memory_buffer) {
-        // 内存播放：从int16_t转换为uint32_t
-        uint16_t i;
-        for (i = 0; i < length; i++) {
-            if (memory_read_pos < memory_data_length) {
-                int16_t sample = memory_buffer[memory_read_pos];
-                
-                // 直接设置播放内容，不混合原始输入
-                // 简化：双声道都播放同样内容
-                output_data[i] = ((uint32_t)(uint16_t)sample << 16) | ((uint32_t)(uint16_t)sample & 0xFFFF);
-                memory_read_pos++;
-            } else {
-                memory_read_pos = 0;
-                g_loop_stats.playback_sample_count++;
-                break;
-            }
-        }
-    } else {
-        // Flash多段混音播放
-        // 找到最长的正在播放的段作为播放循环的基准
-        uint32_t max_length = 0;
-        uint8_t i;
-        uint8_t total_playing = 0;
-        for (i = 0; i < MAX_SEGMENTS; i++) {
-            if (g_loop_manager.segments[i].is_active && 
-                g_loop_manager.segments[i].state == SEGMENT_PLAYING) {
-                total_playing++;
-                if (g_loop_manager.segments[i].length_pages > max_length) {
-                    max_length = g_loop_manager.segments[i].length_pages;
-                }
-            }
-        }
-        
-        if (max_length == 0) {
-            return;  // 没有正在播放的段
-        }
-        
-        // 🔧 新逻辑：每个段使用独立的播放位置，不使用全局播放位置
-        uint32_t effective_length = max_length;  // 使用完整长度
-        
-        // 计算实际要读取的样本数
-        uint32_t samples_per_page = 192 / 4;  // 每页192字节 = 48个uint32样本
-        uint32_t samples_to_read = (length < samples_per_page) ? length : samples_per_page;
-        
-        // 混音所有正在播放的段的数据
-        uint32_t mixed_samples[48];  // 临时混音缓冲区
-        memset(mixed_samples, 0, sizeof(mixed_samples));
-        
-        uint8_t playing_segment_count = 0;
-        for (i = 0; i < MAX_SEGMENTS; i++) {
-            if (!g_loop_manager.segments[i].is_active || 
-                g_loop_manager.segments[i].state != SEGMENT_PLAYING) {
-                continue;
-            }
-            
-            SegmentInfo_t* current_seg = &g_loop_manager.segments[i];
-            
-            // 🔧 关键修复：每个段使用自己的播放位置
-            uint32_t segment_page = current_seg->play_position;
-            uint32_t segment_effective_length = current_seg->length_pages;
-            
-            // 检查段播放位置是否需要循环
-            if (segment_page >= segment_effective_length && segment_effective_length > 0) {
-                segment_page = 0;  // 重置到段开头
-                current_seg->play_position = 0;
-            }
-            
-            uint32_t segment_address = current_seg->start_address +
-                                     segment_page * g_loop_manager.page_size;
-
-            // 读取段数据
-            uint8_t flash_device_id = loop_get_flash_device_id();
-            BG_flash_manager.ReadData(segment_address, buffer, 192, flash_device_id);
-            uint32_t segment_data[48];
-            convertUint8ArrayToUint32Array(buffer, segment_data, samples_to_read);
-
-            // 🔧 额外数据验证：段开头特殊处理
-            if (current_seg->play_position == 0) {
-                // 段开头：检查前几个样本是否有效
-                uint16_t head_check;
-                for (head_check = 0; head_check < 8 && head_check < samples_to_read; head_check++) {
-                    uint32_t sample = segment_data[head_check];
-                    // 如果前几个样本看起来像垃圾数据，用静音替换
-                    if (sample == 0xFFFFFFFF || sample == 0x80008000 ||
-                        (sample & 0xFFFF) == 0xFFFF || ((sample >> 16) & 0xFFFF) == 0xFFFF) {
-                        segment_data[head_check] = 0x00000000;
-                    }
-                }
-            }
-
-            // 检查并清理异常数据
-            uint16_t data_check;
-            for (data_check = 0; data_check < samples_to_read; data_check++) {
-                int16_t seg_left = (int16_t)(segment_data[data_check] & 0xFFFF);
-                int16_t seg_right = (int16_t)((segment_data[data_check] >> 16) & 0xFFFF);
-                
-                // 检查异常值
-                if (seg_left < -32000 || seg_left > 32000 || seg_right < -32000 || seg_right > 32000) {
-                    segment_data[data_check] = 0x00000000;  // 🔧 修复：使用真正的静音值
-                }
-            }
-
-            // 混音到临时缓冲区（增大音量）
-            uint16_t j;
-            for (j = 0; j < samples_to_read; j++) {
-                int16_t seg_left = (int16_t)(segment_data[j] & 0xFFFF);
-                int16_t seg_right = (int16_t)((segment_data[j] >> 16) & 0xFFFF);
-                
-                // 🔧 段开头淡入处理：防止突然的音频跳跃
-                if (current_seg->play_position == 0 && j < 16) {
-                    // 在段开头的前16个样本做淡入
-                    uint16_t fade_factor = (j * 100) / 16;  // 0-100%淡入
-                    seg_left = (int16_t)((int32_t)seg_left * fade_factor / 100);
-                    seg_right = (int16_t)((int32_t)seg_right * fade_factor / 100);
-                }
-
-                int16_t mix_left = (int16_t)(mixed_samples[j] & 0xFFFF);
-                int16_t mix_right = (int16_t)((mixed_samples[j] >> 16) & 0xFFFF);
-
-                // 增大音量混音（每段贡献原音量的60%，提升播放音量）
-                int32_t new_left = (int32_t)mix_left + ((int32_t)seg_left * 5 / 5);
-                int32_t new_right = (int32_t)mix_right + ((int32_t)seg_right * 5 / 5);
-
-                // 立即进行软限幅
-                new_left = __nds32__clips(new_left, 15);
-                new_right = __nds32__clips(new_right, 15);
-
-                mixed_samples[j] = ((uint32_t)(uint16_t)new_right << 16) |
-                                  ((uint32_t)(uint16_t)new_left & 0xFFFF);
-            }
-                playing_segment_count++;
-        }
-        
+    if (playing_count > 0) {
         // 增大整体播放音量
-        if (playing_segment_count > 0) {
-            uint16_t j;
-            for (j = 0; j < samples_to_read; j++) {
-                int16_t left = (int16_t)(mixed_samples[j] & 0xFFFF);
-                int16_t right = (int16_t)((mixed_samples[j] >> 16) & 0xFFFF);
-
-                // 增大音量输出，提升播放效果
-                int32_t boosted_left = (int32_t)left * 3 / 2;   // 增益1.5倍
-                int32_t boosted_right = (int32_t)right * 3 / 2; // 增益1.5倍
-
-                // 软限幅防止溢出
-                boosted_left = __nds32__clips(boosted_left, 15);
-                boosted_right = __nds32__clips(boosted_right, 15);
-
-                mixed_samples[j] = ((uint32_t)(uint16_t)boosted_right << 16) |
-                                  ((uint32_t)(uint16_t)boosted_left & 0xFFFF);
-            }
-        }
-
-        // 复制混音结果到输出，不再需要淡化处理（因为结尾已经用前面数据替换）
-        uint16_t j;
-        for (j = 0; j < samples_to_read && j < length; j++) {
-            output_data[j] = mixed_samples[j];
+        for (i = 0; i < length; i++) {
+            int16_t left = (int16_t)(output_data[i] & 0xFFFF);
+            int16_t right = (int16_t)((output_data[i] >> 16) & 0xFFFF);
+            
+            // 增益1.5倍
+            int32_t boosted_left = (int32_t)left * 3 / 2;
+            int32_t boosted_right = (int32_t)right * 3 / 2;
+            
+            // 软限幅
+            boosted_left = __nds32__clips(boosted_left, 15);
+            boosted_right = __nds32__clips(boosted_right, 15);
+            
+            output_data[i] = ((uint32_t)(uint16_t)boosted_right << 16) | 
+                            ((uint32_t)(uint16_t)boosted_left & 0xFFFF);
         }
         
-        // 🔧 关键修复：递增每个正在播放段的播放位置
-        for (i = 0; i < MAX_SEGMENTS; i++) {
-            if (g_loop_manager.segments[i].is_active && 
-                g_loop_manager.segments[i].state == SEGMENT_PLAYING) {
-                g_loop_manager.segments[i].play_position++;
-            }
-        }
+        // 不频繁打印混音状态，避免卡顿
+        // DBG("Mixed %d segments playback\n", playing_count);
     }
+    
+    // 处理节拍器音频（无论是否有段在播放）
+    metronome_process_audio(output_data, length);
 }
 
 /**
@@ -1108,7 +982,7 @@ void loop_start_new_segment(void)
     
     // 初始化新段
     g_loop_manager.segments[new_segment].start_address = start_address;
-    g_loop_manager.segments[new_segment].length_pages = 0;
+    g_loop_manager.segments[new_segment].length_pages = 0;  // 从0开始，正常录制
     g_loop_manager.segments[new_segment].is_active = 1;
     g_loop_manager.segments[new_segment].state = SEGMENT_RECORDING;
     g_loop_manager.segments[new_segment].play_position = 0;
@@ -1127,72 +1001,75 @@ void loop_start_new_segment(void)
 }
 
 /**
- * @brief 停止当前段录制
+ * @brief 停止指定段录制
+ * @param segment_index 要停止的段索引
  */
-void loop_stop_current_segment(void)
+void loop_stop_current_segment(uint8_t segment_index)
 {
-    // 查找正在录制的段
-    uint8_t recording_segment = MAX_SEGMENTS;
-    uint8_t i;
-    for (i = 0; i < MAX_SEGMENTS; i++) {
-        if (g_loop_manager.segments[i].state == SEGMENT_RECORDING) {
-            recording_segment = i;
-            break;
-        }
-    }
-    
-    if (recording_segment >= MAX_SEGMENTS) {
-        DBG("No segment currently recording\n");
+    if (segment_index >= MAX_SEGMENTS) {
+        DBG("Invalid segment index: %d\n", segment_index);
         return;
     }
     
-    SegmentInfo_t* segment = &g_loop_manager.segments[recording_segment];
+    SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
-    // 🔧 新方案：在录制结尾写入真正的静音数据，确保平滑结束
-    // 添加18页真正的静音数据（100ms）来替换可能的噪声结尾
-    uint8_t silence_pages_to_add = 18;  // 100ms的静音
-    uint8_t silence_buffer[192];
-    uint32_t silence_samples[48];
-    uint16_t sil_idx;
-    
-    // 生成真正的静音值 (0x00000000)
-    for (sil_idx = 0; sil_idx < 48; sil_idx++) {
-        silence_samples[sil_idx] = 0x00000000;
+    if (segment->state != SEGMENT_RECORDING) {
+        DBG("Segment %d is not recording\n", segment_index);
+        return;
     }
     
-    convertUint32ArrayToUint8Array(silence_samples, silence_buffer, 48);
+    // 在录制结尾复制前面的数据，确保循环平滑
+    uint8_t copy_pages_to_add = 10;  // 复制前10页数据
+    uint8_t copy_buffer[192];
     
-    // 写入静音页到当前段结尾
+    // 确保有数据可以复制
+    if (segment->length_pages == 0) {
+        DBG("Warning: No data to copy for segment %d\n", segment_index);
+        return;
+    }
+    
+    // 写入复制的数据页到当前段结尾
     uint8_t flash_device_id = loop_get_flash_device_id();
     uint8_t page_count;
-    for (page_count = 0; page_count < silence_pages_to_add; page_count++) {
-        uint32_t silence_address = segment->start_address + 
-                                  (segment->length_pages + page_count) * g_loop_manager.page_size;
-        uint8_t write_result = BG_flash_manager.PageProgram(silence_address, silence_buffer, 192, flash_device_id);
+    for (page_count = 0; page_count < copy_pages_to_add; page_count++) {
+        // 计算要复制的源页地址（循环使用段开头的数据）
+        uint32_t source_page_index = page_count % segment->length_pages;
+        uint32_t source_address = segment->start_address + source_page_index * g_loop_manager.page_size;
+        
+        // 读取源页数据
+        BG_flash_manager.ReadData(source_address, copy_buffer, 192, flash_device_id);
+        
+        // 写入到段结尾
+        uint32_t dest_address = segment->start_address + 
+                               (segment->length_pages + page_count) * g_loop_manager.page_size;
+        uint8_t write_result = BG_flash_manager.PageProgram(dest_address, copy_buffer, 192, flash_device_id);
         if (write_result != FLASH_STATUS_OK) {
-            DBG("Warning: Failed to write silence page %d\n", page_count);
+            DBG("Warning: Failed to copy page %d to end\n", page_count);
         }
     }
     
-    // 更新段长度（包含静音页）
-    segment->length_pages += silence_pages_to_add;
+    // 更新段长度（包含复制的页）
+    segment->length_pages += copy_pages_to_add;
     
-    DBG("Stop segment %d: recorded %lu pages with end-replacement\n", 
-        recording_segment, (unsigned long)segment->length_pages);
+    DBG("Stop segment %d: recorded %lu pages with end-copy (copied %d pages)\n", 
+        segment_index, (unsigned long)(segment->length_pages - copy_pages_to_add), copy_pages_to_add);
     
     if (segment->length_pages == 0) {
         // 如果没有录制任何数据，标记段为无效
         segment->is_active = 0;
         segment->state = SEGMENT_INACTIVE;
-        DBG("Segment %d has no data, marked as inactive\n", recording_segment);
+        DBG("Segment %d has no data, marked as inactive\n", segment_index);
     } else {
         // 设置段为播放状态
         segment->state = SEGMENT_PLAYING;
         segment->play_position = 0;  // 重置播放位置
         
         DBG("Stopped segment %d: %lu pages, set to PLAYING state\n",
-            recording_segment, (unsigned long)segment->length_pages);
+            segment_index, (unsigned long)segment->length_pages);
     }
+    
+    // 更新全局状态
+    loop_update_global_state();
 }
 
 /**
@@ -1230,78 +1107,6 @@ void loop_clear_all_segments(void)
     DBG("All segments cleared\n");
 }
 
-/**
- * @brief 启动自动测试模式
- */
-void loop_start_auto_test(void)
-{
-    g_loop_manager.auto_test_mode = 1;
-    g_loop_manager.auto_test_timer = 0;
-    g_loop_manager.auto_test_state = 0;  // 0=录制阶段
-    
-    DBG("Starting auto test mode - will record 3 seconds then play using %s Flash\n",
-        g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
-    
-    // 开始第一段录音
-    loop_start_new_segment();
-    
-    DBG("Auto test: started recording segment using %s Flash\n",
-        g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
-}
-
-/**
- * @brief 更新自动测试状态（需要在主循环中调用）
- */
-void loop_update_auto_test(void)
-{
-    if (!g_loop_manager.auto_test_mode) {
-        return;
-    }
-    
-    if (g_loop_manager.auto_test_state == 0) {
-        // 录制阶段 - 检查是否录制了足够长的时间
-        // 使用当前段的长度来判断是否达到3秒（约562页）
-        if (g_loop_manager.active_segments > 0) {
-            SegmentInfo_t* current_seg = &g_loop_manager.segments[0];
-            if (current_seg->length_pages >= 562) {  // 3秒约562页
-                DBG("Auto test: recorded %lu pages, switching to playback\n",
-                    (unsigned long)current_seg->length_pages);
-                // 停止录制，开始播放
-                loop_stop_current_segment();
-                g_loop_manager.auto_test_state = 1;  // 切换到播放阶段
-            }
-        } else {
-            // 检查当前正在录制的段长度，添加淡出处理
-            if (g_loop_manager.state == LOOP_STATE_RECORDING) {
-                if (g_loop_manager.record_length >= 552) {  // 提前10页开始淡出(50ms)
-                    // 标记即将停止，下次录制处理时应用淡出
-                    g_loop_manager.auto_test_timer = 1;  // 用作淡出标记
-                }
-                if (g_loop_manager.record_length >= 562) {
-                    DBG("Auto test: recorded %lu pages, switching to playback\n", 
-                        (unsigned long)g_loop_manager.record_length);
-                    // 停止录制，开始播放
-                    loop_stop_current_segment();
-                    g_loop_manager.auto_test_state = 1;  // 切换到播放阶段
-                }
-            }
-        }
-    } else if (g_loop_manager.auto_test_state == 1) {
-        // 播放阶段 - 持续播放（不停止）
-        // 播放状态已经在其他地方处理，这里只需要保持状态
-    }
-}
-
-/**
- * @brief 停止自动测试模式
- */
-void loop_stop_auto_test(void)
-{
-    g_loop_manager.auto_test_mode = 0;
-    g_loop_manager.auto_test_timer = 0;
-    g_loop_manager.auto_test_state = 0;
-}
-
 // ============================================================================
 // 单段精细控制函数实现
 // ============================================================================
@@ -1316,7 +1121,7 @@ void loop_handle_segment_button(uint8_t segment_index)
         DBG("Invalid segment index: %d\n", segment_index);
         return;
     }
-    
+
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
     switch (segment->state) {
@@ -1329,25 +1134,8 @@ void loop_handle_segment_button(uint8_t segment_index)
         case SEGMENT_RECORDING:
         {
             // 段录制中：停止录制并开始播放
-            // 查找正在录制的段并停止（不依赖全局变量）
-            uint8_t found_recording = 0;
-            uint8_t i;
-            for (i = 0; i < MAX_SEGMENTS; i++) {
-                if (g_loop_manager.segments[i].state == SEGMENT_RECORDING && i == segment_index) {
-                    found_recording = 1;
-                    break;
-                }
-            }
-            
-            if (found_recording) {
-                // 如果确实是正在录制的段，停止录制
-                loop_stop_current_segment();
-                DBG("Segment %d: RECORDING -> PLAYING (stopped recording)\n", segment_index);
-            } else {
-                // 状态不一致，直接设置为播放状态
-                segment->state = SEGMENT_PLAYING;
-                DBG("Segment %d: RECORDING -> PLAYING (state correction)\n", segment_index);
-            }
+            loop_stop_current_segment(segment_index);
+            DBG("Segment %d: RECORDING -> PLAYING (stopped recording)\n", segment_index);
             break;
         }
             
@@ -1376,6 +1164,41 @@ SegmentState_t loop_get_segment_state(uint8_t segment_index)
         return SEGMENT_INACTIVE;
     }
     return g_loop_manager.segments[segment_index].state;
+}
+
+/**
+ * @brief 根据各段状态智能更新全局状态
+ */
+void loop_update_global_state(void)
+{
+    uint8_t has_recording = 0;
+    uint8_t has_playing = 0;
+    uint8_t i;
+    
+    // 统计各段状态
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        if (g_loop_manager.segments[i].state == SEGMENT_RECORDING) {
+            has_recording = 1;
+        }
+        if (g_loop_manager.segments[i].state == SEGMENT_PLAYING) {
+            has_playing = 1;
+        }
+    }
+    
+    // 根据段状态设置全局状态
+    if (has_recording && has_playing) {
+        g_loop_manager.state = LOOP_STATE_RECORDING_AND_PLAYING;
+        DBG("Global state updated: RECORDING_AND_PLAYING (recording=%d, playing=%d)\n", has_recording, has_playing);
+    } else if (has_recording) {
+        g_loop_manager.state = LOOP_STATE_RECORDING;
+        DBG("Global state updated: RECORDING\n");
+    } else if (has_playing) {
+        g_loop_manager.state = LOOP_STATE_PLAYING;
+        DBG("Global state updated: PLAYING\n");
+    } else {
+        g_loop_manager.state = LOOP_STATE_IDLE;
+        DBG("Global state updated: IDLE\n");
+    }
 }
 
 /**
@@ -1420,8 +1243,8 @@ void loop_set_segment_recording(uint8_t segment_index)
     
     segment->state = SEGMENT_RECORDING;
     
-    // 更新全局状态（兼容性）
-    g_loop_manager.state = LOOP_STATE_RECORDING;
+    // 智能更新全局状态：不干扰其他段的播放
+    loop_update_global_state();
     g_loop_manager.is_new_recording = 1;
     g_loop_stats.recording_sample_count = 0;
 }
@@ -1444,13 +1267,6 @@ void loop_set_segment_playing(uint8_t segment_index)
         return;
     }
     
-    // 如果段正在录制，需要先更新其长度信息
-    if (segment->state == SEGMENT_RECORDING && segment_index == g_loop_manager.current_segment) {
-        // 更新当前录制段的长度
-        segment->length_pages = g_loop_manager.record_length;
-        DBG("Updated recording segment %d length to %lu pages\n", segment_index, (unsigned long)segment->length_pages);
-    }
-    
     // 如果段还没有数据，不能播放
     if (segment->length_pages == 0) {
         DBG("Cannot play segment %d: no recorded data\n", segment_index);
@@ -1460,8 +1276,10 @@ void loop_set_segment_playing(uint8_t segment_index)
     segment->state = SEGMENT_PLAYING;
     segment->play_position = 0;  // 重置播放位置
     
-    // 更新全局状态
-    g_loop_manager.state = LOOP_STATE_PLAYING;
+    // 智能更新全局状态：不干扰其他段
+    loop_update_global_state();
+    
+    DBG("Segment %d set to PLAYING state\n", segment_index);
 }
 
 /**
@@ -1478,57 +1296,18 @@ void loop_set_segment_stopped(uint8_t segment_index)
     
     if (segment->state == SEGMENT_RECORDING) {
         // 如果是从录制状态停止，需要保存录制信息
-        segment->length_pages = g_loop_manager.record_length;
         segment->length_bytes = segment->length_pages * g_loop_manager.page_size;
         
-        // 在录制结尾写入静音页，确保平滑结束
-        uint8_t silence_buffer[192];
-        uint32_t silence_samples[48];
-        uint16_t sil_idx;
-        
-        // 生成正确的静音值
-        for (sil_idx = 0; sil_idx < 48; sil_idx++) {
-            silence_samples[sil_idx] = 0x00000000;
-        }
-        
-        convertUint32ArrayToUint8Array(silence_samples, silence_buffer, 48);
-        
-        // 写入少量静音页
-        uint8_t flash_device_id = loop_get_flash_device_id();
-        uint32_t silence_address = segment->start_address + 
-                                  segment->length_pages * g_loop_manager.page_size;
-        BG_flash_manager.PageProgram(silence_address, silence_buffer, 192, flash_device_id);
-        
-        segment->length_pages++;  // 增加静音页
-
         DBG("Segment %d recording stopped: %lu pages\n", 
             segment_index, (unsigned long)segment->length_pages);
     }
     
     segment->state = SEGMENT_STOPPED;
     
-    // 检查是否还有其他段在录制或播放
-    uint8_t has_recording = 0, has_playing = 0;
-    uint8_t i;
-    for (i = 0; i < MAX_SEGMENTS; i++) {
-        if (g_loop_manager.segments[i].state == SEGMENT_RECORDING) {
-            has_recording = 1;
-        }
-        if (g_loop_manager.segments[i].state == SEGMENT_PLAYING) {
-            has_playing = 1;
-        }
-    }
+    // 智能更新全局状态：不干扰其他段
+    loop_update_global_state();
     
-    // 更新全局状态
-    if (has_recording && has_playing) {
-        g_loop_manager.state = LOOP_STATE_RECORDING_AND_PLAYING;
-    } else if (has_recording) {
-        g_loop_manager.state = LOOP_STATE_RECORDING;
-    } else if (has_playing) {
-        g_loop_manager.state = LOOP_STATE_PLAYING;
-    } else {
-        g_loop_manager.state = LOOP_STATE_IDLE;
-    }
+    DBG("Segment %d set to STOPPED state\n", segment_index);
 }
 
 /**
@@ -1558,7 +1337,7 @@ uint8_t loop_is_segment_playing(uint8_t segment_index)
 }
 
 // ============================================================================
-// AudioLooper接口实现函数（内部实现）
+// AudioLooper接口实现函数（基础功能）
 // ============================================================================
 
 /**
@@ -1600,7 +1379,6 @@ static LoopResult_t AudioLooper_ButtonPress(void) {
 
 /**
  * @brief AudioLooper接口：处理指定段的按键按下
- * @param segment_index 段索引 (0-3)
  */
 static LoopResult_t AudioLooper_SegmentButtonPress(uint8_t segment_index) {
     if (segment_index >= MAX_SEGMENTS) {
@@ -1709,41 +1487,400 @@ static uint32_t AudioLooper_GetRecordLength(void) {
 }
 
 /**
- * @brief AudioLooper接口：验证Flash数据
- */
-static uint8_t AudioLooper_VerifyFlashData(uint32_t test_length) {
-    return loop_verify_flash_data(test_length);
-}
-
-/**
  * @brief AudioLooper接口：定时器更新
  */
 static void AudioLooper_TimerUpdate(void) {
     loop_timer_update();
 }
 
+/**
+ * @brief AudioLooper接口：设置循环模式
+ */
+static void AudioLooper_SetMode(LoopMode_t mode) {
+    loop_set_mode(mode);
+}
+
+/**
+ * @brief AudioLooper接口：获取当前循环模式
+ */
+static LoopMode_t AudioLooper_GetMode(void) {
+    return loop_get_mode();
+}
+
+/**
+ * @brief AudioLooper接口：检查是否为歌曲模式
+ */
+static uint8_t AudioLooper_IsSongMode(void) {
+    return loop_is_song_mode();
+}
+
+/**
+ * @brief AudioLooper接口：检查是否为自由模式
+ */
+static uint8_t AudioLooper_IsFreeMode(void) {
+    return loop_is_free_mode();
+}
+
+/**
+ * @brief AudioLooper接口：节拍器开关
+ */
+static void AudioLooper_MetronomeToggle(void) {
+    metronome_toggle();
+}
+
+/**
+ * @brief AudioLooper接口：设置BPM
+ */
+static void AudioLooper_MetronomeSetBPM(uint16_t bpm) {
+    metronome_set_bpm(bpm);
+}
+
+/**
+ * @brief AudioLooper接口：设置每小节拍数
+ */
+static void AudioLooper_MetronomeSetBeatsPerMeasure(uint8_t beats) {
+    metronome_set_beats_per_measure(beats);
+}
+
+/**
+ * @brief AudioLooper接口：设置音量
+ */
+static void AudioLooper_MetronomeSetVolume(float volume) {
+    metronome_set_volume(volume);
+}
+
+/**
+ * @brief AudioLooper接口：设置声音开关
+ */
+static void AudioLooper_MetronomeSetSoundEnabled(uint8_t enabled) {
+    metronome_set_sound_enabled(enabled);
+}
+
+/**
+ * @brief AudioLooper接口：检查节拍器是否启用
+ */
+static uint8_t AudioLooper_MetronomeIsEnabled(void) {
+    return metronome_is_enabled();
+}
+
+/**
+ * @brief AudioLooper接口：检查节拍器声音是否启用
+ */
+static uint8_t AudioLooper_MetronomeIsSoundEnabled(void) {
+    return metronome_is_sound_enabled();
+}
+
+/**
+ * @brief AudioLooper接口：获取BPM
+ */
+static uint16_t AudioLooper_MetronomeGetBPM(void) {
+    return metronome_get_bpm();
+}
+
+/**
+ * @brief AudioLooper接口：获取每小节拍数
+ */
+static uint8_t AudioLooper_MetronomeGetBeatsPerMeasure(void) {
+    return metronome_get_beats_per_measure();
+}
+
+/**
+ * @brief AudioLooper接口：获取当前小节号
+ */
+static uint32_t AudioLooper_MetronomeGetCurrentMeasure(void) {
+    return metronome_get_current_measure();
+}
+
+/**
+ * @brief AudioLooper接口：获取当前拍子号
+ */
+static uint8_t AudioLooper_MetronomeGetCurrentBeat(void) {
+    return metronome_get_current_beat();
+}
+
+/**
+ * @brief AudioLooper接口：获取总拍数
+ */
+static uint32_t AudioLooper_MetronomeGetTotalBeats(void) {
+    return metronome_get_total_beats();
+}
+
+/**
+ * @brief AudioLooper接口：获取总小节数
+ */
+static uint32_t AudioLooper_MetronomeGetTotalMeasures(void) {
+    return metronome_get_total_measures();
+}
+
+/**
+ * @brief AudioLooper接口：检查当前小节是否刚完成
+ */
+static uint8_t AudioLooper_MetronomeIsMeasureComplete(void) {
+    return metronome_is_measure_complete();
+}
+
+/**
+ * @brief AudioLooper接口：重置小节和拍子计数
+ */
+static void AudioLooper_MetronomeResetCounts(void) {
+    metronome_reset_counts();
+}
+
+/**
+ * @brief AudioLooper接口：循环重置时调用
+ */
+static void AudioLooper_MetronomeOnLoopReset(void) {
+    metronome_on_loop_reset();
+}
+
 // ============================================================================
-// 全局AudioLooper接口实例（类似BG_flash_manager）
+// 节拍器模块内部函数实现
 // ============================================================================
+
+/**
+ * @brief 初始化节拍器模块
+ */
+void metronome_init(void) {
+    // 初始化节拍器配置
+    g_loop_manager.metronome.state = METRONOME_OFF;
+    g_loop_manager.metronome.config.bpm = 120;
+    g_loop_manager.metronome.config.beats_per_measure = 4;
+    g_loop_manager.metronome.config.volume = 80;
+    g_loop_manager.metronome.config.sound_enabled = 1;
+    
+    // 初始化小节信息
+    g_loop_manager.metronome.measure_info.measure_number = 1;
+    g_loop_manager.metronome.measure_info.beat_in_measure = 1;
+    g_loop_manager.metronome.measure_info.total_beats = 0;
+    g_loop_manager.metronome.measure_info.total_measures = 0;
+    g_loop_manager.metronome.measure_info.measure_complete = 0;
+    
+    // 初始化运行状态
+    g_loop_manager.metronome.current_beat = 0;
+    g_loop_manager.metronome.current_beat_type = BEAT_TYPE_DOWNBEAT;
+    g_loop_manager.metronome.beat_interval_samples = (METRONOME_SAMPLE_RATE * 60) / g_loop_manager.metronome.config.bpm;
+    g_loop_manager.metronome.sample_counter = 0;
+    g_loop_manager.metronome.loop_reset_flag = 0;
+    
+    DBG("Metronome initialized: BPM=%d, BeatsPerMeasure=%d\n", 
+        g_loop_manager.metronome.config.bpm,
+        g_loop_manager.metronome.config.beats_per_measure);
+}
+
+/**
+ * @brief 切换节拍器开关状态
+ */
+void metronome_toggle(void) {
+    g_loop_manager.metronome.state = (g_loop_manager.metronome.state == METRONOME_OFF) ? METRONOME_ON : METRONOME_OFF;
+    
+    if (g_loop_manager.metronome.state == METRONOME_ON) {
+        // 开启时重置状态
+        g_loop_manager.metronome.sample_counter = 0;
+        g_loop_manager.metronome.current_beat = 0;
+        g_loop_manager.metronome.current_beat_type = BEAT_TYPE_DOWNBEAT;
+        DBG("Metronome enabled\n");
+    } else {
+        DBG("Metronome disabled\n");
+    }
+}
+
+/**
+ * @brief 检查节拍器是否开启
+ * @return 1=开启，0=关闭
+ */
+uint8_t metronome_is_enabled(void) {
+    return (g_loop_manager.metronome.state == METRONOME_ON) ? 1 : 0;
+}
+
+/**
+ * @brief 设置节拍器BPM
+ * @param bpm BPM值（建议范围：60-200）
+ */
+void metronome_set_bpm(uint16_t bpm) {
+    if (bpm >= 60 && bpm <= 200) {
+        g_loop_manager.metronome.config.bpm = bpm;
+        g_loop_manager.metronome.beat_interval_samples = (METRONOME_SAMPLE_RATE * 60) / bpm;
+        DBG("Metronome BPM set to %d\n", bpm);
+    }
+}
+
+/**
+ * @brief 获取节拍器BPM
+ * @return 当前BPM值
+ */
+uint16_t metronome_get_bpm(void) {
+    return g_loop_manager.metronome.config.bpm;
+}
+
+/**
+ * @brief 设置每小节拍数
+ * @param beats 每小节拍数（建议范围：2-8）
+ */
+void metronome_set_beats_per_measure(uint8_t beats) {
+    if (beats >= 2 && beats <= 8) {
+        g_loop_manager.metronome.config.beats_per_measure = beats;
+        DBG("Metronome beats per measure set to %d\n", beats);
+    }
+}
+
+/**
+ * @brief 获取每小节拍数
+ * @return 当前每小节拍数
+ */
+uint8_t metronome_get_beats_per_measure(void) {
+    return g_loop_manager.metronome.config.beats_per_measure;
+}
+
+/**
+ * @brief 设置节拍器音量
+ * @param volume 音量值（0.0-1.0）
+ */
+void metronome_set_volume(float volume) {
+    if (volume >= 0.0f && volume <= 1.0f) {
+        g_loop_manager.metronome.config.volume = volume;
+        DBG("Metronome volume set to %.2f\n", volume);
+    }
+}
+
+/**
+ * @brief 获取当前拍子号（在整个序列中）
+ * @return 当前拍子号
+ */
+uint8_t metronome_get_current_beat(void) {
+    return g_loop_manager.metronome.measure_info.beat_in_measure;
+}
+
+/**
+ * @brief 节拍器音频处理
+ * @param output_data 输出音频数据缓冲区
+ * @param length 数据长度（采样点数）
+ */
+void metronome_process_audio(uint32_t* output_data, uint16_t length) {
+    uint32_t i;
+    
+    if (!metronome_is_enabled() || !g_loop_manager.metronome.config.sound_enabled) {
+        return;  // 节拍器关闭或静音模式
+    }
+    
+    for (i = 0; i < length; i++) {
+        g_loop_manager.metronome.sample_counter++;
+        
+        // 检查是否到达下一拍
+        if (g_loop_manager.metronome.sample_counter >= g_loop_manager.metronome.beat_interval_samples) {
+            metronome_advance_beat();
+            g_loop_manager.metronome.sample_counter = 0;
+        }
+        
+        // 生成节拍器音频信号（简单的点击声）
+        if (g_loop_manager.metronome.sample_counter < 1000) {  // 前1000个采样点播放点击声
+            uint32_t click_amplitude = (uint32_t)(0x7FFF * g_loop_manager.metronome.config.volume);  // 音量调节
+            
+            // 强拍（第一拍）音调更高
+            if (g_loop_manager.metronome.current_beat_type == BEAT_TYPE_DOWNBEAT) {
+                click_amplitude = (uint32_t)(click_amplitude * 1.5);
+                if (click_amplitude > 0x7FFF) click_amplitude = 0x7FFF;
+            }
+            
+            // 混合到输出（假设output_data是32位数据）
+            output_data[i] |= (click_amplitude << 16) | click_amplitude;  // 双声道
+        }
+    }
+}
+
+/**
+ * @brief 推进到下一拍
+ * @note 内部函数，用于处理拍子推进和小节切换逻辑
+ */
+static void metronome_advance_beat(void) {
+    // 增加当前拍子
+    g_loop_manager.metronome.current_beat++;
+    g_loop_manager.metronome.measure_info.beat_in_measure++;
+    g_loop_manager.metronome.measure_info.total_beats++;
+    
+    // 检查是否完成一个小节
+    if (g_loop_manager.metronome.measure_info.beat_in_measure > g_loop_manager.metronome.config.beats_per_measure) {
+        // 完成小节，开始新小节
+        g_loop_manager.metronome.measure_info.measure_number++;
+        g_loop_manager.metronome.measure_info.total_measures++;
+        g_loop_manager.metronome.measure_info.beat_in_measure = 1;
+        g_loop_manager.metronome.measure_info.measure_complete = 1;
+        g_loop_manager.metronome.current_beat_type = BEAT_TYPE_DOWNBEAT;
+        
+        DBG("Metronome: Completed measure %lu, starting measure %lu\n",
+            (unsigned long)(g_loop_manager.metronome.measure_info.measure_number - 1),
+            (unsigned long)g_loop_manager.metronome.measure_info.measure_number);
+    } else {
+        // 普通拍子
+        g_loop_manager.metronome.current_beat_type = BEAT_TYPE_REGULAR;
+    }
+    
+    DBG("Metronome: Beat %d/%d in measure %lu (total beats: %lu)\n",
+        g_loop_manager.metronome.measure_info.beat_in_measure,
+        g_loop_manager.metronome.config.beats_per_measure,
+        (unsigned long)g_loop_manager.metronome.measure_info.measure_number,
+        (unsigned long)g_loop_manager.metronome.measure_info.total_beats);
+    }
+
+// ============================================================================
+// AudioLooper模块实例定义
+// ============================================================================
+
+/**
+ * @brief AudioLooper模块全局实例
+ */
 AudioLooper_t AudioLooper = {
+    // 初始化和配置
     .Init = AudioLooper_Init,
     .InitWithFlashType = AudioLooper_InitWithFlashType,
     .Reset = AudioLooper_Reset,
     .SetFlashType = AudioLooper_SetFlashType,
+    
+    // 控制操作
     .ButtonPress = AudioLooper_ButtonPress,
     .SegmentButtonPress = AudioLooper_SegmentButtonPress,
     .EncoderLeft = AudioLooper_EncoderLeft,
     .EncoderRight = AudioLooper_EncoderRight,
     .StopRecording = AudioLooper_StopRecording,
+    
+    // 音频处理
     .ProcessRecording = AudioLooper_ProcessRecording,
     .ProcessPlayback = AudioLooper_ProcessPlayback,
     .ProcessRecording32 = AudioLooper_ProcessRecording32,
     .ProcessPlayback32 = AudioLooper_ProcessPlayback32,
+    
+    // 状态查询
     .GetStatus = AudioLooper_GetStatus,
     .IsRecording = AudioLooper_IsRecording,
     .IsPlaying = AudioLooper_IsPlaying,
     .GetCurrentAddress = AudioLooper_GetCurrentAddress,
     .GetRecordLength = AudioLooper_GetRecordLength,
-    .VerifyFlashData = AudioLooper_VerifyFlashData,
-    .TimerUpdate = AudioLooper_TimerUpdate
+    
+    // 测试和调试
+    .TimerUpdate = AudioLooper_TimerUpdate,
+    
+    // 模式控制
+    .SetMode = AudioLooper_SetMode,
+    .GetMode = AudioLooper_GetMode,
+    .IsSongMode = AudioLooper_IsSongMode,
+    .IsFreeMode = AudioLooper_IsFreeMode,
+    
+    // 节拍器控制
+    .MetronomeToggle = AudioLooper_MetronomeToggle,
+    .MetronomeSetBPM = AudioLooper_MetronomeSetBPM,
+    .MetronomeSetBeatsPerMeasure = AudioLooper_MetronomeSetBeatsPerMeasure,
+    .MetronomeSetVolume = AudioLooper_MetronomeSetVolume,
+    .MetronomeSetSoundEnabled = AudioLooper_MetronomeSetSoundEnabled,
+    .MetronomeIsEnabled = AudioLooper_MetronomeIsEnabled,
+    .MetronomeIsSoundEnabled = AudioLooper_MetronomeIsSoundEnabled,
+    .MetronomeGetBPM = AudioLooper_MetronomeGetBPM,
+    .MetronomeGetBeatsPerMeasure = AudioLooper_MetronomeGetBeatsPerMeasure,
+    
+    // 小节和拍子信息查询
+    .MetronomeGetCurrentMeasure = AudioLooper_MetronomeGetCurrentMeasure,
+    .MetronomeGetCurrentBeat = AudioLooper_MetronomeGetCurrentBeat,
+    .MetronomeGetTotalBeats = AudioLooper_MetronomeGetTotalBeats,
+    .MetronomeGetTotalMeasures = AudioLooper_MetronomeGetTotalMeasures,
+    .MetronomeIsMeasureComplete = AudioLooper_MetronomeIsMeasureComplete,
+    .MetronomeResetCounts = AudioLooper_MetronomeResetCounts,
+    .MetronomeOnLoopReset = AudioLooper_MetronomeOnLoopReset
 };
