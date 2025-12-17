@@ -152,6 +152,38 @@ void Gui_ShowString(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
 	}
 }
 
+/* 6x8 small font display - single character */
+void Gui_ShowChar6x8(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc)
+{
+	uint8_t c, w, h, ch;
+	
+	if (chr < ' ' || chr > '~') chr = ' ';
+	c = chr - ' ';
+	
+	for (w = 0; w < 6; w++) {
+		ch = F6x8[c][w];
+		for (h = 0; h < 8; h++) {
+			if (ch & (1 << h)) {
+				Gui_DrawPoint(x0 + w, y0 + h, fc);
+			}
+		}
+	}
+}
+
+/* 6x8 small font display - string */
+void Gui_ShowString6x8(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
+{
+	while (*chr != '\0') {
+		Gui_ShowChar6x8(x0, y0, *chr, fc);
+		x0 += 6;
+		if (x0 > LCD_WIDTH - 6) {
+			x0 = 0;
+			y0 += 8;
+		}
+		chr++;
+	}
+}
+
 void Gui_ShowNum(uint16_t x0, uint16_t y0, uint32_t num, uint16_t fc)
 {
 	uint8_t bit_count = 0;

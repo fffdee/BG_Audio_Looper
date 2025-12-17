@@ -37,7 +37,7 @@ extern void OTG_DeviceSendResp(uint16_t Resp, uint8_t n);
 UsbAudio UsbAudioSpeaker;
 UsbAudio UsbAudioMic;
 int16_t iso_buf[48*2];
-SRAContext UsbSraObj;//Èí¼þÎ¢µ÷pcm²ÉÑùµãÊý£¬½á¹¹Ìå¡£
+SRAContext UsbSraObj;//ï¿½ï¿½ï¿½ï¿½Î¢ï¿½ï¿½pcmï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½å¡£
 MCU_CIRCULAR_CONTEXT usb_speak_buff;
 int16_t usb_in_buff[512*2];///==dac0 out buff
 int16_t pcm_in_buf[SRA_BLOCK*4];///Temp buff
@@ -46,9 +46,9 @@ void UsbSraInit(void);
 void UsbSraDataProcess(MCU_CIRCULAR_CONTEXT *InBuf, MCU_CIRCULAR_CONTEXT *OutBuf);
 /////////////////////////////////////////
 /**
- * @brief  USBÉù¿¨Ä£Ê½ÏÂ£¬·¢ËÍ·´Ïò¿ØÖÆÃüÁî
- * @param  Cmd ·´Ïò¿ØÖÆÃüÁî
- * @return 1-³É¹¦£¬0-Ê§°Ü
+ * @brief  USBï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½Â£ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  Cmd ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return 1-ï¿½É¹ï¿½ï¿½ï¿½0-Ê§ï¿½ï¿½
  */
 #define AUDIO_STOP        BIT(7) 
 #define AUDIO_PP          BIT(6) 
@@ -98,8 +98,8 @@ bool OTG_DeviceAudioSendPcCmd(uint8_t Cmd)
 }
 
 
-//×ª²ÉÑùÖ±½ÓÔÚÖÐ¶ÏÖÐ´¦Àí£¬×ª²ÉÑùÊ±¼ä´óÔ¼ÊÇ180us¡£
-//×¢ÒâÒ»ÏÂÐèÒª4×Ö½Ú¶ÔÆë
+//×ªï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½180usï¿½ï¿½
+//×¢ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Òª4ï¿½Ö½Ú¶ï¿½ï¿½ï¿½
 void OnDeviceAudioRcvIsoPacket(void)
 {
 #ifdef CFG_RES_AUDIO_USB_IN_EN
@@ -232,9 +232,9 @@ void UsbAudioSpeakerSampleRateChange(uint32_t SampleRate);
 
 void OTG_DeviceAudioRequest(void)
 {
-	//AUDIO¿ØÖÆ½Ó¿Ú×é¼þIDºÅ¶¨Òå£¨±ØÐëÓëdevice_stor_audio_request.cÖÐµÄ¶¨Òå±£³ÖÒ»ÖÂ£¡£©
+	//AUDIOï¿½ï¿½ï¿½Æ½Ó¿ï¿½ï¿½ï¿½ï¿½IDï¿½Å¶ï¿½ï¿½å£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½device_stor_audio_request.cï¿½ÐµÄ¶ï¿½ï¿½å±£ï¿½ï¿½Ò»ï¿½Â£ï¿½ï¿½ï¿½
 	#define AUDIO_SPEAKER_IT_ID		1
-	#define AUDIO_SPEAKER_FU_ID		2	//¿ØÖÆMUTE¡¢VOLUME
+	#define AUDIO_SPEAKER_FU_ID		2	//ï¿½ï¿½ï¿½ï¿½MUTEï¿½ï¿½VOLUME
 	#define AUDIO_SPEAKER_OT_ID		3
 	#define AUDIO_MIC_IT_ID			4
 	#define AUDIO_MIC_FU_ID			5
@@ -256,7 +256,7 @@ void OTG_DeviceAudioRequest(void)
 	#define SET_CUR_EP	0x2201
 	#define GET_CUR_EP	0xA281
 	
-	//AUDIOÀàÇëÇó´¦Àí
+	//AUDIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	if(AudioCmd == SET_CUR_EP)
 	{
 		if(Setup[4] == 0x84)
@@ -291,7 +291,7 @@ void OTG_DeviceAudioRequest(void)
 
 	if((Entity == AUDIO_SPEAKER_FU_ID) && (Control == 0x01))
 	{
-		//Speaker muteµÄ²Ù×÷
+		//Speaker muteï¿½Ä²ï¿½ï¿½ï¿½
 		if(AudioCmd == GET_CUR)
 		{
 			Setup[0] = UsbAudioSpeaker.Mute;
@@ -309,7 +309,7 @@ void OTG_DeviceAudioRequest(void)
 	}
 	else if((Entity == AUDIO_SPEAKER_FU_ID) && (Control == 0x02))
 	{
-		//Speaker volumeµÄ²Ù×÷
+		//Speaker volumeï¿½Ä²ï¿½ï¿½ï¿½
 		if(AudioCmd == GET_MIN)
 		{
 			DBG("Get speaker min volume\n");
@@ -360,7 +360,7 @@ void OTG_DeviceAudioRequest(void)
 	}
 	else if((Entity == AUDIO_MIC_FU_ID) && (Control == 0x01))
 	{
-		//Mic muteµÄ²Ù×÷
+		//Mic muteï¿½Ä²ï¿½ï¿½ï¿½
 		if(AudioCmd == GET_CUR)
 		{
 			OTG_DeviceSendResp(UsbAudioMic.Mute, 1);
@@ -376,7 +376,7 @@ void OTG_DeviceAudioRequest(void)
 	}
 	else if((Entity == AUDIO_MIC_FU_ID) && (Control == 0x02))
 	{
-		//Mic volumeµÄ²Ù×÷
+		//Mic volumeï¿½Ä²ï¿½ï¿½ï¿½
 		if(AudioCmd == GET_MIN)
 		{
 			//OTG_DBG("Get mic min volume\n");
@@ -384,7 +384,7 @@ void OTG_DeviceAudioRequest(void)
 		}
 		else if(AudioCmd == GET_MAX)
 		{
-			OTG_DeviceSendResp(AUDIO_MAX_VOLUME, 2);	//´Ë´¦³ËÒÔ4µÄÔ­ÒòÇë¿´±¾ÎÄ¼þ¿ªÍ·µÄ×¢ÊÍËµÃ÷
+			OTG_DeviceSendResp(AUDIO_MAX_VOLUME, 2);	//ï¿½Ë´ï¿½ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ë¿´ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Í·ï¿½ï¿½×¢ï¿½ï¿½Ëµï¿½ï¿½
 		}
 		else if(AudioCmd == GET_RES)
 		{
@@ -425,7 +425,7 @@ void OTG_DeviceAudioRequest(void)
 	}
 	else if(Entity == AUDIO_MIC_SL_ID)
 	{
-		//SelectorµÄ²Ù×÷
+		//Selectorï¿½Ä²ï¿½ï¿½ï¿½
 		if(AudioCmd == GET_CUR)
 		{
 			//OTG_DBG("Get selector: 1\n");
@@ -442,13 +442,13 @@ void OTG_DeviceAudioRequest(void)
 	}	
 	else
 	{
-		//ÆäËûAUDIOÀàµÄÊäÈëÇëÇó
+		//ï¿½ï¿½ï¿½ï¿½AUDIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		OTG_DeviceSendResp(0x0000, 1);
 	}
 }
 /*
 ****************************************************************
-* usbÈí¼þÎ¢µ÷´¦Àí³õÊ¼»¯º¯Êý
+* usbï¿½ï¿½ï¿½ï¿½Î¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -461,7 +461,7 @@ void UsbSraInit(void)
 
 /*
 ****************************************************************
-* usbÈí¼þÎ¢µ÷´¦ÀíÊý¾ÝÊä³öº¯Êý
+* usbï¿½ï¿½ï¿½ï¿½Î¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -490,7 +490,7 @@ void UsbSraDataProcess(MCU_CIRCULAR_CONTEXT *InBuf, MCU_CIRCULAR_CONTEXT *OutBuf
 	{
 		len = (SRA_BLOCK + AdjustVal);
 	}
-	else//´íÎó´¦Àí£¬´æÒ»Ö¡Ô­Ê¼Êý¾Ýµ½dac fifo£¬ÀíÂÛÉÏ²»»á
+	else//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ö¡Ô­Ê¼ï¿½ï¿½ï¿½Ýµï¿½dac fifoï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½
 	{
 		len = SRA_BLOCK;
 	}
@@ -506,12 +506,12 @@ void UsbSraDataProcess(MCU_CIRCULAR_CONTEXT *InBuf, MCU_CIRCULAR_CONTEXT *OutBuf
 		if(AmountWaterLevel > MAX_REMAIN_SPACE_SAMPLE)
 		{
 			ModifyVal = 1;
-			DBG("+S\n");
+			/* DBG("+S\n"); */  /* æ³¨é‡ŠæŽ‰ï¼šæ­¤å¤„æ‰“å°ä¼šå¯¼è‡´éŸ³é¢‘å¡é¡¿ */
 		}
 		else if(AmountWaterLevel < MIN_REMAIN_SPACE_SAMPLE)
 		{
 			ModifyVal = -1;
-			DBG("-S\n");
+			/* DBG("-S\n"); */  /* æ³¨é‡ŠæŽ‰ï¼šæ­¤å¤„æ‰“å°ä¼šå¯¼è‡´éŸ³é¢‘å¡é¡¿ */
 		}
 		AdjustVal = ModifyVal;
 		WaterLevelCount = 0;

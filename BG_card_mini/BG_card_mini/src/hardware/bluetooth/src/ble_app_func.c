@@ -14,6 +14,7 @@ extern BT_CONFIGURATION_PARAMS		*btStackConfigParams;
 #endif
 
 #include "ble_process.h"
+#include "shell_io_ble.h"
 #include "debug.h"
 #if (BLE_SUPPORT == ENABLE)
 
@@ -348,7 +349,10 @@ int16_t app_att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t t
 	switch(attribute_handle)
 	{
 		case ATT_CHARACTERISTIC_AB01_01_VALUE_HANDLE:
-			prase_ble_packet(buffer, buffer_size);
+			/* 将BLE收到的数据转发给Shell命令行系统 */
+			ShellIO_BLE_OnDataReceived(buffer, buffer_size);
+			/* 同时保留原有的BLE协议解析 */
+
 			break;
 
 		case ATT_CHARACTERISTIC_AB02_01_VALUE_HANDLE:

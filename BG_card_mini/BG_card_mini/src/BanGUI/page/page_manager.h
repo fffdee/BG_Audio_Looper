@@ -15,6 +15,7 @@ typedef enum{
 	NONE_OPR,
 
 }BG_Page_ID;
+
 extern uint8_t data[9];
 extern BG_Page_Table table[MAX_PAGE];
 extern const unsigned char gImage_qq[3200];

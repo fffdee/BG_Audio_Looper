@@ -27,6 +27,11 @@
 #include "otg_detect.h"
 #include "otg_device_audio.h"
 #include "otg_device_cdc.h"
+#include "bg_shell.h"
+#include "shell_io_cdc.h"
+#include "shell_io_ble.h"
+#include "shell_io_manager.h"
+#include "audio_looper.h"
 
 #include "spi_flash.h"
 
@@ -41,6 +46,10 @@ uint32_t DAC0_FIFO[DAC_FIFO_SAMPLES];
 #define DAC0_FIFO_LEN sizeof(DAC0_FIFO)
 uint32_t DAC1_FIFO[DAC_FIFO_SAMPLES];
 #define DAC1_FIFO_LEN sizeof(DAC1_FIFO)
+
+// Looper音频缓冲区
+static uint8_t looper_flash_buffer[512];
+static uint32_t looper_playback_buffer[256];
 
 // ==================== 外部变量 ====================
 extern uint32_t usb_speaker_enable;
@@ -233,7 +242,11 @@ void BG_audio_Init(uint16_t SampleRate)
 	A2dp_DecoderInit();
 	BtStackServiceStart();
 	
-
+	// 初始化Shell IO管理器（自动管理CDC和BLE接口）
+	ShellIOManager_Init();
+	
+	// 初始化Audio Looper（使用NOR Flash）
+	AudioLooper.InitWithFlashType(FLASH_TYPE_NOR);
 }
 
 // ==================== 音量控制函数 ====================
@@ -455,10 +468,32 @@ static void ApplyAudioEffects(uint16_t len)
 static void BuildFinalOutput(uint16_t len, uint32_t *bt_audio_buffer)
 {
 	uint16_t i;
+	uint16_t usb_data_len;
 	if (usb_speaker_enable)
 	{
-		while (UsbAudioSpeakerDataLenGet() < len);
-		UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, len);
+		usb_data_len = UsbAudioSpeakerDataLenGet();
+		if (usb_data_len >= len)
+		{
+			/* USB数据充足，正常读取 */
+			UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, len);
+		}
+		else if (usb_data_len > 0)
+		{
+			/* USB数据不足，读取可用数据，剩余填零 */
+			UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, usb_data_len);
+			for (i = usb_data_len; i < len; i++)
+			{
+				BG_AudioManager.Audio_data.USB_dac_buf[i] = 0;
+			}
+		}
+		else
+		{
+			/* USB无数据，全部填零避免噪声 */
+			for (i = 0; i < len; i++)
+			{
+				BG_AudioManager.Audio_data.USB_dac_buf[i] = 0;
+			}
+		}
 		for (i = 0; i < len; i++)
 		{
 			BG_AudioManager.Audio_data.OutPut_buf[i] =
@@ -578,15 +613,62 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 		ProcessMicOutput(RealLen);
 		ProcessSpeakerSwitch();
 
+		/* Looper录制处理 - 使用uint32格式的音频数据 */
+		if (AudioLooper.IsRecording())
+		{
+			AudioLooper.ProcessRecording32(BG_AudioManager.Audio_data.guitar_buf_out,
+			                               looper_flash_buffer, RealLen);
+		}
+
+		/* 清零播放缓冲区 */
+		for (i = 0; i < RealLen; i++)
+		{
+			looper_playback_buffer[i] = 0;
+		}
+		
+		/* Looper播放处理 */
+		if (AudioLooper.IsPlaying())
+		{
+			AudioLooper.ProcessPlayback32(looper_playback_buffer, looper_flash_buffer, RealLen);
+		}
+		
+		/* 混合节拍器音频（独立于播放，节拍器可单独使用） */
+		if (AudioLooper.MetronomeIsEnabled())
+		{
+			metronome_process_audio(looper_playback_buffer, RealLen);
+		}
+
 		if (usb_speaker_enable)
 		{
-			while (UsbAudioSpeakerDataLenGet() < MIN_SAMPLE);
-			UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, RealLen);
+			uint16_t usb_data_len = UsbAudioSpeakerDataLenGet();
+			if (usb_data_len >= RealLen)
+			{
+				/* USB数据充足，正常读取 */
+				UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, RealLen);
+			}
+			else if (usb_data_len > 0)
+			{
+				/* USB数据不足，读取可用数据，剩余填零 */
+				UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, usb_data_len);
+				for (i = usb_data_len; i < RealLen; i++)
+				{
+					BG_AudioManager.Audio_data.USB_dac_buf[i] = 0;
+				}
+			}
+			else
+			{
+				/* USB无数据，全部填零避免噪声 */
+				for (i = 0; i < RealLen; i++)
+				{
+					BG_AudioManager.Audio_data.USB_dac_buf[i] = 0;
+				}
+			}
 			for (i = 0; i < RealLen; i++)
 			{
 				BG_AudioManager.Audio_data.OutPut_buf[i] =
 					BG_AudioManager.Audio_data.guitar_buf_out[i] +
-					BG_AudioManager.Audio_data.USB_dac_buf[i];
+					BG_AudioManager.Audio_data.USB_dac_buf[i] +
+					looper_playback_buffer[i];
 			}
 		}
 		else
@@ -594,7 +676,8 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 			for (i = 0; i < RealLen; i++)
 			{
 				BG_AudioManager.Audio_data.OutPut_buf[i] =
-					BG_AudioManager.Audio_data.guitar_buf_out[i];
+					BG_AudioManager.Audio_data.guitar_buf_out[i] +
+					looper_playback_buffer[i];
 			}
 		}
 
@@ -629,85 +712,8 @@ void Audio_loop(void)
 		AudioLoopMinimal(bt_audio_buffer);
 	}
 	
-	// CDC串口应用处理（可选，取消注释以启用示例功能）
-	 CDC_Process_Example();
-}
-
-// ==================== CDC串口示例函数 ====================
-
-/**
- * CDC串口处理示例函数
- * 功能：接收串口数据并回显，支持简单命令
- *
- * 使用说明：
- * 1. 在Audio_loop中取消注释 CDC_Process_Example() 调用
- * 2. 通过串口工具连接（115200 bps）
- * 3. 发送文本会自动回显
- * 4. 支持命令：VERSION, STATUS, HELP
- */
-static void CDC_Process_Example(void)
-{
-	static uint8_t cmdBuffer[128];
-	static uint8_t cmdIndex = 0;
-	uint8_t rxByte;
-	
-	// 检查是否有数据可读
-	while(OTG_DeviceCDC_GetRxCount() > 0 && cmdIndex < sizeof(cmdBuffer)-1)
-	{
-		// 逐字节读取
-		OTG_DeviceCDC_Receive(&rxByte, 1);
-		
-		// 检测到换行符，处理命令
-		if(rxByte == '\r' || rxByte == '\n')
-		{
-			if(cmdIndex > 0)
-			{
-				cmdBuffer[cmdIndex] = '\0';
-				
-				// 处理命令
-				if(strcmp((char*)cmdBuffer, "VERSION") == 0)
-				{
-					const char *response = "BG Card v1.0\r\n";
-					OTG_DeviceCDC_Send((uint8_t*)response, strlen(response));
-				}
-				else if(strcmp((char*)cmdBuffer, "STATUS") == 0)
-				{
-					char statusMsg[64];
-					sprintf(statusMsg, "Audio: Running, USB: Connected\r\n");
-					OTG_DeviceCDC_Send((uint8_t*)statusMsg, strlen(statusMsg));
-				}
-				else if(strcmp((char*)cmdBuffer, "HELP") == 0)
-				{
-					const char *help = "Commands: VERSION, STATUS, HELP\r\n";
-					OTG_DeviceCDC_Send((uint8_t*)help, strlen(help));
-				}
-				else
-				{
-					// 回显接收到的数据
-					OTG_DeviceCDC_Send((uint8_t*)"Echo: ", 6);
-					OTG_DeviceCDC_Send(cmdBuffer, cmdIndex);
-					OTG_DeviceCDC_Send((uint8_t*)"\r\n", 2);
-				}
-				
-				cmdIndex = 0;
-			}
-		}
-		else
-		{
-			// 累积字符
-			cmdBuffer[cmdIndex++] = rxByte;
-			// 实时回显字符（可选）
-			// OTG_DeviceCDC_Send(&rxByte, 1);
-		}
-	}
-	
-	// 防止缓冲区溢出
-	if(cmdIndex >= sizeof(cmdBuffer)-1)
-	{
-		const char *error = "Error: Command too long\r\n";
-		OTG_DeviceCDC_Send((uint8_t*)error, strlen(error));
-		cmdIndex = 0;
-	}
+	// CDC串口应用处理 - 使用Shell IO管理器（自动切换CDC/BLE）
+	ShellIOManager_Process();
 }
 
 // ==================== 保留的原始函数（兼容性） ====================

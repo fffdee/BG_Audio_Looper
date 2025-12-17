@@ -21,7 +21,7 @@ extern "C" {
 #include "typedefine.h"
 
 #ifdef __NDS32__
-#define USE_FATFS_FS
+//#define USE_FATFS_FS
 #endif
 
 /* Memory operation functions remap */

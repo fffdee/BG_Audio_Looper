@@ -370,55 +370,11 @@ bool OTG_DeviceCDC_FlushRx(void)
 /**
  * @brief  CDC task - 处理接收到的数据（数据接收由中断自动完成）
  * @note   使用中断接收后，此Task只需处理缓冲区中的数据，无需轮询USB
+ *         数据处理由Shell命令行系统接管
  */
 void OTG_DeviceCDC_Task(void)
 {
-    if(!UsbCDC.InitOk || !UsbCDC.IsConnected)
-    {
-        return;
-    }
-    
-    // 中断模式：数据接收由OnDeviceCDC_BulkOutReceived自动完成
-    // Task只需处理缓冲区中已接收的数据
-    
-    // 如果有数据，处理并回显
-    if(UsbCDC.RxCount > 0)
-    {
-        uint16_t i;
-        uint8_t rxBuf[64];
-        uint16_t rxLen = 0;
-        
-        // 从缓冲区读取数据
-        for(i = 0; i < sizeof(rxBuf) && UsbCDC.RxCount > 0; i++)
-        {
-            rxBuf[i] = UsbCDC.RxBuffer[UsbCDC.RxTail];
-            UsbCDC.RxTail = (UsbCDC.RxTail + 1) % CDC_RX_BUFFER_SIZE;
-            UsbCDC.RxCount--;
-            rxLen++;
-        }
-        
-        if(rxLen > 0)
-        {
-            DBG("CDC RX: %u bytes\n", rxLen);
-            
-            // 打印接收到的数据（十六进制）
-            DBG("CDC Data: ");
-            for(i = 0; i < rxLen; i++)
-            {
-                DBG("%02X ", rxBuf[i]);
-            }
-            DBG("\n");
-            
-            // 回显数据
-            uint16_t txLen = OTG_DeviceCDC_Send(rxBuf, rxLen);
-            if(txLen == rxLen)
-            {
-                DBG("CDC Echo: %u bytes sent\n", txLen);
-            }
-            else
-            {
-                DBG("CDC Echo failed: only %u/%u bytes sent\n", txLen, rxLen);
-            }
-        }
-    }
+    // 此函数保留用于底层CDC维护
+    // 数据接收由中断完成，数据处理由Shell_Task()完成
+    // 应用层请调用Shell_Task()处理命令行
 }

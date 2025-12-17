@@ -57,7 +57,7 @@ void st7735_init(void)
 	    Lcd_WriteData(0x0E);
 
 	    Lcd_WriteIndex(0x36); //MX, MY, RGB mode
-	   // Lcd_WriteData(0x20);
+	   //Lcd_WriteData(0x20);
 	    Lcd_WriteData(0xA0);
 	   // Lcd_WriteData(0x28);
 	    //ST7735R Gamma Sequence

@@ -224,32 +224,32 @@
 		<link>
 			<name>driver/driver_api/inc/adc_interface.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/adc_interface.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/adc_interface.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/backup_interface.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/backup_interface.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/backup_interface.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/dac_interface.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/dac_interface.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/dac_interface.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/fft_api.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/fft_api.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/fft_api.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/i2c_host.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/i2c_host.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/i2c_host.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/i2c_interface.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/i2c_interface.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/i2c_interface.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/otg</name>
@@ -259,92 +259,92 @@
 		<link>
 			<name>driver/driver_api/inc/sadc_interface.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/sadc_interface.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/sadc_interface.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/sd_card.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/sd_card.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/sd_card.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/spdif_interface.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/spdif_interface.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/spdif_interface.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/spi_flash.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver/inc/spi_flash.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver/inc/spi_flash.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/spim.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver/inc/spim.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver/inc/spim.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/spis.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver/inc/spis.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver/inc/spis.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/sw_uart.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/sw_uart.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/sw_uart.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/uarts_interface.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/uarts_interface.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/uarts_interface.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/adc_interface.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/adc_interface.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/adc_interface.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/backup_interface.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/backup_interface.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/backup_interface.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/dac_interface.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/dac_interface.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/dac_interface.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/fft_api.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1234/MVsB1_Base_SDK/driver/driver_api/src/fft_api.c</locationURI>
+			<locationURI>copy_PARENT12/MVsB1_Base_SDK/driver/driver_api/src/fft_api.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/i2c_host.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/i2c_host.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/i2c_host.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/i2c_interface.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/i2c_interface.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/i2c_interface.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/sadc_interface.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/sadc_interface.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/sadc_interface.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/sd_card.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/sd_card.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/sd_card.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/spim_interface.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/spim_interface.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/spim_interface.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/uarts_interface.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/src/uarts_interface.c</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/src/uarts_interface.c</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/adpcm_encoder.h</name>
@@ -659,27 +659,27 @@
 		<link>
 			<name>driver/driver_api/inc/otg/otg_device_audio.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/otg/otg_device_audio.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/otg/otg_device_audio.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/otg/otg_device_standard_request.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/otg/otg_device_standard_request.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/otg/otg_device_standard_request.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/otg/otg_device_stor.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/otg/otg_device_stor.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/otg/otg_device_stor.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/otg/otg_host_standard_enum.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/otg/otg_host_standard_enum.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/otg/otg_host_standard_enum.h</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/otg/otg_host_udisk.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT123/driver/driver_api/inc/otg/otg_host_udisk.h</locationURI>
+			<locationURI>copy_PARENT1/driver/driver_api/inc/otg/otg_host_udisk.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/FreeRTOS.h</name>
@@ -849,14 +849,6 @@
 		<variable>
 			<name>copy_PARENT12</name>
 			<value>$%7BPARENT-1-copy_PARENT1%7D</value>
-		</variable>
-		<variable>
-			<name>copy_PARENT123</name>
-			<value>$%7BPARENT-2-copy_PARENT12%7D/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK</value>
-		</variable>
-		<variable>
-			<name>copy_PARENT1234</name>
-			<value>$%7BPARENT-1-copy_PARENT123%7D</value>
 		</variable>
 	</variableList>
 </projectDescription>

@@ -60,6 +60,9 @@
 #include "bg_audio_io_manager.h"
 #include "hardware_conf.h"
 #include "framebuffer.h"
+#include "audio_looper.h"
+#include "shell_lcd_adapter.h"  /* Shell LCD console adapter */
+#include "bg_shell.h"           /* Shell console API */
 
 
 extern void SysTickInit(void);
@@ -217,6 +220,59 @@ void button_init()
 	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX15);
 }
 
+/*============================================================================
+ * Looper 4-Button Control
+ * Button mapping:
+ *   GPIO_A0  -> Segment 0 (按键按下为低电平)
+ *   GPIO_B5  -> Segment 1
+ *   GPIO_A15 -> Segment 2
+ *   GPIO_A16 -> Segment 3
+ *===========================================================================*/
+
+/* 按键状态记录（用于边沿检测） */
+static uint8_t looper_btn_last_state[4] = {1, 1, 1, 1};  /* 上拉，默认高电平 */
+static uint8_t looper_btn_debounce[4] = {0, 0, 0, 0};
+
+/**
+ * @brief 处理Looper按键输入
+ * @note  在主循环中周期性调用，实现4个按键控制4个段
+ *        每次按下切换段状态: INACTIVE->RECORDING->PLAYING->STOPPED->PLAYING...
+ */
+void Looper_ProcessButtons(void)
+{
+	uint8_t btn_current[4];
+	uint8_t i;
+	
+	/* 读取4个按键当前状态（低电平有效） */
+	btn_current[0] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX0) ? 1 : 0;
+	btn_current[1] = GPIO_RegOneBitGet(GPIO_B_IN, GPIO_INDEX5) ? 1 : 0;
+	btn_current[2] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX15) ? 1 : 0;
+	btn_current[3] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX16) ? 1 : 0;
+	
+	/* 处理每个按键 */
+	for (i = 0; i < 4; i++)
+	{
+		if (btn_current[i] == 0 && looper_btn_last_state[i] == 1)
+		{
+			/* 下降沿检测 - 按键按下 */
+			looper_btn_debounce[i]++;
+			if (looper_btn_debounce[i] >= 3)  /* 简单去抖 */
+			{
+				/* 调用Looper段按键处理 */
+				AudioLooper.SegmentButtonPress(i);
+				looper_btn_debounce[i] = 0;
+				looper_btn_last_state[i] = 0;
+			}
+		}
+		else if (btn_current[i] == 1)
+		{
+			/* 按键释放 */
+			looper_btn_last_state[i] = 1;
+			looper_btn_debounce[i] = 0;
+		}
+	}
+}
+
 void EffectTask() {
 
 
@@ -235,25 +291,38 @@ void EffectTask() {
 	GPIO_RegOneBitSet(GPIO_A_OE, GPIOA17);
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA17);
 	BG_lcd.Init();
-	 BG_lcd.Clear(BLUE);
-	// 初始化帧缓冲系统
+	 BG_lcd.Clear(0);
+	
+	/* Initialize Shell LCD console adapter */
+	ShellLCD_Adapter_Init();
+	
+	// Initialize frame buffer system
 //	FrameBuffer_Init();
 
 	BG_page = BG_Page_Init(table, MAX_PAGE);
 //
-//	// 使用帧缓冲清屏
+//	// Use frame buffer to clear screen
 //	FrameBuffer_Clear(0x0000);
-//	FrameBuffer_Flush(); // 立即刷新到屏幕
+//	FrameBuffer_Flush(); // Flush to screen immediately
 
 	button_init();
 	//BG_page.Next(&BG_page);
-	BG_AudioManager.Audio_Init(44100);
+	BG_AudioManager.Audio_Init(48000);  /* Use 48kHz to match USB audio */
 	while (1) {
 		BG_AudioManager.Audio_Loop();
 		
+		/* Process Looper 4-button input */
+		Looper_ProcessButtons();
+		
 		if(UI_flag == 1){
 			UI_flag =0;
-		BG_page.Loop(&BG_page);
+		
+		/* If Shell console enabled, only update console display, skip page rendering */
+		if (Shell_ConsoleIsEnabled()) {
+			Shell_ConsoleUpdate();
+		} else {
+			BG_page.Loop(&BG_page);
+		}
 
 #ifdef USE_FRAME_BUFFER
     BG_lcd.FlushFrameBuffer();
