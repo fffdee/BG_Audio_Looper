@@ -426,34 +426,40 @@ void Gui_Circle2(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {//Bresenham绠�
 
 }
 
-
-// void Lcd_Clear(uint16_t Color)               {
+//
+// void Lcd_Clear(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc)
+// {
 //    unsigned int i,m;
-//    Lcd_SetRegion(0,0,LCD_WIDTH-1,LCD_HEIGHT-1);
+//	uint16_t x_end, y_end;
+//	x_end = x + w;
+//	y_end = y + h;
+//	Lcd_SetRegion(x,y,x+w,y+h);
 //    Lcd_WriteIndex(0x2C);
-//    for(i=0;i<LCD_WIDTH;i++)
-//     for(m=0;m<LCD_HEIGHT;m++)
-//     {
-// 	  	  LCD_WriteData_16Bit(Color);
-//     }
+//    for(i=x;i<x_end;i++)
+//    for(m=y;m<y_end;m++)
+//    {
+//	  	  LCD_WriteData_16Bit(bc);
+//    }
 // }
-void Gui_box(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc){
-	/* 濉厖鐭╁舰 */
-	uint16_t i,m;
-	uint16_t x_end, y_end;
-	x_end = x + w - 1;
-	y_end = y + h - 1;
-	Lcd_SetRegion(x,y,x+w,y+h);
-    Lcd_WriteIndex(0x2C);
-    for(i=x;i<x_end;i++)
-    for(m=y;m<y_end;m++)
-    {
-	  	  LCD_WriteData_16Bit(bc);
-    }
-	// for (i = 0; i < h; i++) {
-	// 	Gui_DrawLine(x, y + i, x + w - 1, y + i, bc);
-	// }
-}
+//void Gui_box(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc){
+//	/* 濉厖鐭╁舰 */
+//	uint16_t i,;
+//
+//	 for (i = 0; i < h; i++) {
+//	 	Gui_DrawLine(x, y + i, x + w - 1, y + i, bc);
+//	 }
+//}
+
+ void Gui_box(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t bc) {
+     uint32_t total = w * h;
+     uint32_t i;
+
+     Lcd_SetRegion(x, y, x + w - 1, y + h - 1);
+     Lcd_WriteIndex(0x2C);
+     for (i = 0; i < total; i++) {
+         LCD_WriteData_16Bit(bc);
+     }
+ }
 
 void Gui_box_border(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc){
 	/* 鍙敾杈规 (鍘熸潵鐨凣ui_box鍔熻兘) */
