@@ -1,5 +1,7 @@
 #include "st7735.h"
 #include "bg_lcd.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 extern void Lcd_WriteData(uint8_t data);
 extern void Lcd_WriteIndex(uint8_t index);
@@ -10,6 +12,7 @@ void st7735_init(void)
 
 		LCD_RST_ENABLE();
 		Lcd_WriteIndex(0x11);//Sleep exit
+		vTaskDelay(120);  // CRITICAL: Must wait 120ms after sleep exit!
 
 
 	    //ST7735R Frame Rate
@@ -57,7 +60,7 @@ void st7735_init(void)
 	    Lcd_WriteData(0x0E);
 
 	    Lcd_WriteIndex(0x36); //MX, MY, RGB mode
-	   //Lcd_WriteData(0x20);
+	   // Lcd_WriteData(0x20);
 	    Lcd_WriteData(0xA0);
 	   // Lcd_WriteData(0x28);
 	    //ST7735R Gamma Sequence

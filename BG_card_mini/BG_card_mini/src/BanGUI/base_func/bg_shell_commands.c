@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V2.0.0
  * @date     16-December-2025
- * @brief    Shell命令模块实现
+ * @brief    Shell鍛戒护妯″潡瀹炵幇
  *****************************************************************************
  */
 
@@ -15,9 +15,13 @@
 #include "shell_io_cdc.h"
 #include "shell_io_ble.h"
 #include "shell_io_manager.h"
+#include "page_manager.h"
+#include "bg_lcd.h"
+#include "BG_FlashMgr.h"
+#include "flash_bus.h"
 
 /*============================================================================
- * sys 模块 - 系统信息
+ * sys 妯″潡 - 绯荤粺淇℃伅
  *===========================================================================*/
 
 static int sys_info(int argc, char *argv[])
@@ -89,7 +93,7 @@ static int sys_reboot(int argc, char *argv[])
     return 0;
 }
 
-/* LCD控制台控制命令 */
+/* LCD鎺у埗鍙版帶鍒跺懡浠�*/
 static int sys_console(int argc, char *argv[])
 {
     if (argc < 1)
@@ -218,22 +222,64 @@ static int sys_io(int argc, char *argv[])
     return 0;
 }
 
+static int sys_rotate(int argc, char *argv[])
+{
+    static uint8_t current_rotation = 0;
+    
+    if (argc < 1)
+    {
+        /* 鏄剧ず褰撳墠鏃嬭浆瑙掑害 */
+        Shell_Printf("Current rotation: %d掳 (", current_rotation * 90);
+        switch (current_rotation)
+        {
+            case 0: Shell_Print("Portrait)\r\n"); break;
+            case 1: Shell_Print("Landscape)\r\n"); break;
+            case 2: Shell_Print("Portrait Inverted)\r\n"); break;
+            case 3: Shell_Print("Landscape Inverted)\r\n"); break;
+        }
+        Shell_Print("\r\nUsage:\r\n");
+        Shell_Print("  sys -r 0    - 0掳 (绔栧睆)\r\n");
+        Shell_Print("  sys -r 1    - 90掳 (妯睆)\r\n");
+        Shell_Print("  sys -r 2    - 180掳 (绔栧睆鍊掔疆)\r\n");
+        Shell_Print("  sys -r 3    - 270掳 (妯睆鍊掔疆)\r\n");
+        return 0;
+    }
+    
+    /* 璁剧疆鏃嬭浆瑙掑害 */
+    int rotation = atoi(argv[0]);
+    if (rotation < 0 || rotation > 3)
+    {
+        Shell_Print("Error: Rotation must be 0-3\r\n");
+        return -1;
+    }
+    
+    current_rotation = (uint8_t)rotation;
+    Lcd_SetRotation(current_rotation);
+    Shell_Printf("Screen rotated to %d掳\r\n", current_rotation * 90);
+    
+    /* 鏃嬭浆鍚庢竻灞�*/
+    BG_lcd.Clear(BLACK);
+    
+    return 0;
+}
+
 static const ShellOpt_t sys_opts[] = {
-    OPT("i", "info",    NULL,   "Show system info",     sys_info),
-    OPT("m", "mem",     NULL,   "Show memory status",   sys_mem),
-    OPT("t", "tasks",   NULL,   "List running tasks",   sys_tasks),
-    OPT("u", "uptime",  NULL,   "Show uptime",          sys_uptime),
-    OPT("r", "reboot",  NULL,   "Reboot system",        sys_reboot),
-    OPT("o", "io",      "[cmd]", "IO control (cdc/ble/lock/unlock)", sys_io),
-    OPT("c", "console", "[cmd]", "LCD console (on/off/clear)",       sys_console),
-    OPT("d", "dbglcd",  "[cmd]", "DBG to LCD (on/off)",              sys_dbglcd),
+    OPT("i", "info",    NULL,      "Show system info",     sys_info),
+    OPT("m", "mem",     NULL,      "Show memory status",   sys_mem),
+    OPT("t", "tasks",   NULL,      "List running tasks",   sys_tasks),
+    OPT("u", "uptime",  NULL,      "Show uptime",          sys_uptime),
+    OPT("b", "reboot",  NULL,      "Reboot system",        sys_reboot),
+    OPT("o", "io",      "[cmd]",   "IO control (cdc/ble/lock/unlock)", sys_io),
+    OPT("c", "console", "[cmd]",   "LCD console (on/off/clear)",       sys_console),
+    OPT("d", "dbglcd",  "[cmd]",   "DBG to LCD (on/off)",              sys_dbglcd),
+    OPT("r", "rotate",  "[0-3]",   "Rotate screen (0/1/2/3 = 0掳/90掳/180掳/270掳)", sys_rotate),
     OPT_END()
 };
 
 DEFINE_MODULE(sys, "System information", MOD_CAT_SYSTEM, sys_opts);
 
 /*============================================================================
- * audio 模块 - 音频控制
+ * audio 妯″潡 - 闊抽鎺у埗
  *===========================================================================*/
 
 static int audio_vol(int argc, char *argv[])
@@ -335,7 +381,7 @@ static const ShellOpt_t audio_opts[] = {
 DEFINE_MODULE(audio, "Audio control", MOD_CAT_PARAM, audio_opts);
 
 /*============================================================================
- * gpio 模块 - GPIO控制
+ * gpio 妯″潡 - GPIO鎺у埗
  *===========================================================================*/
 
 static int gpio_read(int argc, char *argv[])
@@ -385,7 +431,7 @@ static const ShellOpt_t gpio_opts[] = {
 DEFINE_MODULE(gpio, "GPIO control", MOD_CAT_HARDWARE, gpio_opts);
 
 /*============================================================================
- * lcd 模块 - LCD控制
+ * lcd 妯″潡 - LCD鎺у埗
  *===========================================================================*/
 
 static int lcd_on(int argc, char *argv[])
@@ -426,7 +472,7 @@ static const ShellOpt_t lcd_opts[] = {
 DEFINE_MODULE(lcd, "LCD control", MOD_CAT_HARDWARE, lcd_opts);
 
 /*============================================================================
- * led 模块 - LED控制
+ * led 妯″潡 - LED鎺у埗
  *===========================================================================*/
 
 static int led_on(int argc, char *argv[])
@@ -461,7 +507,7 @@ static const ShellOpt_t led_opts[] = {
 DEFINE_MODULE(led, "LED control", MOD_CAT_HARDWARE, led_opts);
 
 /*============================================================================
- * dbg 模块 - 调试命令
+ * dbg 妯″潡 - 璋冭瘯鍛戒护
  *===========================================================================*/
 
 static int dbg_echo(int argc, char *argv[])
@@ -545,7 +591,7 @@ static const ShellOpt_t dbg_opts[] = {
 DEFINE_MODULE(dbg, "Debug tools", MOD_CAT_DEBUG, dbg_opts);
 
 /*============================================================================
- * looper 模块 - Audio Looper控制与测试
+ * looper 妯″潡 - Audio Looper鎺у埗涓庢祴璇�
  *===========================================================================*/
 
 static int looper_init_cmd(int argc, char *argv[])
@@ -790,7 +836,175 @@ static const ShellOpt_t looper_opts[] = {
 DEFINE_MODULE(looper, "Audio Looper control", MOD_CAT_HARDWARE, looper_opts);
 
 /*============================================================================
- * 模块注册
+ * flash 妯″潡 - Flash瀛樺偍绠＄悊
+ *===========================================================================*/
+
+static int flash_info_cmd(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    BG_FlashMgr.PrintInfo();
+    return 0;
+}
+
+static int flash_test_cmd(int argc, char *argv[])
+{
+    int32_t ret;
+    uint8_t dev_id = 0;
+    
+    if (argc >= 1) {
+        dev_id = (uint8_t)atoi(argv[0]);
+    }
+    
+    Shell_Printf("Testing device %d...\r\n", dev_id);
+    ret = BG_FlashMgr.TestDevice(dev_id);
+    
+    if (ret == BG_FLASH_OK) {
+        Shell_Print("Test PASSED\r\n");
+    } else {
+        Shell_Printf("Test FAILED: %d\r\n", ret);
+    }
+    return 0;
+}
+
+static int flash_read_cmd(int argc, char *argv[])
+{
+    uint32_t offset, len;
+    uint8_t buffer[256];
+    int32_t ret;
+    uint32_t i;
+    if (argc < 2) {
+        Shell_Print("Usage: flash -r <offset> <len>\r\n");
+        return -1;
+    }
+    
+    offset = strtoul(argv[0], NULL, 0);
+    len = atoi(argv[1]);
+    
+    if (len > 256) {
+        len = 256;
+    }
+    
+    Shell_Printf("Reading %d bytes from Looper offset 0x%X...\r\n", len, offset);
+    
+    ret = BG_FlashMgr.ReadLooper(offset, buffer, len);
+    if (ret != BG_FLASH_OK) {
+        Shell_Printf("Read failed: %d\r\n", ret);
+        return -1;
+    }
+    
+    /* 鎵撳嵃鏁版嵁 */
+    for (i = 0; i < len; i++) {
+        if ((i % 16) == 0) {
+            Shell_Printf("\r\n%06X: ", offset + i);
+        }
+        Shell_Printf("%02X ", buffer[i]);
+    }
+    Shell_Print("\r\n\r\n");
+    
+    return 0;
+}
+
+static int flash_erase_cmd(int argc, char *argv[])
+{
+    uint32_t offset;
+    int32_t ret;
+    
+    if (argc < 1) {
+        Shell_Print("Usage: flash -e <offset>\r\n");
+        return -1;
+    }
+    
+    offset = strtoul(argv[0], NULL, 0);
+    
+    Shell_Printf("Erasing Looper sector at 0x%X...\r\n", offset);
+    
+    ret = BG_FlashMgr.EraseLooperSector(offset);
+    if (ret == BG_FLASH_OK) {
+        Shell_Print("Erase OK\r\n");
+    } else {
+        Shell_Printf("Erase failed: %d\r\n", ret);
+    }
+    
+    return 0;
+}
+
+static int flash_format_cmd(int argc, char *argv[])
+{
+    uint8_t dev_id = 0;
+    int32_t ret;
+    
+    if (argc >= 1) {
+        dev_id = (uint8_t)atoi(argv[0]);
+    }
+    
+    Shell_Printf("WARNING: Formatting device %d, all data will be lost!\r\n", dev_id);
+    Shell_Print("Press Ctrl+C to cancel...\r\n");
+    
+    /* 绠�崟寤惰繜 */
+    vTaskDelay(1000);
+    
+    Shell_Print("Formatting...\r\n");
+    ret = BG_FlashMgr.Format(dev_id);
+    
+    if (ret == BG_FLASH_OK) {
+        Shell_Print("Format completed\r\n");
+    } else {
+        Shell_Printf("Format failed: %d\r\n", ret);
+    }
+    
+    return 0;
+}
+
+static int flash_status_cmd(int argc, char *argv[])
+{
+    BG_FlashMgrStatus_t status;
+    int32_t ret;
+    
+    (void)argc; (void)argv;
+    
+    ret = BG_FlashMgr.GetStatus(&status);
+    if (ret != BG_FLASH_OK) {
+        Shell_Print("Failed to get status\r\n");
+        return -1;
+    }
+    
+    Shell_Print("\r\n=== Flash Status ===\r\n");
+    
+    Shell_Print("\r\nFlash #0 (System + Looper):\r\n");
+    Shell_Printf("  Ready:     %s\r\n", status.flash0.ready ? "YES" : "NO");
+    Shell_Printf("  Device ID: %d\r\n", status.flash0.device_id);
+    Shell_Printf("  Size:      %d MB\r\n", status.flash0.total_size / (1024*1024));
+    Shell_Printf("  Errors:    %d\r\n", status.flash0.error_count);
+    
+    Shell_Print("\r\nFlash #1 (Storage):\r\n");
+    Shell_Printf("  Ready:     %s\r\n", status.flash1.ready ? "YES" : "NO");
+    Shell_Printf("  Device ID: %d\r\n", status.flash1.device_id);
+    Shell_Printf("  Size:      %d MB\r\n", status.flash1.total_size / (1024*1024));
+    Shell_Printf("  Errors:    %d\r\n", status.flash1.error_count);
+    
+    Shell_Print("\r\nPartitions:\r\n");
+    Shell_Print("  System:    1 MB\r\n");
+    Shell_Printf("  Looper:    7 MB (%d KB free)\r\n", BG_FlashMgr.GetLooperFreeSpace() / 1024);
+    Shell_Printf("  Storage:   8 MB (%d KB free)\r\n", BG_FlashMgr.GetStorageFreeSpace() / 1024);
+    Shell_Print("\r\n");
+    
+    return 0;
+}
+
+static const ShellOpt_t flash_opts[] = {
+    OPT("i", "info",    NULL,           "Show flash info",           flash_info_cmd),
+    OPT("s", "status",  NULL,           "Show flash status",         flash_status_cmd),
+    OPT("t", "test",    "[dev]",        "Test device (0 or 1)",      flash_test_cmd),
+    OPT("r", "read",    "<off> <len>",  "Read from Looper",          flash_read_cmd),
+    OPT("e", "erase",   "<offset>",     "Erase Looper sector",       flash_erase_cmd),
+    OPT("f", "format",  "[dev]",        "Format device (0 or 1)",    flash_format_cmd),
+    OPT_END()
+};
+
+DEFINE_MODULE(flash, "Flash storage management", MOD_CAT_HARDWARE, flash_opts);
+
+/*============================================================================
+ * 妯″潡娉ㄥ唽
  *===========================================================================*/
 
 void Shell_RegisterAllModules(void)
@@ -802,4 +1016,5 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(led);
     REGISTER_MODULE(dbg);
     REGISTER_MODULE(looper);
+    REGISTER_MODULE(flash);
 }

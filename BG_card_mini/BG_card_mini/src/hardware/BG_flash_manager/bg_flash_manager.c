@@ -8,28 +8,28 @@
 #include <string.h>
 #include <stdbool.h>
 
-// 坏块管理相关定义
-#define BAD_BLOCK_MARKER 0x00  // 坏块标记，正常块应为0xFF
-#define BAD_BLOCK_TABLE_MAGIC 0x42424242  // 坏块表魔术字 "BBBB"
-#define BAD_BLOCK_TABLE_VERSION 0x0101    // 坏块表版本
+// 鍧忓潡绠＄悊鐩稿叧瀹氫箟
+#define BAD_BLOCK_MARKER 0x00  // 鍧忓潡鏍囪锛屾甯稿潡搴斾负0xFF
+#define BAD_BLOCK_TABLE_MAGIC 0x42424242  // 鍧忓潡琛ㄩ瓟鏈瓧 "BBBB"
+#define BAD_BLOCK_TABLE_VERSION 0x0101    // 鍧忓潡琛ㄧ増鏈�
 
-// 坏块表结构
+// 鍧忓潡琛ㄧ粨鏋�
 typedef struct {
-    uint32_t magic;               // 魔术字，用于验证坏块表
-    uint16_t version;             // 版本号
-    uint16_t count;               // 坏块数量
-    uint32_t bad_blocks[128];     // 坏块地址列表，最多支持128个坏块
-    uint32_t reserved[4];         // 预留空间
+    uint32_t magic;               // 榄旀湳瀛楋紝鐢ㄤ簬楠岃瘉鍧忓潡琛�
+    uint16_t version;             // 鐗堟湰鍙�
+    uint16_t count;               // 鍧忓潡鏁伴噺
+    uint32_t bad_blocks[128];     // 鍧忓潡鍦板潃鍒楄〃锛屾渶澶氭敮鎸�28涓潖鍧�
+    uint32_t reserved[4];         // 棰勭暀绌洪棿
 } BadBlockTable;
 
-// 坏块管理状态
+// 鍧忓潡绠＄悊鐘舵�
 typedef struct {
-    BadBlockTable table;          // 坏块表
-    uint32_t table_address;       // 坏块表存储地址
-    bool initialized;             // 坏块管理是否已初始化
+    BadBlockTable table;          // 鍧忓潡琛�
+    uint32_t table_address;       // 鍧忓潡琛ㄥ瓨鍌ㄥ湴鍧�
+    bool initialized;             // 鍧忓潡绠＄悊鏄惁宸插垵濮嬪寲
 } BadBlockManager;
 
-// 内部函数声明
+// 鍐呴儴鍑芥暟澹版槑
 void flash_init(void);
 void flash_ReadID(uint8_t* manufacturerID, uint8_t* memoryType, uint8_t* deviceID, uint8_t dev);
 void flash_WriteEnable(uint8_t enable,uint8_t dev);
@@ -47,7 +47,7 @@ uint8_t flash_read_byte(void);
 void flash_write(uint8_t* data,uint16_t size);
 void flash_read(uint8_t* data,uint16_t size);
 
-// 坏块管理函数声明
+// 鍧忓潡绠＄悊鍑芥暟澹版槑
 static void bad_block_manager_init(uint8_t dev);
 static bool is_block_bad(uint32_t block_address, uint8_t dev);
 static bool mark_block_as_bad(uint32_t block_address, uint8_t dev);
@@ -57,10 +57,10 @@ static void load_bad_block_table(uint8_t dev);
 static uint32_t address_to_block(uint32_t address, uint8_t dev);
 static uint32_t block_to_address(uint32_t block, uint8_t dev);
 
-// 智能音频缓冲区函数声明
+// 鏅鸿兘闊抽缂撳啿鍖哄嚱鏁板０鏄�
 static uint8_t nand_audio_flush_buffer(uint8_t dev);
 
-// 全局变量
+// 鍏ㄥ眬鍙橀噺
 BG_Flash_Manager BG_flash_manager = {
 	.Init = flash_init,
 	.PageProgram = flash_PageProgram,
@@ -73,95 +73,36 @@ BG_Flash_Manager BG_flash_manager = {
 	.EraseAll = flash_EraseAll,
 };
 
-// 坏块管理器实例
+// 鍧忓潡绠＄悊鍣ㄥ疄渚�
 static BadBlockManager bad_block_manager = {0};
 
 void flash_init(void)
 {
-	FLASH_CS_INIT();
-	NAND_CS_INIT();
+	// 鍒濆鍖栦袱涓�NOR Flash 鐨�CS 寮曡剼
+	FLASH_CS_INIT();   // NOR1 (GPIOA21)
+	NAND_CS_INIT();    // NOR2 (GPIOA22)
 	FLASH_WP_INIT();
 	FLASH_CS_DISABLE();
 	NAND_CS_DISABLE();
 	FLASH_WP_DISABLE();
 
-	// 初始化W25N02 NAND Flash配置
-	DBG("Initializing W25N02 NAND Flash...\n");
-
-	// 发送复位命令确保芯片处于已知状态
-	NAND_CS_ENABLE();
-	flash_write_byte(0xFF);  // Reset命令
-	NAND_CS_DISABLE();
-
-	// 等待复位完成
-	volatile int delay = 10000;
-	while(delay--);
-
-	// 读取当前保护寄存器状态
-	NAND_CS_ENABLE();
-	flash_write_byte(NAND_CMD_GET_FEATURE);  // 0x0F
-	flash_write_byte(0xA0);  // 保护寄存器地址
-	uint8_t protection_reg = flash_read_byte();
-	NAND_CS_DISABLE();
-
-	DBG("Current protection register (0xA0): 0x%02X\n", protection_reg);
-
-	// 设置保护寄存器，禁用所有保护位
-	flash_WriteEnable(1, DEV_NAND);
-	NAND_CS_ENABLE();
-	flash_write_byte(NAND_CMD_SET_FEATURE);  // 0x1F
-	flash_write_byte(0xA0);  // 保护寄存器地址
-	flash_write_byte(0x00);  // 禁用所有保护位
-	NAND_CS_DISABLE();
-	flash_WaitForWriteEnd(DEV_NAND);
-
-	// 读取配置寄存器
-	NAND_CS_ENABLE();
-	flash_write_byte(NAND_CMD_GET_FEATURE);  // 0x0F
-	flash_write_byte(0xB0);  // 配置寄存器地址
-	uint8_t config_reg = flash_read_byte();
-	NAND_CS_DISABLE();
-
-	DBG("Current configuration register (0xB0): 0x%02X\n", config_reg);
-
-	// 设置配置寄存器，启用ECC和缓冲读取模式
-	flash_WriteEnable(1, DEV_NAND);
-	NAND_CS_ENABLE();
-	flash_write_byte(NAND_CMD_SET_FEATURE);  // 0x1F
-	flash_write_byte(0xB0);  // 配置寄存器地址
-	flash_write_byte(0x18);  // 0x18 = 0001 1000: 启用ECC(bit4=1) + 缓冲读取模式(bit3=1)
-	NAND_CS_DISABLE();
-	flash_WaitForWriteEnd(DEV_NAND);
-	
-	// 验证配置是否生效
-	NAND_CS_ENABLE();
-	flash_write_byte(NAND_CMD_GET_FEATURE);
-	flash_write_byte(0xB0);
-	uint8_t new_config = flash_read_byte();
-	NAND_CS_DISABLE();
-	DBG("New configuration register (0xB0): 0x%02X (ECC_EN=%d, BUF=%d)\n", 
-	    new_config, (new_config & 0x10) ? 1 : 0, (new_config & 0x08) ? 1 : 0);
-
-	// 初始化坏块管理
-	bad_block_manager_init(DEV_NAND);
-
-	DBG("W25N02 NAND Flash initialization completed\n");
+	DBG("Dual NOR Flash initialized (CS=A21, A22)\n");
 }
 
-// 同时写入和读取一个字节（用于测试SPI连接）
-// 当前未使用，保留备用
+// 鍚屾椂鍐欏叆鍜岃鍙栦竴涓瓧鑺傦紙鐢ㄤ簬娴嬭瘯SPI杩炴帴锛�
+// 褰撳墠鏈娇鐢紝淇濈暀澶囩敤
 /*
 static uint8_t flash_write_read_byte(uint8_t data) {
 	uint8_t received = 0;
 
-	// 发送数据并同时接收
+	// 鍙戦�鏁版嵁骞跺悓鏃舵帴鏀�
 	SPIM_DMA_Send_Start(&data, 1);
 	SPIM_DMA_Recv_Start(&received, 1);
 
-	// 等待发送完成
+	// 绛夊緟鍙戦�瀹屾垚
 	while(!SPIM_DMA_HalfDone(PERIPHERAL_ID_SPIM_TX));
 
-	// 等待接收完成
+	// 绛夊緟鎺ユ敹瀹屾垚
 	while(!SPIM_DMA_HalfDone(PERIPHERAL_ID_SPIM_RX));
 
 	return received;
@@ -191,7 +132,8 @@ void flash_write(uint8_t* data,uint16_t size){
 }
 
 void flash_ReadID(uint8_t* manufacturerID, uint8_t* memoryType, uint8_t* deviceID, uint8_t dev) {
-  if(dev==DEV_NOR){
+  // 涓や釜璁惧閮芥槸 NOR Flash锛屼娇鐢ㄧ浉鍚岀殑璇诲彇鏂规硶
+  if(dev==DEV_NOR1){
 	FLASH_CS_ENABLE();
 	flash_write_byte(FLASH_CMD_JEDEC_ID);
 
@@ -201,104 +143,31 @@ void flash_ReadID(uint8_t* manufacturerID, uint8_t* memoryType, uint8_t* deviceI
 
 	FLASH_CS_DISABLE();
   }
-  if(dev==DEV_NAND){
-	// W25N02 NAND Flash的设备ID读取
-	NAND_CS_ENABLE();
-	flash_write_byte(0x90);  // Read ID命令
-	flash_write_byte(0x00);  // 地址字节
+  else if(dev==DEV_NOR2){
+	// 绗簩涓�NOR Flash锛屼篃浣跨敤鏍囧噯 JEDEC ID 璇诲彇
+	NAND_CS_ENABLE();  // 浣跨敤 A22 寮曡剼
+	flash_write_byte(FLASH_CMD_JEDEC_ID);
 
-	// W25N02的ID格式：[Dummy][Manufacturer][Memory Type][Device ID]
-	uint8_t dummy = flash_read_byte();        // 通常是0x00或忽略
-	*manufacturerID = flash_read_byte();      // 制造商ID (应该是0xEF)
-	*memoryType = flash_read_byte();          // 内存类型 (应该是0xAA)
-	*deviceID = flash_read_byte();            // 设备ID (应该是0x22)
+	*manufacturerID = flash_read_byte();
+	*memoryType = flash_read_byte();
+	*deviceID = flash_read_byte();
 
 	NAND_CS_DISABLE();
-
-	DBG("Method 1 (0x90): Dummy=0x%02X, Mfg=0x%02X, Type=0x%02X, Dev=0x%02X\n",
-	    dummy, *manufacturerID, *memoryType, *deviceID);
-
-    // 如果方法1失败，尝试0x9F命令
-    if (*manufacturerID == 0x00 || (*manufacturerID != 0xEF && *memoryType != 0xAA)) {
-    	DBG("Trying alternative JEDEC ID read (0x9F)...\n");
-
-    	NAND_CS_ENABLE();
-    	flash_write_byte(0x9F);  // JEDEC ID命令
-
-    	// 读取ID，可能需要跳过第一个字节
-    	dummy = flash_read_byte();                // 可能的dummy字节
-    	*manufacturerID = flash_read_byte();      // 制造商ID
-    	*memoryType = flash_read_byte();          // 内存类型
-    	*deviceID = flash_read_byte();            // 设备ID
-
-    	NAND_CS_DISABLE();
-
-    	DBG("Method 2 (0x9F): Dummy=0x%02X, Mfg=0x%02X, Type=0x%02X, Dev=0x%02X\n",
-    	    dummy, *manufacturerID, *memoryType, *deviceID);
-    }
-
-    // 如果还是读取失败，尝试不同的解析方式
-    if (*manufacturerID == 0x00 || (*manufacturerID != 0xEF && *memoryType != 0xAA)) {
-    	DBG("Trying different ID interpretation...\n");
-
-    	// 有时候读取顺序可能不同，尝试重新解析
-    	NAND_CS_ENABLE();
-    	flash_write_byte(0x90);  // Read ID命令
-    	flash_write_byte(0x00);  // 地址字节
-
-    	uint8_t byte0 = flash_read_byte();
-    	uint8_t byte1 = flash_read_byte();
-    	uint8_t byte2 = flash_read_byte();
-    	uint8_t byte3 = flash_read_byte();
-
-    	NAND_CS_DISABLE();
-
-    	DBG("Raw ID bytes: 0x%02X 0x%02X 0x%02X 0x%02X\n", byte0, byte1, byte2, byte3);
-
-    	// 根据实际读取的数据重新分配
-    	if (byte1 == 0xEF && byte2 == 0xAA) {
-    		// 正常顺序：[Dummy][Mfg][Type][Dev]
-    		*manufacturerID = byte1; // 0xEF
-    		*memoryType = byte2;     // 0xAA
-    		*deviceID = byte3;       // 设备ID
-    		DBG("Detected normal order: Mfg=0xEF, Type=0xAA\n");
-    	} else if (byte0 == 0xEF && byte1 == 0xAA) {
-    		// 无dummy字节：[Mfg][Type][Dev][Extra]
-    		*manufacturerID = byte0; // 0xEF
-    		*memoryType = byte1;     // 0xAA
-    		*deviceID = byte2;       // 设备ID
-    		DBG("Detected no-dummy order: Mfg=0xEF, Type=0xAA\n");
-    	} else {
-    		// 手动设置已知的W25N02 ID
-    		DBG("ID pattern not recognized, setting manual W25N02 ID\n");
-    		*manufacturerID = 0xEF;  // Winbond
-    		*memoryType = 0xAA;      // NAND Flash标识
-    		*deviceID = 0x22;        // W25N02 2Gbit
-    	}
-    }
-
-    DBG("Final NAND ID: Mfg=0x%02X, Type=0x%02X, Dev=0x%02X\n",
-        *manufacturerID, *memoryType, *deviceID);
   }
 }
+
 
 uint32_t flash_GetTotalByte(uint8_t dev) {
     uint32_t capacity = 0;
     uint8_t manufacturerID, memoryType, deviceID;
     flash_ReadID(&manufacturerID, &memoryType, &deviceID,dev);
 
-    // 添加调试信息显示读取到的ID
+    // 娣诲姞璋冭瘯淇℃伅鏄剧ず璇诲彇鍒扮殑ID
     DBG("%s Flash ID: Manufacturer=0x%02X, MemoryType=0x%02X, DeviceID=0x%02X\n",
-        dev == DEV_NOR ? "NOR" : "NAND", manufacturerID, memoryType, deviceID);
+        dev == DEV_NOR1 ? "NOR1" : "NOR2", manufacturerID, memoryType, deviceID);
 
-    // 对于NAND Flash，特殊处理W25N02
-    if (dev == DEV_NAND && manufacturerID == 0xEF && memoryType == 0xAA) {
-        // 这是W25N02芯片，直接设置容量为256MB (2Gbit)
-        DBG("Detected W25N02 NAND Flash (Winbond 2Gbit)\n");
-        capacity = 256 * 1024 * 1024; // 256 MB
-    } else {
-        // 对于其他芯片，按设备ID匹配
-        switch (deviceID) {
+    // 涓や釜璁惧閮芥槸 NOR Flash锛屾寜璁惧ID鍖归厤瀹归噺
+    switch (deviceID) {
             case DEVICE_ID_64MBIT:
                 capacity = 64 * 1024 * 1024; // 64 Mbit
                 break;
@@ -317,30 +186,26 @@ uint32_t flash_GetTotalByte(uint8_t dev) {
             case DEVICE_ID_2GBIT:
                 capacity = 2048 * 1024 * 1024; // 2 Gbit (W25N02)
                 break;
-            case DEVICE_ID_W25N02:  // 0xAA 也可能是设备ID
+            case DEVICE_ID_W25N02:  // 0xAA 涔熷彲鑳芥槸璁惧ID
                 capacity = 256 * 1024 * 1024; // W25N02 256MB
                 break;
             default:
-                // 未知设备ID，尝试根据制造商和类型推断
+                // 鏈煡璁惧ID锛屽皾璇曟牴鎹埗閫犲晢鍜岀被鍨嬫帹鏂�
                 if (dev == DEV_NAND && manufacturerID == 0xEF) {
-                    // Winbond NAND Flash，但设备ID未知
+                    // Winbond NAND Flash锛屼絾璁惧ID鏈煡
                     DBG("Unknown Winbond NAND device ID: 0x%02X, assuming W25N02\n", deviceID);
-                    capacity = 256 * 1024 * 1024; // 默认为W25N02容量
+                    capacity = 256 * 1024 * 1024; // 榛樿涓篧25N02瀹归噺
                 } else {
                     DBG("Unknown device ID: 0x%02X\n", deviceID);
                     capacity = 0;
                 }
                 break;
         }
-    }
 
-    // 对于NAND Flash，返回字节容量，不需要除以8
-    if (dev == DEV_NAND) {
-        return capacity;
-    } else {
-        // 对于NOR Flash，可能需要bit到byte的转换
+
+        // 瀵逛簬NOR Flash锛屽彲鑳介渶瑕乥it鍒癰yte鐨勮浆鎹�
         return capacity/8;
-    }
+
 }
 
 uint32_t Windbond_GetCapacity(uint8_t deviceID,uint8_t dev) {
@@ -375,9 +240,9 @@ uint32_t Windbond_GetCapacity(uint8_t deviceID,uint8_t dev) {
 
 bool flash_IsSectorErased(uint32_t sectorAddress,uint8_t dev) {
     uint8_t data;
-    // 读取扇区的第一个字节
+    // 璇诲彇鎵囧尯鐨勭涓�釜瀛楄妭
     flash_ReadData(sectorAddress, &data, 1,dev);
-    // 如果第一个字节是0xFF则认为扇区已擦除
+    // 濡傛灉绗竴涓瓧鑺傛槸0xFF鍒欒涓烘墖鍖哄凡鎿﹂櫎
     return data == 0xFF;
 }
 
@@ -388,16 +253,12 @@ uint32_t flash_GetRemainingCapacity(uint8_t dev) {
     uint8_t manufacturerID, memoryType, deviceID;
     flash_ReadID(&manufacturerID, &memoryType, &deviceID,dev);
     for (i = 0; i < Windbond_GetCapacity(deviceID,dev)/SECTOR_SIZE ; ++i) {
-        // 跳过坏块
-        if (dev == DEV_NAND && is_block_bad(address_to_block(sectorAddress, dev), dev)) {
-            sectorAddress += SECTOR_SIZE;
-            continue;
-        }
-        
+        // 涓や釜璁惧閮芥槸 NOR Flash锛屾棤闇�鏌ュ潖鍧�
+
         if (flash_IsSectorErased(sectorAddress,dev)) {
             remainingCapacity += 1 ;
         }
-        // 移动到下一个扇区
+        // 绉诲姩鍒颁笅涓�釜鎵囧尯
         sectorAddress += SECTOR_SIZE;
     }
     DBG("Total is:%d KByte,Remain is:%d KByte\n",(Windbond_GetCapacity(deviceID,dev)/SECTOR_SIZE)*4,remainingCapacity*4);
@@ -405,7 +266,7 @@ uint32_t flash_GetRemainingCapacity(uint8_t dev) {
 }
 
 void flash_WriteEnable(uint8_t enable,uint8_t dev) {
-	if(dev==DEV_NOR){
+	if(dev==DEV_NOR1){
 		FLASH_CS_ENABLE();
 		if(enable){
 			flash_write_byte(FLASH_CMD_WRITE_ENABLE);
@@ -414,7 +275,8 @@ void flash_WriteEnable(uint8_t enable,uint8_t dev) {
 		}
 		FLASH_CS_DISABLE();
 	}
-	if(dev==DEV_NAND){
+	else if(dev==DEV_NOR2){
+		// 绗簩涓�NOR Flash 浣跨敤鐩稿悓鐨勫啓浣胯兘鎿嶄綔
 		NAND_CS_ENABLE();
 		if(enable){
 			flash_write_byte(FLASH_CMD_WRITE_ENABLE);
@@ -423,31 +285,32 @@ void flash_WriteEnable(uint8_t enable,uint8_t dev) {
 		}
 		NAND_CS_DISABLE();
 	}
+
+
 }
 
-// 读取状态寄存器
+// 璇诲彇鐘舵�瀵勫瓨鍣�
 uint8_t flash_ReadStatusReg(uint8_t dev) {
     uint8_t data;
-    if(dev==DEV_NOR){
+    if(dev==DEV_NOR1){
 		FLASH_CS_ENABLE();
 		flash_write_byte(FLASH_CMD_READ_STATUS_REG);
 		data = flash_read_byte();
 		FLASH_CS_DISABLE();
     }
-    if(dev==DEV_NAND){
-		// W25N02使用Get Feature命令读取状态寄存器
+    else if(dev==DEV_NOR2){
+		// 绗簩涓�NOR Flash 浣跨敤鐩稿悓鐨勬爣鍑嗘搷浣�
 		NAND_CS_ENABLE();
-		flash_write_byte(NAND_CMD_GET_FEATURE);  // 0x0F
-		flash_write_byte(0xC0);  // 状态寄存器地址 (Status Register)
+		flash_write_byte(FLASH_CMD_READ_STATUS_REG);
 		data = flash_read_byte();
 		NAND_CS_DISABLE();
     }
     return data;
 }
 
-// 写状态寄存器
+// 鍐欑姸鎬佸瘎瀛樺櫒
 void flash_WriteStatusReg(uint8_t data,uint8_t dev) {
-	if(dev==DEV_NOR){
+	if(dev==DEV_NOR1){
 		flash_WriteEnable(1,dev);
 		FLASH_CS_ENABLE();
 		flash_write_byte(FLASH_CMD_WRITE_STATUS_REG);
@@ -455,46 +318,26 @@ void flash_WriteStatusReg(uint8_t data,uint8_t dev) {
 		FLASH_CS_DISABLE();
 		flash_WaitForWriteEnd(dev);
 	}
-	if(dev==DEV_NAND){
-		// W25N02使用Set Feature命令写状态寄存器
+	else if(dev==DEV_NOR2){
+		// 绗簩涓�NOR Flash 浣跨敤鐩稿悓鐨勬爣鍑嗘搷浣�
 		flash_WriteEnable(1,dev);
 		NAND_CS_ENABLE();
-		flash_write_byte(NAND_CMD_SET_FEATURE);  // 0x1F
-		flash_write_byte(0xC0);  // 状态寄存器地址
+		flash_write_byte(FLASH_CMD_WRITE_STATUS_REG);
 		flash_write_byte(data);
 		NAND_CS_DISABLE();
 		flash_WaitForWriteEnd(dev);
 	}
 }
 
-// 等待写入完成
+// 绛夊緟鍐欏叆瀹屾垚
 void flash_WaitForWriteEnd(uint8_t dev) {
-    if(dev==DEV_NOR) {
-        while ((flash_ReadStatusReg(dev) & 0x01) == 0x01);
-    }
-    if(dev==DEV_NAND) {
-        // W25N02的状态位定义：
-        // Bit 0 (BUSY): 1=忙碌, 0=就绪
-        // Bit 3 (P_FAIL): 1=编程失败
-        // Bit 2 (E_FAIL): 1=擦除失败
-        uint8_t status;
-        do {
-            status = flash_ReadStatusReg(dev);
-        } while ((status & 0x01) == 0x01);  // 等待BUSY位清零
-
-        // 检查操作是否成功
-        if (status & 0x08) {  // P_FAIL位
-            DBG("NAND Program operation failed!\n");
-        }
-        if (status & 0x04) {  // E_FAIL位
-            DBG("NAND Erase operation failed!\n");
-        }
-    }
+    // 涓や釜璁惧閮芥槸 NOR Flash锛屼娇鐢ㄧ浉鍚岀殑绛夊緟鏂瑰紡
+    while ((flash_ReadStatusReg(dev) & 0x01) == 0x01);
 }
 
-// 扇区擦除
+// 鎵囧尯鎿﹂櫎
 void flash_SectorErase(uint32_t sectorAddress,uint8_t dev) {
-	if(dev==DEV_NOR){
+	if(dev==DEV_NOR1){
 		flash_WriteEnable(1,dev);
 		FLASH_CS_ENABLE();
 		flash_write_byte(FLASH_CMD_SECTOR_ERASE);
@@ -504,30 +347,16 @@ void flash_SectorErase(uint32_t sectorAddress,uint8_t dev) {
 		FLASH_CS_DISABLE();
 		flash_WaitForWriteEnd(dev);
 	}
-	if(dev==DEV_NAND){
-		// 检查块是否为坏块
-		uint32_t block = address_to_block(sectorAddress, dev);
-		if (is_block_bad(block, dev)) {
-			DBG("Attempted to erase bad block %d, skipping\n", block);
-			return;
-		}
-		
-		// W25N02 NAND Flash块擦除
+	else if(dev==DEV_NOR2){
+		// 绗簩涓�NOR Flash 浣跨敤鐩稿悓鐨勬爣鍑嗘搷浣�
 		flash_WriteEnable(1,dev);
 		NAND_CS_ENABLE();
-		flash_write_byte(NAND_CMD_BLOCK_ERASE);  // 0xD8
-		flash_write_byte(0x00);  // W25N02块擦除命令只需要2字节地址，高位补0
-		flash_write_byte((block >> 8) & 0xFF);  // 块地址高字节
-		flash_write_byte(block & 0xFF);         // 块地址低字节
+		flash_write_byte(FLASH_CMD_SECTOR_ERASE);
+		flash_write_byte((sectorAddress & 0xFF0000) >> 16);
+		flash_write_byte((sectorAddress & 0x00FF00) >> 8);
+		flash_write_byte(sectorAddress & 0x0000FF);
 		NAND_CS_DISABLE();
 		flash_WaitForWriteEnd(dev);
-
-		// 擦除后检查是否失败，如果失败则标记为坏块
-		uint8_t status = flash_ReadStatusReg(dev);
-		if (status & 0x04) {  // E_FAIL位
-			DBG("Block erase failed, marking block %d as bad\n", block);
-			mark_block_as_bad(block, dev);
-		}
 	}
 }
 
@@ -539,167 +368,72 @@ void flash_EraseAll(uint8_t dev) {
     FLASH_CS_DISABLE();
     flash_WaitForWriteEnd(dev);
 	}
-	if(dev==DEV_NAND){
-		// W25N02没有芯片擦除命令，需要逐块擦除
-		DBG("NAND Flash does not support chip erase, erasing all blocks...\n");
-
-		// W25N02有1024个块（每块64页，每页2048字节）
-		uint16_t total_blocks = 1024;
-		uint16_t block;
-
-		for(block = 0; block < total_blocks; block++) {
-			// 跳过坏块
-			if (is_block_bad(block, dev)) {
-				DBG("Skipping bad block %d during mass erase\n", block);
-				continue;
-			}
-			
-			flash_WriteEnable(1,dev);
-			NAND_CS_ENABLE();
-			flash_write_byte(NAND_CMD_BLOCK_ERASE);  // 0xD8
-			flash_write_byte(0x00);  // 地址最高字节
-			flash_write_byte((block >> 8) & 0xFF);   // 块地址高字节
-			flash_write_byte(block & 0xFF);          // 块地址低字节
-			NAND_CS_DISABLE();
-			flash_WaitForWriteEnd(dev);
-
-			// 检查擦除是否失败
-			uint8_t status = flash_ReadStatusReg(dev);
-			if (status & 0x04) {  // E_FAIL位
-				DBG("Block %d erase failed, marking as bad\n", block);
-				mark_block_as_bad(block, dev);
-			}
-			
-			// 每100个块显示进度
-			if((block % 100) == 0) {
-				DBG("Erased %d/%d blocks\n", block, total_blocks);
-			}
-		}
-		DBG("NAND Flash chip erase completed\n");
+	else if(dev==DEV_NOR2){
+		// 绗簩涓�NOR Flash 浣跨敤鐩稿悓鐨勫叏鐗囨摝闄�
+		flash_WriteEnable(1,dev);
+		NAND_CS_ENABLE();
+		flash_write_byte(FLASH_CMD_CHIP_ERASE);
+		NAND_CS_DISABLE();
+		flash_WaitForWriteEnd(dev);
 	}
 }
 
-// 页编程
+// 椤电紪绋�
 uint8_t flash_PageProgram(uint32_t address, uint8_t* data, uint16_t size,uint8_t dev) {
-	if(dev==DEV_NOR){
- 	 	flash_WriteEnable(1,dev);  // 使能写操作
-        FLASH_CS_ENABLE();     // 选择W25Q64
-        flash_write_byte(FLASH_CMD_PAGE_PROGRAM);  // 发送页编程指令
-        flash_write_byte((address >> 16) & 0xFF);  // 发送地址的高字节
-        flash_write_byte((address >> 8) & 0xFF);   // 发送地址的中字节
-        flash_write_byte(address & 0xFF);          // 发送地址的低字节
+	if(dev==DEV_NOR1){
+ 	 	flash_WriteEnable(1,dev);  // 浣胯兘鍐欐搷浣�
+        FLASH_CS_ENABLE();     // 閫夋嫨W25Q64
+        flash_write_byte(FLASH_CMD_PAGE_PROGRAM);  // 鍙戦�椤电紪绋嬫寚浠�
+        flash_write_byte((address >> 16) & 0xFF);  // 鍙戦�鍦板潃鐨勯珮瀛楄妭
+        flash_write_byte((address >> 8) & 0xFF);   // 鍙戦�鍦板潃鐨勪腑瀛楄妭
+        flash_write_byte(address & 0xFF);          // 鍙戦�鍦板潃鐨勪綆瀛楄妭
 
         flash_write(data,size);
         FLASH_CS_DISABLE();
-        flash_WaitForWriteEnd(dev);  // 等待写操作完成
-        // 释放片选信号
+        flash_WaitForWriteEnd(dev);  // 绛夊緟鍐欐搷浣滃畬鎴�
 	}
-	if(dev==DEV_NAND){
-		// 检查块是否为坏块
-		uint32_t block = address_to_block(address, dev);
-		if (is_block_bad(block, dev)) {
-			DBG("Attempted to program bad block %d, operation failed\n", block);
-			return FLASH_STATUS_ERROR;
-		}
-		
-		// W25N02 NAND Flash编程需要两步操作
-		flash_WriteEnable(1,dev);  // 使能写操作
+	else if(dev==DEV_NOR2){
+		// 绗簩涓�NOR Flash 浣跨敤鐩稿悓鐨勯〉缂栫▼鎿嶄綔
+ 	 	flash_WriteEnable(1,dev);
+        NAND_CS_ENABLE();
+        flash_write_byte(FLASH_CMD_PAGE_PROGRAM);
+        flash_write_byte((address >> 16) & 0xFF);
+        flash_write_byte((address >> 8) & 0xFF);
+        flash_write_byte(address & 0xFF);
 
-		// 第一步：Program Load - 将数据加载到内部缓冲区
-		uint32_t page_address = address / 2048; // W25N02页大小为2048字节
-		uint16_t column_address = address % 2048;
-
-		NAND_CS_ENABLE();
-		flash_write_byte(NAND_CMD_PROGRAM_LOAD);  // 0x02
-		flash_write_byte((column_address >> 8) & 0xFF);
-		flash_write_byte(column_address & 0xFF);
-		flash_write(data,size);
-		NAND_CS_DISABLE();
-
-		// 第二步：Program Execute - 执行编程操作
-		NAND_CS_ENABLE();
-		flash_write_byte(NAND_CMD_PROGRAM_EXECUTE);  // 0x10
-		flash_write_byte(0x00);  // 地址最高字节
-		flash_write_byte((page_address >> 8) & 0xFF);
-		flash_write_byte(page_address & 0xFF);
-		NAND_CS_DISABLE();
-
-		flash_WaitForWriteEnd(dev);  // 等待写操作完成
-		
-		// 检查编程是否失败，如果失败则标记为坏块
-		uint8_t status = flash_ReadStatusReg(dev);
-		if (status & 0x08) {  // P_FAIL位
-			DBG("Page program failed, marking block %d as bad\n", block);
-			mark_block_as_bad(block, dev);
-			return FLASH_STATUS_ERROR;
-		}
+        flash_write(data,size);
+        NAND_CS_DISABLE();
+        flash_WaitForWriteEnd(dev);
 	}
-	return FLASH_STATUS_OK;  // 返回成功状态
+	return FLASH_STATUS_OK;  // 杩斿洖鎴愬姛鐘舵�
 }
 
-// 读取数据
+// 璇诲彇鏁版嵁
 void flash_ReadData(uint32_t address, uint8_t* data, uint16_t size ,uint8_t dev) {
-	if(dev==DEV_NOR){
-	FLASH_CS_ENABLE();
-	flash_write_byte(FLASH_CMD_READ_DATA);
-	flash_write_byte((address & 0xFF0000) >> 16);
-	flash_write_byte((address & 0xFF00) >> 8);
-	flash_write_byte(address & 0xFF);
+	if(dev==DEV_NOR1){
+		FLASH_CS_ENABLE();
+		flash_write_byte(FLASH_CMD_READ_DATA);
+		flash_write_byte((address & 0xFF0000) >> 16);
+		flash_write_byte((address & 0xFF00) >> 8);
+		flash_write_byte(address & 0xFF);
 
-	flash_read(data,size);
-    FLASH_CS_DISABLE();
+		flash_read(data,size);
+		FLASH_CS_DISABLE();
 	}
-	if(dev==DEV_NAND){
-		// 检查块是否为坏块
-		uint32_t block = address_to_block(address, dev);
-		if (is_block_bad(block, dev)) {
-			// DBG("Attempted to read from bad block %d, returning 0xFF\n", block);
-			// 填充0xFF表示无效数据
-			memset(data, 0xFF, size);
-			return;
-		}
-		
-		// W25N02 NAND Flash读取需要两步操作
-		// 第一步：Page Data Read - 将页数据加载到内部缓冲区
-		uint32_t page_address = address / 2048; // W25N02页大小为2048字节
-		uint16_t column_address = address % 2048;
-
+	else if(dev==DEV_NOR2){
+		// 绗簩涓�NOR Flash 浣跨敤鐩稿悓鐨勮鍙栨搷浣�
 		NAND_CS_ENABLE();
-		flash_write_byte(NAND_CMD_PAGE_DATA_READ); // 0x13
-		flash_write_byte(0x00);  // 地址最高字节
-		flash_write_byte((page_address >> 8) & 0xFF);
-		flash_write_byte(page_address & 0xFF);
-		NAND_CS_DISABLE();
-
-		// 等待页读取完成
-		flash_WaitForWriteEnd(dev);
-		
-		// 检查ECC状态
-		uint8_t status = flash_ReadStatusReg(dev);
-		if (status & 0x20) {  // ECC_1 bit - 1-bit ECC error corrected
-			// 1位ECC错误已自动修正，静默处理
-		}
-		if (status & 0x40) {  // ECC_2 bit - 2+ bit ECC error, uncorrectable
-			// 多位ECC错误，无法修正，标记为坏块
-			// DBG("Uncorrectable ECC error in block %d, marking as bad\n", block);
-			mark_block_as_bad(block, dev);
-			memset(data, 0x00, size);  // 填充静音数据避免噪音
-			return;
-		}
-
-		// 第二步：Random Data Read - 从缓冲区读取数据
-		NAND_CS_ENABLE();
-		flash_write_byte(NAND_CMD_RANDOM_DATA_READ); // 0x03
-		flash_write_byte((column_address >> 8) & 0xFF);
-		flash_write_byte(column_address & 0xFF);
-		flash_write_byte(0x00); // Dummy byte
+		flash_write_byte(FLASH_CMD_READ_DATA);
+		flash_write_byte((address & 0xFF0000) >> 16);
+		flash_write_byte((address & 0xFF00) >> 8);
+		flash_write_byte(address & 0xFF);
 
 		flash_read(data,size);
 		NAND_CS_DISABLE();
 	}
 }
 
-// W25N02 NAND Flash 寄存器测试函数
+// W25N02 NAND Flash 瀵勫瓨鍣ㄦ祴璇曞嚱鏁�
 void flash_test_w25n02_registers(void) {
 	int i;
 	uint8_t status, prot_reg, conf_reg, stat_reg, drv_reg;
@@ -712,10 +446,10 @@ void flash_test_w25n02_registers(void) {
 	bool test_passed = true;
 	bool all_zero;
 	
-	DBG("开始W25N02 NAND Flash系统测试...\n");
+	DBG("寮�W25N02 NAND Flash绯荤粺娴嬭瘯...\n");
 	DBG("========== W25N02 Register Test ==========\n");
 	
-	// 硬件连接测试
+	// 纭欢杩炴帴娴嬭瘯
 	DBG("=== Hardware Connection Test ===\n");
 	DBG("NAND CS Pin State Test:\n");
 	NAND_CS_ENABLE();
@@ -723,18 +457,18 @@ void flash_test_w25n02_registers(void) {
 	NAND_CS_DISABLE(); 
 	DBG("CS Disabled\n");
 	
-	// SPI通信测试
+	// SPI閫氫俊娴嬭瘯
 	DBG("=== SPI Communication Test ===\n");
 	DBG("Testing basic SPI response...\n");
 	
-	// 多次测试状态寄存器
+	// 澶氭娴嬭瘯鐘舵�瀵勫瓨鍣�
 	DBG("Testing status register multiple times...\n");
 	for(i = 1; i <= 5; i++) {
 		status = flash_ReadStatusReg(DEV_NAND);
 		DBG("Status test %d: 0x%02X\n", i, status);
 	}
 	
-	// 测试不同的特性寄存器
+	// 娴嬭瘯涓嶅悓鐨勭壒鎬у瘎瀛樺櫒
 	DBG("Testing different feature registers...\n");
 	NAND_CS_ENABLE();
 	flash_write_byte(0x0F); // Get Features command
@@ -764,10 +498,10 @@ void flash_test_w25n02_registers(void) {
 	NAND_CS_DISABLE();
 	DBG("Register 0xD0: 0x%02X\n", drv_reg);
 	
-	// ID读取测试
+	// ID璇诲彇娴嬭瘯
 	flash_ReadID(&mfg, &type, &dev, DEV_NAND);
 	
-	// 寄存器详细分析
+	// 瀵勫瓨鍣ㄨ缁嗗垎鏋�
 	DBG("Device ID Test: Mfg=0x%02X, Type=0x%02X, Dev=0x%02X\n", mfg, type, dev);
 	DBG("NAND Status Register (0xC0): 0x%02X\n", stat_reg);
 	DBG("Status Register: 0x%02X (BUSY=%d, E_FAIL=%d, P_FAIL=%d)\n", 
@@ -776,7 +510,7 @@ void flash_test_w25n02_registers(void) {
 	DBG("Configuration Register (0xB0): 0x%02X (ECC_EN=%d, BUF=%d)\n", 
 	    conf_reg, (conf_reg&0x10)?1:0, (conf_reg&0x08)?1:0);
 	
-	// 容量检测
+	// 瀹归噺妫�祴
 	capacity = flash_GetTotalByte(DEV_NAND);
 	DBG("NAND Flash ID: Manufacturer=0x%02X, MemoryType=0x%02X, DeviceID=0x%02X\n", mfg, type, dev);
 	
@@ -790,7 +524,7 @@ void flash_test_w25n02_registers(void) {
 	
 	DBG("Total Capacity: %lu bytes (%.2f MB)\n", (unsigned long)capacity, capacity/1024.0/1024.0);
 	
-	// 坏块管理测试
+	// 鍧忓潡绠＄悊娴嬭瘯
 	DBG("=== Bad Block Management Test ===\n");
 	DBG("Total bad blocks detected: %d\n", bad_block_manager.table.count);
 	if (bad_block_manager.table.count > 0) {
@@ -801,15 +535,15 @@ void flash_test_w25n02_registers(void) {
 		DBG("\n");
 	}
 	
-	// 简单的读写测试
+	// 绠�崟鐨勮鍐欐祴璇�
 	DBG("Performing read/write test at address 0x%04lX...\n", test_address);
 	
-	// 擦除、写入、读取
+	// 鎿﹂櫎銆佸啓鍏ャ�璇诲彇
 	flash_SectorErase(test_address, DEV_NAND);
 	flash_PageProgram(test_address, test_data, 16, DEV_NAND);
 	flash_ReadData(test_address, read_buffer, 16, DEV_NAND);
 	
-	// 比较数据
+	// 姣旇緝鏁版嵁
 	test_passed = true;
 	for(i = 0; i < 16; i++) {
 		if(test_data[i] != read_buffer[i]) {
@@ -828,7 +562,7 @@ void flash_test_w25n02_registers(void) {
 		for(i = 0; i < 16; i++) DBG("%02X ", read_buffer[i]);
 		DBG("\n");
 		
-		// 检查是否所有读取数据都是0x00
+		// 妫�煡鏄惁鎵�湁璇诲彇鏁版嵁閮芥槸0x00
 		all_zero = true;
 		for(i = 0; i < 16; i++) {
 			if(read_buffer[i] != 0x00) {
@@ -844,9 +578,9 @@ void flash_test_w25n02_registers(void) {
 	DBG("========== W25N02 Test Complete ==========\n");
 }
 
-// 坏块管理函数实现
+// 鍧忓潡绠＄悊鍑芥暟瀹炵幇
 
-// 初始化坏块管理器
+// 鍒濆鍖栧潖鍧楃鐞嗗櫒
 static void bad_block_manager_init(uint8_t dev) {
     if (bad_block_manager.initialized) {
         return;
@@ -855,14 +589,14 @@ static void bad_block_manager_init(uint8_t dev) {
     uint8_t manufacturerID, memoryType, deviceID;
     flash_ReadID(&manufacturerID, &memoryType, &deviceID, dev);
     
-    // 设置坏块表存储地址（放在Flash开头的第一个块，跳过第0块避免冲突）
+    // 璁剧疆鍧忓潡琛ㄥ瓨鍌ㄥ湴鍧�紙鏀惧湪Flash寮�ご鐨勭涓�釜鍧楋紝璺宠繃绗�鍧楅伩鍏嶅啿绐侊級
     uint32_t total_size = flash_GetTotalByte(dev);
     
-    // 对于NAND Flash，坏块表放在第1块（跳过第0块）
+    // 瀵逛簬NAND Flash锛屽潖鍧楄〃鏀惧湪绗�鍧楋紙璺宠繃绗�鍧楋級
     if (dev == DEV_NAND) {
-        bad_block_manager.table_address = 64 * 2048;  // 第1块的起始地址
+        bad_block_manager.table_address = 64 * 2048;  // 绗�鍧楃殑璧峰鍦板潃
     } else {
-        // 对于NOR Flash，放在末尾
+        // 瀵逛簬NOR Flash锛屾斁鍦ㄦ湯灏�
         bad_block_manager.table_address = total_size - sizeof(BadBlockTable);
     }
     
@@ -870,38 +604,38 @@ static void bad_block_manager_init(uint8_t dev) {
     DBG("Total Flash size: 0x%08X bytes\n", total_size);
     DBG("Bad block table stored at: 0x%08X\n", bad_block_manager.table_address);
     
-    // 临时设置为已初始化，防止在加载坏块表时的递归调用
+    // 涓存椂璁剧疆涓哄凡鍒濆鍖栵紝闃叉鍦ㄥ姞杞藉潖鍧楄〃鏃剁殑閫掑綊璋冪敤
     bad_block_manager.initialized = true;
     
-    // 尝试加载已有的坏块表
+    // 灏濊瘯鍔犺浇宸叉湁鐨勫潖鍧楄〃
     load_bad_block_table(dev);
     
-    // 如果坏块表不存在或无效，则创建新的
+    // 濡傛灉鍧忓潡琛ㄤ笉瀛樺湪鎴栨棤鏁堬紝鍒欏垱寤烘柊鐨�
     if (bad_block_manager.table.magic != BAD_BLOCK_TABLE_MAGIC || 
         bad_block_manager.table.version != BAD_BLOCK_TABLE_VERSION) {
         DBG("No valid bad block table found, creating new one\n");
         
-        // 初始化新的坏块表
+        // 鍒濆鍖栨柊鐨勫潖鍧楄〃
         memset(&bad_block_manager.table, 0, sizeof(BadBlockTable));
         bad_block_manager.table.magic = BAD_BLOCK_TABLE_MAGIC;
         bad_block_manager.table.version = BAD_BLOCK_TABLE_VERSION;
         bad_block_manager.table.count = 0;
         
-        // 暂时不进行全盘扫描，改为运行时动态检测坏块
-        // 这样可以避免启动时的栈溢出问题
+        // 鏆傛椂涓嶈繘琛屽叏鐩樻壂鎻忥紝鏀逛负杩愯鏃跺姩鎬佹娴嬪潖鍧�
+        // 杩欐牱鍙互閬垮厤鍚姩鏃剁殑鏍堟孩鍑洪棶棰�
         DBG("Skipping initial bad block scan for now, will detect during runtime\n");
         
-        // 保存空的坏块表
+        // 淇濆瓨绌虹殑鍧忓潡琛�
         save_bad_block_table(dev);
     } else {
         DBG("Loaded existing bad block table, %d bad blocks found\n", bad_block_manager.table.count);
     }
     
-    // 确保初始化标志已设置
+    // 纭繚鍒濆鍖栨爣蹇楀凡璁剧疆
     bad_block_manager.initialized = true;
 }
 
-// 检查块是否为坏块
+// 妫�煡鍧楁槸鍚︿负鍧忓潡
 static bool is_block_bad(uint32_t block_address, uint8_t dev) {
     uint16_t i;
     
@@ -909,7 +643,7 @@ static bool is_block_bad(uint32_t block_address, uint8_t dev) {
         bad_block_manager_init(dev);
     }
     
-    // 检查块地址是否在坏块列表中
+    // 妫�煡鍧楀湴鍧�槸鍚﹀湪鍧忓潡鍒楄〃涓�
     for (i = 0; i < bad_block_manager.table.count; i++) {
         if (bad_block_manager.table.bad_blocks[i] == block_address) {
             return true;
@@ -918,38 +652,38 @@ static bool is_block_bad(uint32_t block_address, uint8_t dev) {
     return false;
 }
 
-// 将块标记为坏块
+// 灏嗗潡鏍囪涓哄潖鍧�
 static bool mark_block_as_bad(uint32_t block_address, uint8_t dev) {
     if (!bad_block_manager.initialized) {
         bad_block_manager_init(dev);
     }
     
-    // 检查是否已经是坏块
+    // 妫�煡鏄惁宸茬粡鏄潖鍧�
     if (is_block_bad(block_address, dev)) {
         return true;
     }
     
-    // 检查是否还有空间添加新的坏块
+    // 妫�煡鏄惁杩樻湁绌洪棿娣诲姞鏂扮殑鍧忓潡
     if (bad_block_manager.table.count >= sizeof(bad_block_manager.table.bad_blocks)/sizeof(bad_block_manager.table.bad_blocks[0])) {
         DBG("Cannot mark block %d as bad - bad block table is full\n", block_address);
         return false;
     }
     
-    // 将块添加到坏块列表
+    // 灏嗗潡娣诲姞鍒板潖鍧楀垪琛�
     bad_block_manager.table.bad_blocks[bad_block_manager.table.count++] = block_address;
     DBG("Block %d marked as bad\n", block_address);
     
-    // 在块的第一个页写入坏块标记
+    // 鍦ㄥ潡鐨勭涓�釜椤靛啓鍏ュ潖鍧楁爣璁�
     uint32_t address = block_to_address(block_address, dev);
     uint8_t marker = BAD_BLOCK_MARKER;
     flash_PageProgram(address, &marker, 1, dev);
     
-    // 保存坏块表
+    // 淇濆瓨鍧忓潡琛�
     save_bad_block_table(dev);
     return true;
 }
 
-// 查找下一个好块
+// 鏌ユ壘涓嬩竴涓ソ鍧�
 static uint32_t find_next_good_block(uint32_t start_block, uint8_t dev) {
     uint32_t total_blocks;
     uint32_t block;
@@ -966,23 +700,23 @@ static uint32_t find_next_good_block(uint32_t start_block, uint8_t dev) {
         }
     }
     
-    // 如果在start_block之后没有找到好块，从头开始找
+    // 濡傛灉鍦╯tart_block涔嬪悗娌℃湁鎵惧埌濂藉潡锛屼粠澶村紑濮嬫壘
     for (block = 0; block < start_block; block++) {
         if (!is_block_bad(block, dev)) {
             return block;
         }
     }
     
-    // 所有块都是坏块
-    return 0xFFFFFFFF; // 无效块地址
+    // 鎵�湁鍧楅兘鏄潖鍧�
+    return 0xFFFFFFFF; // 鏃犳晥鍧楀湴鍧�
 }
 
-// 保存坏块表到Flash
+// 淇濆瓨鍧忓潡琛ㄥ埌Flash
 static void save_bad_block_table(uint8_t dev) {
-    // 擦除坏块表所在的块
+    // 鎿﹂櫎鍧忓潡琛ㄦ墍鍦ㄧ殑鍧�
     flash_SectorErase(bad_block_manager.table_address, dev);
     
-    // 写入坏块表
+    // 鍐欏叆鍧忓潡琛�
     flash_PageProgram(bad_block_manager.table_address, 
                      (uint8_t*)&bad_block_manager.table, 
                      sizeof(BadBlockTable), 
@@ -991,7 +725,7 @@ static void save_bad_block_table(uint8_t dev) {
     DBG("Bad block table saved, %d bad blocks recorded\n", bad_block_manager.table.count);
 }
 
-// 从Flash加载坏块表
+// 浠嶧lash鍔犺浇鍧忓潡琛�
 static void load_bad_block_table(uint8_t dev) {
     flash_ReadData(bad_block_manager.table_address,
                   (uint8_t*)&bad_block_manager.table,
@@ -999,19 +733,19 @@ static void load_bad_block_table(uint8_t dev) {
                   dev);
 }
 
-// 将地址转换为块号
+// 灏嗗湴鍧�浆鎹负鍧楀彿
 static uint32_t address_to_block(uint32_t address, uint8_t dev) {
-    // W25N02每块64页，每页2048字节
+    // W25N02姣忓潡64椤碉紝姣忛〉2048瀛楄妭
     return address / (64 * 2048);
 }
 
-// 将块号转换为地址
+// 灏嗗潡鍙疯浆鎹负鍦板潃
 static uint32_t block_to_address(uint32_t block, uint8_t dev) {
-    // W25N02每块64页，每页2048字节
+    // W25N02姣忓潡64椤碉紝姣忛〉2048瀛楄妭
     return block * 64 * 2048;
 }
 
-// 公开的坏块管理接口函数
+// 鍏紑鐨勫潖鍧楃鐞嗘帴鍙ｅ嚱鏁�
 uint8_t nand_check_bad_block(uint32_t block_address, uint8_t dev) {
     return is_block_bad(block_address, dev) ? 1 : 0;
 }
@@ -1026,14 +760,14 @@ uint32_t nand_find_next_good_block(uint32_t start_block, uint8_t dev) {
 
 uint32_t nand_get_safe_write_address(uint32_t current_address, uint32_t bytes_to_write, uint8_t dev) {
     if (dev != DEV_NAND) {
-        return current_address;  // NOR Flash不需要坏块管理
+        return current_address;  // NOR Flash涓嶉渶瑕佸潖鍧楃鐞�
     }
     
     uint32_t current_block = address_to_block(current_address, dev);
     
-    // 检查当前块是否为坏块
+    // 妫�煡褰撳墠鍧楁槸鍚︿负鍧忓潡
     if (is_block_bad(current_block, dev)) {
-        // 找到下一个好块
+        // 鎵惧埌涓嬩竴涓ソ鍧�
         uint32_t next_good_block = find_next_good_block(current_block + 1, dev);
         if (next_good_block == 0xFFFFFFFF) {
             DBG("ERROR: No good blocks available!\n");
@@ -1045,7 +779,7 @@ uint32_t nand_get_safe_write_address(uint32_t current_address, uint32_t bytes_to
     return current_address;
 }
 
-// NAND Flash音频优化写入 - 页面对齐缓冲机制
+// NAND Flash闊抽浼樺寲鍐欏叆 - 椤甸潰瀵归綈缂撳啿鏈哄埗
 #define NAND_PAGE_SIZE 2048
 #define NAND_AUDIO_BUFFER_SIZE NAND_PAGE_SIZE
 
@@ -1058,11 +792,11 @@ static struct {
 
 uint8_t nand_audio_write_buffered(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev) {
     if (dev != DEV_NAND) {
-        // NOR Flash直接写入
+        // NOR Flash鐩存帴鍐欏叆
         return flash_PageProgram(address, data, size, dev);
     }
     
-    // 初始化缓冲区
+    // 鍒濆鍖栫紦鍐插尯
     if (!nand_audio_buffer.initialized) {
         nand_audio_buffer.current_page_address = (address / NAND_PAGE_SIZE) * NAND_PAGE_SIZE;
         nand_audio_buffer.buffer_pos = address % NAND_PAGE_SIZE;
@@ -1074,7 +808,7 @@ uint8_t nand_audio_write_buffered(uint32_t address, uint8_t* data, uint16_t size
     while (data_pos < size) {
         uint32_t target_page = (address + data_pos) / NAND_PAGE_SIZE * NAND_PAGE_SIZE;
         
-        // 如果跨页了，先刷新当前缓冲区
+        // 濡傛灉璺ㄩ〉浜嗭紝鍏堝埛鏂板綋鍓嶇紦鍐插尯
         if (target_page != nand_audio_buffer.current_page_address) {
             if (nand_audio_buffer.buffer_pos > 0) {
                 uint8_t result = nand_audio_flush_buffer(dev);
@@ -1083,24 +817,24 @@ uint8_t nand_audio_write_buffered(uint32_t address, uint8_t* data, uint16_t size
                 }
             }
             
-            // 切换到新页
+            // 鍒囨崲鍒版柊椤�
             nand_audio_buffer.current_page_address = target_page;
             nand_audio_buffer.buffer_pos = 0;
         }
         
-        // 计算可以写入当前页的数据量
+        // 璁＄畻鍙互鍐欏叆褰撳墠椤电殑鏁版嵁閲�
         uint16_t remaining_in_page = NAND_PAGE_SIZE - nand_audio_buffer.buffer_pos;
         uint16_t remaining_data = size - data_pos;
         uint16_t bytes_to_copy = (remaining_in_page < remaining_data) ? remaining_in_page : remaining_data;
         
-        // 复制数据到缓冲区
+        // 澶嶅埗鏁版嵁鍒扮紦鍐插尯
         memcpy(&nand_audio_buffer.buffer[nand_audio_buffer.buffer_pos], 
                &data[data_pos], bytes_to_copy);
         
         nand_audio_buffer.buffer_pos += bytes_to_copy;
         data_pos += bytes_to_copy;
         
-        // 如果页面缓冲区满了，刷新到Flash
+        // 濡傛灉椤甸潰缂撳啿鍖烘弧浜嗭紝鍒锋柊鍒癋lash
         if (nand_audio_buffer.buffer_pos >= NAND_PAGE_SIZE) {
             uint8_t result = nand_audio_flush_buffer(dev);
             if (result != FLASH_STATUS_OK) {
@@ -1112,7 +846,7 @@ uint8_t nand_audio_write_buffered(uint32_t address, uint8_t* data, uint16_t size
     return FLASH_STATUS_OK;
 }
 
-// 初始化NAND智能音频缓冲系统
+// 鍒濆鍖朜AND鏅鸿兘闊抽缂撳啿绯荤粺
 void nand_smart_audio_init(void) {
     nand_audio_buffer.buffer_pos = 0;
     nand_audio_buffer.current_page_address = 0;
@@ -1120,7 +854,7 @@ void nand_smart_audio_init(void) {
     DBG("NAND smart audio buffer initialized\n");
 }
 
-// 获取当前NAND音频写入地址
+// 鑾峰彇褰撳墠NAND闊抽鍐欏叆鍦板潃
 uint32_t nand_smart_audio_get_address(void) {
     if (!nand_audio_buffer.initialized) {
         return 0;
@@ -1133,10 +867,10 @@ uint8_t nand_audio_flush_buffer(uint8_t dev) {
         return FLASH_STATUS_OK;
     }
     
-    // 检查目标块是否为坏块
+    // 妫�煡鐩爣鍧楁槸鍚︿负鍧忓潡
     uint32_t block = address_to_block(nand_audio_buffer.current_page_address, dev);
     if (is_block_bad(block, dev)) {
-        // 找到下一个好块
+        // 鎵惧埌涓嬩竴涓ソ鍧�
         uint32_t next_good_block = find_next_good_block(block + 1, dev);
         if (next_good_block == 0xFFFFFFFF) {
             DBG("ERROR: No good blocks available for audio buffer flush!\n");
@@ -1145,40 +879,40 @@ uint8_t nand_audio_flush_buffer(uint8_t dev) {
         nand_audio_buffer.current_page_address = block_to_address(next_good_block, dev);
     }
     
-    // 将缓冲区内容写入Flash（页面对齐）
+    // 灏嗙紦鍐插尯鍐呭鍐欏叆Flash锛堥〉闈㈠榻愶級
     uint8_t result = flash_PageProgram(nand_audio_buffer.current_page_address, 
                                       nand_audio_buffer.buffer, 
                                       nand_audio_buffer.buffer_pos, 
                                       dev);
     
     if (result == FLASH_STATUS_OK) {
-        // 重置缓冲区
+        // 閲嶇疆缂撳啿鍖�
         nand_audio_buffer.buffer_pos = 0;
         nand_audio_buffer.current_page_address += NAND_PAGE_SIZE;
         return FLASH_STATUS_OK;
     } else {
-        // 写入失败，标记坏块并重试
+        // 鍐欏叆澶辫触锛屾爣璁板潖鍧楀苟閲嶈瘯
         mark_block_as_bad(block, dev);
         DBG("Audio buffer flush failed, marked block %lu as bad\n", (unsigned long)block);
         return FLASH_STATUS_ERROR;
     }
 }
 
-// NAND智能音频写入
+// NAND鏅鸿兘闊抽鍐欏叆
 uint8_t nand_smart_audio_write(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev) {
-    // 直接使用现有的缓冲写入功能
+    // 鐩存帴浣跨敤鐜版湁鐨勭紦鍐插啓鍏ュ姛鑳�
     return nand_audio_write_buffered(address, data, size, dev);
 }
 
-// NAND智能音频读取
+// NAND鏅鸿兘闊抽璇诲彇
 uint8_t nand_smart_audio_read(uint32_t address, uint8_t* data, uint16_t size, uint8_t dev) {
-    // 对于读取，直接使用标准Flash读取
-    // TODO: 如果需要，可以添加智能读取逻辑（考虑页面映射等）
+    // 瀵逛簬璇诲彇锛岀洿鎺ヤ娇鐢ㄦ爣鍑咶lash璇诲彇
+    // TODO: 濡傛灉闇�锛屽彲浠ユ坊鍔犳櫤鑳借鍙栭�杈戯紙鑰冭檻椤甸潰鏄犲皠绛夛級
     BG_flash_manager.ReadData(address, data, size, dev);
     return FLASH_STATUS_OK;
 }
 
-// NAND智能音频刷新
+// NAND鏅鸿兘闊抽鍒锋柊
 uint8_t nand_smart_audio_flush(uint8_t dev) {
     return nand_audio_flush_buffer(dev);
 }

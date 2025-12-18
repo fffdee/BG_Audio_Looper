@@ -55,6 +55,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_mini/middleware/fatfs/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_mini/src/BanGUI/menu_slider}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_mini/src/hardware/audio_looper}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_mini/src/hardware/sys_param}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BG_card_mini/src/BanGUI/ui_system}&quot;"/>
 								</option>
 								<option id="nds.c.compiler.option.optimization.lto.934303171" name="Link Time Optimization (-flto)" superClass="nds.c.compiler.option.optimization.lto" value="false" valueType="boolean"/>
 								<option id="nds.c.compiler.option.optimization.removesections.function.489783750" name="Remove unused function sections (-ffunction-sections)" superClass="nds.c.compiler.option.optimization.removesections.function" value="true" valueType="boolean"/>

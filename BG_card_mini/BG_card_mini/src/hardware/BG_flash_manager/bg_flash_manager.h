@@ -5,22 +5,36 @@
 #include <stdbool.h>
 #include "gpio.h"
 
-#define DEV_NOR 	0
-#define DEV_NAND 	1
+#define DEV_NOR1 	0   // 第一个NOR Flash, CS = GPIOA21
+#define DEV_NOR2 	1   // 第二个NOR Flash, CS = GPIOA22
 
-#define FLASH_CS_INIT()        GPIO_RegOneBitClear(GPIO_A_IE, GPIOA21);\
-		                       GPIO_RegOneBitSet(GPIO_A_OE, GPIOA21);\
-		                       GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA21);
+// 兼容旧代码
+#define DEV_NOR     DEV_NOR1
+#define DEV_NAND    DEV_NOR2
 
-#define NAND_CS_INIT()         GPIO_RegOneBitClear(GPIO_A_IE, GPIOA22);\
-		                       GPIO_RegOneBitSet(GPIO_A_OE, GPIOA22);\
-		                       GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA22);
+// 第一个NOR Flash CS引脚 (GPIOA21)
+#define NOR1_CS_INIT()        GPIO_RegOneBitClear(GPIO_A_IE, GPIOA21);\
+		                      GPIO_RegOneBitSet(GPIO_A_OE, GPIOA21);\
+		                      GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA21);
 
-#define FLASH_CS_ENABLE()     GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA21);
-#define FLASH_CS_DISABLE()    GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA21);
+// 第二个NOR Flash CS引脚 (GPIOA22)
+#define NOR2_CS_INIT()        GPIO_RegOneBitClear(GPIO_A_IE, GPIOA22);\
+		                      GPIO_RegOneBitSet(GPIO_A_OE, GPIOA22);\
+		                      GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA22);
 
-#define NAND_CS_ENABLE()     GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA22);
-#define NAND_CS_DISABLE()    GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA22);
+#define NOR1_CS_ENABLE()      GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA21);
+#define NOR1_CS_DISABLE()     GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA21);
+
+#define NOR2_CS_ENABLE()      GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA22);
+#define NOR2_CS_DISABLE()     GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA22);
+
+// 兼容旧代码的宏
+#define FLASH_CS_INIT()       NOR1_CS_INIT()
+#define FLASH_CS_ENABLE()     NOR1_CS_ENABLE()
+#define FLASH_CS_DISABLE()    NOR1_CS_DISABLE()
+#define NAND_CS_INIT()        NOR2_CS_INIT()
+#define NAND_CS_ENABLE()      NOR2_CS_ENABLE()
+#define NAND_CS_DISABLE()     NOR2_CS_DISABLE()
 
 
 //#define FLASH_HOLD_INIT()      GPIO_RegOneBitClear(GPIO_A_IE, GPIOA22);\

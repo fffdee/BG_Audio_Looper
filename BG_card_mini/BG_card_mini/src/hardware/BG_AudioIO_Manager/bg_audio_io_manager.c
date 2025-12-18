@@ -523,11 +523,13 @@ static void OutputAudioData(uint16_t len)
 }
 
 /**
- * 处理蓝牙SBC音频解码
+ * 音频主循环（有蓝牙音频数据时）
  */
-static void ProcessBtAudioDecode(uint32_t *bt_audio_buffer)
+static void AudioLoopWithBT(uint32_t *bt_audio_buffer)
 {
-	static uint32_t SampleRateCC = 44100;
+	uint32_t SampleRateCC = BG_AudioManager.Audio_data.SampleRate;
+	uint16_t RealLen = 0;
+	uint16_t n = 0;
 	uint16_t i;
 
 	if (RT_SUCCESS == audio_decoder_can_continue())
@@ -540,48 +542,24 @@ static void ProcessBtAudioDecode(uint32_t *bt_audio_buffer)
 			if (SampleRateCC != audio_decoder->song_info->sampling_rate)
 			{
 				SampleRateCC = audio_decoder->song_info->sampling_rate;
+				/* 同步DAC和ADC采样率，避免移频 */
 				AudioDAC_SampleRateChange(DAC0, audio_decoder->song_info->sampling_rate);
 				AudioDAC_SampleRateChange(DAC1, audio_decoder->song_info->sampling_rate);
-			}
 
-			// 转换PCM数据
-			for (i = 0; i < audio_decoder->song_info->pcm_data_length; i++)
-				bt_audio_buffer[i] = (uint32_t)audio_decoder->song_info->pcm_addr[i];
-		}
-		else
-		{
-			DBG("[INFO]: ERROR%d\n", (int)audio_decoder->error_code);
-		}
-	}
-}
-
-/**
- * 音频主循环（有蓝牙音频数据时）
- */
-static void AudioLoopWithBT(uint32_t *bt_audio_buffer)
-{
-	static uint32_t SampleRateCC = 44100;
-	uint16_t RealLen = 0;
-	uint16_t n = 0;
-
-	ProcessBtAudioDecode(bt_audio_buffer);
-
-	if (RT_SUCCESS == audio_decoder_can_continue())
-	{
-		if (mv_msize(&SBC_MemHandle) <= SBC_DECODER_FIFO_MIN)
-			return;
-
-		if (audio_decoder_decode() == RT_SUCCESS)
-		{
-			if (SampleRateCC != audio_decoder->song_info->sampling_rate)
-			{
-				SampleRateCC = audio_decoder->song_info->sampling_rate;
-				AudioDAC_SampleRateChange(DAC0, audio_decoder->song_info->sampling_rate);
-				AudioDAC_SampleRateChange(DAC1, audio_decoder->song_info->sampling_rate);
+				DBG("BT Audio Rate: %ld Hz (DAC+ADC synced)\n", (long)audio_decoder->song_info->sampling_rate);
 			}
 
 			n = audio_decoder->song_info->pcm_data_length;
+			
+			/* 转换PCM数据到bt_audio_buffer */
+			for (i = 0; i < n; i++)
+				bt_audio_buffer[i] = (uint32_t)audio_decoder->song_info->pcm_addr[i];
+
+			/* 等待DAC有足够空间 */
 			while (AudioDAC0DataSpaceLenGet() < n);
+			
+			/* 等待ADC有足够数据（确保吉他/麦克风数据准备好） */
+			while (AudioADC_DataLenGet(ADC0_MODULE) < n || AudioADC_DataLenGet(ADC1_MODULE) < n);
 
 			ReadAudioData(n, &RealLen);
 			ApplyAudioEffects(RealLen);
@@ -613,10 +591,10 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 		ProcessMicOutput(RealLen);
 		ProcessSpeakerSwitch();
 
-		/* Looper录制处理 - 使用uint32格式的音频数据 */
+		/* Looper录制处理 - 使用mic_buf_in（麦克风输入）*/
 		if (AudioLooper.IsRecording())
 		{
-			AudioLooper.ProcessRecording32(BG_AudioManager.Audio_data.guitar_buf_out,
+			AudioLooper.ProcessRecording32(BG_AudioManager.Audio_data.mic_buf_in,
 			                               looper_flash_buffer, RealLen);
 		}
 
@@ -668,6 +646,7 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 				BG_AudioManager.Audio_data.OutPut_buf[i] =
 					BG_AudioManager.Audio_data.guitar_buf_out[i] +
 					BG_AudioManager.Audio_data.USB_dac_buf[i] +
+					BG_AudioManager.Audio_data.mic_buf_in[i] +
 					looper_playback_buffer[i];
 			}
 		}
@@ -677,6 +656,7 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 			{
 				BG_AudioManager.Audio_data.OutPut_buf[i] =
 					BG_AudioManager.Audio_data.guitar_buf_out[i] +
+					BG_AudioManager.Audio_data.mic_buf_in[i] +
 					looper_playback_buffer[i];
 			}
 		}

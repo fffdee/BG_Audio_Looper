@@ -264,3 +264,38 @@ void FrameBuffer_DrawString(uint16_t x, uint16_t y, const uint8_t* str, uint16_t
     // 暂时仍使用原有接口，因为字体数据较复杂
     // TODO: 实现直接写入帧缓冲的字符串绘制
 }
+
+/*===========================================================================
+ * bg_lcd.c 兼容适配函数
+ * 这些函数提供与旧API兼容的接口
+ *===========================================================================*/
+
+// 帧缓冲清屏 (兼容bg_lcd.c接口)
+void frame_buffer_clear(uint16_t color) {
+    FrameBuffer_Clear(color);
+}
+
+// 帧缓冲设置像素 (兼容bg_lcd.c接口)
+void frame_buffer_set_pixel(uint16_t x, uint16_t y, uint16_t color) {
+    FrameBuffer_SetPixel(x, y, color);
+}
+
+// 帧缓冲绘制点 (兼容bg_lcd.c接口)
+void frame_buffer_draw_point(uint16_t x, uint16_t y, uint16_t color) {
+    FrameBuffer_SetPixel(x, y, color);
+}
+
+// 帧缓冲绘制直线 (兼容bg_lcd.c接口)
+void frame_buffer_draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color) {
+    FrameBuffer_DrawLine(x0, y0, x1, y1, color);
+}
+
+// 帧缓冲填充矩形 (兼容bg_lcd.c接口) - 这是关键的Box函数
+void frame_buffer_box(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t bc) {
+    FrameBuffer_FillRect(x, y, w, h, bc);
+}
+
+// 帧缓冲刷新 (兼容bg_lcd.c接口)
+void frame_buffer_flush(void) {
+    FrameBuffer_Flush();
+}

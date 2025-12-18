@@ -3,7 +3,7 @@
 ################################################################################
 
 ifndef ANDESIGHT_ROOT
-ANDESIGHT_ROOT=/cygdrive/D/app/Andestech/AndeSight300RDS
+ANDESIGHT_ROOT=/cygdrive/D/ADS
 endif
 
 ifndef CROSS_COMPILE
@@ -32,6 +32,7 @@ RM := rm -rf
 -include src/BanGUI/base_func/subdir.mk
 -include src/BanGUI/menu_slider/subdir.mk
 -include src/BanGUI/page/subdir.mk
+-include src/BanGUI/ui_system/subdir.mk
 -include src/hardware/BG_AudioIO_Manager/USB/src/subdir.mk
 -include src/hardware/BG_AudioIO_Manager/subdir.mk
 -include src/hardware/BG_Encoder/subdir.mk
@@ -43,6 +44,7 @@ RM := rm -rf
 -include src/hardware/audio/music_parameter/subdir.mk
 -include src/hardware/audio_looper/subdir.mk
 -include src/hardware/bluetooth/src/subdir.mk
+-include src/hardware/sys_param/subdir.mk
 -include src/subdir.mk
 -include startup/subdir.mk
 -include objects.mk
@@ -92,7 +94,7 @@ all: BG_card_mini.adx secondary-outputs
 BG_card_mini.adx: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/BG_card_mini/src/hardware/bluetooth" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BG_card_mini.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio" -L"/cygdrive/F/project_and_dataset/project/BG_card_mini/BG_card_mini/src/hardware/bluetooth" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BG_card_mini.adx" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

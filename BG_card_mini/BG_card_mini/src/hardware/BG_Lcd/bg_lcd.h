@@ -71,6 +71,7 @@ typedef struct{
 #endif
 }BG_Lcd;
 void gui_DrawPoint(uint16_t x,uint16_t y,uint16_t Data);
+void Lcd_SetRotation(uint8_t rotation);  // 设置屏幕旋转
 extern BG_Lcd BG_lcd;
 
 #endif

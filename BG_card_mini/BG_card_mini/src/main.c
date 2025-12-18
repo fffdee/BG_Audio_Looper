@@ -42,6 +42,9 @@
 #include "spim.h"
 #include "bg_encoder.h"
 #include "bg_flash_manager.h"
+#include "BG_FlashMgr.h"
+#include "flash_test.h"
+#include "internal_flash_test.h"
 #include "bg_lcd.h"
 #include <math.h>
 #include <string.h>
@@ -63,6 +66,7 @@
 #include "audio_looper.h"
 #include "shell_lcd_adapter.h"  /* Shell LCD console adapter */
 #include "bg_shell.h"           /* Shell console API */
+#include "ui_system.h"          /* UI System (Menu, StatusBar, Boot Screen) */
 
 
 extern void SysTickInit(void);
@@ -226,7 +230,7 @@ void button_init()
  *   GPIO_A0  -> Segment 0 (按键按下为低电平)
  *   GPIO_B5  -> Segment 1
  *   GPIO_A15 -> Segment 2
- *   GPIO_A16 -> Segment 3
+ *   GPIO_A16 -> Segment 3 Sending
  *===========================================================================*/
 
 /* 按键状态记录（用于边沿检测） */
@@ -290,77 +294,231 @@ void EffectTask() {
 	GPIO_RegOneBitClear(GPIO_A_IE, GPIOA17);
 	GPIO_RegOneBitSet(GPIO_A_OE, GPIOA17);
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA17);
-	BG_lcd.Init();
-	 BG_lcd.Clear(0);
 	
+	/* Initialize BG_FlashMgr */
+	if (BG_FlashMgr.Init() == BG_FLASH_OK) {
+		DBG("[Main] BG_FlashMgr initialized successfully\n");
+		BG_FlashMgr.PrintInfo();
+	} else {
+		DBG("[Main] BG_FlashMgr init failed!\n");
+	}
+	
+	BG_lcd.Init();
+	/* Initialize UI System (includes boot screen animation) */
+	UI_System_Init(NULL);   /* Use default config */
+
+	/* Initialize and set default menu */
+	UI_Menu_InitDefault();
+	
+	UI_System_Start();      /* Start boot screen */
 	/* Initialize Shell LCD console adapter */
 	ShellLCD_Adapter_Init();
-	
-	// Initialize frame buffer system
-//	FrameBuffer_Init();
-
-	BG_page = BG_Page_Init(table, MAX_PAGE);
-//
-//	// Use frame buffer to clear screen
-//	FrameBuffer_Clear(0x0000);
-//	FrameBuffer_Flush(); // Flush to screen immediately
 
 	button_init();
-	//BG_page.Next(&BG_page);
-	BG_AudioManager.Audio_Init(48000);  /* Use 48kHz to match USB audio */
+	BG_AudioManager.Audio_Init(44100);  /* Use 48kHz to match USB audio */
+	
+
+	
 	while (1) {
 		BG_AudioManager.Audio_Loop();
 		
-		/* Process Looper 4-button input */
-		Looper_ProcessButtons();
-		
+		/* Update UI System (handles button input, menu, status bar) */
 		if(UI_flag == 1){
-			UI_flag =0;
-		
-		/* If Shell console enabled, only update console display, skip page rendering */
-		if (Shell_ConsoleIsEnabled()) {
-			Shell_ConsoleUpdate();
-		} else {
-			BG_page.Loop(&BG_page);
-		}
+			UI_flag = 0;
+			
+			/* Scan ADC/DAC insert detection pins */
+			UI_StatusBar_ScanDetect();
+			
+			/* If Shell console enabled, only update console display */
+			if (Shell_ConsoleIsEnabled()) {
+				Shell_ConsoleUpdate();
+			} else {
+				/* Update UI system (handles all UI logic, delta_ms ~20ms based on timer) */
+				UI_System_Update(20);
+			}
 
 #ifdef USE_FRAME_BUFFER
-    BG_lcd.FlushFrameBuffer();
+			BG_lcd.FlushFrameBuffer();
 #endif
 		}
-//		if (UI_flag == 1) {
-//			UI_flag = 0;
-//			BG_page.Loop(&BG_page);
-//		}
-//		if(GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX0)){
-//			if (UI_flag == 1) {
-//						UI_flag = 0;
-//			BG_page.Enter(&BG_page);
-//			}
-//		}
-//
-//		if(GPIO_RegOneBitGet(GPIO_B_IN, GPIO_INDEX5)){
-//			if (UI_flag == 1) {
-//									UI_flag = 0;
-//			BG_page.Next(&BG_page);
-//			}
-//		}
-//
-//		if(GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX15)){
-//			if (UI_flag == 1) {
-//									UI_flag = 0;
-//			BG_page.Last(&BG_page);
-//			}
-//		}
-//
-//		if(GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX16)){
-//			if (UI_flag == 1) {
-//									UI_flag = 0;
-//			BG_page.Exit(&BG_page);
-//			}
-//		}
-
 	}
+}
+void FlashTask(void)
+{
+	spi_init();
+	BG_lcd.Init();
+	BG_lcd.Clear(RED);
+	// 初始化闪存管理器
+	BG_flash_manager.Init();
+
+	// 读取两个NOR Flash的ID
+	uint8_t manufacturerID, memoryType, deviceID;
+	
+	DBG("========== Dual NOR Flash Test ==========\n");
+	
+	// 读取第一个NOR Flash ID (CS = A21)
+	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID, DEV_NOR1);
+	DBG("NOR1 (CS=A21) ID: 0x%02X 0x%02X 0x%02X\n", manufacturerID, memoryType, deviceID);
+	
+	// 读取第二个NOR Flash ID (CS = A22)
+	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID, DEV_NOR2);
+	DBG("NOR2 (CS=A22) ID: 0x%02X 0x%02X 0x%02X\n", manufacturerID, memoryType, deviceID);
+
+	// ================== Flash读写测试 ==================
+	DBG("========== Flash Sector Test Start ==========\n");
+
+	// 测试数据缓冲区
+	uint8_t write_buffer[256];
+	uint8_t read_buffer[256];
+	uint32_t test_address = 0x1000; // 使用第二个4K扇区，避开地址0
+	uint16_t test_size = 256;		// 测试数据大小
+	uint16_t i;
+	bool test_passed = true;
+
+	// 1. 准备测试数据
+	DBG("Preparing test data...\n");
+	for (i = 0; i < test_size; i++)
+	{
+		write_buffer[i] = (uint8_t)(0xA0 + (i & 0x0F)); // 模式：A0,A1,A2...AF,A0,A1...
+	}
+
+	// 打印写入数据（前32字节）
+	DBG("Write data (first 32 bytes):\n");
+	for (i = 0; i < 32 && i < test_size; i++)
+	{
+		if (i % 16 == 0)
+			DBG("\n0x%04X: ", i);
+		DBG("%02X ", write_buffer[i]);
+	}
+	DBG("\n");
+
+	// ========== 测试NOR1 (CS=A21) ==========
+	DBG("\n=== Testing NOR1 (CS=A21) ===\n");
+	
+	// 单字节测试
+	uint8_t test_byte = 0xAA;
+	uint8_t read_byte;
+	BG_flash_manager.SectorErase(test_address, DEV_NOR1);
+	BG_flash_manager.PageProgram(test_address, &test_byte, 1, DEV_NOR1);
+	BG_flash_manager.ReadData(test_address, &read_byte, 1, DEV_NOR1);
+	DBG("NOR1 single byte: wrote 0x%02X, read 0x%02X %s\n", 
+	    test_byte, read_byte, (test_byte == read_byte) ? "[OK]" : "[FAIL]");
+	if (test_byte != read_byte) test_passed = false;
+
+	// 256字节测试
+	BG_flash_manager.SectorErase(test_address, DEV_NOR1);
+	DBG("Writing %d bytes to NOR1 at 0x%08lX...\n", test_size, (unsigned long)test_address);
+	BG_flash_manager.PageProgram(test_address, write_buffer, test_size, DEV_NOR1);
+	
+	memset(read_buffer, 0, sizeof(read_buffer));
+	BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NOR1);
+	
+	// 验证数据
+	bool nor1_ok = true;
+	uint16_t error_count = 0;
+	for (i = 0; i < test_size; i++)
+	{
+		if (read_buffer[i] != write_buffer[i])
+		{
+			if (error_count < 5)
+				DBG("NOR1 mismatch at %d: wrote 0x%02X, read 0x%02X\n", i, write_buffer[i], read_buffer[i]);
+			error_count++;
+			nor1_ok = false;
+		}
+	}
+	if (nor1_ok)
+		DBG("NOR1 verification PASSED - All %d bytes match\n", test_size);
+	else
+	{
+		DBG("NOR1 verification FAILED - %d errors\n", error_count);
+		test_passed = false;
+	}
+
+	// ========== 测试NOR2 (CS=A22) ==========
+	DBG("\n=== Testing NOR2 (CS=A22) ===\n");
+	
+	// 单字节测试
+	test_byte = 0x55;
+	BG_flash_manager.SectorErase(test_address, DEV_NOR2);
+	BG_flash_manager.PageProgram(test_address, &test_byte, 1, DEV_NOR2);
+	BG_flash_manager.ReadData(test_address, &read_byte, 1, DEV_NOR2);
+	DBG("NOR2 single byte: wrote 0x%02X, read 0x%02X %s\n", 
+	    test_byte, read_byte, (test_byte == read_byte) ? "[OK]" : "[FAIL]");
+	if (test_byte != read_byte) test_passed = false;
+
+	// 256字节测试 - 使用不同的测试模式
+	for (i = 0; i < test_size; i++)
+	{
+		write_buffer[i] = (uint8_t)(0x50 + (i & 0x0F)); // 模式：50,51,52...5F
+	}
+	
+	BG_flash_manager.SectorErase(test_address, DEV_NOR2);
+	DBG("Writing %d bytes to NOR2 at 0x%08lX...\n", test_size, (unsigned long)test_address);
+	BG_flash_manager.PageProgram(test_address, write_buffer, test_size, DEV_NOR2);
+	
+	memset(read_buffer, 0, sizeof(read_buffer));
+	BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NOR2);
+	
+	// 验证数据
+	bool nor2_ok = true;
+	error_count = 0;
+	for (i = 0; i < test_size; i++)
+	{
+		if (read_buffer[i] != write_buffer[i])
+		{
+			if (error_count < 5)
+				DBG("NOR2 mismatch at %d: wrote 0x%02X, read 0x%02X\n", i, write_buffer[i], read_buffer[i]);
+			error_count++;
+			nor2_ok = false;
+		}
+	}
+	if (nor2_ok)
+		DBG("NOR2 verification PASSED - All %d bytes match\n", test_size);
+	else
+	{
+		DBG("NOR2 verification FAILED - %d errors\n", error_count);
+		test_passed = false;
+	}
+
+	// ========== 显示测试结果 ==========
+	if (test_passed)
+	{
+		DBG("\n========== Dual NOR Flash Test PASSED ==========\n");
+		BG_lcd.Clear(GREEN);
+	}
+	else
+	{
+		DBG("\n========== Dual NOR Flash Test FAILED ==========\n");
+		BG_lcd.Clear(RED);
+	}
+
+	DBG("Flash Test Summary:\n");
+	DBG("- NOR1 (CS=A21): %s\n", nor1_ok ? "OK" : "FAIL");
+	DBG("- NOR2 (CS=A22): %s\n", nor2_ok ? "OK" : "FAIL");
+	DBG("========== Flash Test End ==========\n");
+}
+
+/**
+ * @brief 新 Flash 驱动架构测试任务
+ * 使用重构后的 flash_bus + flash_devices + flash_nor_w25qxx 架构
+ */
+void FlashNewDriverTask(void)
+{
+	spi_init();
+	BG_lcd.Init();
+	BG_lcd.Clear(BLUE);  // 蓝色表示使用新驱动
+
+	DBG("\n");
+	DBG("**************************************************\n");
+	DBG("*     New Flash Driver Architecture Test        *\n");
+	DBG("**************************************************\n");
+	
+	// 运行完整测试
+	FlashNewDriver_Test();
+	
+	// 测试完成，显示结果颜色已在测试函数中设置
+	DBG("\nNew Flash Driver test completed.\n");
+	DBG("You can also run FlashNewDriver_QuickTest() for quick debug.\n");
 }
 
 //static uint8_t DmaTxBuf[512];
@@ -485,7 +643,15 @@ int main(void) {
 
 	xQueue = xQueueCreate(4, sizeof(uint32_t));
 
-
+	/* 选择要运行的测试：
+	 * - FlashTask: 测试旧的 bg_flash_manager (双 NOR Flash 支持)
+	 * - FlashNewDriverTask: 测试新重构的 Flash 驱动架构 (外部Flash)
+	 * - InternalFlashTestTask: 测试芯片内部 Flash 读写
+	 */
+	// xTaskCreate( (TaskFunction_t)FlashTask, "FlashTask", 512, NULL, 1, NULL );  // 旧驱动测试
+	// xTaskCreate( (TaskFunction_t)FlashNewDriverTask, "FlashNewDriverTask", 1024, NULL, 1, NULL );  // 新驱动测试
+	// xTaskCreate( (TaskFunction_t)InternalFlashTestTask, "InternalFlashTest", 1024, NULL, 1, NULL );  // 内部Flash测试
+	
 	xTaskCreate((TaskFunction_t )EffectTask, "EffectTask", 2048, NULL, 1, NULL);
 
 	//xTaskCreate( (TaskFunction_t)btTask, "btTask",2048, NULL, 1, NULL );

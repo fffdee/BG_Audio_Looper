@@ -127,12 +127,8 @@ void loop_init(void)
     // 初始化节拍器
     metronome_init();
     
-    // 开机全片擦除Flash
-    uint8_t flash_device_id = loop_get_flash_device_id();
-    DBG("Erasing entire Flash on startup (device: %s)...\n", 
-        g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
-    BG_flash_manager.EraseAll(flash_device_id);
-    DBG("Flash erased, Loop manager initialized with multi-segment support\n");
+    /* 不再在初始化时擦除Flash，由用户手动触发（编码器右转）*/
+    DBG("Loop manager initialized with multi-segment support (Flash erase deferred)\n");
     //loop_handle_button_press();
 }
 
@@ -175,12 +171,8 @@ void loop_init_with_flash_type(FlashType_t flash_type)
     // 初始化节拍器
     metronome_init();
     
-    // 开机全片擦除Flash（使用指定的Flash类型）
-    uint8_t flash_device_id = loop_get_flash_device_id();
-    DBG("Erasing entire Flash on startup (device: %s)...\n", 
-        g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
-    BG_flash_manager.EraseAll(flash_device_id);
-    DBG("Flash erased, Loop manager initialized with %s Flash support\n",
+    /* 不再在初始化时擦除Flash，由用户手动触发（编码器右转）*/
+    DBG("Loop manager initialized with %s Flash support (Flash erase deferred)\n",
         g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
 }
 
@@ -743,6 +735,8 @@ void loop_update_master_segment_info(void)
  */
 void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data, uint8_t* buffer, uint16_t length)
 {
+    static uint32_t rec_call_count = 0;
+    
     if (segment_index >= MAX_SEGMENTS) {
         return;  // 无效段索引
     }
@@ -761,6 +755,21 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
     uint32_t write_address = segment->start_address + 
                             segment->length_pages * g_loop_manager.page_size;
     uint8_t flash_device_id = loop_get_flash_device_id();
+    
+    // Debug: 每100次打印一次录音状态
+    rec_call_count++;
+    if (rec_call_count % 100 == 1) {
+        // 检查音频数据是否有非零值
+        uint16_t non_zero = 0;
+        uint16_t k;
+        for (k = 0; k < length && k < 48; k++) {
+            if (audio_data[k] != 0) non_zero++;
+        }
+        DBG("REC[%lu]: seg=%d addr=0x%lX pages=%lu nonzero=%d/%d sample0=0x%08lX\n",
+            (unsigned long)rec_call_count, segment_index, 
+            (unsigned long)write_address, (unsigned long)segment->length_pages,
+            non_zero, length, (unsigned long)audio_data[0]);
+    }
     
     BG_flash_manager.PageProgram(write_address, write_buffer, bytes_to_write, flash_device_id);
     
@@ -799,6 +808,8 @@ void loop_process_recording_uint32(uint32_t* audio_data, uint8_t* buffer, uint16
  */
 uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_data, uint8_t* buffer, uint16_t length)
 {
+    static uint32_t play_call_count = 0;
+    
     if (segment_index >= MAX_SEGMENTS) {
         return 0;  // 无效段索引
     }
@@ -831,6 +842,21 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
     uint32_t segment_data[48];
     uint32_t samples_to_read = (length < 48) ? length : 48;
     convertUint8ArrayToUint32Array(buffer, segment_data, samples_to_read);
+    
+    // Debug: 每100次打印一次播放状态
+    play_call_count++;
+    if (play_call_count % 100 == 1) {
+        uint16_t non_zero = 0;
+        uint16_t k;
+        for (k = 0; k < samples_to_read; k++) {
+            if (segment_data[k] != 0) non_zero++;
+        }
+        DBG("PLAY[%lu]: seg=%d addr=0x%lX pos=%lu/%lu nonzero=%d/%lu data0=0x%08lX\n",
+            (unsigned long)play_call_count, segment_index,
+            (unsigned long)segment_address, (unsigned long)segment->play_position,
+            (unsigned long)segment->length_pages, non_zero, (unsigned long)samples_to_read,
+            (unsigned long)segment_data[0]);
+    }
     
     // 段开头淡入处理
     if (segment->play_position == 0) {
@@ -947,21 +973,27 @@ void loop_start_new_segment(void)
         return;
     }
     
-    // 计算新段的起始地址
-    uint32_t start_address;
-    if (new_segment == 0) {
-        // 第一段从固定地址开始
-        start_address = 0x40000;  // 避开Flash低地址
-    } else {
-        // 后续段根据前面段的大小来计算
-        start_address = g_loop_manager.segments[new_segment - 1].start_address + 
-                       g_loop_manager.segments[new_segment - 1].length_pages * g_loop_manager.page_size;
-        
-        // 确保地址是页对齐的
-        if (start_address % g_loop_manager.page_size != 0) {
-            start_address = ((start_address / g_loop_manager.page_size) + 1) * g_loop_manager.page_size;
+    // 计算新段的起始地址 - 动态分配，接在所有已用空间之后
+    uint32_t max_end_address = 0x40000;  // 基地址
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        if (g_loop_manager.segments[i].is_active && g_loop_manager.segments[i].length_pages > 0) {
+            uint32_t end_addr = g_loop_manager.segments[i].start_address + 
+                               g_loop_manager.segments[i].length_pages * g_loop_manager.page_size;
+            if (end_addr > max_end_address) {
+                max_end_address = end_addr;
+            }
         }
     }
+    
+    // 页对齐
+    if (max_end_address % g_loop_manager.page_size != 0) {
+        max_end_address = ((max_end_address / g_loop_manager.page_size) + 1) * g_loop_manager.page_size;
+    }
+    
+    uint32_t start_address = max_end_address;
+    
+    DBG("Segment %d: dynamic start_address = 0x%08lX (after all used space)\n",
+        new_segment, (unsigned long)start_address);
     
     // 初始化新段
     g_loop_manager.segments[new_segment].start_address = start_address;
@@ -1196,21 +1228,29 @@ void loop_set_segment_recording(uint8_t segment_index)
     
     // 如果段未激活，初始化段信息
     if (segment->state == SEGMENT_INACTIVE) {
-        // 计算段起始地址 - 与loop_start_new_segment保持一致
-        uint32_t start_address;
-        if (segment_index == 0) {
-            // 第一段从固定地址开始
-            start_address = 0x40000;  // 避开Flash低地址
-        } else {
-            // 后续段根据前面段的大小来计算
-            start_address = g_loop_manager.segments[segment_index - 1].start_address + 
-                           g_loop_manager.segments[segment_index - 1].length_pages * g_loop_manager.page_size;
-            
-            // 确保地址是页对齐的
-            if (start_address % g_loop_manager.page_size != 0) {
-                start_address = ((start_address / g_loop_manager.page_size) + 1) * g_loop_manager.page_size;
+        // 计算段起始地址 - 动态分配，接在所有已用空间之后
+        // 遍历所有段，找到最大的结束地址
+        uint32_t max_end_address = 0x40000;  // 基地址
+        uint8_t i;
+        for (i = 0; i < MAX_SEGMENTS; i++) {
+            if (g_loop_manager.segments[i].is_active && g_loop_manager.segments[i].length_pages > 0) {
+                uint32_t end_addr = g_loop_manager.segments[i].start_address + 
+                                   g_loop_manager.segments[i].length_pages * g_loop_manager.page_size;
+                if (end_addr > max_end_address) {
+                    max_end_address = end_addr;
+                }
             }
         }
+        
+        // 页对齐
+        if (max_end_address % g_loop_manager.page_size != 0) {
+            max_end_address = ((max_end_address / g_loop_manager.page_size) + 1) * g_loop_manager.page_size;
+        }
+        
+        uint32_t start_address = max_end_address;
+        
+        DBG("Segment %d: dynamic start_address = 0x%08lX (after all used space)\n",
+            segment_index, (unsigned long)start_address);
         
         segment->start_address = start_address;
         segment->length_pages = 0;

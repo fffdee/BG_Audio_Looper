@@ -134,7 +134,7 @@
 		<link>
 			<name>middleware/audio/audio_decoder_error_code_summary.txt</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/audio_decoder_error_code_summary.txt</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/audio_decoder_error_code_summary.txt</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc</name>
@@ -144,57 +144,47 @@
 		<link>
 			<name>middleware/audio/libAudioDecoderLibrary.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libAudioDecoderLibrary.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libAudioDecoderLibrary.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libAudioEffectLibrary.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libAudioEffectLibrary.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libAudioEffectLibrary.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libBlueAEC.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libBlueAEC.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libBlueAEC.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libVocalCut.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libVocalCut.a</locationURI>
-		</link>
-		<link>
-			<name>middleware/audio/libadpcmenc.a</name>
-			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libadpcmenc.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libVocalCut.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libcvsd_plc.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libcvsd_plc.a</locationURI>
-		</link>
-		<link>
-			<name>middleware/audio/libmp2enc.a</name>
-			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libmp2enc.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libcvsd_plc.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libmp3enc.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libmp3enc.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libmp3enc.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libresampler.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libresampler.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libresampler.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libsbcenc.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libsbcenc.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libsbcenc.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/libsra.a</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/libsra.a</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/libsra.a</location>
 		</link>
 		<link>
 			<name>middleware/audio/src</name>
@@ -347,294 +337,279 @@
 			<locationURI>copy_PARENT1/driver/driver_api/src/uarts_interface.c</locationURI>
 		</link>
 		<link>
-			<name>middleware/audio/inc/adpcm_encoder.h</name>
-			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/adpcm_encoder.h</locationURI>
-		</link>
-		<link>
 			<name>middleware/audio/inc/audio_decoder_api.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/audio_decoder_api.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/audio_decoder_api.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/audio_effect_library.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/audio_effect_library.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/audio_effect_library.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/audio_utility.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/audio_utility.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/audio_utility.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/auto_tune.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/auto_tune.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/auto_tune.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/auto_wah.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/auto_wah.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/auto_wah.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/bits.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/bits.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/bits.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/blue_aec.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/blue_aec.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/blue_aec.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/blue_ns_core.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/blue_ns_core.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/blue_ns_core.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/chorus.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/chorus.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/chorus.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/cvsd_plc.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/cvsd_plc.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/cvsd_plc.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/dc_blocker.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/dc_blocker.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/dc_blocker.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/drc.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/drc.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/drc.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/echo.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/echo.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/echo.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/eq.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/eq.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/eq.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/exciter.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/exciter.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/exciter.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/expander.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/expander.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/expander.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/freqshifter.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/freqshifter.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/freqshifter.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/howling_suppressor.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/howling_suppressor.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/howling_suppressor.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp2.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/mp2.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/mp2.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp2dec.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/mp2dec.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/mp2dec.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp2dectab.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/mp2dectab.h</locationURI>
-		</link>
-		<link>
-			<name>middleware/audio/inc/mp2enc_api.h</name>
-			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/mp2enc_api.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/mp2dectab.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp3enc_api.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/mp3enc_api.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/mp3enc_api.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mvintrinsics.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/mvintrinsics.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/mvintrinsics.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mvstdio.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/mvstdio.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/mvstdio.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/noise_gate.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/noise_gate.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/noise_gate.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pcm_delay.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/pcm_delay.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/pcm_delay.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pingpong.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/pingpong.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/pingpong.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pitch_shifter.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pitch_shifter_pro.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter_pro.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter_pro.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/plate_reverb.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/plate_reverb.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/plate_reverb.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/resampler.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/resampler.h</locationURI>
-		</link>
-		<link>
-			<name>middleware/audio/inc/resampler_polyphase.h</name>
-			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/resampler_polyphase.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/resampler.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/reverb.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/reverb.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/reverb.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/reverb_pro.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/reverb_pro.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/reverb_pro.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/sbcenc_api.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/sbcenc_api.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/sbcenc_api.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/silence_detector.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/silence_detector.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/silence_detector.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/sra.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/sra.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/sra.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/stereo_widener.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/stereo_widener.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/stereo_widener.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/three_d.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/three_d.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/three_d.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/three_d_plus.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/three_d_plus.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/three_d_plus.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/typedefine.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/typedefine.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/typedefine.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/virtual_bass.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/virtual_bass_classic.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass_classic.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass_classic.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/vocal_remover.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/vocal_remover.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/vocal_remover.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/vocalcut.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/vocalcut.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/vocalcut.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/voice_changer.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/voice_changer.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/voice_changer.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/inc/voice_changer_pro.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/inc/voice_changer_pro.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/inc/voice_changer_pro.h</location>
 		</link>
 		<link>
 			<name>middleware/audio/src/bits.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/src/bits.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/src/bits.c</location>
 		</link>
 		<link>
 			<name>middleware/audio/src/libmp2dec.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/src/libmp2dec.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/src/libmp2dec.c</location>
 		</link>
 		<link>
 			<name>middleware/audio/src/mvstdio.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT12/MVsB1_Base_SDK/middleware/audio/src/mvstdio.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/audio/src/mvstdio.c</location>
 		</link>
 		<link>
 			<name>middleware/mv_utils/inc/debug.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/mv_utils/inc/debug.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/debug.h</location>
 		</link>
 		<link>
 			<name>middleware/mv_utils/inc/delay.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/mv_utils/inc/delay.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/delay.h</location>
 		</link>
 		<link>
 			<name>middleware/mv_utils/inc/mcu_circular_buf.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/mv_utils/inc/mcu_circular_buf.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/mcu_circular_buf.h</location>
 		</link>
 		<link>
 			<name>middleware/mv_utils/inc/type.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/mv_utils/inc/type.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h</location>
 		</link>
 		<link>
 			<name>middleware/mv_utils/src/debug.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/mv_utils/src/debug.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/src/debug.c</location>
 		</link>
 		<link>
 			<name>middleware/mv_utils/src/mcu_circular_buf.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/mv_utils/src/mcu_circular_buf.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc</name>
@@ -649,12 +624,12 @@
 		<link>
 			<name>middleware/rtos/rtos_api/rtos_api.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/rtos_api/rtos_api.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/rtos_api/rtos_api.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/rtos_api/rtos_api.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.h</location>
 		</link>
 		<link>
 			<name>driver/driver_api/inc/otg/otg_device_audio.h</name>
@@ -684,157 +659,157 @@
 		<link>
 			<name>middleware/rtos/freertos/inc/FreeRTOS.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/FreeRTOS.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/FreeRTOS.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/FreeRTOSConfig.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/FreeRTOSConfig.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/FreeRTOSConfig.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/StackMacros.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/StackMacros.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/StackMacros.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/croutine.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/croutine.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/croutine.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/event_groups.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/event_groups.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/event_groups.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/list.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/list.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/list.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/mpu_wrappers.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/mpu_wrappers.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/mpu_wrappers.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/n12_def.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/n12_def.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/n12_def.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/nds32_defs.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/nds32_defs.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/nds32_defs.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/nds32_regs.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/nds32_regs.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/nds32_regs.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/os_cpu.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/os_cpu.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/os_cpu.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/os_cpu_common.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/os_cpu_common.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/os_cpu_common.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/portable.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/portable.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/portable.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/portmacro.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/portmacro.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/portmacro.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/projdefs.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/projdefs.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/projdefs.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/queue.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/queue.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/queue.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/semphr.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/semphr.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/semphr.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/shell.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/shell.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/shell.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/task.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/task.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/task.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/inc/timers.h</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/inc/timers.h</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/inc/timers.h</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/croutine.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/croutine.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/croutine.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/event_groups.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/event_groups.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/event_groups.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/heap_5s.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/heap_5s.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/list.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/list.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/os_cpu_a.S</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/os_cpu_a.S</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/os_cpu_a.S</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/port.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/port.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/portISR.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/portISR.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/portISR.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/queue.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/queue.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/queue.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/shell.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/shell.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/shell.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/tasks.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/tasks.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c</location>
 		</link>
 		<link>
 			<name>middleware/rtos/freertos/src/timers.c</name>
 			<type>1</type>
-			<locationURI>copy_PARENT1/middleware/rtos/freertos/src/timers.c</locationURI>
+			<location>F:/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/rtos/freertos/src/timers.c</location>
 		</link>
 	</linkedResources>
 	<variableList>

@@ -14,6 +14,10 @@ typedef struct
     void (*DrawPoint)(uint16_t, uint16_t, uint16_t);
     void (*Clear)(uint16_t);
     void (*Update)(void);
+    
+    /* 大字体函数 (8x16) */
+    void (*ShowCharLarge)(uint16_t, uint16_t, uint8_t, uint16_t);
+    void (*ShowStringLarge)(uint16_t, uint16_t, uint8_t*, uint16_t);
 
 }BGUI_Tool;
 

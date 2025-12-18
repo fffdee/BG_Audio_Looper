@@ -13,6 +13,10 @@ void Gui_ShowImage(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const uin
 void Gui_DrawPoint(uint16_t x0, uint16_t y0, uint16_t fc);
 void Gui_Clear(uint16_t fc);
 void Gui_update();
+/* 大字体函数 (8x16) */
+void Gui_ShowCharLarge(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc);
+void Gui_ShowStringLarge(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc);
+
 BGUI_Tool BGUI_tool = {
 
 
@@ -25,6 +29,8 @@ BGUI_Tool BGUI_tool = {
 	.DrawPoint = Gui_DrawPoint,
 	.Clear = Gui_Clear,
 	.Update = Gui_update,
+	.ShowCharLarge = Gui_ShowCharLarge,
+	.ShowStringLarge = Gui_ShowStringLarge,
 };
 
 void Gui_Clear(uint16_t fc){
@@ -90,46 +96,27 @@ void Gui_Circle(uint16_t X, uint16_t Y, uint16_t R, uint16_t fc)
 
 void Gui_ShowChar(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc)
 {
-
 	unsigned char c = 0, i = 0;
 	uint16_t y;
-	uint8_t ch,w,h;
+	uint8_t ch, w, h;
 	c = chr - ' '; // 得到偏移后的值
 	if (x0 > LCD_WIDTH - 1)
 	{
 		x0 = 0;
-		y0 = y0 + 16;
+		y0 = y0 + 8;  // 改为8像素高度
 	}
-	for (w = 0; w < 8; w++)
+	
+	// 使用6x8字体
+	for (w = 0; w < 6; w++)  // 改为6像素宽度
 	{
 		y = y0;
-		// printf("in func %d\n",c);
-		for (h = 0; h < 8; h++)
+		ch = F6x8[c][w];  // 使用F6x8字体数组
+		for (h = 0; h < 8; h++)  // 8像素高度
 		{
-			ch = F8x16[c * 16 + w];
-			// printf("ch is %d\n",ch);
 			if ((ch >> h & 0x01) == 1)
 			{
 				Gui_DrawPoint(x0 + w, y, fc);
-				// printf("drawpoint 1 %d %d \n", x0 + w,y); // 使用 %u 或 %d 来格式化 unsigned char
 			}
-
-			y++;
-		}
-	}
-
-	for (w = 0; w < 8; w++)
-	{
-		y = y0 + 8;
-		for (h = 0; h < 8; h++)
-		{
-			ch = F8x16[c * 16 + w + 8];
-			if ((ch >> h & 0x01) == 1)
-			{
-				Gui_DrawPoint(x0 + w, y, fc);
-				// printf("drawpoint 2 %d %d \n", x0 + w,y);
-			}
-			ch = ch >> 1;
 			y++;
 		}
 	}
@@ -142,14 +129,43 @@ void Gui_ShowString(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
 	while (chr[j] != '\0')
 	{
 		Gui_ShowChar(x0, y0, chr[j], fc);
-		x0 += 8;
-		if (x0 > LCD_WIDTH - 8)
+		x0 += 6;  // 改为6像素字符宽度
+		if (x0 > LCD_WIDTH - 6)  // 改为6像素边界检查
 		{
 			x0 = 0;
-			y0 += 16;
+			y0 += 8;  // 改为8像素行高
 		}
 		j++;
 	}
+}
+
+void Gui_ShowNum(uint16_t x0, uint16_t y0, uint32_t num, uint16_t fc)
+{
+	uint8_t bit_count = 0;
+	uint8_t i;
+	if (num == 0)
+	{ // 鐗规畩鎯呭喌锛�鏄竴浣嶆暟
+		bit_count = 1;
+	}
+	else
+	{
+		uint32_t temp = num;
+		while (temp != 0)
+		{
+			temp /= 10; // 鏁撮櫎10
+			bit_count++;
+		}
+	}
+
+	char char_num[bit_count+1]; // 浣跨敤char绫诲瀷鏁扮粍
+	for (i = 0; i < bit_count; i++)
+	{
+		char_num[bit_count - i - 1] = (num % 10) + '0'; // 杞崲涓哄瓧绗﹀苟瀛樺偍
+		num /= 10;										// 鏇存柊num涓轰笅涓�綅鏁板瓧
+
+	}
+	char_num[bit_count] = '\0';
+	Gui_ShowString(x0, y0, char_num, fc);
 }
 
 /* 6x8 small font display - single character */
@@ -184,33 +200,65 @@ void Gui_ShowString6x8(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
 	}
 }
 
-void Gui_ShowNum(uint16_t x0, uint16_t y0, uint32_t num, uint16_t fc)
+/* 大字体显示字符 (8x16) */
+void Gui_ShowCharLarge(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc)
 {
-	uint8_t bit_count = 0;
-	uint8_t i;
-	if (num == 0)
-	{ // 鐗规畩鎯呭喌锛�鏄竴浣嶆暟
-		bit_count = 1;
-	}
-	else
+	unsigned char c = 0, i = 0;
+	uint16_t y;
+	uint8_t ch, w, h;
+	c = chr - ' '; // 得到偏移后的值
+	if (x0 > LCD_WIDTH - 1)
 	{
-		uint32_t temp = num;
-		while (temp != 0)
+		x0 = 0;
+		y0 = y0 + 16;
+	}
+	
+	// 使用8x16字体 - 上半部分
+	for (w = 0; w < 8; w++)
+	{
+		y = y0;
+		ch = F8x16[c * 16 + w];
+		for (h = 0; h < 8; h++)
 		{
-			temp /= 10; // 鏁撮櫎10
-			bit_count++;
+			if ((ch >> h & 0x01) == 1)
+			{
+				Gui_DrawPoint(x0 + w, y, fc);
+			}
+			y++;
 		}
 	}
 
-	char char_num[bit_count+1]; // 浣跨敤char绫诲瀷鏁扮粍
-	for (i = 0; i < bit_count; i++)
+	// 使用8x16字体 - 下半部分
+	for (w = 0; w < 8; w++)
 	{
-		char_num[bit_count - i - 1] = (num % 10) + '0'; // 杞崲涓哄瓧绗﹀苟瀛樺偍
-		num /= 10;										// 鏇存柊num涓轰笅涓�綅鏁板瓧
-
+		y = y0 + 8;
+		ch = F8x16[c * 16 + w + 8];
+		for (h = 0; h < 8; h++)
+		{
+			if ((ch >> h & 0x01) == 1)
+			{
+				Gui_DrawPoint(x0 + w, y, fc);
+			}
+			y++;
+		}
 	}
-	char_num[bit_count] = '\0';
-	Gui_ShowString(x0, y0, char_num, fc);
+}
+
+/* 大字体显示字符串 (8x16) */
+void Gui_ShowStringLarge(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
+{
+	unsigned char j = 0;
+	while (chr[j] != '\0')
+	{
+		Gui_ShowCharLarge(x0, y0, chr[j], fc);
+		x0 += 8;
+		if (x0 > LCD_WIDTH - 8)
+		{
+			x0 = 0;
+			y0 += 16;
+		}
+		j++;
+	}
 }
 
 void Gui_ShowImage(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const uint8_t *chr)

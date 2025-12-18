@@ -5,6 +5,9 @@
 #include "spim_interface.h"
 #include "dma.h"
 #include "st7735.h"
+#include "font.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include <stdlib.h>
 #include <math.h>
 
@@ -76,6 +79,12 @@ void lcd_init(void)
 	LCD_DC_INIT();
 	LCD_CS_INIT();
 
+	/* Hardware reset sequence for ST7735 */
+	LCD_RST_DISABLE();       // Pull reset low
+	vTaskDelay(10);          // Wait 10ms
+	LCD_RST_ENABLE();        // Pull reset high
+	vTaskDelay(120);         // Wait 120ms for LCD to stabilize
+
 	st7735_init();
 
 
@@ -109,6 +118,37 @@ void Lcd_WriteReg(uint8_t index, uint8_t data)
 		Lcd_WriteIndex(index);
         Lcd_WriteData(data);
         LCD_CS_DISABLE();
+}
+
+/**
+ * @brief 设置LCD屏幕旋转方向
+ * @param rotation 旋转角度 (0=0°, 1=90°, 2=180°, 3=270°)
+ */
+void Lcd_SetRotation(uint8_t rotation)
+{
+	uint8_t madctl_value;
+	
+	switch (rotation % 4)
+	{
+		case 0:  // 0° - 竖屏
+			madctl_value = 0xA0;  // MY=1, MX=0, MV=1, ML=0, RGB=0
+			break;
+		case 1:  // 90° - 横屏
+			madctl_value = 0x60;  // MY=0, MX=1, MV=1, ML=0, RGB=0
+			break;
+		case 2:  // 180° - 竖屏倒置
+			madctl_value = 0x00;  // MY=0, MX=0, MV=0, ML=0, RGB=0
+			break;
+		case 3:  // 270° - 横屏倒置
+			madctl_value = 0xC0;  // MY=1, MX=1, MV=0, ML=0, RGB=0
+			break;
+		default:
+			madctl_value = 0xA0;  // 默认0°
+			break;
+	}
+	
+	Lcd_WriteIndex(0x36);  // Memory Data Access Control
+	Lcd_WriteData(madctl_value);
 }
 
 void LCD_WriteData_16Bit(uint16_t Data)
@@ -392,6 +432,15 @@ void Gui_Circle2(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {//Bresenham算�
 }
 
 void Gui_box(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc){
+	/* 填充矩形 */
+	uint16_t i;
+	for (i = 0; i < h; i++) {
+		Gui_DrawLine(x, y + i, x + w - 1, y + i, bc);
+	}
+}
+
+void Gui_box_border(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc){
+	/* 只画边框 (原来的Gui_box功能) */
 	Gui_DrawLine(x,y,x+w,y,0xEF7D);
 	Gui_DrawLine(x+w-1,y+1,x+w-1,y+1+h,0x2965);
 	Gui_DrawLine(x,y+h,x+w,y+h,0x2965);
@@ -521,21 +570,29 @@ void gui_Circle(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {
     }
 }
 
-// ShowChar函数实现 - 显示单个字符
+// ShowChar函数实现 - 显示单个字符 (8x16像素)
 void ShowChar(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc) {
-    // 简单的字符显示实现，这里先提供一个基本版本
-    // 实际项目中可能需要字体数据
     uint8_t i, j;
     uint8_t temp;
     
-    // 8x16像素的字符，需要字体数据
-    // 这里提供一个简单的实现，实际使用时需要包含字体库
+    // 字符范围检查，asc16字体从空格(0x20)开始
+    if (chr < 0x20 || chr > 0x7E) {
+        chr = '?';  // 不支持的字符显示问号
+    }
+    
+    // 获取字符在字体数据中的偏移 (每个字符16字节)
+    uint16_t offset = (chr - 0x20) * 16;
+    
+    // 绘制8x16像素的字符
     for(i = 0; i < 16; i++) {
-        // temp = ASCII_8x16[chr * 16 + i]; // 需要字体数据
-        temp = 0xFF; // 临时使用实心块作为演示
+        temp = asc16[offset + i];
         for(j = 0; j < 8; j++) {
             if(temp & (0x80 >> j)) {
+#ifdef USE_FRAME_BUFFER
+                frame_buffer_draw_point(x0 + j, y0 + i, fc);
+#else
                 gui_DrawPoint(x0 + j, y0 + i, fc);
+#endif
             }
         }
     }

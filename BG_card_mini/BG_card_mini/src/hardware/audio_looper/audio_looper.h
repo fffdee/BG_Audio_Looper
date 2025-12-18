@@ -58,10 +58,13 @@ typedef enum {
 #endif
 
 /* Flash类型枚举 */
+#ifndef FLASH_TYPE_DEFINED
+#define FLASH_TYPE_DEFINED
 typedef enum {
     FLASH_TYPE_NOR = 0,
     FLASH_TYPE_NAND = 1
 } FlashType_t;
+#endif /* FLASH_TYPE_DEFINED */
 
 /* 段状态枚举 */
 typedef enum {

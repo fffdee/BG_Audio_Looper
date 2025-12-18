@@ -34,6 +34,7 @@ src/BanGUI/BG_List \
 src/BanGUI/base_func \
 src/BanGUI/menu_slider \
 src/BanGUI/page \
+src/BanGUI/ui_system \
 src/hardware/BG_AudioIO_Manager/USB/src \
 src/hardware/BG_AudioIO_Manager \
 src/hardware/BG_Encoder \
@@ -45,6 +46,7 @@ src/hardware/audio/effect_parameter \
 src/hardware/audio/music_parameter \
 src/hardware/audio_looper \
 src/hardware/bluetooth/src \
+src/hardware/sys_param \
 src \
 startup \
 
