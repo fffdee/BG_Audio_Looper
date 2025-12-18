@@ -856,13 +856,14 @@ static int flash_test_cmd(int argc, char *argv[])
     }
     
     Shell_Printf("Testing device %d...\r\n", dev_id);
-    ret = BG_FlashMgr.TestDevice(dev_id);
+    FlashNewDriver_Test();
+    // ret = BG_FlashMgr.TestDevice(dev_id);
     
-    if (ret == BG_FLASH_OK) {
-        Shell_Print("Test PASSED\r\n");
-    } else {
-        Shell_Printf("Test FAILED: %d\r\n", ret);
-    }
+    // if (ret == BG_FLASH_OK) {
+    //     Shell_Print("Test PASSED\r\n");
+    // } else {
+    //     Shell_Printf("Test FAILED: %d\r\n", ret);
+    // }
     return 0;
 }
 
@@ -985,7 +986,7 @@ static int flash_status_cmd(int argc, char *argv[])
     Shell_Print("\r\nPartitions:\r\n");
     Shell_Print("  System:    1 MB\r\n");
     Shell_Printf("  Looper:    7 MB (%d KB free)\r\n", BG_FlashMgr.GetLooperFreeSpace() / 1024);
-    Shell_Printf("  Storage:   8 MB (%d KB free)\r\n", BG_FlashMgr.GetStorageFreeSpace() / 1024);
+    Shell_Printf("  Storage:   %d MB (%d KB free)\r\n",status.flash0.total_size , BG_FlashMgr.GetStorageFreeSpace() / 1024);
     Shell_Print("\r\n");
     
     return 0;

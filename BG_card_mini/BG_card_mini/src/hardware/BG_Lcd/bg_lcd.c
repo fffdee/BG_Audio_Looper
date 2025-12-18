@@ -13,13 +13,12 @@
 
 #define _USE_MATH_DEFINES
 
-// 帧缓冲相关变量和函数
+// 甯х紦鍐茬浉鍏冲彉閲忓拰鍑芥暟
 #ifdef USE_FRAME_BUFFER
 uint16_t frame_buffer[FRAME_BUFFER_SIZE];
 uint8_t frame_buffer_dirty = 0;
 
-// 帧缓冲函数声明
-void frame_buffer_flush(void);
+// 甯х紦鍐插嚱鏁板０鏄�void frame_buffer_flush(void);
 void frame_buffer_set_pixel(uint16_t x, uint16_t y, uint16_t color);
 void frame_buffer_draw_point(uint16_t x, uint16_t y, uint16_t color);
 void frame_buffer_draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
@@ -37,7 +36,6 @@ void Gui_Speed_Radians(uint8_t X,uint8_t Y,uint8_t R,uint8_t angle,uint16_t fc, 
 void Gui_box(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc);
 void showimage(uint8_t x,uint8_t y,uint8_t width,uint8_t high,const uint8_t *p);
 
-// 帧缓冲函数声明 - 实现在frame_buffer_impl.c中
 #ifdef USE_FRAME_BUFFER
 extern void frame_buffer_flush(void);
 extern void frame_buffer_set_pixel(uint16_t x, uint16_t y, uint16_t color);
@@ -55,7 +53,7 @@ BG_Lcd BG_lcd = {
 #ifdef USE_FRAME_BUFFER
 	.Clear = frame_buffer_clear,
 	.DrawPoint = frame_buffer_draw_point,
-	.Circle = gui_Circle,  // 圆形绘制暂时保持原样
+	.Circle = gui_Circle,  // 鍦嗗舰缁樺埗鏆傛椂淇濇寔鍘熸牱
 	.DrawLine = frame_buffer_draw_line,
 	.Box = frame_buffer_box,
 	.FlushFrameBuffer = frame_buffer_flush,
@@ -121,8 +119,8 @@ void Lcd_WriteReg(uint8_t index, uint8_t data)
 }
 
 /**
- * @brief 设置LCD屏幕旋转方向
- * @param rotation 旋转角度 (0=0°, 1=90°, 2=180°, 3=270°)
+ * @brief 璁剧疆LCD灞忓箷鏃嬭浆鏂瑰悜
+ * @param rotation 鏃嬭浆瑙掑害 (0=0掳, 1=90掳, 2=180掳, 3=270掳)
  */
 void Lcd_SetRotation(uint8_t rotation)
 {
@@ -130,20 +128,20 @@ void Lcd_SetRotation(uint8_t rotation)
 	
 	switch (rotation % 4)
 	{
-		case 0:  // 0° - 竖屏
+		case 0:  // 0掳 - 绔栧睆
 			madctl_value = 0xA0;  // MY=1, MX=0, MV=1, ML=0, RGB=0
 			break;
-		case 1:  // 90° - 横屏
+		case 1:  // 90掳 - 妯睆
 			madctl_value = 0x60;  // MY=0, MX=1, MV=1, ML=0, RGB=0
 			break;
-		case 2:  // 180° - 竖屏倒置
+		case 2:  // 180掳 - 绔栧睆鍊掔疆
 			madctl_value = 0x00;  // MY=0, MX=0, MV=0, ML=0, RGB=0
 			break;
-		case 3:  // 270° - 横屏倒置
+		case 3:  // 270掳 - 妯睆鍊掔疆
 			madctl_value = 0xC0;  // MY=1, MX=1, MV=0, ML=0, RGB=0
 			break;
 		default:
-			madctl_value = 0xA0;  // 默认0°
+			madctl_value = 0xA0;  // 榛樿0掳
 			break;
 	}
 	
@@ -237,7 +235,7 @@ uint16_t LCD_BGR2RGB(uint16_t c){
   rgb=(b<<11)+(g<<5)+(r<<0);
   return(rgb);
 }
-//画线函数，使用Bresenham 画线算法
+//鐢荤嚎鍑芥暟锛屼娇鐢˙resenham 鐢荤嚎绠楁硶
 void gui_DrawLine(uint16_t x0, uint16_t y0,uint16_t x1, uint16_t y1,uint16_t Color){
 int dx,             // difference in x's
     dy,             // difference in y's
@@ -250,8 +248,8 @@ int dx,             // difference in x's
 
 
 	Lcd_SetXY(x0,y0);
-	dx = x1-x0;//计算x距离
-	dy = y1-y0;//计算y距离
+	dx = x1-x0;//璁＄畻x璺濈
+	dy = y1-y0;//璁＄畻y璺濈
 
 	if (dx>=0)
 	{
@@ -276,35 +274,32 @@ int dx,             // difference in x's
 	dx2 = dx << 1;
 	dy2 = dy << 1;
 
-	if (dx > dy)//x距离大于y距离，那么每个x轴上只有一个点，每个y轴上有若干个点
-	{//且线的点数等于x距离，以x轴递增画点
-		// initialize error term
+	if (dx > dy){
 		error = dy2 - dx;
 
 		// draw the line
-		for (index=0; index <= dx; index++)//要画的点数不会超过x距离
+		for (index=0; index <= dx; index++)//瑕佺敾鐨勭偣鏁颁笉浼氳秴杩噚璺濈
 		{
-			//画点
+			//鐢荤偣
 			Gui_DrawPoint(x0,y0,Color);
 
 			// test if error has overflowed
-			if (error >= 0) //是否需要增加y坐标值
-			{
+			if (error >= 0)
+				{
 				error-=dx2;
 
 				// move to next line
-				y0+=y_inc;//增加y坐标值
-			} // end if error overflowed
+				y0+=y_inc;
+				} // end if error overflowed
 
 			// adjust the error term
 			error+=dy2;
 
 			// move to the next pixel
-			x0+=x_inc;//x坐标值每次画点后都递增1
+			x0+=x_inc;//x鍧愭爣鍊兼瘡娆＄敾鐐瑰悗閮介�澧�
 		} // end for
 	} // end if |slope| <= 1
-	else//y轴大于x轴，则每个y轴上只有一个点，x轴若干个点
-	{//以y轴为递增画点
+	else{
 		// initialize error term
 		error = dx2 - dy;
 
@@ -329,7 +324,7 @@ int dx,             // difference in x's
 			// move to the next pixel
 			y0+=y_inc;
 		} // end for
-	} // end else |slope| > 1
+	}
 }
 
 
@@ -337,7 +332,7 @@ int dx,             // difference in x's
 void Gui_Speed_Radians(uint8_t X,uint8_t Y,uint8_t R,uint8_t angle,uint16_t fc, bool initFlag)
 {
 	unsigned char i;
-  // 将角度转换为弧度
+  // 灏嗚搴﹁浆鎹负寮у害
   if(initFlag){
     for(i=0;i<180;i++){
       float angle_radians = radians(i+180);
@@ -358,7 +353,7 @@ void Gui_Speed_Radians(uint8_t X,uint8_t Y,uint8_t R,uint8_t angle,uint16_t fc, 
   }else {
 
       float angle_radians = radians(angle+180);
-      int x = (int)(X + R * cos(angle_radians)); // 计算圆上的点坐标
+      int x = (int)(X + R * cos(angle_radians)); // 璁＄畻鍦嗕笂鐨勭偣鍧愭爣
       int y = (int)(Y + R * sin(angle_radians));
 
       int x2 = (int)(X + (R-R/4) * cos(angle_radians));
@@ -374,7 +369,7 @@ void Gui_Speed_Radians(uint8_t X,uint8_t Y,uint8_t R,uint8_t angle,uint16_t fc, 
 
 }
 
-void Gui_Circle2(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {//Bresenham算法
+void Gui_Circle2(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {//Bresenham绠楁硶
     unsigned short  a,b;
     int c;
     a=0;
@@ -431,16 +426,37 @@ void Gui_Circle2(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {//Bresenham算�
 
 }
 
+
+// void Lcd_Clear(uint16_t Color)               {
+//    unsigned int i,m;
+//    Lcd_SetRegion(0,0,LCD_WIDTH-1,LCD_HEIGHT-1);
+//    Lcd_WriteIndex(0x2C);
+//    for(i=0;i<LCD_WIDTH;i++)
+//     for(m=0;m<LCD_HEIGHT;m++)
+//     {
+// 	  	  LCD_WriteData_16Bit(Color);
+//     }
+// }
 void Gui_box(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc){
-	/* 填充矩形 */
-	uint16_t i;
-	for (i = 0; i < h; i++) {
-		Gui_DrawLine(x, y + i, x + w - 1, y + i, bc);
-	}
+	/* 濉厖鐭╁舰 */
+	uint16_t i,m;
+	uint16_t x_end, y_end;
+	x_end = x + w - 1;
+	y_end = y + h - 1;
+	Lcd_SetRegion(x,y,x+w,y+h);
+    Lcd_WriteIndex(0x2C);
+    for(i=x;i<x_end;i++)
+    for(m=y;m<y_end;m++)
+    {
+	  	  LCD_WriteData_16Bit(bc);
+    }
+	// for (i = 0; i < h; i++) {
+	// 	Gui_DrawLine(x, y + i, x + w - 1, y + i, bc);
+	// }
 }
 
 void Gui_box_border(uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint16_t bc){
-	/* 只画边框 (原来的Gui_box功能) */
+	/* 鍙敾杈规 (鍘熸潵鐨凣ui_box鍔熻兘) */
 	Gui_DrawLine(x,y,x+w,y,0xEF7D);
 	Gui_DrawLine(x+w-1,y+1,x+w-1,y+1+h,0x2965);
 	Gui_DrawLine(x,y+h,x+w,y+h,0x2965);
@@ -472,17 +488,17 @@ void Gui_box2(uint16_t x,uint16_t y,uint16_t w,uint16_t h, u8 mode){
 
 
 
-//取模方式 水平扫描 从左到右 低位在前
-void showimage(uint8_t x,uint8_t y,uint8_t width,uint8_t high,const uint8_t *p){ //显示40*40 QQ图片
+//鍙栨ā鏂瑰紡 姘村钩鎵弿 浠庡乏鍒板彸 浣庝綅鍦ㄥ墠
+void showimage(uint8_t x,uint8_t y,uint8_t width,uint8_t high,const uint8_t *p){ //鏄剧ず40*40 QQ鍥剧墖
   	int i,j,k;
 	unsigned char picH,picL;
-	//Lcd_Clear(BLACK); //清屏
+	//Lcd_Clear(BLACK); //娓呭睆
 
 
-			Lcd_SetRegion(x+2,y,x+width-1,y+high-1);		//坐标设置
+			Lcd_SetRegion(x+2,y,x+width-1,y+high-1);		//鍧愭爣璁剧疆
 		    for(i=0;i<width*high;i++)
 			 {
-			 	picL=*(p+i*2);	//数据低位在前
+			 	picL=*(p+i*2);	//鏁版嵁浣庝綅鍦ㄥ墠
 				picH=*(p+i*2+1);
 				LCD_WriteData_16Bit(picH<<8|picL);
         //delay(1);
@@ -492,10 +508,9 @@ void showimage(uint8_t x,uint8_t y,uint8_t width,uint8_t high,const uint8_t *p){
 
 
 /**************************************************************************************
-功能描述: 在屏幕显示一凸起的按钮框
-输    入: uint16_t x1,y1,x2,y2 按钮框左上角和右下角坐标
-输    出: 无
-**************************************************************************************/
+鍔熻兘鎻忚堪: 鍦ㄥ睆骞曟樉绀轰竴鍑歌捣鐨勬寜閽
+杈�   鍏� uint16_t x1,y1,x2,y2 鎸夐挳妗嗗乏涓婅鍜屽彸涓嬭鍧愭爣
+杈�   鍑� 鏃�**************************************************************************************/
 void DisplayButtonDown(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2){
 	Gui_DrawLine(x1,  y1,  x2,y1, GRAY2);  //H
 	Gui_DrawLine(x1+1,y1+1,x2,y1+1, GRAY1);  //H
@@ -506,10 +521,9 @@ void DisplayButtonDown(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2){
 }
 
 /**************************************************************************************
-功能描述: 在屏幕显示一凹下的按钮框
-输    入: uint16_t x1,y1,x2,y2 按钮框左上角和右下角坐标
-输    出: 无
-**************************************************************************************/
+鍔熻兘鎻忚堪: 鍦ㄥ睆骞曟樉绀轰竴鍑逛笅鐨勬寜閽
+杈�   鍏� uint16_t x1,y1,x2,y2 鎸夐挳妗嗗乏涓婅鍜屽彸涓嬭鍧愭爣
+杈�   鍑� 鏃�**************************************************************************************/
 void DisplayButtonUp(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2){
 	Gui_DrawLine(x1,  y1,  x2,y1, WHITE); //H
 	Gui_DrawLine(x1,  y1,  x1,y2, WHITE); //V
@@ -531,7 +545,7 @@ void Lcd_Clear_Section(uint8_t x0,uint8_t y0,uint8_t x1,uint8_t y1,uint16_t Colo
     }
 }
 
-// gui_Circle函数实现 - 使用Bresenham算法画圆
+// gui_Circle鍑芥暟瀹炵幇 - 浣跨敤Bresenham绠楁硶鐢诲渾
 void gui_Circle(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {
     unsigned short  a,b;
     int c;
@@ -570,20 +584,19 @@ void gui_Circle(uint16_t X,uint16_t Y,uint16_t R,uint16_t fc) {
     }
 }
 
-// ShowChar函数实现 - 显示单个字符 (8x16像素)
+// ShowChar鍑芥暟瀹炵幇 - 鏄剧ず鍗曚釜瀛楃 (8x16鍍忕礌)
 void ShowChar(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc) {
     uint8_t i, j;
     uint8_t temp;
     
-    // 字符范围检查，asc16字体从空格(0x20)开始
+    // 瀛楃鑼冨洿妫�煡锛宎sc16瀛椾綋浠庣┖鏍�0x20)寮�
     if (chr < 0x20 || chr > 0x7E) {
-        chr = '?';  // 不支持的字符显示问号
+        chr = '?';  // 涓嶆敮鎸佺殑瀛楃鏄剧ず闂彿
     }
     
-    // 获取字符在字体数据中的偏移 (每个字符16字节)
+    // 鑾峰彇瀛楃鍦ㄥ瓧浣撴暟鎹腑鐨勫亸绉�(姣忎釜瀛楃16瀛楄妭)
     uint16_t offset = (chr - 0x20) * 16;
     
-    // 绘制8x16像素的字符
     for(i = 0; i < 16; i++) {
         temp = asc16[offset + i];
         for(j = 0; j < 8; j++) {

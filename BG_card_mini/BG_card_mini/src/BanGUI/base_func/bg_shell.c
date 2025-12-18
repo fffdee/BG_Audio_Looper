@@ -810,3 +810,15 @@ void Shell_DbgToLcd(const char* str)
         Console_AddLine(str);
     }
 }
+
+/*
+
+#define DBG_LCD(format, ...) do { \
+    printf(format, ##__VA_ARGS__); \
+    if (Shell_DbgToLcdIsEnabled()) { \
+        char buf[128]; \
+        snprintf(buf, sizeof(buf), format, ##__VA_ARGS__); \
+        Shell_DbgToLcd(buf); \
+    } \
+} while(0)
+*/

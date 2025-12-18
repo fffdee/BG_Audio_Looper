@@ -31,37 +31,44 @@ extern "C" {
 
 
 /************************** DEBUG**********************************
-*����Ϊ��ӡ������Ϣ�Ľӿ�,��������:
-*1.��ӡǰ׺�ӿ� : 
-*  1)�����Ҫ�ڴ�ӡʱ���ģ��ǰ׺ ,����� APP_DBG(),
-*  2)��Ҫ�ر�ĳģ��ĵ�����Ϣ,������ע������ XXX_MODULE_DEBUG�ĺ�
-*	��ģ���,�Ǹ������¹��� �����ֵ� : 
-*	������Ϊ����9��ģ��,
-*	����7��ģ����AppsĿ¼:��Ϊmedia play,bt,hdmi_in,Main_task,usb_audio_mode,waiting_modeģ��
-*	��������ģ����:Deviceģ�顢Servicesģ��
-*	ʣ��ͳһ���ڣ�DEBģ��
+*锟斤拷锟斤拷为锟斤拷印锟斤拷锟斤拷锟斤拷息锟侥接匡拷,锟斤拷锟斤拷锟斤拷锟斤拷:
+*1.锟斤拷印前缀锟接匡拷 :
+*  1)锟斤拷锟斤拷锟揭拷诖锟接∈憋拷锟斤拷模锟斤拷前缀 ,锟斤拷锟斤拷锟�APP_DBG(),
+*  2)锟斤拷要锟截憋拷某模锟斤拷牡锟斤拷锟斤拷锟较�锟斤拷锟斤拷锟斤拷注锟斤拷锟斤拷锟斤拷 XXX_MODULE_DEBUG锟侥猴拷
+*	锟斤拷模锟斤拷锟�锟角革拷锟斤拷锟斤拷锟铰癸拷锟斤拷 锟斤拷锟斤拷锟街碉拷 :
+*	锟斤拷锟斤拷锟斤拷为锟斤拷锟斤拷9锟斤拷模锟斤拷,
+*	锟斤拷锟斤拷7锟斤拷模锟斤拷锟斤拷Apps目录:锟斤拷为media play,bt,hdmi_in,Main_task,usb_audio_mode,waiting_mode模锟斤拷
+*	锟斤拷锟斤拷锟斤拷锟斤拷模锟斤拷锟斤拷:Device模锟介、Services模锟斤拷
+*	剩锟斤拷统一锟斤拷锟节ｏ拷DEB模锟斤拷
 *
-*2.����ӡǰ׺�ӿ� : ���� DBG()
+*2.锟斤拷锟斤拷印前缀锟接匡拷 : 锟斤拷锟斤拷 DBG()
 *************************************************************/
 
 
 
 
-#define	DEVICE_MODULE_DEBUG			//DEVICEģ���ӡ������Ϣ����
-#define	SERVICE_MODULE_DEBUG		//SERVICEģ���ӡ������Ϣ����
-#define	MEDIA_MODULE_DEBUG			//MEDIAģ���ӡ������Ϣ����
-#define	BT_MODULE_DEBUG				//BTģ���ӡ������Ϣ����
-#define	MAINTSK_MODULE_DEBUG		//MAINTSKģ���ӡ������Ϣ����
-#define	USBAUDIO_MODULE_DEBUG		//USBAUDIOģ���ӡ������Ϣ����
-#define	WAITING_MODULE_DEBUG		//WAITINGģ���ӡ������Ϣ����
+#define	DEVICE_MODULE_DEBUG			//DEVICE模锟斤拷锟接★拷锟斤拷锟斤拷锟较拷锟斤拷锟�
+#define	SERVICE_MODULE_DEBUG		//SERVICE模锟斤拷锟接★拷锟斤拷锟斤拷锟较拷锟斤拷锟�
+#define	MEDIA_MODULE_DEBUG			//MEDIA模锟斤拷锟接★拷锟斤拷锟斤拷锟较拷锟斤拷锟�
+#define	BT_MODULE_DEBUG				//BT模锟斤拷锟接★拷锟斤拷锟斤拷锟较拷锟斤拷锟�
+#define	MAINTSK_MODULE_DEBUG		//MAINTSK模锟斤拷锟接★拷锟斤拷锟斤拷锟较拷锟斤拷锟�
+#define	USBAUDIO_MODULE_DEBUG		//USBAUDIO模锟斤拷锟接★拷锟斤拷锟斤拷锟较拷锟斤拷锟�
+#define	WAITING_MODULE_DEBUG		//WAITING模锟斤拷锟接★拷锟斤拷锟斤拷锟较拷锟斤拷锟�
 
 
 
 uint8_t DBG_Global(char * str,char **fmt, ...);
 
 #define	APP_DBG(format, ...)	do{char *fmt=format;if(DBG_Global(__FILE__,&fmt, ##__VA_ARGS__))printf(fmt, ##__VA_ARGS__);}while(0)
-#define	DBG(format, ...)		printf(format, ##__VA_ARGS__)
-
+//#define	DBG(format, ...)		printf(format, ##__VA_ARGS__)
+#define DBG(format, ...)  do { \
+    printf(format, ##__VA_ARGS__); \
+    if (Shell_DbgToLcdIsEnabled()) { \
+        char buf[128]; \
+        snprintf(buf, sizeof(buf), format, ##__VA_ARGS__); \
+        Shell_DbgToLcd(buf); \
+    } \
+} while(0)
 #define	OTG_DBG(format, ...)		//printf(format, ##__VA_ARGS__)
 #define	BT_DBG(format, ...)			printf(format, ##__VA_ARGS__)//do{printf("[BT] "); printf(format, ##__VA_ARGS__);}while(0)
 
@@ -71,16 +78,16 @@ int DbgUartInit(int Which, unsigned int BaudRate, unsigned char DatumBits, unsig
 
 /************************** TOGGLE DEBUG**********************************
  *
- * Ϊ�˷������ʱ��debug�ļ��ṩIO toggle����
- * 1. LED_IO_TOGGLE �˿ں���������б���IO��ʵ��api��0~n ��Ҫʹ�ã�
- * 2��OS_INT_TOGGLE Os������ж�ʱ��Ƭ �۲⣬��task���ֱ�Ϊ��ţ�led0~x���ж�����֮����Ҫ�ȿ���LED_IO_TOGGLE
+ * 为锟剿凤拷锟斤拷锟斤拷锟绞憋拷锟絛ebug锟侥硷拷锟结供IO toggle锟斤拷锟斤拷
+ * 1. LED_IO_TOGGLE 锟剿口猴拷锟斤拷锟斤拷锟斤拷锟斤拷斜锟斤拷锟絀O锟斤拷实锟斤拷api锟斤拷0~n 锟斤拷要使锟矫ｏ拷
+ * 2锟斤拷OS_INT_TOGGLE Os锟斤拷锟斤拷锟斤拷卸锟绞憋拷锟狡�锟桔测，锟斤拷task锟斤拷锟街憋拷为锟斤拷牛锟絣ed0~x锟斤拷锟叫讹拷锟斤拷锟斤拷之锟斤拷锟斤拷要锟饺匡拷锟斤拷LED_IO_TOGGLE
  *
  *************************************************************/
 
-/**OS�����л����ж� ʱIO toggle���ߵ�ƽ����ִ��ʱ��Ƭ**/
+/**OS锟斤拷锟斤拷锟叫伙拷锟斤拷锟叫讹拷 时IO toggle锟斤拷锟竭碉拷平锟斤拷锟斤拷执锟斤拷时锟斤拷片**/
 //#define OS_INT_TOGGLE
 
-/**��Ҫtoggle��task Name,���ò���,�������ȼ��ߵ���ǰ��˳�� ��ӦLED 0��LED 1....**/
+/**锟斤拷要toggle锟斤拷task Name,锟斤拷锟矫诧拷锟斤拷,锟斤拷锟斤拷锟斤拷锟饺硷拷锟竭碉拷锟斤拷前锟斤拷顺锟斤拷 锟斤拷应LED 0锟斤拷LED 1....**/
 #define DBG_TASK_LIST	{{"AudioCore"}, {"Decoder"}, {"Device"},  {"IDLE"}}
 //uint8_t dbgtasklist[][configMAX_TASK_NAME_LEN];
 void DbgTaskTGL_set();
@@ -88,12 +95,12 @@ void DbgTaskTGL_clr();
 
 
 /*********************************************
- * �ж�toggle��ڣ���Ҫ����crt0.S��OS_Trap_Int_Comm ����������
+ * 锟叫讹拷toggle锟斤拷冢锟斤拷锟揭拷锟斤拷锟絚rt0.S锟斤拷OS_Trap_Int_Comm 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
 
- 	 ԭ��������:
+ 	 原锟斤拷锟斤拷锟斤拷锟斤拷:
  	jral $r1
 
- 	�޸�Ϊ:
+ 	锟睫革拷为:
  	pushm $r0,$r1
  	jal   OS_dbg_int_in
  	popm $r0,$r1
@@ -102,22 +109,22 @@ void DbgTaskTGL_clr();
  	pop  $r0
  	jal   OS_dbg_int_out
  ********************************************/
-/**�ж�toggle��IO(LED_PORT_LIST) ���� OS ��ź���,����DBG_INT_ID, ������OS�ж���һ��IO**/
-#define DBG_INT_ID				18 //Int18ΪBT INT0ΪOS �����μ�crt0.S
+/**锟叫讹拷toggle锟斤拷IO(LED_PORT_LIST) 锟斤拷锟斤拷 OS 锟斤拷藕锟斤拷锟�锟斤拷锟斤拷DBG_INT_ID, 锟斤拷锟斤拷锟斤拷OS锟叫讹拷锟斤拷一锟斤拷IO**/
+#define DBG_INT_ID				18 //Int18为BT INT0为OS 锟斤拷锟斤拷锟轿硷拷crt0.S
 
 void OS_dbg_int_in(uint32_t int_num);
 void OS_dbg_int_out(uint32_t int_num);
 
 
 
-//#define LED_IO_TOGGLE //ʹ��IO toggle����  led���߷ֹ۲� ��� LedPortInit()
+//#define LED_IO_TOGGLE //使锟斤拷IO toggle锟斤拷锟斤拷  led锟斤拷锟竭分观诧拷 锟斤拷锟�LedPortInit()
 
 
-/**����IO,�����ڳ���ִ��ʱ����ӻ�����׼SDK��ʹ��**/
-/**����ߵ͵�ƽ�������أ��½��أ���ת��led�ȣ�1~4�˿������ã������Σ�led��������Ч��ƽ��**/
-/**����LedPortInit��ʼ���˿����á�**/
-#define LED_ON_LEVEL	1//�����߸ߵ�ƽ �趨��
-/**������Ҫ������Ӧ�˿ں����,led 0~n-1��ע��˿ڸ��ù��**/
+/**锟斤拷锟斤拷IO,锟斤拷锟斤拷锟节筹拷锟斤拷执锟斤拷时锟斤拷锟斤拷踊锟斤拷锟斤拷锟阶糞DK锟斤拷使锟斤拷**/
+/**锟斤拷锟斤拷叩偷锟狡斤拷锟斤拷锟斤拷锟斤拷兀锟斤拷陆锟斤拷兀锟斤拷锟阶拷锟絣ed锟饺ｏ拷1~4锟剿匡拷锟斤拷锟斤拷锟矫ｏ拷锟斤拷锟斤拷锟轿ｏ拷led锟斤拷锟斤拷锟斤拷锟斤拷效锟斤拷平锟斤拷**/
+/**锟斤拷锟斤拷LedPortInit锟斤拷始锟斤拷锟剿匡拷锟斤拷锟矫★拷**/
+#define LED_ON_LEVEL	1//锟斤拷锟斤拷锟竭高碉拷平 锟借定锟斤拷
+/**锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷应锟剿口猴拷锟斤拷锟�led 0~n-1锟斤拷注锟斤拷丝诟锟斤拷霉锟斤拷**/
 #define LED_PORT_LIST	{{'A', 0}, {'A', 1}, {'A', 2}, {'A', 3}, {'A', 4}, {'A', 5}, {'A', 6}, {'A', 7}, {'A', 8}, {'A', 9}, {'A', 10}, {'A', 11}, {'A', 12}, {'A', 13}, {'A', 14}, {'A', 15}}
 
 
@@ -138,12 +145,12 @@ void OS_dbg_int_out(uint32_t int_num);
 #define PORT_DMA_REG(X)			(X=='A'? GPIO_A_DMA_OUT_MASK : GPIO_B_DMA_OUT_MASK)
 
 void LedPortInit(void);
-void LedOn(uint8_t Index);//1~4 �Ƿ���Чȡ����LEDx_PORT�Ƿ���
+void LedOn(uint8_t Index);//1~4 锟角凤拷锟斤拷效取锟斤拷锟斤拷LEDx_PORT锟角凤拷锟斤拷
 void LedOff(uint8_t Index);
 void LedToggle(uint8_t Index);
 void LedPortRise(uint8_t Index);
 void LedPortDown(uint8_t Index);
-bool LedPortGet(uint8_t Index);//TRUE:�ߵ�ƽ��FALSE:�͵�ƽ��index��Чʱ Ĭ��FALSE
+bool LedPortGet(uint8_t Index);//TRUE:锟竭碉拷平锟斤拷FALSE:锟酵碉拷平锟斤拷index锟斤拷效时 默锟斤拷FALSE
 
 
 #ifdef __cplusplus
