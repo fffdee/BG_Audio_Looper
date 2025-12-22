@@ -1,5 +1,5 @@
 /**
- * flash_devices.c - Flash设备注册和管理实现
+ * flash_devices.c - Flash device registration and management implementation
  */
 
 #include "flash_devices.h"
@@ -8,35 +8,35 @@
 #include <string.h>
 
 /*===========================================================================
- * CS引脚控制函数
+ * CS Pin Control Functions
  *===========================================================================*/
 
-/* Flash #0 CS控制 */
+/* Flash #0 CS control */
 static void flash0_cs_init(void)
 {
-    /* 配置为GPIO输出模式，初始为高电平（未选中） */
-    GPIO_RegOneBitClear(GPIO_A_IE, FLASH0_CS_GPIO_MASK);   /* 关闭输入 */
-    GPIO_RegOneBitSet(GPIO_A_OE, FLASH0_CS_GPIO_MASK);     /* 使能输出 */
-    GPIO_RegOneBitSet(GPIO_A_OUT, FLASH0_CS_GPIO_MASK);    /* 输出高电平 */
+    /* Configure as GPIO output mode, initial state is high (not selected) */
+    GPIO_RegOneBitClear(GPIO_A_IE, FLASH0_CS_GPIO_MASK);   /* Disable input */
+    GPIO_RegOneBitSet(GPIO_A_OE, FLASH0_CS_GPIO_MASK);     /* Enable output */
+    GPIO_RegOneBitSet(GPIO_A_OUT, FLASH0_CS_GPIO_MASK);    /* Output high */
 }
 
 static void flash0_cs_select(void)
 {
-    GPIO_RegOneBitClear(GPIO_A_OUT, FLASH0_CS_GPIO_MASK);  /* 输出低电平 */
+    GPIO_RegOneBitClear(GPIO_A_OUT, FLASH0_CS_GPIO_MASK);  /* Output low */
 }
 
 static void flash0_cs_deselect(void)
 {
-    GPIO_RegOneBitSet(GPIO_A_OUT, FLASH0_CS_GPIO_MASK);    /* 输出高电平 */
+    GPIO_RegOneBitSet(GPIO_A_OUT, FLASH0_CS_GPIO_MASK);    /* Output high */
 }
 
-/* Flash #1 CS控制 */
+/* Flash #1 CS control */
 static void flash1_cs_init(void)
 {
-    /* 配置为GPIO输出模式，初始为高电平（未选中） */
-    GPIO_RegOneBitClear(GPIO_A_IE, FLASH1_CS_GPIO_MASK);   /* 关闭输入 */
-    GPIO_RegOneBitSet(GPIO_A_OE, FLASH1_CS_GPIO_MASK);     /* 使能输出 */
-    GPIO_RegOneBitSet(GPIO_A_OUT, FLASH1_CS_GPIO_MASK);    /* 输出高电平 */
+    /* Configure as GPIO output mode, initial state is high (not selected) */
+    GPIO_RegOneBitClear(GPIO_A_IE, FLASH1_CS_GPIO_MASK);   /* Disable input */
+    GPIO_RegOneBitSet(GPIO_A_OE, FLASH1_CS_GPIO_MASK);     /* Enable output */
+    GPIO_RegOneBitSet(GPIO_A_OUT, FLASH1_CS_GPIO_MASK);    /* Output high */
 }
 
 static void flash1_cs_select(void)
@@ -50,15 +50,15 @@ static void flash1_cs_deselect(void)
 }
 
 /*===========================================================================
- * 设备实例
+ * Device Instances
  *===========================================================================*/
 
-static FlashDevice_t *g_flash0 = NULL;  /* 系统Flash */
-static FlashDevice_t *g_flash1 = NULL;  /* 存储Flash */
+static FlashDevice_t *g_flash0 = NULL;  /* System Flash */
+static FlashDevice_t *g_flash1 = NULL;  /* Storage Flash */
 static bool g_devices_initialized = false;
 
 /*===========================================================================
- * 设备初始化
+ * Device Initialization
  *===========================================================================*/
 
 FlashStatus_t FlashDevices_Init(void)
@@ -71,10 +71,10 @@ FlashStatus_t FlashDevices_Init(void)
     
     DBG("[FlashDevices] Initializing...\n");
     
-    /* 初始化总线 */
+    /* Initialize bus */
     FlashBus_Init();
     
-    /* 创建Flash #0 (系统Flash) */
+    /* Create Flash #0 (System Flash) */
     g_flash0 = W25Qxx_Create("flash0_sys",
                              flash0_cs_select,
                              flash0_cs_deselect,
@@ -84,7 +84,7 @@ FlashStatus_t FlashDevices_Init(void)
         return FLASH_ERR_NOMEM;
     }
     
-    /* 注册到总线 */
+    /* Register to bus */
     ret = FlashBus_Register(g_flash0);
     if (ret != FLASH_OK) {
         DBG("[FlashDevices] Failed to register flash0\n");
@@ -93,15 +93,15 @@ FlashStatus_t FlashDevices_Init(void)
         return ret;
     }
     
-    /* 初始化设备 */
+    /* Initialize device */
     ret = FlashDev_Init(g_flash0);
     if (ret != FLASH_OK) {
         DBG("[FlashDevices] Failed to init flash0\n");
-        /* 继续执行，设备可能暂时离线 */
+        /* Continue execution, device may be temporarily offline */
     }
     
-    /* 创建Flash #1 (存储Flash) - 仅当硬件存在时 */
-#if FLASH1_CS_PIN != 0  /* 如果配置了Flash#1 */
+    /* Create Flash #1 (Storage Flash) - only if hardware exists */
+#if FLASH1_CS_PIN != 0  /* If Flash#1 is configured */
     g_flash1 = W25Qxx_Create("flash1_stor",
                              flash1_cs_select,
                              flash1_cs_deselect,
@@ -119,7 +119,7 @@ FlashStatus_t FlashDevices_Init(void)
     
     g_devices_initialized = true;
     
-    /* 打印设备信息 */
+    /* Print device information */
     FlashBus_PrintInfo();
     
     DBG("[FlashDevices] Initialized\n");
@@ -161,23 +161,23 @@ FlashDevice_t* FlashDevices_GetStorageFlash(void)
 }
 
 /*===========================================================================
- * Shell命令
+ * Shell Commands
  *===========================================================================*/
 
 void FlashDevices_RegisterShellCommands(void)
 {
-    /* Shell命令通过 FlashBus_ShellCmd 注册 */
-    /* 在shell_commands.c中添加:
+    /* Shell commands registered via FlashBus_ShellCmd */
+    /* Add in shell_commands.c:
      *   {"flash", FlashBus_ShellCmd, "Flash operations"}
      */
     DBG("[FlashDevices] Shell commands: use 'flash' command\n");
 }
 
 /*===========================================================================
- * 分区操作实现
+ * Partition Operation Implementation
  *===========================================================================*/
 
-/* 系统分区 (Flash#0 前1MB) */
+/* System Partition (Flash#0 first 1MB) */
 FlashStatus_t FlashPartition_SystemRead(uint32_t offset, uint8_t *buf, uint32_t len)
 {
     if (!g_flash0 || !g_flash0->initialized) {
@@ -211,7 +211,7 @@ FlashStatus_t FlashPartition_SystemEraseSector(uint32_t offset)
     return FlashDev_EraseSector(g_flash0, FLASH0_PARTITION_SYSTEM_START + offset);
 }
 
-/* Looper分区 (Flash#0 后7MB) */
+/* Looper Partition (Flash#0 last 7MB) */
 FlashStatus_t FlashPartition_LooperRead(uint32_t offset, uint8_t *buf, uint32_t len)
 {
     if (!g_flash0 || !g_flash0->initialized) {
@@ -256,7 +256,7 @@ FlashStatus_t FlashPartition_LooperEraseBlock(uint32_t offset)
     return FlashDev_EraseBlock(g_flash0, FLASH0_PARTITION_LOOPER_START + offset);
 }
 
-/* 存储分区 (Flash#1 全部8MB) */
+/* Storage Partition (Flash#1 entire 8MB) */
 FlashStatus_t FlashPartition_StorageRead(uint32_t offset, uint8_t *buf, uint32_t len)
 {
     if (!g_flash1 || !g_flash1->initialized) {

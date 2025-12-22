@@ -1,5 +1,5 @@
 /**
- * BG_FlashMgr.c - BanGUI Flash管理器 (应用层实现)
+ * BG_FlashMgr.c - BanGUI Flash Manager (Application Layer Implementation)
  */
 
 #include "BG_FlashMgr.h"
@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 /*===========================================================================
- * 内部宏定义
+ * Internal Macro Definitions
  *===========================================================================*/
 
 #define BG_FLASHMGR_DEBUG   1
@@ -23,7 +23,7 @@
 #endif
 
 /*===========================================================================
- * 内部变量
+ * Internal Variables
  *===========================================================================*/
 
 static BG_FlashMgrStatus_t g_flash_status = {0};
@@ -31,7 +31,7 @@ static SemaphoreHandle_t g_flash_mutex = NULL;
 static bool g_initialized = false;
 
 /*===========================================================================
- * 互斥锁操作
+ * Mutex Operations
  *===========================================================================*/
 
 static inline bool flash_lock(uint32_t timeout_ms)
@@ -39,7 +39,7 @@ static inline bool flash_lock(uint32_t timeout_ms)
     if (g_flash_mutex) {
         return xSemaphoreTake(g_flash_mutex, (timeout_ms / portTICK_PERIOD_MS)) == pdTRUE;
     }
-    return true;  /* 没有互斥锁时直接通过 */
+    return true;  /* If no mutex, pass directly */
 }
 
 static inline void flash_unlock(void)
@@ -50,11 +50,11 @@ static inline void flash_unlock(void)
 }
 
 /*===========================================================================
- * 内部辅助函数
+ * Internal Helper Functions
  *===========================================================================*/
 
 /**
- * @brief 更新设备状态
+ * @brief Update device status
  */
 static void update_device_status(FlashDevice_t *dev, BG_FlashDeviceStatus_t *status)
 {
@@ -64,12 +64,12 @@ static void update_device_status(FlashDevice_t *dev, BG_FlashDeviceStatus_t *sta
     status->ready = dev->initialized;
     status->device_id = dev->id;
     status->total_size = dev->info.total_size;
-    status->used_size = 0;  /* 需要文件系统支持 */
-    /* error_count在操作失败时更新 */
+    status->used_size = 0;  /* Requires file system support */
+    /* error_count is updated on operation failure */
 }
 
 /**
- * @brief 检查参数有效性
+ * @brief Check parameter validity
  */
 static inline bool is_valid_looper_range(uint32_t offset, uint32_t size)
 {
@@ -87,7 +87,7 @@ static inline bool is_valid_system_range(uint32_t offset, uint32_t size)
 }
 
 /*===========================================================================
- * 初始化与反初始化
+ * Initialization and De-initialization
  *===========================================================================*/
 
 static int32_t bg_flash_init(void)
@@ -101,7 +101,7 @@ static int32_t bg_flash_init(void)
     
     FLASHMGR_LOG("Initializing...\n");
     
-    /* 创建互斥锁 */
+    /* Create mutex */
     if (!g_flash_mutex) {
         g_flash_mutex = xSemaphoreCreateMutex();
         if (!g_flash_mutex) {
@@ -111,14 +111,14 @@ static int32_t bg_flash_init(void)
         g_flash_status.mutex_initialized = true;
     }
     
-    /* 初始化底层设备 */
+    /* Initialize underlying devices */
     ret = FlashDevices_Init();
     if (ret != FLASH_OK) {
         FLASHMGR_LOG("FlashDevices_Init failed: %d\n", ret);
         return BG_FLASH_ERROR;
     }
     
-    /* 更新状态 */
+    /* Update status */
     FlashDevice_t *dev0 = FlashDevices_GetSystemFlash();
     FlashDevice_t *dev1 = FlashDevices_GetStorageFlash();
     
@@ -168,7 +168,7 @@ static void bg_flash_deinit(void)
 }
 
 /*===========================================================================
- * 系统分区操作
+ * System Partition Operations
  *===========================================================================*/
 
 static int32_t bg_flash_read_system(uint32_t offset, uint8_t *buffer, uint32_t size)
@@ -263,7 +263,7 @@ static int32_t bg_flash_erase_system_sector(uint32_t offset)
 }
 
 /*===========================================================================
- * Looper分区操作
+ * Looper Partition Operations
  *===========================================================================*/
 
 static int32_t bg_flash_read_looper(uint32_t offset, uint8_t *buffer, uint32_t size)
@@ -404,7 +404,7 @@ static int32_t bg_flash_erase_looper_all(void)
     
     FLASHMGR_LOG("Erasing entire Looper partition (7MB)...\n");
     
-    /* 按块擦除效率更高 */
+    /* Block-wise erase is more efficient */
     uint32_t offset = 0;
     while (offset < BG_FLASH_PARTITION_LOOPER_SIZE) {
         ret = FlashPartition_LooperEraseBlock(offset);
@@ -416,7 +416,7 @@ static int32_t bg_flash_erase_looper_all(void)
         }
         offset += BG_FLASH_BLOCK_SIZE;
         
-        /* 每擦除1MB打印进度 */
+        /* Print progress every 1MB */
         if ((offset % (1024*1024)) == 0) {
             FLASHMGR_LOG("  Erased %d MB...\n", offset / (1024*1024));
         }
@@ -429,7 +429,7 @@ static int32_t bg_flash_erase_looper_all(void)
 }
 
 /*===========================================================================
- * 存储分区操作
+ * Storage Partition Operations
  *===========================================================================*/
 
 static int32_t bg_flash_read_storage(uint32_t offset, uint8_t *buffer, uint32_t size)
@@ -570,7 +570,7 @@ static int32_t bg_flash_erase_storage_all(void)
     
     FLASHMGR_LOG("Erasing entire Storage partition (8MB)...\n");
     
-    /* 使用全片擦除命令更快 */
+    /* Use chip erase command for faster operation */
     ret = FlashDev_EraseChip(dev);
     
     if (ret != FLASH_OK) {
@@ -586,7 +586,7 @@ static int32_t bg_flash_erase_storage_all(void)
 }
 
 /*===========================================================================
- * 状态查询
+ * Status Query
  *===========================================================================*/
 
 static int32_t bg_flash_get_status(BG_FlashMgrStatus_t *status)
@@ -599,7 +599,7 @@ static int32_t bg_flash_get_status(BG_FlashMgrStatus_t *status)
         return BG_FLASH_ERROR_TIMEOUT;
     }
     
-    /* 更新设备状态 */
+    /* Update device status */
     FlashDevice_t *dev0 = FlashDevices_GetSystemFlash();
     FlashDevice_t *dev1 = FlashDevices_GetStorageFlash();
     
@@ -624,20 +624,20 @@ static bool bg_flash_is_ready(void)
 
 static uint32_t bg_flash_get_looper_free_space(void)
 {
-    /* 简化实现: 返回总容量 */
-    /* TODO: 实现真实的空间统计 */
+    /* Simplified implementation: return total capacity */
+    /* TODO: Implement real space statistics */
     return BG_FLASH_PARTITION_LOOPER_SIZE;
 }
 
 static uint32_t bg_flash_get_storage_free_space(void)
 {
-    /* 简化实现: 返回总容量 */
-    /* TODO: 实现真实的空间统计 */
+    /* Simplified implementation: return total capacity */
+    /* TODO: Implement real space statistics */
     return BG_FLASH_PARTITION_STORAGE_SIZE;
 }
 
 /*===========================================================================
- * 测试与调试
+ * Testing and Debugging
  *===========================================================================*/
 
 static int32_t bg_flash_test_device(uint8_t device_id)
@@ -703,10 +703,10 @@ static int32_t bg_flash_format(uint8_t device_id)
     FLASHMGR_LOG("Formatting device %d...\n", device_id);
     
     if (device_id == 0) {
-        /* 格式化Looper分区 (不动系统分区) */
+        /* Format Looper partition (do not touch system partition) */
         ret = bg_flash_erase_looper_all();
     } else if (device_id == 1) {
-        /* 格式化存储分区 */
+        /* Format storage partition */
         ret = bg_flash_erase_storage_all();
     } else {
         return BG_FLASH_ERROR_PARAM;
@@ -722,40 +722,40 @@ static int32_t bg_flash_format(uint8_t device_id)
 }
 
 /*===========================================================================
- * 全局实例
+ * Global Instance
  *===========================================================================*/
 
 BG_FlashMgr_t BG_FlashMgr = {
-    /* 初始化与反初始化 */
+    /* Initialization and De-initialization */
     .Init               = bg_flash_init,
     .DeInit             = bg_flash_deinit,
     
-    /* 系统分区操作 */
+    /* System Partition Operations */
     .ReadSystem         = bg_flash_read_system,
     .WriteSystem        = bg_flash_write_system,
     .EraseSystemSector  = bg_flash_erase_system_sector,
     
-    /* Looper分区操作 */
+    /* Looper Partition Operations */
     .ReadLooper         = bg_flash_read_looper,
     .WriteLooper        = bg_flash_write_looper,
     .EraseLooperSector  = bg_flash_erase_looper_sector,
     .EraseLooperBlock   = bg_flash_erase_looper_block,
     .EraseLooperAll     = bg_flash_erase_looper_all,
     
-    /* 存储分区操作 */
+    /* Storage Partition Operations */
     .ReadStorage        = bg_flash_read_storage,
     .WriteStorage       = bg_flash_write_storage,
     .EraseStorageSector = bg_flash_erase_storage_sector,
     .EraseStorageBlock  = bg_flash_erase_storage_block,
     .EraseStorageAll    = bg_flash_erase_storage_all,
     
-    /* 状态查询 */
+    /* Status Query */
     .GetStatus          = bg_flash_get_status,
     .IsReady            = bg_flash_is_ready,
     .GetLooperFreeSpace = bg_flash_get_looper_free_space,
     .GetStorageFreeSpace= bg_flash_get_storage_free_space,
     
-    /* 测试与调试 */
+    /* Testing and Debugging */
     .TestDevice         = bg_flash_test_device,
     .PrintInfo          = bg_flash_print_info,
     .Format             = bg_flash_format,

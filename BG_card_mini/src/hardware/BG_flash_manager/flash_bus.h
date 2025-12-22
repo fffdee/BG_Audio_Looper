@@ -1,10 +1,10 @@
 /**
- * flash_bus.h - Flash总线管理器
- * 
- * 采用总线-驱动模型：
- * - 驱动注册到总线
- * - 统一管理所有Flash设备
- * - 提供Shell接口
+ * flash_bus.h - Flash bus manager
+ *
+ * Uses bus-driver model:
+ * - Drivers are registered to the bus
+ * - Unified management of all Flash devices
+ * - Provides Shell interface
  */
 
 #ifndef __FLASH_BUS_H__
@@ -14,15 +14,15 @@
 #include <stdbool.h>
 
 /*===========================================================================
- * 常量定义
+ * Constant Definitions
  *===========================================================================*/
 
-#define FLASH_BUS_MAX_DEVICES       8       /* 总线最大设备数 */
-#define FLASH_NAME_MAX_LEN          16      /* 设备名称最大长度 */
-#define FLASH_DEV_NAME_MAX          FLASH_NAME_MAX_LEN  /* 兼容别名 */
+#define FLASH_BUS_MAX_DEVICES       8       /* Maximum number of devices on the bus */
+#define FLASH_NAME_MAX_LEN          16      /* Maximum device name length */
+#define FLASH_DEV_NAME_MAX          FLASH_NAME_MAX_LEN  /* Alias compatibility */
 
 /*===========================================================================
- * 状态码定义
+ * Status Code Definitions
  *===========================================================================*/
 
 typedef enum {
@@ -44,7 +44,7 @@ typedef enum {
 } FlashStatus_t;
 
 /*===========================================================================
- * Flash类型定义 (兼容audio_looper.h)
+ * Flash Type Definitions (compatible with audio_looper.h)
  *===========================================================================*/
 
 #ifndef FLASH_TYPE_DEFINED
@@ -57,226 +57,226 @@ typedef enum {
 #endif /* FLASH_TYPE_DEFINED */
 
 /*===========================================================================
- * Flash设备信息
+ * Flash Device Information
  *===========================================================================*/
 
 typedef struct {
-    uint8_t  mfg_id;            /* 制造商ID */
-    uint8_t  mem_type;          /* 内存类型 */
-    uint8_t  dev_id;            /* 设备ID */
-    uint32_t total_size;        /* 总容量(字节) */
-    uint32_t page_size;         /* 页大小 */
-    uint32_t sector_size;       /* 扇区大小 */
-    uint32_t block_size;        /* 块大小 */
-    uint16_t block_count;       /* 块数量 */
+    uint8_t  mfg_id;            /* Manufacturer ID */
+    uint8_t  mem_type;          /* Memory type */
+    uint8_t  dev_id;            /* Device ID */
+    uint32_t total_size;        /* Total capacity (bytes) */
+    uint32_t page_size;         /* Page size */
+    uint32_t sector_size;       /* Sector size */
+    uint32_t block_size;        /* Block size */
+    uint16_t block_count;       /* Number of blocks */
 } FlashDevInfo_t;
 
 /*===========================================================================
- * Flash驱动操作接口
+ * Flash Driver Operation Interface
  *===========================================================================*/
 
-/* 前向声明 */
+/* Forward declaration */
 typedef struct FlashDevice FlashDevice_t;
 
-/* 驱动操作函数指针类型 */
+/* Driver operation function pointer types */
 typedef struct {
-    /* 初始化/反初始化 */
+    /* Initialization/De-initialization */
     FlashStatus_t (*init)(FlashDevice_t *dev);
     FlashStatus_t (*deinit)(FlashDevice_t *dev);
     
-    /* 读写操作 */
+    /* Read/Write operations */
     FlashStatus_t (*read)(FlashDevice_t *dev, uint32_t addr, uint8_t *buf, uint32_t len);
     FlashStatus_t (*write)(FlashDevice_t *dev, uint32_t addr, const uint8_t *buf, uint32_t len);
     
-    /* 擦除操作 */
+    /* Erase operations */
     FlashStatus_t (*erase_sector)(FlashDevice_t *dev, uint32_t addr);
     FlashStatus_t (*erase_block)(FlashDevice_t *dev, uint32_t addr);
     FlashStatus_t (*erase_chip)(FlashDevice_t *dev);
     
-    /* 状态操作 */
+    /* Status operations */
     FlashStatus_t (*get_status)(FlashDevice_t *dev, uint8_t *status);
     FlashStatus_t (*wait_ready)(FlashDevice_t *dev, uint32_t timeout_ms);
     
-    /* 信息获取 */
+    /* Information retrieval */
     FlashStatus_t (*read_id)(FlashDevice_t *dev);
     FlashStatus_t (*get_info)(FlashDevice_t *dev, FlashDevInfo_t *info);
 } FlashOps_t;
 
 /*===========================================================================
- * CS引脚控制
+ * CS Pin Control
  *===========================================================================*/
 
 typedef struct {
-    void (*init)(void);         /* 初始化CS引脚 */
-    void (*select)(void);       /* 选中设备 (CS低) */
-    void (*deselect)(void);     /* 取消选中 (CS高) */
+    void (*init)(void);         /* Initialize CS pin */
+    void (*select)(void);       /* Select device (CS low) */
+    void (*deselect)(void);     /* Deselect (CS high) */
 } FlashCS_t;
 
 /*===========================================================================
- * Flash设备结构
+ * Flash Device Structure
  *===========================================================================*/
 
 struct FlashDevice {
-    /* 设备标识 */
-    char            name[FLASH_NAME_MAX_LEN];   /* 设备名称 */
-    uint8_t         id;                         /* 设备ID (总线分配) */
-    FlashType_t     type;                       /* Flash类型 */
-    bool            initialized;                /* 是否已初始化 */
-    bool            registered;                 /* 是否已注册 */
+    /* Device identification */
+    char            name[FLASH_NAME_MAX_LEN];   /* Device name */
+    uint8_t         id;                         /* Device ID (assigned by bus) */
+    FlashType_t     type;                       /* Flash type */
+    bool            initialized;                /* Is initialized */
+    bool            registered;                 /* Is registered */
     
-    /* 设备信息 */
-    FlashDevInfo_t  info;                       /* 设备信息 */
+    /* Device information */
+    FlashDevInfo_t  info;                       /* Device information */
     
-    /* 硬件控制 */
-    FlashCS_t       cs;                         /* CS引脚控制 */
+    /* Hardware control */
+    FlashCS_t       cs;                         /* CS pin control */
     
-    /* 驱动操作 */
-    const FlashOps_t *ops;                      /* 操作函数 */
+    /* Driver operations */
+    const FlashOps_t *ops;                      /* Operation functions */
     
-    /* 私有数据 */
-    void            *priv;                      /* 驱动私有数据 */
+    /* Private data */
+    void            *priv;                      /* Driver private data */
     
-    /* 链表 */
-    FlashDevice_t   *next;                      /* 下一个设备 */
+    /* Linked list */
+    FlashDevice_t   *next;                      /* Next device */
 };
 
 /*===========================================================================
- * Flash总线结构
+ * Flash Bus Structure
  *===========================================================================*/
 
 typedef struct {
-    bool            initialized;                /* 总线是否初始化 */
-    uint8_t         device_count;               /* 已注册设备数 */
-    FlashDevice_t   *head;                      /* 设备链表头 */
-    FlashDevice_t   *devices[FLASH_BUS_MAX_DEVICES]; /* 设备数组(按ID索引) */
+    bool            initialized;                /* Is bus initialized */
+    uint8_t         device_count;               /* Number of registered devices */
+    FlashDevice_t   *head;                      /* Device list head */
+    FlashDevice_t   *devices[FLASH_BUS_MAX_DEVICES]; /* Device array (indexed by ID) */
 } FlashBus_t;
 
 /*===========================================================================
- * 总线API
+ * Bus API
  *===========================================================================*/
 
 /**
- * 初始化Flash总线
+ * Initialize Flash bus
  */
 FlashStatus_t FlashBus_Init(void);
 
 /**
- * 反初始化Flash总线
+ * De-initialize Flash bus
  */
 void FlashBus_DeInit(void);
 
 /**
- * 获取总线实例
+ * Get bus instance
  */
 FlashBus_t* FlashBus_GetInstance(void);
 
 /**
- * 注册设备到总线
- * @param dev 设备指针
- * @return FLASH_OK成功
+ * Register device to bus
+ * @param dev Device pointer
+ * @return FLASH_OK on success
  */
 FlashStatus_t FlashBus_Register(FlashDevice_t *dev);
 
 /**
- * 从总线注销设备
- * @param dev 设备指针
- * @return FLASH_OK成功
+ * Unregister device from bus
+ * @param dev Device pointer
+ * @return FLASH_OK on success
  */
 FlashStatus_t FlashBus_Unregister(FlashDevice_t *dev);
 
 /**
- * 根据ID获取设备
- * @param id 设备ID
- * @return 设备指针，失败返回NULL
+ * Get device by ID
+ * @param id Device ID
+ * @return Device pointer, NULL on failure
  */
 FlashDevice_t* FlashBus_GetDeviceById(uint8_t id);
 
 /**
- * 根据名称获取设备
- * @param name 设备名称
- * @return 设备指针，失败返回NULL
+ * Get device by name
+ * @param name Device name
+ * @return Device pointer, NULL on failure
  */
 FlashDevice_t* FlashBus_GetDeviceByName(const char *name);
 
 /**
- * 获取设备数量
+ * Get device count
  */
 uint8_t FlashBus_GetDeviceCount(void);
 
 /**
- * 遍历所有设备
- * @param callback 回调函数
- * @param user_data 用户数据
+ * Iterate over all devices
+ * @param callback Callback function
+ * @param user_data User data
  */
 void FlashBus_ForEach(void (*callback)(FlashDevice_t *dev, void *user_data), void *user_data);
 
 /*===========================================================================
- * 设备操作便捷API
+ * Device Operation Convenience API
  *===========================================================================*/
 
 /**
- * 初始化设备
+ * Initialize device
  */
 FlashStatus_t FlashDev_Init(FlashDevice_t *dev);
 
 /**
- * 读取数据
+ * Read data
  */
 FlashStatus_t FlashDev_Read(FlashDevice_t *dev, uint32_t addr, uint8_t *buf, uint32_t len);
 
 /**
- * 写入数据
+ * Write data
  */
 FlashStatus_t FlashDev_Write(FlashDevice_t *dev, uint32_t addr, const uint8_t *buf, uint32_t len);
 
 /**
- * 擦除扇区
+ * Erase sector
  */
 FlashStatus_t FlashDev_EraseSector(FlashDevice_t *dev, uint32_t addr);
 
 /**
- * 擦除块
+ * Erase block
  */
 FlashStatus_t FlashDev_EraseBlock(FlashDevice_t *dev, uint32_t addr);
 
 /**
- * 全片擦除
+ * Chip erase
  */
 FlashStatus_t FlashDev_EraseChip(FlashDevice_t *dev);
 
 /**
- * 打印设备信息
+ * Print device information
  */
 void FlashDev_PrintInfo(FlashDevice_t *dev);
 
 /*===========================================================================
- * Shell命令接口
+ * Shell Command Interface
  *===========================================================================*/
 
 /**
- * 注册Flash Shell命令
+ * Register Flash Shell commands
  */
 void FlashBus_RegisterShellCommands(void);
 
 /**
- * Flash Shell命令处理
- * @param argc 参数数量
- * @param argv 参数数组
- * @return 0成功，其他失败
+ * Flash Shell command handler
+ * @param argc Argument count
+ * @param argv Argument array
+ * @return 0 on success, other values on failure
  */
 int FlashBus_ShellCmd(int argc, char *argv[]);
 
 /*===========================================================================
- * 调试接口
+ * Debug Interface
  *===========================================================================*/
 
 /**
- * 打印总线信息
+ * Print bus information
  */
 void FlashBus_PrintInfo(void);
 
 /**
- * 测试设备
+ * Test device
  */
 FlashStatus_t FlashBus_TestDevice(uint8_t id);
 

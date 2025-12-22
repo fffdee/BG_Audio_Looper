@@ -1,10 +1,10 @@
 /**
- * flash_driver.h - Flash底层驱动抽象层
+ * flash_driver.h - Flash low-level driver abstraction layer
  * 
- * 本文件定义Flash驱动的抽象接口，支持：
- * - 多颗同型号Flash通过不同CS引脚控制
- * - NOR Flash (W25Q64等) 和 NAND Flash (W25N02等)
- * - 统一的驱动接口，便于上层管理
+ * This file defines the abstract interface for Flash drivers, supporting:
+ * - Multiple Flash chips of the same model controlled by different CS pins
+ * - NOR Flash (W25Q64, etc.) and NAND Flash (W25N02, etc.)
+ * - Unified driver interface for easy management at upper layers
  */
 
 #ifndef __FLASH_DRIVER_H__
@@ -15,17 +15,17 @@
 #include "gpio.h"
 
 /*===========================================================================
- * 常量定义
+ * Constant Definitions
  *===========================================================================*/
 
-/* Flash类型定义 */
+/* Flash type definitions */
 typedef enum {
-    FLASH_TYPE_NOR = 0,     /* NOR Flash (W25Qxx系列) */
-    FLASH_TYPE_NAND,        /* NAND Flash (W25Nxx系列) */
+    FLASH_TYPE_NOR = 0,     /* NOR Flash (W25Qxx series) */
+    FLASH_TYPE_NAND,        /* NAND Flash (W25Nxx series) */
     FLASH_TYPE_MAX
 } FlashType_t;
 
-/* Flash型号定义 */
+/* Flash model definitions */
 typedef enum {
     FLASH_MODEL_UNKNOWN = 0,
     /* NOR Flash */
@@ -38,7 +38,7 @@ typedef enum {
     FLASH_MODEL_MAX
 } FlashModel_t;
 
-/* 操作状态码 */
+/* Operation status codes */
 typedef enum {
     FLASH_OK = 0,
     FLASH_ERROR_BUSY,
@@ -51,79 +51,79 @@ typedef enum {
     FLASH_ERROR_NOT_INIT
 } FlashStatus_t;
 
-/* Flash信息结构 */
+/* Flash information structure */
 typedef struct {
-    FlashType_t type;           /* Flash类型 */
-    FlashModel_t model;         /* Flash型号 */
-    uint8_t manufacturer_id;    /* 制造商ID */
-    uint8_t memory_type;        /* 内存类型 */
-    uint8_t device_id;          /* 设备ID */
-    uint32_t total_size;        /* 总容量(字节) */
-    uint32_t page_size;         /* 页大小(字节) */
-    uint32_t sector_size;       /* 扇区大小(字节) */
-    uint32_t block_size;        /* 块大小(字节) */
-    uint32_t block_count;       /* 块数量 */
+    FlashType_t type;           /* Flash type */
+    FlashModel_t model;         /* Flash model */
+    uint8_t manufacturer_id;    /* Manufacturer ID */
+    uint8_t memory_type;        /* Memory type */
+    uint8_t device_id;          /* Device ID */
+    uint32_t total_size;        /* Total size (bytes) */
+    uint32_t page_size;         /* Page size (bytes) */
+    uint32_t sector_size;       /* Sector size (bytes) */
+    uint32_t block_size;        /* Block size (bytes) */
+    uint32_t block_count;       /* Block count */
 } FlashInfo_t;
 
-/* CS引脚控制函数类型 */
+/* CS pin control function type */
 typedef void (*FlashCsFunc_t)(bool enable);
 
-/* Flash设备配置 */
+/* Flash device configuration */
 typedef struct {
-    FlashCsFunc_t cs_enable;    /* CS使能函数 */
-    FlashCsFunc_t cs_disable;   /* CS禁用函数（可选，为NULL时使用enable(false)） */
-    uint32_t gpio_port;         /* GPIO端口（用于初始化） */
-    uint32_t gpio_pin;          /* GPIO引脚（用于初始化） */
+    FlashCsFunc_t cs_enable;    /* CS enable function */
+    FlashCsFunc_t cs_disable;   /* CS disable function (optional, use enable(false) if NULL) */
+    uint32_t gpio_port;         /* GPIO port (for initialization) */
+    uint32_t gpio_pin;          /* GPIO pin (for initialization) */
 } FlashCsConfig_t;
 
 /*===========================================================================
- * Flash驱动结构体
+ * Flash Driver Structure
  *===========================================================================*/
 
-/* 前向声明 */
+/* Forward declaration */
 typedef struct FlashDriver FlashDriver_t;
 
-/* Flash驱动操作接口 */
+/* Flash driver operation interface */
 struct FlashDriver {
-    /* 设备标识 */
-    uint8_t id;                 /* 设备ID (0-based) */
-    FlashType_t type;           /* Flash类型 */
-    bool initialized;           /* 是否已初始化 */
+    /* Device identification */
+    uint8_t id;                 /* Device ID (0-based) */
+    FlashType_t type;           /* Flash type */
+    bool initialized;           /* Initialized flag */
     
-    /* 设备信息 */
-    FlashInfo_t info;           /* Flash信息 */
+    /* Device information */
+    FlashInfo_t info;           /* Flash information */
     
-    /* CS控制 */
-    FlashCsConfig_t cs_config;  /* CS配置 */
+    /* CS control */
+    FlashCsConfig_t cs_config;  /* CS configuration */
     
-    /* 私有数据 */
-    void *priv;                 /* 驱动私有数据 */
+    /* Private data */
+    void *priv;                 /* Driver private data */
     
-    /* 基本操作 */
+    /* Basic operations */
     FlashStatus_t (*init)(FlashDriver_t *drv);
     FlashStatus_t (*deinit)(FlashDriver_t *drv);
     FlashStatus_t (*read_id)(FlashDriver_t *drv, uint8_t *mfg, uint8_t *type, uint8_t *dev);
     
-    /* 读写操作 */
+    /* Read/Write operations */
     FlashStatus_t (*read)(FlashDriver_t *drv, uint32_t addr, uint8_t *buf, uint32_t len);
     FlashStatus_t (*write)(FlashDriver_t *drv, uint32_t addr, const uint8_t *buf, uint32_t len);
     
-    /* 擦除操作 */
+    /* Erase operations */
     FlashStatus_t (*erase_sector)(FlashDriver_t *drv, uint32_t addr);
     FlashStatus_t (*erase_block)(FlashDriver_t *drv, uint32_t addr);
     FlashStatus_t (*erase_chip)(FlashDriver_t *drv);
     
-    /* 状态操作 */
+    /* Status operations */
     FlashStatus_t (*get_status)(FlashDriver_t *drv, uint8_t *status);
     FlashStatus_t (*wait_ready)(FlashDriver_t *drv, uint32_t timeout_ms);
     
-    /* 电源管理 */
+    /* Power management */
     FlashStatus_t (*power_down)(FlashDriver_t *drv);
     FlashStatus_t (*power_up)(FlashDriver_t *drv);
 };
 
 /*===========================================================================
- * 预定义的CS引脚配置
+ * Predefined CS Pin Configurations
  *===========================================================================*/
 
 /* NOR Flash #0 (W25Q64) - GPIOA21 */
@@ -135,7 +135,7 @@ struct FlashDriver {
 #define FLASH_NOR0_CS_ENABLE()  GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA21)
 #define FLASH_NOR0_CS_DISABLE() GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA21)
 
-/* NOR Flash #1 (W25Q64) - GPIOA23 (示例，根据实际硬件修改) */
+/* NOR Flash #1 (W25Q64) - GPIOA23 (Example, modify according to actual hardware) */
 #define FLASH_NOR1_CS_INIT()    do { \
     GPIO_RegOneBitClear(GPIO_A_IE, GPIOA23); \
     GPIO_RegOneBitSet(GPIO_A_OE, GPIOA23); \
@@ -153,7 +153,7 @@ struct FlashDriver {
 #define FLASH_NAND0_CS_ENABLE()  GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA22)
 #define FLASH_NAND0_CS_DISABLE() GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA22)
 
-/* WP引脚控制 */
+/* WP pin control */
 #define FLASH_WP_INIT()    do { \
     GPIO_RegOneBitClear(GPIO_A_IE, GPIOA17); \
     GPIO_RegOneBitSet(GPIO_A_OE, GPIOA17); \
@@ -163,7 +163,7 @@ struct FlashDriver {
 #define FLASH_WP_DISABLE()  GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA17)
 
 /*===========================================================================
- * NOR Flash命令定义
+ * NOR Flash Command Definitions
  *===========================================================================*/
 #define NOR_CMD_WRITE_ENABLE        0x06
 #define NOR_CMD_WRITE_DISABLE       0x04
@@ -180,18 +180,18 @@ struct FlashDriver {
 #define NOR_CMD_RELEASE_PD          0xAB
 #define NOR_CMD_READ_JEDEC_ID       0x9F
 
-/* NOR Flash状态位 */
+/* NOR Flash status bits */
 #define NOR_STATUS_BUSY             0x01
 #define NOR_STATUS_WEL              0x02
 
-/* NOR Flash参数 */
+/* NOR Flash parameters */
 #define NOR_PAGE_SIZE               256
 #define NOR_SECTOR_SIZE_4K          4096
 #define NOR_BLOCK_SIZE_32K          32768
 #define NOR_BLOCK_SIZE_64K          65536
 
 /*===========================================================================
- * NAND Flash命令定义 (W25N02)
+ * NAND Flash Command Definitions (W25N02)
  *===========================================================================*/
 #define NAND_CMD_RESET              0xFF
 #define NAND_CMD_READ_JEDEC_ID      0x9F
@@ -206,12 +206,12 @@ struct FlashDriver {
 #define NAND_CMD_PROGRAM_EXECUTE    0x10
 #define NAND_CMD_BLOCK_ERASE        0xD8
 
-/* NAND Flash寄存器地址 */
+/* NAND Flash register addresses */
 #define NAND_REG_PROTECTION         0xA0
 #define NAND_REG_CONFIGURATION      0xB0
 #define NAND_REG_STATUS             0xC0
 
-/* NAND Flash状态位 */
+/* NAND Flash status bits */
 #define NAND_STATUS_BUSY            0x01
 #define NAND_STATUS_WEL             0x02
 #define NAND_STATUS_EFAIL           0x04
@@ -219,7 +219,7 @@ struct FlashDriver {
 #define NAND_STATUS_ECC1            0x20
 #define NAND_STATUS_ECC2            0x40
 
-/* NAND Flash参数 (W25N02) */
+/* NAND Flash parameters (W25N02) */
 #define NAND_PAGE_SIZE              2048
 #define NAND_PAGE_SPARE_SIZE        64
 #define NAND_PAGES_PER_BLOCK        64
@@ -228,35 +228,35 @@ struct FlashDriver {
 #define NAND_W25N02_TOTAL_SIZE      (256 * 1024 * 1024)  /* 256MB */
 
 /*===========================================================================
- * 驱动创建函数
+ * Driver Creation Functions
  *===========================================================================*/
 
 /**
- * 创建NOR Flash驱动实例
- * @param id 设备ID
- * @param cs_enable CS使能函数
- * @param cs_disable CS禁用函数
- * @return 驱动实例指针，失败返回NULL
+ * Create NOR Flash driver instance
+ * @param id Device ID
+ * @param cs_enable CS enable function
+ * @param cs_disable CS disable function
+ * @return Driver instance pointer, NULL on failure
  */
 FlashDriver_t* FlashDriver_CreateNOR(uint8_t id, FlashCsFunc_t cs_enable, FlashCsFunc_t cs_disable);
 
 /**
- * 创建NAND Flash驱动实例
- * @param id 设备ID
- * @param cs_enable CS使能函数
- * @param cs_disable CS禁用函数
- * @return 驱动实例指针，失败返回NULL
+ * Create NAND Flash driver instance
+ * @param id Device ID
+ * @param cs_enable CS enable function
+ * @param cs_disable CS disable function
+ * @return Driver instance pointer, NULL on failure
  */
 FlashDriver_t* FlashDriver_CreateNAND(uint8_t id, FlashCsFunc_t cs_enable, FlashCsFunc_t cs_disable);
 
 /**
- * 销毁Flash驱动实例
- * @param drv 驱动实例
+ * Destroy Flash driver instance
+ * @param drv Driver instance
  */
 void FlashDriver_Destroy(FlashDriver_t *drv);
 
 /*===========================================================================
- * 底层SPI通信函数（内部使用）
+ * Low-level SPI Communication Functions (Internal Use)
  *===========================================================================*/
 
 void flash_spi_write_byte(uint8_t data);

@@ -1,7 +1,7 @@
 /**
- * flash_driver.c - Flash底层驱动实现
- * 
- * 支持多颗NOR Flash (W25Q64) 通过不同CS引脚控制
+ * flash_driver.c - Flash low-level driver implementation
+ *
+ * Supports multiple NOR Flash (W25Q64) controlled by different CS pins
  */
 
 #include "flash_driver.h"
@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 /*===========================================================================
- * 底层SPI通信
+ * Low-level SPI communication
  *===========================================================================*/
 
 void flash_spi_write_byte(uint8_t data)
@@ -43,7 +43,7 @@ void flash_spi_read(uint8_t *data, uint16_t len)
 }
 
 /*===========================================================================
- * NOR Flash驱动私有数据
+ * NOR Flash driver private data
  *===========================================================================*/
 
 typedef struct {
@@ -52,7 +52,7 @@ typedef struct {
 } NorFlashPriv_t;
 
 /*===========================================================================
- * NOR Flash内部函数
+ * NOR Flash internal functions
  *===========================================================================*/
 
 static inline void nor_cs_enable(FlashDriver_t *drv)
@@ -90,7 +90,7 @@ static void nor_write_disable(FlashDriver_t *drv)
 }
 
 /*===========================================================================
- * NOR Flash驱动操作实现
+ * NOR Flash driver operation implementations
  *===========================================================================*/
 
 static FlashStatus_t nor_init(FlashDriver_t *drv)
@@ -99,10 +99,10 @@ static FlashStatus_t nor_init(FlashDriver_t *drv)
     
     if (!drv) return FLASH_ERROR_PARAM;
     
-    /* 读取设备ID */
+    /* Read device ID */
     drv->read_id(drv, &mfg, &type, &dev);
     
-    /* 填充设备信息 */
+    /* Fill device info */
     drv->info.type = FLASH_TYPE_NOR;
     drv->info.manufacturer_id = mfg;
     drv->info.memory_type = type;
@@ -111,7 +111,7 @@ static FlashStatus_t nor_init(FlashDriver_t *drv)
     drv->info.sector_size = NOR_SECTOR_SIZE_4K;
     drv->info.block_size = NOR_BLOCK_SIZE_64K;
     
-    /* 根据设备ID确定容量 */
+    /* Determine capacity based on device ID */
     switch (dev) {
         case 0x17: /* W25Q64 - 64Mbit = 8MB */
             drv->info.total_size = 8 * 1024 * 1024;
@@ -126,7 +126,7 @@ static FlashStatus_t nor_init(FlashDriver_t *drv)
             drv->info.model = FLASH_MODEL_W25Q32;
             break;
         default:
-            drv->info.total_size = 8 * 1024 * 1024; /* 默认8MB */
+            drv->info.total_size = 8 * 1024 * 1024; /* Default 8MB */
             drv->info.model = FLASH_MODEL_W25Q64;
             break;
     }
@@ -177,7 +177,7 @@ static FlashStatus_t nor_wait_ready(FlashDriver_t *drv, uint32_t timeout_ms)
 {
     uint8_t status;
     uint32_t count = 0;
-    uint32_t max_count = timeout_ms * 1000; /* 简单计数 */
+    uint32_t max_count = timeout_ms * 1000; /* Simple counter */
     
     if (!drv) return FLASH_ERROR_PARAM;
     
@@ -218,15 +218,15 @@ static FlashStatus_t nor_write(FlashDriver_t *drv, uint32_t addr, const uint8_t 
     if (!drv->initialized) return FLASH_ERROR_NOT_INIT;
     
     while (len > 0) {
-        /* 计算当前页内偏移和剩余空间 */
+        /* Calculate current page offset and remaining space */
         page_offset = addr % NOR_PAGE_SIZE;
         page_remain = NOR_PAGE_SIZE - page_offset;
         write_len = (len < page_remain) ? len : page_remain;
         
-        /* 写使能 */
+        /* Write enable */
         nor_write_enable(drv);
         
-        /* 页编程 */
+        /* Page program */
         nor_cs_enable(drv);
         flash_spi_write_byte(NOR_CMD_PAGE_PROGRAM);
         flash_spi_write_byte((addr >> 16) & 0xFF);
@@ -235,7 +235,7 @@ static FlashStatus_t nor_write(FlashDriver_t *drv, uint32_t addr, const uint8_t 
         flash_spi_write(buf, write_len);
         nor_cs_disable(drv);
         
-        /* 等待完成 */
+        /* Wait for completion */
         nor_wait_ready(drv, 10);
         
         addr += write_len;
@@ -251,7 +251,7 @@ static FlashStatus_t nor_erase_sector(FlashDriver_t *drv, uint32_t addr)
     if (!drv) return FLASH_ERROR_PARAM;
     if (!drv->initialized) return FLASH_ERROR_NOT_INIT;
     
-    /* 对齐到扇区边界 */
+    /* Align to sector boundary */
     addr &= ~(NOR_SECTOR_SIZE_4K - 1);
     
     nor_write_enable(drv);
@@ -273,7 +273,7 @@ static FlashStatus_t nor_erase_block(FlashDriver_t *drv, uint32_t addr)
     if (!drv) return FLASH_ERROR_PARAM;
     if (!drv->initialized) return FLASH_ERROR_NOT_INIT;
     
-    /* 对齐到块边界 */
+    /* Align to block boundary */
     addr &= ~(NOR_BLOCK_SIZE_64K - 1);
     
     nor_write_enable(drv);
@@ -301,7 +301,7 @@ static FlashStatus_t nor_erase_chip(FlashDriver_t *drv)
     flash_spi_write_byte(NOR_CMD_CHIP_ERASE);
     nor_cs_disable(drv);
     
-    nor_wait_ready(drv, 60000); /* 全片擦除可能需要较长时间 */
+    nor_wait_ready(drv, 60000); /* Chip erase may take a long time */
     
     return FLASH_OK;
 }
@@ -325,7 +325,7 @@ static FlashStatus_t nor_power_up(FlashDriver_t *drv)
     flash_spi_write_byte(NOR_CMD_RELEASE_PD);
     nor_cs_disable(drv);
     
-    /* 等待唤醒 */
+    /* Wait for wakeup */
     volatile int delay = 1000;
     while (delay--);
     
@@ -333,7 +333,7 @@ static FlashStatus_t nor_power_up(FlashDriver_t *drv)
 }
 
 /*===========================================================================
- * NOR Flash驱动实例池
+ * NOR Flash driver instance pool
  *===========================================================================*/
 
 #define MAX_NOR_FLASH_DEVICES 4
@@ -343,7 +343,7 @@ static NorFlashPriv_t nor_flash_privs[MAX_NOR_FLASH_DEVICES];
 static uint8_t nor_flash_count = 0;
 
 /*===========================================================================
- * 创建NOR Flash驱动
+ * Create NOR Flash driver
  *===========================================================================*/
 
 FlashDriver_t* FlashDriver_CreateNOR(uint8_t id, FlashCsFunc_t cs_enable, FlashCsFunc_t cs_disable)
@@ -359,17 +359,17 @@ FlashDriver_t* FlashDriver_CreateNOR(uint8_t id, FlashCsFunc_t cs_enable, FlashC
     memset(drv, 0, sizeof(FlashDriver_t));
     memset(priv, 0, sizeof(NorFlashPriv_t));
     
-    /* 设置私有数据 */
+    /* Set private data */
     priv->cs_enable = cs_enable;
     priv->cs_disable = cs_disable;
     
-    /* 设置驱动 */
+    /* Set driver */
     drv->id = id;
     drv->type = FLASH_TYPE_NOR;
     drv->initialized = false;
     drv->priv = priv;
     
-    /* 绑定操作函数 */
+    /* Bind operation functions */
     drv->init = nor_init;
     drv->deinit = nor_deinit;
     drv->read_id = nor_read_id;
@@ -392,6 +392,6 @@ void FlashDriver_Destroy(FlashDriver_t *drv)
 {
     if (drv) {
         drv->initialized = false;
-        /* 静态分配，不需要释放内存 */
+        /* Statically allocated, no need to free memory */
     }
 }

@@ -1,7 +1,7 @@
 /**
- * internal_flash_test.c - 内部Flash读写测试
+ * internal_flash_test.c - Internal Flash read/write test
  * 
- * 测试SDK提供的内部Flash API:
+ * Test the internal Flash API provided by SDK:
  *   - SpiFlashRead()
  *   - SpiFlashWrite()
  *   - SpiFlashErase()
@@ -14,17 +14,17 @@
 #include "string.h"
 #include "bg_lcd.h"
 
-/* 测试配置 */
-#define TEST_SECTOR_NUM     250             /* 使用第250扇区做测试 (避免破坏代码区) */
+/* Test configuration */
+#define TEST_SECTOR_NUM     250             /* Use sector 250 for testing (avoid code area) */
 #define TEST_FLASH_ADDR     (TEST_SECTOR_NUM * 4096)
-#define TEST_TIMEOUT        100             /* Flash操作超时(ms) */
+#define TEST_TIMEOUT        100             /* Flash operation timeout (ms) */
 
-/* 测试缓冲区 */
+/* Test buffers */
 static uint8_t test_write_buf[512];
 static uint8_t test_read_buf[512];
 
 /**
- * @brief 测试单字节读写
+ * @brief Test single byte read/write
  */
 static bool test_single_byte(void)
 {
@@ -34,22 +34,22 @@ static bool test_single_byte(void)
     
     DBG("\n--- Single Byte Test ---\n");
     
-    /* 擦除扇区 */
+    /* Erase sector */
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     
-    /* 写入单字节 */
+    /* Write single byte */
     if (SpiFlashWrite(addr, &write_data, 1, TEST_TIMEOUT) != FLASH_NONE_ERR) {
         DBG("[FAIL] Single byte write failed\n");
         return false;
     }
     
-    /* 读取单字节 */
+    /* Read single byte */
     if (SpiFlashRead(addr, &read_data, 1, TEST_TIMEOUT) != FLASH_NONE_ERR) {
         DBG("[FAIL] Single byte read failed\n");
         return false;
     }
     
-    /* 验证 */
+    /* Verify */
     if (write_data == read_data) {
         DBG("[OK] Single byte: wrote 0x%02X, read 0x%02X\n", write_data, read_data);
         return true;
@@ -60,7 +60,7 @@ static bool test_single_byte(void)
 }
 
 /**
- * @brief 测试256字节页写入
+ * @brief Test 256-byte page write
  */
 static bool test_page_write(void)
 {
@@ -70,28 +70,28 @@ static bool test_page_write(void)
     
     DBG("\n--- 256 Byte Page Test ---\n");
     
-    /* 准备测试数据 */
+    /* Prepare test data */
     for (i = 0; i < 256; i++) {
         test_write_buf[i] = (uint8_t)(0x50 + (i & 0x0F));
     }
     
-    /* 擦除扇区 */
+    /* Erase sector */
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     
-    /* 写入256字节 */
+    /* Write 256 bytes */
     if (SpiFlashWrite(addr, test_write_buf, 256, TEST_TIMEOUT) != FLASH_NONE_ERR) {
         DBG("[FAIL] 256 byte write failed\n");
         return false;
     }
     
-    /* 读取256字节 */
+    /* Read 256 bytes */
     memset(test_read_buf, 0, 256);
     if (SpiFlashRead(addr, test_read_buf, 256, TEST_TIMEOUT) != FLASH_NONE_ERR) {
         DBG("[FAIL] 256 byte read failed\n");
         return false;
     }
     
-    /* 验证数据 */
+    /* Verify data */
     for (i = 0; i < 256; i++) {
         if (test_write_buf[i] != test_read_buf[i]) {
             DBG("[FAIL] Byte %d: wrote 0x%02X, read 0x%02X\n", 
@@ -109,7 +109,7 @@ static bool test_page_write(void)
 }
 
 /**
- * @brief 测试512字节跨页写入
+ * @brief Test 512-byte cross-page write
  */
 static bool test_cross_page(void)
 {
@@ -119,28 +119,28 @@ static bool test_cross_page(void)
     
     DBG("\n--- 512 Byte Cross-Page Test ---\n");
     
-    /* 准备测试数据 */
+    /* Prepare test data */
     for (i = 0; i < 512; i++) {
         test_write_buf[i] = (uint8_t)(0xA0 + (i & 0x0F));
     }
     
-    /* 擦除扇区 */
+    /* Erase sector */
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     
-    /* 写入512字节 */
+    /* Write 512 bytes */
     if (SpiFlashWrite(addr, test_write_buf, 512, TEST_TIMEOUT) != FLASH_NONE_ERR) {
         DBG("[FAIL] 512 byte write failed\n");
         return false;
     }
     
-    /* 读取512字节 */
+    /* Read 512 bytes */
     memset(test_read_buf, 0, 512);
     if (SpiFlashRead(addr, test_read_buf, 512, TEST_TIMEOUT) != FLASH_NONE_ERR) {
         DBG("[FAIL] 512 byte read failed\n");
         return false;
     }
     
-    /* 验证数据 */
+    /* Verify data */
     for (i = 0; i < 512; i++) {
         if (test_write_buf[i] != test_read_buf[i]) {
             DBG("[FAIL] Byte %d: wrote 0x%02X, read 0x%02X\n", 
@@ -158,7 +158,7 @@ static bool test_cross_page(void)
 }
 
 /**
- * @brief 测试擦除验证
+ * @brief Test erase verification
  */
 static bool test_erase_verify(void)
 {
@@ -168,15 +168,15 @@ static bool test_erase_verify(void)
     
     DBG("\n--- Erase Verify Test ---\n");
     
-    /* 先写入数据 */
+    /* Write data first */
     memset(test_write_buf, 0x55, 256);
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     SpiFlashWrite(addr, test_write_buf, 256, TEST_TIMEOUT);
     
-    /* 擦除 */
+    /* Erase */
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     
-    /* 读取并验证擦除后应该全为0xFF */
+    /* Read and verify that it should be all 0xFF after erase */
     memset(test_read_buf, 0, 256);
     if (SpiFlashRead(addr, test_read_buf, 256, TEST_TIMEOUT) != FLASH_NONE_ERR) {
         DBG("[FAIL] Read after erase failed\n");
@@ -200,7 +200,7 @@ static bool test_erase_verify(void)
 }
 
 /**
- * @brief 测试Flash保护/解保护
+ * @brief Test Flash protection/unprotection
  */
 static bool test_flash_protect(void)
 {
@@ -210,21 +210,21 @@ static bool test_flash_protect(void)
     
     DBG("\n--- Flash Protection Test ---\n");
     
-    /* 解保护并写入数据 */
+    /* Unprotect and write data */
     SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     SpiFlashWrite(addr, &write_data, 1, TEST_TIMEOUT);
     
-    /* 保护Flash */
+    /* Protect Flash */
     if (SpiFlashIOCtrl(IOCTL_FLASH_PROTECT, FLASH_LOCK_RANGE_ALL) != FLASH_NONE_ERR) {
         DBG("[FAIL] Flash protect failed\n");
         return false;
     }
     
-    /* 尝试擦除（应该失败或无效） */
+    /* Try to erase (should fail or be ineffective) */
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     
-    /* 读取数据，如果保护有效，数据应该还在 */
+    /* Read data, if protection is effective, data should still be there */
     SpiFlashRead(addr, &read_data, 1, TEST_TIMEOUT);
     
     if (read_data == write_data) {
@@ -233,7 +233,7 @@ static bool test_flash_protect(void)
         DBG("[WARN] Flash protection may not be working (read: 0x%02X)\n", read_data);
     }
     
-    /* 解保护 */
+    /* Unprotect */
     SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
     DBG("[OK] Flash unprotected\n");
     
@@ -241,7 +241,7 @@ static bool test_flash_protect(void)
 }
 
 /**
- * @brief 完整测试流程
+ * @brief Full test procedure
  */
 void InternalFlash_Test(void)
 {
@@ -258,17 +258,17 @@ void InternalFlash_Test(void)
     DBG("  Sector Size: 4096 bytes\n");
     DBG("  Timeout: %d ms\n", TEST_TIMEOUT);
     
-    /* 解保护Flash，确保可以擦写 */
+    /* Unprotect Flash to ensure it can be erased and written */
     SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
     
-    /* 运行测试 */
+    /* Run tests */
     test1 = test_single_byte();
     test2 = test_page_write();
     test3 = test_cross_page();
     test4 = test_erase_verify();
     test5 = test_flash_protect();
     
-    /* 显示测试结果 */
+    /* Display test results */
     DBG("\n");
     DBG("========================================\n");
     DBG("         Test Summary                  \n");
@@ -290,27 +290,27 @@ void InternalFlash_Test(void)
 }
 
 /**
- * @brief 内部Flash测试任务 (FreeRTOS)
+ * @brief Internal Flash test task (FreeRTOS)
  */
 void InternalFlashTestTask(void)
 {
-    /* 初始化LCD */
+    /* Initialize LCD */
     BG_lcd.Init();
-    BG_lcd.Clear(0x001F);  /* 蓝色背景 */
+    BG_lcd.Clear(0x001F);  /* Blue background */
     
     DBG("\n");
     DBG("**************************************************\n");
     DBG("*     Internal Flash Test Task Started          *\n");
     DBG("**************************************************\n");
     
-    /* 运行测试 */
+    /* Run tests */
     InternalFlash_Test();
     
     DBG("\nInternal Flash test completed.\n");
 }
 
 /**
- * @brief 快速测试函数（用于调试）
+ * @brief Quick test function (for debugging)
  */
 void InternalFlash_QuickTest(void)
 {
@@ -320,22 +320,22 @@ void InternalFlash_QuickTest(void)
     
     DBG("\n=== Internal Flash Quick Test ===\n");
     
-    /* 解保护 */
+    /* Unprotect */
     SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
     
-    /* 擦除 */
+    /* Erase */
     DBG("Erasing sector %d...\n", TEST_SECTOR_NUM);
     SpiFlashErase(SECTOR_ERASE, TEST_SECTOR_NUM, 1);
     
-    /* 写入 */
+    /* Write */
     DBG("Writing 0x%02X to 0x%08lX...\n", write_val, (unsigned long)addr);
     SpiFlashWrite(addr, &write_val, 1, TEST_TIMEOUT);
     
-    /* 读取 */
+    /* Read */
     DBG("Reading from 0x%08lX...\n", (unsigned long)addr);
     SpiFlashRead(addr, &read_val, 1, TEST_TIMEOUT);
     
-    /* 结果 */
+    /* Result */
     DBG("Result: Wrote 0x%02X, Read 0x%02X %s\n", 
         write_val, read_val, 
         (write_val == read_val) ? "[OK]" : "[FAIL]");

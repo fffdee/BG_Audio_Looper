@@ -1,5 +1,5 @@
 /**
- * flash_test.h - 新 Flash 驱动架构测试头文件
+ * flash_test.h - New Flash driver framework test header file
  */
 
 #ifndef __FLASH_TEST_H__
@@ -9,20 +9,20 @@
 #include <stdbool.h>
 
 /**
- * @brief Flash 驱动架构完整测试
- * 测试包括：
- * - Flash 管理器初始化
- * - 设备枚举
- * - 单字节读写
- * - 页读写（256字节）
- * - 跨页读写（512字节）
- * - 两个 NOR Flash 设备（CS=A21, CS=A22）
+ * @brief Complete test for Flash driver framework
+ * Tests include:
+ * - Flash manager initialization
+ * - Device enumeration
+ * - Single byte read/write
+ * - Page read/write (256 bytes)
+ * - Cross-page read/write (512 bytes)
+ * - Two NOR Flash devices (CS=A21, CS=A22)
  */
 void FlashNewDriver_Test(void);
 
 /**
- * @brief 快速功能测试（用于调试）
- * 仅测试基本的读写功能，输出简洁
+ * @brief Quick function test (for debugging)
+ * Only tests basic read/write functions, outputs concise results
  */
 void FlashNewDriver_QuickTest(void);
 

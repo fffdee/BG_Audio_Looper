@@ -1,5 +1,5 @@
 /**
- * flash_bus.c - Flash鎬荤嚎绠＄悊鍣ㄥ疄鐜�
+ * flash_bus.c - Flash bus manager implementation
  */
 
 #include "flash_bus.h"
@@ -8,13 +8,13 @@
 #include <stdio.h>
 
 /*===========================================================================
- * 鎬荤嚎鍗曚緥
+ * Bus Instance
  *===========================================================================*/
 
 static FlashBus_t g_flash_bus = {0};
 
 /*===========================================================================
- * 鎬荤嚎绠＄悊
+ * Bus Management
  *===========================================================================*/
 
 FlashStatus_t FlashBus_Init(void)
@@ -77,14 +77,14 @@ FlashStatus_t FlashBus_Register(FlashDevice_t *dev)
         return FLASH_OK;
     }
 
-    /* 鍒嗛厤ID */
+    /* Allocate ID */
     dev->id = g_flash_bus.device_count;
     dev->registered = true;
 
-    /* 娣诲姞鍒版暟缁�*/
+    /* Add to device count */
     g_flash_bus.devices[dev->id] = dev;
 
-    /* 娣诲姞鍒伴摼琛�*/
+    /* Add to linked list */
     dev->next = g_flash_bus.head;
     g_flash_bus.head = dev;
 
@@ -106,7 +106,7 @@ FlashStatus_t FlashBus_Unregister(FlashDevice_t *dev)
         return FLASH_ERR_PARAM;
     }
 
-    /* 浠庨摼琛ㄧЩ闄�*/
+    /* Remove from linked list */
     curr = g_flash_bus.head;
     while (curr)
     {
@@ -126,7 +126,7 @@ FlashStatus_t FlashBus_Unregister(FlashDevice_t *dev)
         curr = curr->next;
     }
 
-    /* 浠庢暟缁勭Щ闄�*/
+    /* Clear from device count */
     if (dev->id < FLASH_BUS_MAX_DEVICES)
     {
         g_flash_bus.devices[dev->id] = NULL;
@@ -186,7 +186,7 @@ void FlashBus_ForEach(void (*callback)(FlashDevice_t *dev, void *user_data), voi
 }
 
 /*===========================================================================
- * 璁惧鎿嶄綔渚挎嵎API
+ * Device Operation Reference API
  *===========================================================================*/
 
 FlashStatus_t FlashDev_Init(FlashDevice_t *dev)
@@ -196,7 +196,7 @@ FlashStatus_t FlashDev_Init(FlashDevice_t *dev)
         return FLASH_ERR_PARAM;
     }
 
-    /* 鍒濆鍖朇S寮曡剼 */
+    /* Chip select initialization */
     if (dev->cs.init)
     {
         dev->cs.init();
@@ -295,7 +295,7 @@ void FlashDev_PrintInfo(FlashDevice_t *dev)
 }
 
 /*===========================================================================
- * 璋冭瘯鎺ュ彛
+ * Debug/Test Interface
  *===========================================================================*/
 
 void FlashBus_PrintInfo(void)
@@ -337,13 +337,13 @@ FlashStatus_t FlashBus_TestDevice(uint8_t id)
 
     DBG("\n=== Testing %s (id=%d) ===\n", dev->name, id);
 
-    /* 鍑嗗娴嬭瘯鏁版嵁 */
+    /* Pattern data for testing */
     for (i = 0; i < 256; i++)
     {
         write_buf[i] = i;
     }
 
-    /* 鎿﹂櫎 */
+    /* Erase sector */
     DBG("Erasing sector at 0x%06X...\n", test_addr);
     ret = FlashDev_EraseSector(dev, test_addr);
     if (ret != FLASH_OK)
@@ -352,7 +352,7 @@ FlashStatus_t FlashBus_TestDevice(uint8_t id)
         return ret;
     }
 
-    /* 楠岃瘉鎿﹂櫎 */
+    /* Verify erase */
     ret = FlashDev_Read(dev, test_addr, read_buf, 256);
     if (ret != FLASH_OK)
     {
@@ -370,7 +370,7 @@ FlashStatus_t FlashBus_TestDevice(uint8_t id)
     }
     DBG("Erase verified OK\n");
 
-    /* 鍐欏叆 */
+    /* Write test data */
     DBG("Writing test data...\n");
     ret = FlashDev_Write(dev, test_addr, write_buf, 256);
     if (ret != FLASH_OK)
@@ -379,7 +379,7 @@ FlashStatus_t FlashBus_TestDevice(uint8_t id)
         return ret;
     }
 
-    /* 璇诲彇楠岃瘉 */
+    /* Read and verify */
     memset(read_buf, 0, 256);
     ret = FlashDev_Read(dev, test_addr, read_buf, 256);
     if (ret != FLASH_OK)
@@ -405,7 +405,7 @@ FlashStatus_t FlashBus_TestDevice(uint8_t id)
 }
 
 /*===========================================================================
- * Shell鍛戒护
+ * Shell Commands
  *===========================================================================*/
 
 int FlashBus_ShellCmd(int argc, char *argv[])
@@ -428,14 +428,14 @@ int FlashBus_ShellCmd(int argc, char *argv[])
 
     const char *cmd = argv[0];
 
-    /* list - 鍒楀嚭鎵�湁璁惧 */
+    /* list - list all registered devices */
     if (strcmp(cmd, "list") == 0)
     {
         FlashBus_PrintInfo();
         return 0;
     }
 
-    /* info <id> - 鏄剧ず璁惧淇℃伅 */
+    /* info <id> - show device information */
     if (strcmp(cmd, "info") == 0)
     {
         if (argc < 2)
@@ -456,7 +456,7 @@ int FlashBus_ShellCmd(int argc, char *argv[])
         return 0;
     }
 
-    /* init <id> - 鍒濆鍖栬澶�*/
+    /* init <id> - initialize device */
     if (strcmp(cmd, "init") == 0)
     {
         if (argc < 2)
@@ -478,7 +478,7 @@ int FlashBus_ShellCmd(int argc, char *argv[])
         return 0;
     }
 
-    /* test <id> - 娴嬭瘯璁惧 */
+    /* test <id> - test device read/write */
     if (strcmp(cmd, "test") == 0)
     {
         if (argc < 2)
@@ -491,7 +491,7 @@ int FlashBus_ShellCmd(int argc, char *argv[])
         return 0;
     }
 
-    /* read <id> <addr> [len] - 璇诲彇鏁版嵁 */
+    /* read <id> <addr> [len] - read data */
     if (strcmp(cmd, "read") == 0)
     {
         if (argc < 3)
@@ -536,7 +536,7 @@ int FlashBus_ShellCmd(int argc, char *argv[])
         return 0;
     }
 
-    /* erase <id> <addr> - 鎿﹂櫎鎵囧尯 */
+    /* erase <id> <addr> - erase sector */
     if (strcmp(cmd, "erase") == 0)
     {
         if (argc < 3)
@@ -561,7 +561,7 @@ int FlashBus_ShellCmd(int argc, char *argv[])
         return 0;
     }
 
-    /* eraseall <id> - 鍏ㄧ墖鎿﹂櫎 */
+    /* eraseall <id> - erase entire chip */
     if (strcmp(cmd, "eraseall") == 0)
     {
         if (argc < 2)

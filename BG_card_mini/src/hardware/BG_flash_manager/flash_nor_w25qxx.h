@@ -1,7 +1,7 @@
 /**
- * flash_nor_w25qxx.h - W25Qxx系列NOR Flash驱动
- * 
- * 支持型号: W25Q32, W25Q64, W25Q128, W25Q256 等
+ * flash_nor_w25qxx.h - W25Qxx series NOR Flash driver
+ *
+ * Supported models: W25Q32, W25Q64, W25Q128, W25Q256, etc.
  */
 
 #ifndef __FLASH_NOR_W25QXX_H__
@@ -14,10 +14,10 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * W25Qxx 命令集
+ * W25Qxx Command Set
  *===========================================================================*/
 
-/* 基本命令 */
+/* Basic commands */
 #define W25QXX_CMD_WRITE_ENABLE      0x06
 #define W25QXX_CMD_WRITE_DISABLE     0x04
 #define W25QXX_CMD_READ_STATUS_REG1  0x05
@@ -35,7 +35,7 @@ extern "C" {
 #define W25QXX_CMD_READ_JEDEC_ID     0x9F
 #define W25QXX_CMD_READ_UNIQUE_ID    0x4B
 
-/* 状态寄存器位 */
+/* Status register bits */
 #define W25QXX_SR1_BUSY              0x01
 #define W25QXX_SR1_WEL               0x02
 #define W25QXX_SR1_BP0               0x04
@@ -45,38 +45,38 @@ extern "C" {
 #define W25QXX_SR1_SEC               0x40
 #define W25QXX_SR1_SRP               0x80
 
-/* 厂商ID */
+/* Manufacturer ID */
 #define W25QXX_MFG_WINBOND           0xEF
 
-/* 设备类型 */
+/* Device types */
 #define W25QXX_DEV_Q32               0x16    /* W25Q32: 4MB */
 #define W25QXX_DEV_Q64               0x17    /* W25Q64: 8MB */
 #define W25QXX_DEV_Q128              0x18    /* W25Q128: 16MB */
 #define W25QXX_DEV_Q256              0x19    /* W25Q256: 32MB */
 
-/* 规格参数 */
+/* Specification parameters */
 #define W25QXX_PAGE_SIZE             256
 #define W25QXX_SECTOR_SIZE           4096
 #define W25QXX_BLOCK_SIZE_32K        (32 * 1024)
 #define W25QXX_BLOCK_SIZE_64K        (64 * 1024)
 
-/* 超时设置 (ms) */
+/* Timeout settings (ms) */
 #define W25QXX_TIMEOUT_WRITE_PAGE    5
 #define W25QXX_TIMEOUT_ERASE_SECTOR  100
 #define W25QXX_TIMEOUT_ERASE_BLOCK   400
 #define W25QXX_TIMEOUT_ERASE_CHIP    100000
 
 /*===========================================================================
- * W25Qxx 驱动接口
+ * W25Qxx Driver Interface
  *===========================================================================*/
 
 /**
- * @brief 创建W25Qxx设备实例
- * @param name      设备名称
- * @param cs_select CS选中函数
- * @param cs_deselect CS取消选中函数
- * @param cs_init   CS初始化函数 (可选)
- * @return 设备指针，失败返回NULL
+ * @brief Create W25Qxx device instance
+ * @param name      Device name
+ * @param cs_select CS select function
+ * @param cs_deselect CS deselect function
+ * @param cs_init   CS initialization function (optional)
+ * @return Device pointer, NULL on failure
  */
 FlashDevice_t* W25Qxx_Create(const char *name,
                              void (*cs_select)(void),
@@ -84,19 +84,19 @@ FlashDevice_t* W25Qxx_Create(const char *name,
                              void (*cs_init)(void));
 
 /**
- * @brief 销毁W25Qxx设备实例
- * @param dev 设备指针
+ * @brief Destroy W25Qxx device instance
+ * @param dev Device pointer
  */
 void W25Qxx_Destroy(FlashDevice_t *dev);
 
 /**
- * @brief 获取W25Qxx驱动操作表
- * @return 操作表指针
+ * @brief Get W25Qxx driver operation table
+ * @return Operation table pointer
  */
 const FlashOps_t* W25Qxx_GetOps(void);
 
 /*===========================================================================
- * IOCTL命令
+ * IOCTL Commands
  *===========================================================================*/
 
 #define W25QXX_IOCTL_POWER_DOWN      0x01

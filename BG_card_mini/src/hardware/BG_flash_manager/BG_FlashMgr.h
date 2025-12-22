@@ -1,14 +1,14 @@
 /**
- * BG_FlashMgr.h - BanGUI Flash管理器 (应用层接口)
- * 
- * 功能:
- *   - 管理多颗Flash芯片 (NOR/NAND)
- *   - 提供分区级别的读写接口
- *   - 自动处理擦除操作
- *   - 线程安全保护
- *   - 简单易用的API
- * 
- * 使用方法:
+ * BG_FlashMgr.h - BanGUI Flash Manager (Application Layer Interface)
+ *
+ * Features:
+ *   - Manage multiple Flash chips (NOR/NAND)
+ *   - Provide partition-level read/write interfaces
+ *   - Automatically handle erase operations
+ *   - Thread-safe protection
+ *   - Simple and easy-to-use API
+ *
+ * Usage:
  *   BG_FlashMgr.Init();
  *   BG_FlashMgr.WriteLooper(offset, data, size);
  *   BG_FlashMgr.ReadLooper(offset, buffer, size);
@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * 状态定义
+ * Status Definitions
  *===========================================================================*/
 
 #define BG_FLASH_OK                 0
@@ -41,7 +41,7 @@ extern "C" {
 #define BG_FLASH_ERROR_NO_SPACE    -10
 
 /*===========================================================================
- * 分区定义
+ * Partition Definitions
  *===========================================================================*/
 
 /* Flash #0 (8MB NOR Flash) - GPIOA21 */
@@ -51,79 +51,79 @@ extern "C" {
 /* Flash #1 (8MB NOR Flash) - GPIOA23 */
 #define BG_FLASH_PARTITION_STORAGE_SIZE     (8 * 1024 * 1024)    /* 8MB */
 
-/* 扇区/块大小 */
+/* Sector/Block Size */
 #define BG_FLASH_SECTOR_SIZE                4096                  /* 4KB */
 #define BG_FLASH_BLOCK_SIZE                 (64 * 1024)           /* 64KB */
 #define BG_FLASH_PAGE_SIZE                  256
 
 /*===========================================================================
- * 设备状态
+ * Device Status
  *===========================================================================*/
 
 typedef struct {
-    bool initialized;           /* 初始化标志 */
-    bool ready;                 /* 设备就绪 */
-    uint8_t device_id;          /* 设备ID */
-    uint32_t total_size;        /* 总容量(字节) */
-    uint32_t used_size;         /* 已使用空间 */
-    uint32_t error_count;       /* 错误计数 */
+    bool initialized;           /* Initialization flag */
+    bool ready;                 /* Device ready */
+    uint8_t device_id;          /* Device ID */
+    uint32_t total_size;        /* Total capacity (bytes) */
+    uint32_t used_size;         /* Used space */
+    uint32_t error_count;       /* Error count */
 } BG_FlashDeviceStatus_t;
 
 typedef struct {
-    BG_FlashDeviceStatus_t flash0;   /* 系统Flash状态 */
-    BG_FlashDeviceStatus_t flash1;   /* 存储Flash状态 */
-    bool mutex_initialized;          /* 互斥锁初始化标志 */
+    BG_FlashDeviceStatus_t flash0;   /* System Flash status */
+    BG_FlashDeviceStatus_t flash1;   /* Storage Flash status */
+    bool mutex_initialized;          /* Mutex initialization flag */
 } BG_FlashMgrStatus_t;
 
 /*===========================================================================
- * BG_FlashMgr 接口结构体
+ * BG_FlashMgr Interface Structure
  *===========================================================================*/
 
 typedef struct {
-    /* 初始化与反初始化 */
+    /* Initialization and De-initialization */
     int32_t (*Init)(void);
     void (*DeInit)(void);
     
-    /* 系统分区操作 (Flash #0 前1MB) */
+    /* System Partition Operations (Flash #0 first 1MB) */
     int32_t (*ReadSystem)(uint32_t offset, uint8_t *buffer, uint32_t size);
     int32_t (*WriteSystem)(uint32_t offset, const uint8_t *data, uint32_t size);
     int32_t (*EraseSystemSector)(uint32_t offset);
     
-    /* Looper分区操作 (Flash #0 后7MB) */
+    /* Looper Partition Operations (Flash #0 last 7MB) */
     int32_t (*ReadLooper)(uint32_t offset, uint8_t *buffer, uint32_t size);
     int32_t (*WriteLooper)(uint32_t offset, const uint8_t *data, uint32_t size);
     int32_t (*EraseLooperSector)(uint32_t offset);
     int32_t (*EraseLooperBlock)(uint32_t offset);
     int32_t (*EraseLooperAll)(void);
     
-    /* 存储分区操作 (Flash #1 全部8MB) */
+    /* Storage Partition Operations (Flash #1 entire 8MB) */
     int32_t (*ReadStorage)(uint32_t offset, uint8_t *buffer, uint32_t size);
     int32_t (*WriteStorage)(uint32_t offset, const uint8_t *data, uint32_t size);
     int32_t (*EraseStorageSector)(uint32_t offset);
     int32_t (*EraseStorageBlock)(uint32_t offset);
     int32_t (*EraseStorageAll)(void);
     
-    /* 状态查询 */
+    /* Status Query */
     int32_t (*GetStatus)(BG_FlashMgrStatus_t *status);
     bool (*IsReady)(void);
     uint32_t (*GetLooperFreeSpace)(void);
     uint32_t (*GetStorageFreeSpace)(void);
     
-    /* 测试与调试 */
+    /* Testing and Debugging */
     int32_t (*TestDevice)(uint8_t device_id);
     void (*PrintInfo)(void);
-    int32_t (*Format)(uint8_t device_id);  /* 格式化设备 */
+    int32_t (*Format)(uint8_t device_id);  /* Format device */
     
 } BG_FlashMgr_t;
 
 /*===========================================================================
- * 全局实例
+ * Global Instance
  *===========================================================================*/
 
 extern BG_FlashMgr_t BG_FlashMgr;
 
 /*===========================================================================
- * 便捷宏定义 (可选使用)
+ * Convenience Macro Definitions (Optional)
  *===========================================================================*/
 
 #define BG_FLASH_INIT()                 BG_FlashMgr.Init()
@@ -141,33 +141,33 @@ extern BG_FlashMgr_t BG_FlashMgr;
 #define BG_FLASH_PRINT_INFO()           BG_FlashMgr.PrintInfo()
 
 /*===========================================================================
- * 使用示例
+ * Usage Examples
  *===========================================================================*/
 
 #if 0
-/* 示例1: 初始化与基本读写 */
+/* Example 1: Initialization and Basic Read/Write */
 void example_basic_usage(void)
 {
     uint8_t buffer[256];
     
-    // 初始化
+    // Initialization
     if (BG_FlashMgr.Init() != BG_FLASH_OK) {
         DBG("Flash init failed!\n");
         return;
     }
     
-    // 擦除Looper分区第一个扇区
+    // Erase the first sector of the Looper partition
     BG_FlashMgr.EraseLooperSector(0);
     
-    // 写入数据
+    // Write data
     memset(buffer, 0xAA, 256);
     BG_FlashMgr.WriteLooper(0, buffer, 256);
     
-    // 读取数据
+    // Read data
     memset(buffer, 0, 256);
     BG_FlashMgr.ReadLooper(0, buffer, 256);
     
-    // 验证
+    // Verify
     {
         int i;
         for (i = 0; i < 256; i++) {
@@ -178,7 +178,7 @@ void example_basic_usage(void)
     }
 }
 
-/* 示例2: 使用便捷宏 */
+/* Example 2: Using Convenience Macros */
 void example_macro_usage(void)
 {
     uint8_t data[128] = {0};
@@ -193,7 +193,7 @@ void example_macro_usage(void)
     BG_FLASH_PRINT_INFO();
 }
 
-/* 示例3: 状态查询 */
+/* Example 3: Status Query */
 void example_status_query(void)
 {
     BG_FlashMgrStatus_t status;
@@ -209,15 +209,15 @@ void example_status_query(void)
     }
 }
 
-/* 示例4: 大数据写入 (自动处理页对齐) */
+/* Example 4: Large Data Write (Automatically Handle Page Alignment) */
 void example_large_write(void)
 {
     uint8_t *large_data = malloc(64 * 1024);
     
-    // 擦除一个块 (64KB)
+    // Erase a block (64KB)
     BG_FlashMgr.EraseLooperBlock(0);
     
-    // 写入64KB数据 (自动处理页对齐)
+    // Write 64KB of data (automatically handle page alignment)
     BG_FlashMgr.WriteLooper(0, large_data, 64 * 1024);
     
     free(large_data);

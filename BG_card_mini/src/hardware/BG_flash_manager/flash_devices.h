@@ -1,7 +1,7 @@
 /**
- * flash_devices.h - Flash设备定义和注册
+ * flash_devices.h - Flash device definitions and registration
  * 
- * 定义系统中所有Flash设备的CS引脚配置和设备实例
+ * Defines CS pin configuration and device instances for all Flash devices in the system
  */
 
 #ifndef __FLASH_DEVICES_H__
@@ -16,40 +16,40 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * 硬件配置 - CS引脚定义
+ * Hardware Configuration - CS Pin Definitions
  *===========================================================================*/
 
-/* Flash #0 - 系统Flash (1MB系统 + 7MB Looper)
- * CS引脚: GPIOA21
+/* Flash #0 - System Flash (1MB system + 7MB Looper)
+ * CS pin: GPIOA21
  */
 #define FLASH0_CS_GPIO_INDEX    GPIO_A_IN
 #define FLASH0_CS_GPIO_MASK     GPIO_INDEX21
 #define FLASH0_CS_PIN           21
 
-/* Flash #1 - 存储Flash (8MB存储)
- * CS引脚: GPIOA22
+/* Flash #1 - Storage Flash (8MB storage)
+ * CS pin: GPIOA22
  */
 #define FLASH1_CS_GPIO_INDEX    GPIO_A_IN
 #define FLASH1_CS_GPIO_MASK     GPIO_INDEX22
 #define FLASH1_CS_PIN           22
 
 /*===========================================================================
- * 分区定义
+ * Partition Definitions
  *===========================================================================*/
 
-/* Flash #0 分区布局 (总共8MB) */
-#define FLASH0_PARTITION_SYSTEM_START   0x000000    /* 系统分区起始 */
+/* Flash #0 partition layout (total 8MB) */
+#define FLASH0_PARTITION_SYSTEM_START   0x000000    /* System partition start */
 #define FLASH0_PARTITION_SYSTEM_SIZE    0x100000    /* 1MB */
 
-#define FLASH0_PARTITION_LOOPER_START   0x100000    /* Looper分区起始 */
+#define FLASH0_PARTITION_LOOPER_START   0x100000    /* Looper partition start */
 #define FLASH0_PARTITION_LOOPER_SIZE    0x700000    /* 7MB */
 
-/* Flash #1 分区布局 (总共8MB) */
-#define FLASH1_PARTITION_STORAGE_START  0x000000    /* 存储分区起始 */
+/* Flash #1 partition layout (total 8MB) */
+#define FLASH1_PARTITION_STORAGE_START  0x000000    /* Storage partition start */
 #define FLASH1_PARTITION_STORAGE_SIZE   0x800000    /* 8MB */
 
 /*===========================================================================
- * 设备ID定义
+ * Device ID Definitions
  *===========================================================================*/
 
 #define FLASH_DEV_ID_SYSTEM     0   /* Flash #0 */
