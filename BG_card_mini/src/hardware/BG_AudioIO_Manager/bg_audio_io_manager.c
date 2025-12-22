@@ -12,6 +12,7 @@
 #include "adc_interface.h"
 #include "dac_interface.h"
 #include "adc.h"
+#include "dma.h"
 #include "reset.h"
 #include "dac.h"
 #include "clk.h"
@@ -32,9 +33,11 @@
 #include "shell_io_ble.h"
 #include "shell_io_manager.h"
 #include "audio_looper.h"
-
+#include "sra.h"
 #include "spi_flash.h"
+#include "resampler.h"
 
+#include "bt_manager.h"
 // ==================== 全局缓冲区定义 ====================
 #define SETTING_ADDR 0x80000000
 uint32_t AudioADC1Buf[1024] = {0};
@@ -84,6 +87,7 @@ BG_Audio_Io_Manager BG_AudioManager = {
 	.Audio_data = {
 		.guitar_count = 0,
 		.mic_count = 0,
+		.det_state = NONE,
 	},
 };
 
@@ -104,7 +108,7 @@ static uint8_t decoder_buf[1024 * 20] = {0};
 static uint8_t DecoderInitialized = 0;
 
 MemHandle SBC_MemHandle;
-
+ResamplerContext bt_resmaper;
 // ==================== 前向声明（内部函数） ====================
 static void SaveDataToSbcBuffer(uint8_t *data, uint16_t dataLen);
 
@@ -193,7 +197,7 @@ static void InitControlGPIO(void)
 	// GPIO_A1: 麦克风指示
 	GPIO_RegOneBitClear(GPIO_A_IE, GPIOA1);
 	GPIO_RegOneBitSet(GPIO_A_OE, GPIOA1);
-	GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA1);
+	GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA1);
 
 	// GPIO_A17: 吉他指示
 	GPIO_RegOneBitClear(GPIO_A_IE, GPIOA17);
@@ -244,9 +248,15 @@ void BG_audio_Init(uint16_t SampleRate)
 	
 	// 初始化Shell IO管理器（自动管理CDC和BLE接口）
 	ShellIOManager_Init();
-	
+
 	// 初始化Audio Looper（使用NOR Flash）
 	AudioLooper.InitWithFlashType(FLASH_TYPE_NOR);
+
+	AudioDAC_FadeDisable(DAC0);
+
+	AudioDAC_Pause(DAC0);
+	
+
 }
 
 // ==================== 音量控制函数 ====================
@@ -337,6 +347,9 @@ static void SetVolume(void)
 	AudioDAC_VolSet(DAC1, DC_Data, 0);
 }
 
+
+
+
 // ==================== 音频解码和处理 ====================
 
 /**
@@ -386,12 +399,19 @@ static void ProcessGuitarOutput(uint16_t n)
 {
 	if (!GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX29))
 	{
+
+		BG_AudioManager.Audio_data.det_state  = GUITAR_DET_OUT;
 		GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA17);
+
 	}
 	else
 	{
 		GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA17);
+		BG_AudioManager.Audio_data.det_state  = GUITAR_DET_IN;
+
+
 	}
+
 }
 
 /**
@@ -402,10 +422,15 @@ static void ProcessMicOutput(uint16_t n)
 	if (GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX30))
 	{
 		GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA1);
+		BG_AudioManager.Audio_data.det_state = MIC_DET_OUT;
+
 	}
 	else
 	{
 		GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA1);
+		BG_AudioManager.Audio_data.det_state  = MIC_DET_IN;
+
+
 	}
 }
 
@@ -417,13 +442,62 @@ static void ProcessSpeakerSwitch(void)
 	if (GPIO_RegOneBitGet(GPIO_B_IN, GPIO_INDEX4))
 	{
 		GPIO_RegOneBitClear(GPIO_B_OUT, GPIOB6);
+		BG_AudioManager.Audio_data.det_state  = SPEAKER_DET;
 	}
 	else
 	{
+
 		GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
+		BG_AudioManager.Audio_data.det_state  = EARPHONE_DET;
 	}
 }
 
+static void Detect_check()
+{
+	switch(BG_AudioManager.Audio_data.det_state)
+	{
+		case NONE:
+			break;
+		case MIC_DET_IN:
+			GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA1);
+			Shell_Printf("Mic Detect IN! \n");
+
+			BG_AudioManager.Audio_data.det_state = NONE;
+			break;
+		case MIC_DET_OUT:
+
+			Shell_Printf("Mic Detect OUT! \n");
+			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_DAC0_TX);
+			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_ADC0_RX);
+			BG_AudioManager.Audio_data.det_state  = NONE;
+			break;
+		case GUITAR_DET_IN:
+			GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA17);
+			Shell_Printf("Guitar Detect IN! \n");
+			BG_AudioManager.Audio_data.det_state = NONE;
+			break;
+		case GUITAR_DET_OUT:
+			GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA17);
+			Shell_Printf("Guiatr Detect OUT! \n");
+			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_DAC0_TX);
+			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_ADC1_RX);
+			BG_AudioManager.Audio_data.det_state = NONE;
+			break;
+		case EARPHONE_DET:
+			GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
+			Shell_Printf("Line Out Detect ! \n");
+			BG_AudioManager.Audio_data.det_state  = NONE;
+			break;
+		case SPEAKER_DET:
+			GPIO_RegOneBitClear(GPIO_B_OUT, GPIOB6);
+			Shell_Printf("Speaker mode ! \n");
+			BG_AudioManager.Audio_data.det_state  = NONE;
+			break;
+		default:
+			Shell_Printf("Param Err,please check! \n");
+			break;
+	}
+}
 /**
  * 读取音频数据（ADC和混音）
  */
@@ -456,10 +530,12 @@ static void ReadAudioData(uint16_t len, uint16_t *pRealLen)
  */
 static void ApplyAudioEffects(uint16_t len)
 {
+
+
 	AudioEffectReverbApply(&gCtrlVars.reverb_unit,
-		(int16_t *)BG_AudioManager.Audio_data.OutPut_buf,
-		(int16_t *)BG_AudioManager.Audio_data.guitar_buf_out,
-		len);
+				(int16_t *)BG_AudioManager.Audio_data.OutPut_buf,
+				(int16_t *)BG_AudioManager.Audio_data.guitar_buf_out,
+				len);
 }
 
 /**
@@ -520,6 +596,7 @@ static void BuildFinalOutput(uint16_t len, uint32_t *bt_audio_buffer)
 static void OutputAudioData(uint16_t len)
 {
 	AudioDAC_DataSet(DAC0, BG_AudioManager.Audio_data.OutPut_buf, len);
+
 }
 
 /**
@@ -541,16 +618,20 @@ static void AudioLoopWithBT(uint32_t *bt_audio_buffer)
 		{
 			if (SampleRateCC != audio_decoder->song_info->sampling_rate)
 			{
-				SampleRateCC = audio_decoder->song_info->sampling_rate;
+				//SampleRateCC = audio_decoder->song_info->sampling_rate;
 				/* 同步DAC和ADC采样率，避免移频 */
-				AudioDAC_SampleRateChange(DAC0, audio_decoder->song_info->sampling_rate);
-				AudioDAC_SampleRateChange(DAC1, audio_decoder->song_info->sampling_rate);
+//				AudioDAC_SampleRateChange(DAC0, audio_decoder->song_info->sampling_rate);
+//				AudioDAC_SampleRateChange(DAC1, audio_decoder->song_info->sampling_rate);
+//				resampler_init(&bt_resmaper,2,audio_decoder->song_info->sampling_rate,CFG_PARA_SAMPLE_RATE,0,0);
+//				n = resampler_apply(&bt_resmaper,(int16_t *)audio_decoder->song_info->pcm_addr,(int16_t *)audio_decoder->song_info->pcm_addr,audio_decoder->song_info->pcm_data_length);
+//				DBG("BT Audio Rate: %ld Hz (DAC+ADC synced)\n", (long)audio_decoder->song_info->sampling_rate);
+			}else{
+				n = audio_decoder->song_info->pcm_data_length;
 
-				DBG("BT Audio Rate: %ld Hz (DAC+ADC synced)\n", (long)audio_decoder->song_info->sampling_rate);
 			}
-
-			n = audio_decoder->song_info->pcm_data_length;
 			
+
+
 			/* 转换PCM数据到bt_audio_buffer */
 			for (i = 0; i < n; i++)
 				bt_audio_buffer[i] = (uint32_t)audio_decoder->song_info->pcm_addr[i];
@@ -624,15 +705,15 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 				/* USB数据充足，正常读取 */
 				UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, RealLen);
 			}
-			else if (usb_data_len > 0)
-			{
-				/* USB数据不足，读取可用数据，剩余填零 */
-				UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, usb_data_len);
-				for (i = usb_data_len; i < RealLen; i++)
-				{
-					BG_AudioManager.Audio_data.USB_dac_buf[i] = 0;
-				}
-			}
+//			else if (usb_data_len > 0)
+//			{
+//				/* USB数据不足，读取可用数据，剩余填零 */
+//				UsbAudioSpeakerDataGet(BG_AudioManager.Audio_data.USB_dac_buf, usb_data_len);
+//				for (i = usb_data_len; i < RealLen; i++)
+//				{
+//					BG_AudioManager.Audio_data.USB_dac_buf[i] = 0;
+//				}
+//			}
 			else
 			{
 				/* USB无数据，全部填零避免噪声 */
@@ -682,7 +763,7 @@ void Audio_loop(void)
 	OTG_DeviceCDC_Task();
 
 	// 检查是否有蓝牙音频数据要处理
-	if (RT_SUCCESS == audio_decoder_can_continue())
+	if (GetA2dpState() == BT_A2DP_STATE_STREAMING)
 	{
 		if (mv_msize(&SBC_MemHandle) > SBC_DECODER_FIFO_MIN)
 			AudioLoopWithBT(bt_audio_buffer);
@@ -694,6 +775,8 @@ void Audio_loop(void)
 	
 	// CDC串口应用处理 - 使用Shell IO管理器（自动切换CDC/BLE）
 	ShellIOManager_Process();
+
+
 }
 
 // ==================== 保留的原始函数（兼容性） ====================

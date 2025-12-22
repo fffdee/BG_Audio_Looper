@@ -33,10 +33,7 @@ static uint8_t current_progress;
 static const char* progress_message;
 static bool initialized;
 
-/* 闃舵鏃堕棿閰嶇疆 */
-#define STAGE_LOGO_TIME     800     /* Logo鏄剧ず鏃堕棿 */
-#define STAGE_INFO_TIME     500     /* 淇℃伅鏄剧ず鏃堕棿 */
-#define STAGE_FADEOUT_TIME  300     /* 娣″嚭鏃堕棿 */
+
 
 /*===========================================================================
  * 绉佹湁鍑芥暟
@@ -194,7 +191,7 @@ void UI_BootScreen_Init(const UI_BootConfig_t* config)
         boot_config.logo_height = 32;
         boot_config.product_name = "BG Card Mini";
         boot_config.version = "v1.0.0";
-        boot_config.copyright = "(C) 2025 BG Team";
+        boot_config.copyright = "(C) 2025 BanGO";
         boot_config.display_time = UI_BOOT_DURATION;
         boot_config.show_progress = true;
     }
@@ -249,7 +246,7 @@ bool UI_BootScreen_Update(uint16_t delta_ms)
             
             /* 鑷姩澧炲姞杩涘害 (濡傛灉娌℃湁澶栭儴璁剧疆) */
             if (current_progress < 100) {
-                current_progress += 2;
+                current_progress += 5;
                 if (current_progress > 100) current_progress = 100;
             }
             

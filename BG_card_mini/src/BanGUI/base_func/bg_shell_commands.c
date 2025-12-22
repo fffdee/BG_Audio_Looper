@@ -20,6 +20,10 @@
 #include "BG_FlashMgr.h"
 #include "flash_bus.h"
 
+#include "gpio.h"
+#include "adc.h"
+#include "dac.h"
+#include "bt_a2dp_api.h"
 /*============================================================================
  * sys 妯″潡 - 绯荤粺淇℃伅
  *===========================================================================*/
@@ -89,7 +93,7 @@ static int sys_reboot(int argc, char *argv[])
 {
     (void)argc; (void)argv;
     Shell_Print("System rebooting...\r\n");
-    // TODO: NVIC_SystemReset();
+    Reset_McuSystem ();
     return 0;
 }
 
@@ -272,7 +276,7 @@ static const ShellOpt_t sys_opts[] = {
     OPT("o", "io",      "[cmd]",   "IO control (cdc/ble/lock/unlock)", sys_io),
     OPT("c", "console", "[cmd]",   "LCD console (on/off/clear)",       sys_console),
     OPT("d", "dbglcd",  "[cmd]",   "DBG to LCD (on/off)",              sys_dbglcd),
-    OPT("r", "rotate",  "[0-3]",   "Rotate screen (0/1/2/3 = 0掳/90掳/180掳/270掳)", sys_rotate),
+    OPT("r", "rotate_distr",  "[0-3]",   "Rotate screen (0/1/2/3 = 0掳/90掳/180掳/270掳)", sys_rotate),
     OPT_END()
 };
 
@@ -305,76 +309,22 @@ static int audio_mute(int argc, char *argv[])
         return -1;
     }
     int m = atoi(argv[0]);
+    if(m){
+        AudioDAC_Pause(DAC0);
+    }else{
+        AudioDAC_Run(DAC0);
+    }
     Shell_Printf("Mute: %s\r\n", m ? "ON" : "OFF");
     return 0;
 }
 
-static int audio_eq(int argc, char *argv[])
-{
-    const char *modes[] = {"flat", "rock", "pop", "jazz", "classic", "bass"};
-    
-    if(argc < 1)
-    {
-        Shell_Print("EQ modes: flat, rock, pop, jazz, classic, bass\r\n");
-        Shell_Print("Current: flat\r\n");
-        return 0;
-    }
-    uint32_t i ;
-    for(i = 0; i < 6; i++)
-    {
-        if(strcmp(argv[0], modes[i]) == 0)
-        {
-            Shell_Printf("EQ: %s\r\n", modes[i]);
-            return 0;
-        }
-    }
-    Shell_Printf("Unknown EQ: %s\r\n", argv[0]);
-    return -1;
-}
 
-static int audio_src(int argc, char *argv[])
-{
-    if(argc < 1)
-    {
-        Shell_Print("Sources: usb, bt, aux, sd\r\n");
-        Shell_Print("Current: usb\r\n");
-        return 0;
-    }
-    uint32_t i ;
-    const char *srcs[] = {"usb", "bt", "aux", "sd"};
-    for(i = 0; i < 4; i++)
-    {
-        if(strcmp(argv[0], srcs[i]) == 0)
-        {
-            Shell_Printf("Source: %s\r\n", srcs[i]);
-            return 0;
-        }
-    }
-    Shell_Printf("Unknown source: %s\r\n", argv[0]);
-    return -1;
-}
 
-static int audio_play(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Print("Play\r\n");
-    return 0;
-}
 
-static int audio_pause(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Print("Pause\r\n");
-    return 0;
-}
 
 static const ShellOpt_t audio_opts[] = {
     OPT("v", "vol",     "<0-100>",  "Set/get volume",       audio_vol),
     OPT("m", "mute",    "<0|1>",    "Mute on/off",          audio_mute),
-    OPT("e", "eq",      "<mode>",   "Set EQ mode",          audio_eq),
-    OPT("s", "src",     "<source>", "Select audio source",  audio_src),
-    OPT("p", "play",    NULL,       "Play",                 audio_play),
-    OPT("a", "pause",   NULL,       "Pause",                audio_pause),
     OPT_END()
 };
 
@@ -1008,6 +958,49 @@ DEFINE_MODULE(flash, "Flash storage management", MOD_CAT_HARDWARE, flash_opts);
  * 妯″潡娉ㄥ唽
  *===========================================================================*/
 
+ static int raw_battry_info(int argc, char *argv[])
+ {
+	(void)argc; (void)argv;
+	uint16_t Bat_Data;
+	GPIO_RegOneBitClear(GPIO_A_ANA_EN, GPIO_INDEX31);
+	GPIO_RegOneBitSet(GPIO_A_ANA_EN, GPIO_INDEX31);
+	Bat_Data = ADC_SingleModeDataGet(ADC_CHANNEL_GPIOA31);
+	Shell_Printf(" Bat's ADC Value = { %d }     \r\n", Bat_Data);
+	return 0;
+ }
+
+ static int battry_val_info(int argc, char *argv[])
+{
+	 return 0;
+}
+
+static const ShellOpt_t battery_opts[] = {
+    OPT("r", "raw_bat",    NULL,      "Show raw battry adc value",     raw_battry_info),
+    OPT("v", "bat_val",    NULL,      "Show battry persent val",     battry_val_info),
+    OPT_END()
+};
+DEFINE_MODULE(battery, "battery controller", MOD_CAT_HARDWARE, battery_opts);
+ static int  bt_get_staus(int argc, char *argv[])
+{
+
+     
+     char *status[] ={
+        "None",
+        "Connecting",
+        "Connected",
+        "Streaming"
+     };
+     Shell_Printf(" Bluetooth state is{ %s }     \r\n", status[GetA2dpState()]);
+	 return 0;
+}
+static const ShellOpt_t bt_opts[] = {
+    OPT("s", "state",    NULL,      "Show bt status",    bt_get_staus),
+   
+    OPT_END()
+};
+
+DEFINE_MODULE(bt, "Bluetooth controller", MOD_CAT_HARDWARE, bt_opts);
+
 void Shell_RegisterAllModules(void)
 {
     REGISTER_MODULE(sys);
@@ -1018,4 +1011,8 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(dbg);
     REGISTER_MODULE(looper);
     REGISTER_MODULE(flash);
+    REGISTER_MODULE(battery);
+    REGISTER_MODULE(bt);
+
+
 }

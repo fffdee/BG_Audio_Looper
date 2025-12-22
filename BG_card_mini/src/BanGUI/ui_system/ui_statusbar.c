@@ -12,7 +12,7 @@
 #include "adc.h"
 #include "otg_detect.h"
 #include <string.h>
-
+#include "dma.h"
 /*===========================================================================
  * 鍥炬爣鏁版嵁 (8x8 浣嶅浘)
  *===========================================================================*/
@@ -146,7 +146,6 @@ static void draw_adc_icon(void)
     if (statusbar_data.adc_source & UI_ADC_MIC) {
         draw_icon(UI_ICON_MIC_X, y, icon_mic, UI_COLOR_GREEN);
     }
-    
     /* 鍚変粬鍥炬爣 - 鐙珛浣嶇疆 */
     BG_lcd.Box(UI_ICON_GUITAR_X, y, UI_ICON_SIZE, UI_ICON_SIZE, UI_STATUSBAR_BG_COLOR);
     if (statusbar_data.adc_source & UI_ADC_GUITAR) {
@@ -186,6 +185,9 @@ static void draw_usb_icon(void)
     
     if (statusbar_data.usb_connected) {
         draw_icon(UI_ICON_USB_X, y, icon_usb, UI_COLOR_GREEN);
+        UsbDeviceEnable();
+    }else{
+    	UsbDeviceDisable();
     }
 }
 
@@ -254,7 +256,7 @@ void UI_StatusBar_Init(void)
     memset(&statusbar_data, 0, sizeof(statusbar_data));
     memset(&last_data, 0, sizeof(last_data));
     
-    statusbar_data.bt_status = UI_BT_OFF;
+    statusbar_data.bt_status = UI_BT_DISCONNECTED;
     statusbar_data.adc_source = UI_ADC_NONE;
     statusbar_data.dac_output = UI_DAC_SPKR;  /* 榛樿鎵０鍣ㄨ緭鍑�*/
     statusbar_data.volume = 50;
@@ -361,6 +363,7 @@ void UI_StatusBar_ScanDetect(void)
     if (new_volume > 100) new_volume = 100;
     statusbar_data.volume = new_volume;
     
+
     /* 鎵弿USB杩炴帴鐘舵� */
     statusbar_data.usb_connected = OTG_PortDeviceIsLink();
 }

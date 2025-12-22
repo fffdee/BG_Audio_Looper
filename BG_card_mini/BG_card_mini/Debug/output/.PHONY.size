@@ -1,2 +1,0 @@
-   text (code + rodata)	   data	    bss	    dec	    hex	filename
- 811578 (665402 + 146176)	   6896	 138124	 956598	  e98b6	BG_card_mini.adx

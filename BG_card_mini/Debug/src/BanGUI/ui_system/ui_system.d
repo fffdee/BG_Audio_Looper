@@ -8,7 +8,8 @@ src/BanGUI/ui_system/ui_system.d src/BanGUI/ui_system/ui_system.o: \
  /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h \
  /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/timer.h \
  ../src/BanGUI/ui_system/icon.h \
- /cygdrive/F/project_and_dataset/project/BG_card_mini/BG_card_mini/src/BanGUI/base_func/gui_tool.h
+ /cygdrive/F/project_and_dataset/project/BG_card_mini/BG_card_mini/src/BanGUI/base_func/gui_tool.h \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/dac.h
 
 ../src/BanGUI/ui_system/ui_system.h:
 
@@ -33,3 +34,5 @@ src/BanGUI/ui_system/ui_system.d src/BanGUI/ui_system/ui_system.o: \
 ../src/BanGUI/ui_system/icon.h:
 
 /cygdrive/F/project_and_dataset/project/BG_card_mini/BG_card_mini/src/BanGUI/base_func/gui_tool.h:
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/dac.h:

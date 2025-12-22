@@ -8,6 +8,7 @@ typedef struct {
 
     uint8_t MicEnable;
     uint8_t mic_count;
+    uint8_t det_state;
     uint8_t guitar_count;
     uint8_t LineOutEnable;
     uint8_t LineInEnable;
@@ -42,6 +43,15 @@ typedef struct bg_audio_io_manager
 
 }BG_Audio_Io_Manager;
 
+typedef enum{
+	NONE = 0,
+	MIC_DET_IN,
+	MIC_DET_OUT,
+	GUITAR_DET_IN,
+	GUITAR_DET_OUT,
+	EARPHONE_DET,
+	SPEAKER_DET
+}DET_STATE;
 
 extern BG_Audio_Io_Manager BG_AudioManager;
 

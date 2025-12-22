@@ -29,7 +29,7 @@ extern "C"{
 #define CFG_RES_AUDIO_USB_SRC_EN
 #define CFG_RES_AUDIO_USB_VOL_SET_EN
 
-#define CFG_PARA_SAMPLE_RATE	48000
+#define CFG_PARA_SAMPLE_RATE	44100
 
 
 bool UsbDevicePlayInit(void);

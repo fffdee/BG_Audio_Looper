@@ -95,6 +95,7 @@ static const ShellOpt_t g_HelpOpts[] = {
     OPT("v", "version", NULL,       "Show version",         Opt_Version),
     OPT("c", "clear",   NULL,       "Clear screen",         Opt_Clear),
     OPT("i", "io",      NULL,       "Show current IO",      Opt_IO),
+
     OPT_END()
 };
 

@@ -10,7 +10,7 @@
 #include "icon.h"
 #include "gui_tool.h"
 #include <string.h>
-
+#include "dac.h"
 /*===========================================================================
  * 绉佹湁鍙橀噺
  *===========================================================================*/
@@ -181,6 +181,8 @@ static void change_state(UI_SystemState_t new_state)
             UI_Menu_SetVisible(false);
             UI_StatusBar_Draw();
             draw_idle_screen();
+            AudioDAC_FadeEnable(DAC0);
+            AudioDAC_Run(DAC0);
             break;
             
         case UI_STATE_MENU:

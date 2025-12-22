@@ -1,6 +1,6 @@
 /**
  * @file    ui_config.h
- * @brief   UI系统配置文件
+ * @brief   UI绯荤粺閰嶇疆鏂囦欢
  * @author  BG Card Team
  * @date    2025-12-18
  */
@@ -13,64 +13,69 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * 屏幕配置
+ * 灞忓箷閰嶇疆
  *===========================================================================*/
 #define UI_SCREEN_WIDTH         160
 #define UI_SCREEN_HEIGHT        128
 
 /*===========================================================================
- * 状态栏配置
+ * 鐘舵�鏍忛厤缃�
  *===========================================================================*/
-#define UI_STATUSBAR_HEIGHT     12      /* 状态栏高度 */
-#define UI_STATUSBAR_Y          0       /* 状态栏Y位置 */
-#define UI_STATUSBAR_BG_COLOR   0x2104  /* 深灰色背景 */
-#define UI_STATUSBAR_FG_COLOR   0xFFFF  /* 白色前景 */
+#define UI_STATUSBAR_HEIGHT     12      /* 鐘舵�鏍忛珮搴�*/
+#define UI_STATUSBAR_Y          0       /* 鐘舵�鏍廦浣嶇疆 */
+#define UI_STATUSBAR_BG_COLOR   0x2104  /* 娣辩伆鑹茶儗鏅�*/
+#define UI_STATUSBAR_FG_COLOR   0xFFFF  /* 鐧借壊鍓嶆櫙 */
 
-/* 图标位置定义 (从左到右，每个图标间隔12像素) */
-#define UI_ICON_BT_X            2       /* 蓝牙图标X */
-#define UI_ICON_MIC_X           16      /* 麦克风图标X */
-#define UI_ICON_GUITAR_X        30      /* 吉他图标X */
-#define UI_ICON_HP_X            44      /* 耳机/扬声器图标X */
-#define UI_ICON_USB_X           58      /* USB图标X */
-#define UI_ICON_VOLUME_X        130     /* 音量图标X */
-#define UI_ICON_Y               2       /* 图标Y位置 */
-#define UI_ICON_SIZE            8       /* 图标大小 */
+/* 鍥炬爣浣嶇疆瀹氫箟 (浠庡乏鍒板彸锛屾瘡涓浘鏍囬棿闅�2鍍忕礌) */
+#define UI_ICON_BT_X            2       /* 钃濈墮鍥炬爣X */
+#define UI_ICON_MIC_X           16      /* 楹﹀厠椋庡浘鏍嘪 */
+#define UI_ICON_GUITAR_X        30      /* 鍚変粬鍥炬爣X */
+#define UI_ICON_HP_X            44      /* 鑰虫満/鎵０鍣ㄥ浘鏍嘪 */
+#define UI_ICON_USB_X           58      /* USB鍥炬爣X */
+#define UI_ICON_VOLUME_X        130     /* 闊抽噺鍥炬爣X */
+#define UI_ICON_Y               2       /* 鍥炬爣Y浣嶇疆 */
+#define UI_ICON_SIZE            8       /* 鍥炬爣澶у皬 */
 
 /*===========================================================================
- * 菜单配置
+ * 鑿滃崟閰嶇疆
  *===========================================================================*/
-#define UI_MENU_START_Y         (UI_STATUSBAR_HEIGHT + 2)  /* 菜单起始Y */
+#define UI_MENU_START_Y         (UI_STATUSBAR_HEIGHT + 2)  /* 鑿滃崟璧峰Y */
 #define UI_MENU_HEIGHT          (UI_SCREEN_HEIGHT - UI_STATUSBAR_HEIGHT - 2)
-#define UI_MENU_ITEM_HEIGHT     20      /* 菜单项高度 */
-#define UI_MENU_MAX_ITEMS       16      /* 最大菜单项数 */
-#define UI_MENU_MAX_DEPTH       4       /* 最大菜单深度 */
-#define UI_MENU_VISIBLE_ITEMS   5       /* 可见菜单项数 */
+#define UI_MENU_ITEM_HEIGHT     20      /* 鑿滃崟椤归珮搴�*/
+#define UI_MENU_MAX_ITEMS       16      /* 鏈�ぇ鑿滃崟椤规暟 */
+#define UI_MENU_MAX_DEPTH       4       /* 鏈�ぇ鑿滃崟娣卞害 */
+#define UI_MENU_VISIBLE_ITEMS   5       /* 鍙鑿滃崟椤规暟 */
 
-#define UI_MENU_BG_COLOR        0x0000  /* 黑色背景 */
-#define UI_MENU_FG_COLOR        0xFFFF  /* 白色文字 */
-#define UI_MENU_SEL_BG_COLOR    0x001F  /* 蓝色选中背景 */
-#define UI_MENU_SEL_FG_COLOR    0xFFFF  /* 白色选中文字 */
-#define UI_MENU_ICON_COLOR      0x07E0  /* 绿色图标 */
+#define UI_MENU_BG_COLOR        0x0000  /* 榛戣壊鑳屾櫙 */
+#define UI_MENU_FG_COLOR        0xFFFF  /* 鐧借壊鏂囧瓧 */
+#define UI_MENU_SEL_BG_COLOR    0x001F  /* 钃濊壊閫変腑鑳屾櫙 */
+#define UI_MENU_SEL_FG_COLOR    0xFFFF  /* 鐧借壊閫変腑鏂囧瓧 */
+#define UI_MENU_ICON_COLOR      0x07E0  /* 缁胯壊鍥炬爣 */
 
 /*===========================================================================
- * 开机画面配置
+ * 寮�満鐢婚潰閰嶇疆
  *===========================================================================*/
-#define UI_BOOT_DURATION        2000    /* 开机画面持续时间(ms) */
-#define UI_BOOT_LOGO_WIDTH      64      /* Logo宽度 */
-#define UI_BOOT_LOGO_HEIGHT     64      /* Logo高度 */
-#define UI_BOOT_BG_COLOR        0x0000  /* 黑色背景 */
-#define UI_BOOT_TEXT_COLOR      0xFFFF  /* 白色文字 */
-#define UI_BOOT_PROGRESS_COLOR  0x07E0  /* 绿色进度条 */
+#define UI_BOOT_DURATION        100    /* 寮�満鐢婚潰鎸佺画鏃堕棿(ms) */
+/* 闃舵鏃堕棿閰嶇疆 */
+#define STAGE_LOGO_TIME     50     /* Logo鏄剧ず鏃堕棿 */
+#define STAGE_INFO_TIME     50     /* 淇℃伅鏄剧ず鏃堕棿 */
+#define STAGE_FADEOUT_TIME  10     /* 娣″嚭鏃堕棿 */
+
+#define UI_BOOT_LOGO_WIDTH      64      /* Logo瀹藉害 */
+#define UI_BOOT_LOGO_HEIGHT     64      /* Logo楂樺害 */
+#define UI_BOOT_BG_COLOR        0x0000  /* 榛戣壊鑳屾櫙 */
+#define UI_BOOT_TEXT_COLOR      0xFFFF  /* 鐧借壊鏂囧瓧 */
+#define UI_BOOT_PROGRESS_COLOR  0x07E0  /* 缁胯壊杩涘害鏉�*/
 
 /*===========================================================================
- * 按键配置
+ * 鎸夐敭閰嶇疆
  *===========================================================================*/
-#define UI_BTN_DEBOUNCE_MS      20      /* 去抖时间(ms) */
-#define UI_BTN_LONG_PRESS_MS    800     /* 长按时间(ms) */
-#define UI_BTN_REPEAT_MS        200     /* 连按间隔(ms) */
+#define UI_BTN_DEBOUNCE_MS      20      /* 鍘绘姈鏃堕棿(ms) */
+#define UI_BTN_LONG_PRESS_MS    800     /* 闀挎寜鏃堕棿(ms) */
+#define UI_BTN_REPEAT_MS        200     /* 杩炴寜闂撮殧(ms) */
 
 /*===========================================================================
- * 颜色定义
+ * 棰滆壊瀹氫箟
  *===========================================================================*/
 #define UI_COLOR_BLACK          0x0000
 #define UI_COLOR_WHITE          0xFFFF

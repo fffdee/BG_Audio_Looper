@@ -63,7 +63,7 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 			
 			SetBtDisconnectProfile(BT_CONNECTED_A2DP_FLAG);
 
-			//ÖØÐÂ¸üÐÂÀ¶ÑÀdecoderÏà¹Ø²ÎÊý
+			//ï¿½ï¿½ï¿½Â¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½decoderï¿½ï¿½Ø²ï¿½ï¿½ï¿½
 			if(RefreshSbcDecoder)
 				RefreshSbcDecoder();
 
@@ -90,7 +90,7 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 		{
 			BT_DBG("A2dp suspend\n");
 			SetA2dpState(BT_A2DP_STATE_CONNECTED);
-			Reset_McuSystem ();
+			
 			//BtMidMessageSend(MSG_BT_MID_PLAY_STATE_CHANGE, 2);
 		}
 		break;

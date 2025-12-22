@@ -277,23 +277,27 @@ void Looper_ProcessButtons(void)
 	}
 }
 
+
+void hardware_check()
+{
+
+	UI_StatusBar_SetBTStatus(GetA2dpState());
+
+}
+
+
 void EffectTask() {
 
 
 	SarADC_Init();
+
 	CtrlVarsInit();
+
+	BG_AudioManager.Audio_Init(44100);  /* Use 48kHz to match USB audio */
+
 	spi_init();
-	GPIO_RegOneBitClear(GPIO_B_IE, GPIOB6);
-	GPIO_RegOneBitSet(GPIO_B_OE, GPIOB6);
-	GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
-#ifdef BAN_SPEAKER_V2
-	GPIO_RegOneBitClear(GPIO_A_IE, GPIOA1);
-	GPIO_RegOneBitSet(GPIO_A_OE, GPIOA1);
-	GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA1);
-#endif
-	GPIO_RegOneBitClear(GPIO_A_IE, GPIOA17);
-	GPIO_RegOneBitSet(GPIO_A_OE, GPIOA17);
-	GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA17);
+
+
 	
 	/* Initialize BG_FlashMgr */
 	if (BG_FlashMgr.Init() == BG_FLASH_OK) {
@@ -315,13 +319,15 @@ void EffectTask() {
 	ShellLCD_Adapter_Init();
 
 	button_init();
-	BG_AudioManager.Audio_Init(44100);  /* Use 48kHz to match USB audio */
+//	BG_AudioManager.Audio_Init(44100);  /* Use 48kHz to match USB audio */
 	
 
 	
 	while (1) {
+
 		BG_AudioManager.Audio_Loop();
 		
+		hardware_check();
 		/* Update UI System (handles button input, menu, status bar) */
 		if(UI_flag == 1){
 			UI_flag = 0;
@@ -648,8 +654,8 @@ int main(void) {
 	 * - FlashNewDriverTask: 测试新重构的 Flash 驱动架构 (外部Flash)
 	 * - InternalFlashTestTask: 测试芯片内部 Flash 读写
 	 */
-	// xTaskCreate( (TaskFunction_t)FlashTask, "FlashTask", 512, NULL, 1, NULL );  // 旧驱动测试
-	// xTaskCreate( (TaskFunction_t)FlashNewDriverTask, "FlashNewDriverTask", 1024, NULL, 1, NULL );  // 新驱动测试
+	//xTaskCreate( (TaskFunction_t)FlashTask, "FlashTask", 512, NULL, 1, NULL );  // 旧驱动测试
+	//xTaskCreate( (TaskFunction_t)FlashNewDriverTask, "FlashNewDriverTask", 1024, NULL, 1, NULL );  // 新驱动测试
 	// xTaskCreate( (TaskFunction_t)InternalFlashTestTask, "InternalFlashTest", 1024, NULL, 1, NULL );  // 内部Flash测试
 	
 	xTaskCreate((TaskFunction_t )EffectTask, "EffectTask", 2048, NULL, 1, NULL);
