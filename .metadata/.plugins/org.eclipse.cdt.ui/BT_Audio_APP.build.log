@@ -1,0 +1,83 @@
+10:42:39 **** Build of configuration Debug for project BT_Audio_APP ****
+make pre-build main-build 
+..\script.bat
+
+C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper\BT_Audio_APP\Debug>..\..\MVsB1_Base_SDK\tools\remind_script\MergeAudio2BinNew.exe -a 0x0 -i ..\..\..\BT_Audio_APP\remind_file 
+Wed Dec 24 10:42:41 2025
+MergeAudio2Bin Tools version v4.1 for MVS SDK SoundRemind
+current path: C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper\MVsB1_Base_SDK\tools\remind_script
+inputdir=..\..\..\BT_Audio_APP\remind_file
+base address = 0x0
+0       : address = 00001000, size = 00000F4E, fullname = 0.mp3
+1       : address = 00001F4E, size = 00000E15, fullname = 1.mp3
+2       : address = 00002D63, size = 00000C3E, fullname = 2.mp3
+3       : address = 000039A1, size = 000011C1, fullname = 3.mp3
+4       : address = 00004B62, size = 00000FEB, fullname = 4.mp3
+5       : address = 00005B4D, size = 00000D78, fullname = 5.mp3
+6       : address = 000068C5, size = 00000D78, fullname = 6.mp3
+7       : address = 0000763D, size = 00000EB1, fullname = 7.mp3
+8       : address = 000084EE, size = 00000BA2, fullname = 8.mp3
+9       : address = 00009090, size = 00000EB1, fullname = 9.mp3
+BTmode  : address = 00009F41, size = 000014D1, fullname = BTmode.mp3
+callring: address = 0000B412, size = 00002692, fullname = callring.mp3
+cardmode: address = 0000DAA4, size = 000014D1, fullname = cardmode.mp3
+connect : address = 0000EF75, size = 00001CC6, fullname = connect.mp3
+DianYin : address = 00010C3B, size = 00002249, fullname = DianYin.mp3
+disconne: address = 00012E84, size = 00002FC1, fullname = disconnect.mp3
+DLguodi : address = 00015E45, size = 000011C1, fullname = DLguodi.mp3
+FMmode  : address = 00017006, size = 00001D63, fullname = FMmode.mp3
+guanji  : address = 00018D69, size = 00001F9E, fullname = guanji.mp3
+Gxianmod: address = 0001AD07, size = 00001744, fullname = Gxianmode.mp3
+HanMai  : address = 0001C44B, size = 00002692, fullname = HanMai.mp3
+HDMImode: address = 0001EADD, size = 00002559, fullname = HDMImode.mp3
+i2smode : address = 00021036, size = 000053DD, fullname = i2smode.mp3
+jinrumod: address = 00026413, size = 0000160A, fullname = jinrumode.mp3
+kaiji   : address = 00027A1D, size = 00000D78, fullname = kaiji.mp3
+LiuXingH: address = 00028795, size = 0000241F, fullname = LiuXingHunXiang.mp3
+luyin   : address = 0002ABB4, size = 00000B05, fullname = luyin.mp3
+MoYin   : address = 0002B6B9, size = 0000241F, fullname = MoYin.mp3
+NanShen : address = 0002DAD8, size = 000022E6, fullname = NanShen.mp3
+NvShen  : address = 0002FDBE, size = 0000241F, fullname = NvShen.mp3
+REChuifa: address = 000321DD, size = 00001434, fullname = REChuifang.mp3
+shangyis: address = 00033611, size = 00001434, fullname = shangyishou.mp3
+shengkam: address = 00034A45, size = 00002868, fullname = shengkamode.mp3
+standbym: address = 000372AD, size = 0000187D, fullname = standbymode.mp3
+StopRec : address = 00038B2A, size = 00001744, fullname = StopRec.mp3
+Tzhoumod: address = 0003A26E, size = 0000160A, fullname = Tzhoumode.mp3
+Upanmode: address = 0003B878, size = 0000191A, fullname = Upanmode.mp3
+WaWaYin : address = 0003D192, size = 00001744, fullname = WaWaYin.mp3
+xianlumo: address = 0003E8D6, size = 0000187D, fullname = xianlumode.mp3
+xiayisou: address = 00040153, size = 000012FB, fullname = xiayisou.mp3
+zhangshe: address = 0004144E, size = 000063CC, fullname = zhangshen.mp3
+total file size=292890
+CRC16 = 0x3E2B
+finished...
+
+C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper\BT_Audio_APP\Debug>fc ..\..\MVsB1_Base_SDK\tools\remind_script\sound_remind_item.h .\..\bt_audio_app_src\inc\remind_sound_item.h 
+正在比较文件 ..\..\MVSB1_BASE_SDK\TOOLS\REMIND_SCRIPT\sound_remind_item.h 和 .\..\BT_AUDIO_APP_SRC\INC\REMIND_SOUND_ITEM.H
+FC: 找不到差异
+
+
+C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper\BT_Audio_APP\Debug>if 0 == 1 (copy ..\..\MVsB1_Base_SDK\tools\remind_script\sound_remind_item.h .\..\bt_audio_app_src\inc\remind_sound_item.h ) 
+
+C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper\BT_Audio_APP\Debug>..\..\MVsB1_Base_SDK\tools\libs_copy_script\copyLibs.exe -s ..\..\..\BT_Audio_APP\script_copy.ini 
+Wed Dec 24 10:42:42 2025
+CopyLibs.py Tools version v1.1.4 for MVS BT_audio SDK copy libs
+current path: C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper\MVsB1_Base_SDK\tools\libs_copy_script
+home_dir = C:\Users\BanGO\Desktop\BanGO_prj\BG_Audio_Looper
+DO REAL: not BT_TWS_SUPPORT and not BLE_SUPPORT
+copy libBtStack_Std_NoBle.a
+file MVsB1_Base_SDK/middleware/bluetooth/libBtStack_Std_NoBle.a not existed, exit.
+make: [makefile:157: pre-build] Error 1 (ignored)
+ 
+Building file: ../bt_audio_app_src/ai/ai.c
+Invoking: Andes C Compiler
+nds32le-elf-gcc -DFUNC_OS_EN=1 -DCFG_APP_CONFIG -DHAVE_CONFIG_H -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/audio" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/ai/md5" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/ai/speex/include/speex" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/ai/speex/include" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/ai/speex/libspeex" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/ai/speex" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/ai" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc/otg" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/display" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/user" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/ble" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/libopus/include" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/libopus/silk" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/libopus/src" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/libopus/app" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/libopus/celt" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/libopus/silk/fixed" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/libopus/silk/float" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BT_Audio_APP/bt_audio_app_src/xiaomi_ai" -Og -mcmodel=medium -g3 -Wall -mcpu=d1088-spu -c -fmessage-length=0 -ldsp -mext-dsp -ffunction-sections -fdata-sections -MMD -MP -MF"bt_audio_app_src/ai/ai.d" -MT"bt_audio_app_src/ai/ai.d bt_audio_app_src/ai/ai.o" -o "bt_audio_app_src/ai/ai.o" "../bt_audio_app_src/ai/ai.c"
+../bt_audio_app_src/ai/ai.c:2:21: fatal error: ble_api.h: No such file or directory
+ #include "ble_api.h"
+                     ^
+compilation terminated.
+make: *** [bt_audio_app_src/ai/subdir.mk:23: bt_audio_app_src/ai/ai.o] Error 1
+
+10:42:43 Build Finished (took 3s.74ms)
+

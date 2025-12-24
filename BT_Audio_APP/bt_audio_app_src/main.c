@@ -388,12 +388,12 @@ int main(void)
 		Clock_HOSCCurrentSet(15);//晶体谐振电流配置为15（电流1.152mA）
 	}
 	
-//#if FLASH_BOOT_EN
-//	RstFlag = Reset_FlagGet_Flash_Boot();
-//#else
+#if FLASH_BOOT_EN
+	RstFlag = Reset_FlagGet_Flash_Boot();
+#else
 	RstFlag = Reset_FlagGet();
 	Reset_FlagClear();
-//#endif
+#endif
 
 	//检测第一次系统上电赋缺省值。
 	BACKUP_NVMInit();
