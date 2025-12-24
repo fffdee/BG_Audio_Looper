@@ -28,16 +28,7 @@ typedef struct bg_audio_io_manager
 	Audio_Data Audio_data;
 /******************************Audio_Proccess_Input_Output_Setting*******************************/
     void (*Audio_Init)(uint16_t);
-    void (*PowerAmplifier_OnOff)(uint8_t);
-    void (*MIC_OnOff)(uint8_t);
-    void (*LineIn1_OnOff)(uint8_t);
-    void (*LineIn2_OnOff)(uint8_t);
-    void (*Det)(uint8_t);
     void (*Audio_Loop)(void);
-    void (*SetMicVol)(uint8_t);
-    void (*SetLineIn1Vol)(uint8_t);
-    void (*SetLineIn2Vol)(uint8_t);
-    void (*SetLineOutVol)(uint16_t,uint16_t);
 /********************************Audio_Looper_Setting*************************************/
 
 

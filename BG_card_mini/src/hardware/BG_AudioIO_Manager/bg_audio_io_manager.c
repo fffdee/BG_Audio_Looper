@@ -39,15 +39,13 @@
 
 #include "bt_manager.h"
 // ==================== 全局缓冲区定义 ====================
-#define SETTING_ADDR 0x80000000
-uint32_t AudioADC1Buf[1024] = {0};
-uint32_t AudioADC2Buf[1024] = {0};
-uint16_t OutPut_bufx[AUDIO_BUF_MAX];
+static uint32_t AudioADC1Buf[1024] = {0};
+static uint32_t AudioADC2Buf[1024] = {0};
 
 #define DAC_FIFO_SAMPLES 1024
-uint32_t DAC0_FIFO[DAC_FIFO_SAMPLES];
+static uint32_t DAC0_FIFO[DAC_FIFO_SAMPLES];
 #define DAC0_FIFO_LEN sizeof(DAC0_FIFO)
-uint32_t DAC1_FIFO[DAC_FIFO_SAMPLES];
+static uint32_t DAC1_FIFO[DAC_FIFO_SAMPLES];
 #define DAC1_FIFO_LEN sizeof(DAC1_FIFO)
 
 // Looper音频缓冲区
@@ -60,15 +58,8 @@ extern uint32_t usb_mic_enable;
 
 // ==================== 前向声明 ====================
 void BG_audio_Init(uint16_t SampleRate);
-uint8_t BG_Audio_Det(void);
 void Audio_loop(void);
-void BG_Set_LineIn1_Vol(uint8_t vol);
-void BG_Set_LineIn2_Vol(uint8_t vol);
-void BG_Set_Mic_Vol(uint8_t vol);
-void BG_Set_LineOut_Vol(uint16_t left_vol, uint16_t right_vol);
-void BG_LineIn1_IsEnable(uint8_t Enable);
-void BG_LineIn2_IsEnable(uint8_t Enable);
-void BG_MIC_IsEnable(uint8_t Enable);
+
 
 // CDC串口处理函数（可选的示例功能）
 static void CDC_Process_Example(void);
@@ -77,13 +68,6 @@ static void CDC_Process_Example(void);
 BG_Audio_Io_Manager BG_AudioManager = {
 	.Audio_Init = BG_audio_Init,
 	.Audio_Loop = Audio_loop,
-	.SetMicVol = BG_Set_Mic_Vol,
-	.SetLineIn1Vol = BG_Set_LineIn1_Vol,
-	.SetLineIn2Vol = BG_Set_LineIn2_Vol,
-	.SetLineOutVol = BG_Set_LineOut_Vol,
-	.LineIn1_OnOff = BG_LineIn1_IsEnable,
-	.LineIn2_OnOff = BG_LineIn2_IsEnable,
-	.MIC_OnOff = BG_MIC_IsEnable,
 	.Audio_data = {
 		.guitar_count = 0,
 		.mic_count = 0,
@@ -258,82 +242,6 @@ void BG_audio_Init(uint16_t SampleRate)
 	
 
 }
-
-// ==================== 音量控制函数 ====================
-
-/**
- * 设置LineIn1音量
- */
-void BG_Set_LineIn1_Vol(uint8_t vol)
-{
-	AudioADC_VolSetChannel(ADC0_MODULE, CHANNEL_LEFT, vol);
-}
-
-/**
- * 设置LineIn2音量
- */
-void BG_Set_LineIn2_Vol(uint8_t vol)
-{
-	AudioADC_VolSetChannel(ADC0_MODULE, CHANNEL_RIGHT, vol);
-}
-
-/**
- * 设置LineOut音量
- */
-void BG_Set_LineOut_Vol(uint16_t left_vol, uint16_t right_vol)
-{
-	AudioDAC_VolSet(DAC0, left_vol, right_vol);
-}
-
-/**
- * 设置麦克风音量
- */
-void BG_Set_Mic_Vol(uint8_t vol)
-{
-	AudioADC_VolSet(ADC1_MODULE, vol, vol);
-}
-
-// ==================== 输入使能控制 ====================
-
-void BG_LineIn1_IsEnable(uint8_t Enable)
-{
-	// 功能预留
-}
-
-void BG_LineIn2_IsEnable(uint8_t Enable)
-{
-	// 功能预留
-}
-
-/**
- * 控制麦克风使能
- */
-void BG_MIC_IsEnable(uint8_t Enable)
-{
-	BG_AudioManager.Audio_data.MicEnable = Enable;
-	AudioADC_SoftMute(ADC1_MODULE, BG_AudioManager.Audio_data.MicEnable, BG_AudioManager.Audio_data.MicEnable);
-}
-
-// ==================== 检测和设置函数 ====================
-
-/**
- * 检测音频输入设备状态变化
- */
-uint8_t BG_Audio_Det(void)
-{
-	if (GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX30) != BG_AudioManager.Audio_data.MicEnable)
-	{
-		BG_AudioManager.Audio_data.MicEnable = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX30);
-		DBG("MIC %d\n", BG_AudioManager.Audio_data.MicEnable);
-	}
-	if (GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX29) != BG_AudioManager.Audio_data.LineOutEnable)
-	{
-		BG_AudioManager.Audio_data.LineOutEnable = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX29);
-		DBG("earphone %d\n", BG_AudioManager.Audio_data.LineOutEnable);
-	}
-	return 0;
-}
-
 /**
  * 设置输出音量（通过ADC读取电位器值）
  */
@@ -786,11 +694,4 @@ void Audio_loop(void)
 	ShellIOManager_Process();
 
 
-}
-
-// ==================== 保留的原始函数（兼容性） ====================
-
-void det_int(void)
-{
-	InitDetectionGPIO();
 }
