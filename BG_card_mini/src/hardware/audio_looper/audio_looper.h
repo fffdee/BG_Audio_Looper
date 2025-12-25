@@ -16,30 +16,30 @@
 #include "type.h"
 #include "stdint.h"
 
-/* 手动定义size_t类型（如果编译器没有stddef.h） */
+/* Manually define size_t type (if compiler does not have stddef.h) */
 #ifndef _SIZE_T_DEFINED
 #define _SIZE_T_DEFINED
 typedef unsigned int size_t;
 #endif
 
-/* Loop状态枚举 */
+/* Loop state enumeration */
 typedef enum {
-    LOOP_STATE_IDLE = 0,               /* 空闲状态，等待录制 */
-    LOOP_STATE_RECORDING = 1,          /* 只录制状态（第一段） */
-    LOOP_STATE_PLAYING = 2,            /* 只播放状态 */
-    LOOP_STATE_RECORDING_AND_PLAYING = 3 /* 边录制边播放状态 */
+    LOOP_STATE_IDLE = 0,               /* Idle state, waiting for recording */
+    LOOP_STATE_RECORDING = 1,          /* Recording only (first segment) */
+    LOOP_STATE_PLAYING = 2,            /* Playback only */
+    LOOP_STATE_RECORDING_AND_PLAYING = 3 /* Recording and playback simultaneously */
 } LoopState_t;
 
-/* 播放模式枚举 */
+/* Playback mode enumeration */
 typedef enum {
     SONG_MODE = 0,
     FREE_STYLE
 } Paly_Mode_t;
 
-/* 多段录音支持 */
-#define MAX_SEGMENTS 4          /* 最多支持4段录音 */
+/* Multi-segment recording support */
+#define MAX_SEGMENTS 4          /* Support up to 4 segments */
 
-/* 节拍器常量定义 */
+/* Metronome constant definitions */
 #define METRONOME_MIN_BPM 60
 #define METRONOME_MAX_BPM 200
 #define METRONOME_DEFAULT_BPM 80
@@ -52,12 +52,12 @@ typedef enum {
 #define METRONOME_MIN_BEATS_PER_MEASURE 2
 #define METRONOME_MAX_BEATS_PER_MEASURE 8
 
-/* 数学常量 */
+/* Math constant */
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif
 
-/* Flash类型枚举 */
+/* Flash type enumeration */
 #ifndef FLASH_TYPE_DEFINED
 #define FLASH_TYPE_DEFINED
 typedef enum {
@@ -66,7 +66,7 @@ typedef enum {
 } FlashType_t;
 #endif /* FLASH_TYPE_DEFINED */
 
-/* 段状态枚举 */
+/* Segment state enumeration */
 typedef enum {
     SEGMENT_INACTIVE = 0,
     SEGMENT_RECORDING = 1,
@@ -74,25 +74,25 @@ typedef enum {
     SEGMENT_STOPPED = 3
 } SegmentState_t;
 
-/* 循环模式枚举 */
+/* Loop mode enumeration */
 typedef enum {
     LOOP_MODE_SONG = 0,
     LOOP_MODE_FREE = 1
 } LoopMode_t;
 
-/* 节拍器状态枚举 */
+/* Metronome state enumeration */
 typedef enum {
     METRONOME_OFF = 0,
     METRONOME_ON = 1
 } MetronomeState_t;
 
-/* 节拍器拍子类型枚举 */
+/* Metronome beat type enumeration */
 typedef enum {
     BEAT_TYPE_DOWNBEAT = 0,
     BEAT_TYPE_REGULAR = 1
 } BeatType_t;
 
-/* 段信息结构体 */
+/* Segment info structure */
 typedef struct {
     uint32_t start_address;
     uint32_t length_pages;
@@ -102,7 +102,7 @@ typedef struct {
     uint8_t is_active;
 } SegmentInfo_t;
 
-/* 节拍器配置结构体 */
+/* Metronome config structure */
 typedef struct {
     uint16_t bpm;
     uint8_t beats_per_measure;
@@ -112,7 +112,7 @@ typedef struct {
     float volume;
 } MetronomeConfig_t;
 
-/* 节拍器状态结构体 */
+/* Metronome runtime state structure */
 typedef struct {
     MetronomeState_t state;
     MetronomeConfig_t config;
@@ -126,7 +126,7 @@ typedef struct {
     float sine_phase;
 } MetronomeState_Runtime_t;
 
-/* Loop管理器结构体 */
+/* Loop manager structure */
 typedef struct {
     LoopState_t state;
     LoopMode_t mode;
@@ -148,10 +148,10 @@ typedef struct {
     MetronomeState_Runtime_t metronome;
 } LoopManager_t;
 
-/* 全局Loop管理器 */
+/* Global Loop manager */
 extern LoopManager_t g_loop_manager;
 
-/* Loop操作结果枚举 */
+/* Loop operation result enumeration */
 typedef enum {
     LOOP_RESULT_OK = 0,
     LOOP_RESULT_ERROR = 1,
@@ -159,7 +159,7 @@ typedef enum {
     LOOP_RESULT_FULL = 3
 } LoopResult_t;
 
-/* Loop统计信息结构体 */
+/* Loop status info structure */
 typedef struct {
     LoopState_t current_state;
     uint8_t active_segments;
@@ -171,7 +171,7 @@ typedef struct {
     uint8_t is_playing;
 } LoopStatus_t;
 
-/* Audio Looper模块接口结构体 */
+/* Audio Looper module interface structure */
 typedef struct {
     void (*Init)(void);
     void (*InitWithFlashType)(FlashType_t flash_type);
@@ -205,7 +205,7 @@ typedef struct {
     uint8_t (*MetronomeGetBeatsPerMeasure)(void);
 } AudioLooper_t;
 
-/* 全局Audio Looper模块实例 */
+/* Global Audio Looper module instance */
 extern AudioLooper_t AudioLooper;
 
 /* ============================================================================

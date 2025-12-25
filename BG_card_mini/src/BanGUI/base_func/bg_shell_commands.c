@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V2.0.0
  * @date     16-December-2025
- * @brief    Shell鍛戒护妯″潡瀹炵幇
+ * @brief    Shell command module implementation
  *****************************************************************************
  */
 
@@ -26,7 +26,7 @@
 #include "bt_a2dp_api.h"
 #include "battery_drv.h"
 /*============================================================================
- * sys 妯″潡 - 绯荤粺淇℃伅
+ * sys module - System information
  *===========================================================================*/
 
 static int sys_info(int argc, char *argv[])
@@ -98,7 +98,7 @@ static int sys_reboot(int argc, char *argv[])
     return 0;
 }
 
-/* LCD鎺у埗鍙版帶鍒跺懡浠�*/
+/* LCD control command */
 static int sys_console(int argc, char *argv[])
 {
     if (argc < 1)
@@ -131,7 +131,7 @@ static int sys_console(int argc, char *argv[])
     return 0;
 }
 
-/* DBG输出到LCD控制台开关 */
+/* DBG output to LCD console switch */
 static int sys_dbglcd(int argc, char *argv[])
 {
     if (argc < 1)
@@ -233,8 +233,8 @@ static int sys_rotate(int argc, char *argv[])
     
     if (argc < 1)
     {
-        /* 鏄剧ず褰撳墠鏃嬭浆瑙掑害 */
-        Shell_Printf("Current rotation: %d掳 (", current_rotation * 90);
+        /* Show current rotation angle */
+        Shell_Printf("Current rotation: %d° (", current_rotation * 90);
         switch (current_rotation)
         {
             case 0: Shell_Print("Portrait)\r\n"); break;
@@ -243,14 +243,14 @@ static int sys_rotate(int argc, char *argv[])
             case 3: Shell_Print("Landscape Inverted)\r\n"); break;
         }
         Shell_Print("\r\nUsage:\r\n");
-        Shell_Print("  sys -r 0    - 0掳 (绔栧睆)\r\n");
-        Shell_Print("  sys -r 1    - 90掳 (妯睆)\r\n");
-        Shell_Print("  sys -r 2    - 180掳 (绔栧睆鍊掔疆)\r\n");
-        Shell_Print("  sys -r 3    - 270掳 (妯睆鍊掔疆)\r\n");
+        Shell_Print("  sys -r 0    - 0° (Portrait)\r\n");
+        Shell_Print("  sys -r 1    - 90° (Landscape)\r\n");
+        Shell_Print("  sys -r 2    - 180° (Portrait Inverted)\r\n");
+        Shell_Print("  sys -r 3    - 270° (Landscape Inverted)\r\n");
         return 0;
     }
     
-    /* 璁剧疆鏃嬭浆瑙掑害 */
+    /* Set rotation angle */
     int rotation = atoi(argv[0]);
     if (rotation < 0 || rotation > 3)
     {
@@ -260,9 +260,9 @@ static int sys_rotate(int argc, char *argv[])
     
     current_rotation = (uint8_t)rotation;
     Lcd_SetRotation(current_rotation);
-    Shell_Printf("Screen rotated to %d掳\r\n", current_rotation * 90);
+    Shell_Printf("Screen rotated to %d°\r\n", current_rotation * 90);
     
-    /* 鏃嬭浆鍚庢竻灞�*/
+    /* Clear screen after rotation */
     BG_lcd.Clear(BLACK);
     
     return 0;
@@ -277,14 +277,14 @@ static const ShellOpt_t sys_opts[] = {
     OPT("o", "io",      "[cmd]",   "IO control (cdc/ble/lock/unlock)", sys_io),
     OPT("c", "console", "[cmd]",   "LCD console (on/off/clear)",       sys_console),
     OPT("d", "dbglcd",  "[cmd]",   "DBG to LCD (on/off)",              sys_dbglcd),
-    OPT("r", "rotate_distr",  "[0-3]",   "Rotate screen (0/1/2/3 = 0掳/90掳/180掳/270掳)", sys_rotate),
+    OPT("r", "rotate_distr",  "[0-3]",   "Rotate screen (0/1/2/3 = 0°/90°/180°/270°)", sys_rotate),
     OPT_END()
 };
 
 DEFINE_MODULE(sys, "System information", MOD_CAT_SYSTEM, sys_opts);
 
 /*============================================================================
- * audio 妯″潡 - 闊抽鎺у埗
+ * audio module - Audio control
  *===========================================================================*/
 
 static int audio_vol(int argc, char *argv[])
@@ -332,7 +332,7 @@ static const ShellOpt_t audio_opts[] = {
 DEFINE_MODULE(audio, "Audio control", MOD_CAT_PARAM, audio_opts);
 
 /*============================================================================
- * gpio 妯″潡 - GPIO鎺у埗
+ * gpio module - GPIO control
  *===========================================================================*/
 
 static int gpio_read(int argc, char *argv[])
@@ -382,7 +382,7 @@ static const ShellOpt_t gpio_opts[] = {
 DEFINE_MODULE(gpio, "GPIO control", MOD_CAT_HARDWARE, gpio_opts);
 
 /*============================================================================
- * lcd 妯″潡 - LCD鎺у埗
+ * lcd module - LCD control
  *===========================================================================*/
 
 static int lcd_on(int argc, char *argv[])
@@ -423,7 +423,7 @@ static const ShellOpt_t lcd_opts[] = {
 DEFINE_MODULE(lcd, "LCD control", MOD_CAT_HARDWARE, lcd_opts);
 
 /*============================================================================
- * led 妯″潡 - LED鎺у埗
+ * led module - LED control
  *===========================================================================*/
 
 static int led_on(int argc, char *argv[])
@@ -458,7 +458,7 @@ static const ShellOpt_t led_opts[] = {
 DEFINE_MODULE(led, "LED control", MOD_CAT_HARDWARE, led_opts);
 
 /*============================================================================
- * dbg 妯″潡 - 璋冭瘯鍛戒护
+ * dbg module - Debug commands
  *===========================================================================*/
 
 static int dbg_echo(int argc, char *argv[])
@@ -542,7 +542,7 @@ static const ShellOpt_t dbg_opts[] = {
 DEFINE_MODULE(dbg, "Debug tools", MOD_CAT_DEBUG, dbg_opts);
 
 /*============================================================================
- * looper 妯″潡 - Audio Looper鎺у埗涓庢祴璇�
+ * looper module - Audio Looper control and test
  *===========================================================================*/
 
 static int looper_init_cmd(int argc, char *argv[])
@@ -787,7 +787,7 @@ static const ShellOpt_t looper_opts[] = {
 DEFINE_MODULE(looper, "Audio Looper control", MOD_CAT_HARDWARE, looper_opts);
 
 /*============================================================================
- * flash 妯″潡 - Flash瀛樺偍绠＄悊
+ * flash module - Flash storage management
  *===========================================================================*/
 
 static int flash_info_cmd(int argc, char *argv[])
@@ -844,7 +844,7 @@ static int flash_read_cmd(int argc, char *argv[])
         return -1;
     }
     
-    /* 鎵撳嵃鏁版嵁 */
+    /* Print data */
     for (i = 0; i < len; i++) {
         if ((i % 16) == 0) {
             Shell_Printf("\r\n%06X: ", offset + i);
@@ -892,7 +892,7 @@ static int flash_format_cmd(int argc, char *argv[])
     Shell_Printf("WARNING: Formatting device %d, all data will be lost!\r\n", dev_id);
     Shell_Print("Press Ctrl+C to cancel...\r\n");
     
-    /* 绠�崟寤惰繜 */
+    /* Simple delay */
     vTaskDelay(1000);
     
     Shell_Print("Formatting...\r\n");
@@ -956,7 +956,7 @@ static const ShellOpt_t flash_opts[] = {
 DEFINE_MODULE(flash, "Flash storage management", MOD_CAT_HARDWARE, flash_opts);
 
 /*============================================================================
- * 妯″潡娉ㄥ唽
+ * Module registration
  *===========================================================================*/
 
  static int raw_battry_info(int argc, char *argv[])

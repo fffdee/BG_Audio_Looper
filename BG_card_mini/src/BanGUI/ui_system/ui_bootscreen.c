@@ -1,6 +1,6 @@
 /**
  * @file    ui_bootscreen.c
- * @brief   寮�満鐢婚潰妯″潡瀹炵幇
+ * @brief   Boot screen module implementation
  * @author  BG Card Team
  * @date    2025-12-18
  */
@@ -11,10 +11,10 @@
 #include <string.h>
 
 /*===========================================================================
- * 榛樿Logo (绠�崟鐨凚G Card Logo - 32x32)
+ * Default Logo (simple BG Card Logo - 32x32)
  *===========================================================================*/
 
-/* 绠�崟鐨�BG"鏂囧瓧鍥炬爣 */
+/* Simple "BG" text icon */
 static const uint8_t default_logo[] = {
     /* B */
     0x7E, 0x42, 0x42, 0x7C, 0x42, 0x42, 0x7E, 0x00,
@@ -23,7 +23,7 @@ static const uint8_t default_logo[] = {
 };
 
 /*===========================================================================
- * 绉佹湁鍙橀噺
+ * Private variables
  *===========================================================================*/
 
 static UI_BootConfig_t boot_config;
@@ -36,11 +36,11 @@ static bool initialized;
 
 
 /*===========================================================================
- * 绉佹湁鍑芥暟
+ * Private functions
  *===========================================================================*/
 
 /**
- * @brief 缁樺埗灞呬腑鏂囧瓧
+ * @brief Draw centered text
  */
 static void draw_centered_text(uint16_t y, const char* text, uint16_t color)
 {
@@ -57,7 +57,7 @@ static void draw_centered_text(uint16_t y, const char* text, uint16_t color)
 }
 
 /**
- * @brief 缁樺埗杩涘害鏉�
+ * @brief Draw progress bar
  */
 static void draw_progress_bar(uint8_t progress)
 {
@@ -66,23 +66,21 @@ static void draw_progress_bar(uint8_t progress)
     uint16_t bar_y = UI_SCREEN_HEIGHT - 25;
     uint16_t bar_height = 6;
     
-    /* 缁樺埗鑳屾櫙 */
+    /* Draw background */
     BG_lcd.Box(bar_x, bar_y, bar_width, bar_height, UI_COLOR_DARK_GRAY);
-    
-    /* 缁樺埗杩涘害 */
+    /* Draw progress */
     uint16_t fill_width = (bar_width * progress) / 100;
     if (fill_width > 0) {
         BG_lcd.Box(bar_x, bar_y, fill_width, bar_height, UI_BOOT_PROGRESS_COLOR);
     }
-    
-    /* 缁樺埗杩涘害娑堟伅 */
+    /* Draw progress message */
     if (progress_message) {
         draw_centered_text(bar_y - 12, progress_message, UI_COLOR_GRAY);
     }
 }
 
 /**
- * @brief 缁樺埗榛樿Logo
+ * @brief Draw default Logo
  */
 void draw_default_logo(void)
 {
@@ -90,13 +88,13 @@ void draw_default_logo(void)
     uint16_t logo_y = 20;
     uint8_t i, j, k;
     
-    /* 缁樺埗澶у彿 "BG" 鏂囧瓧 */
-    /* B - 鏀惧ぇ4鍊�*/
+    /* Draw large "BG" text */
+    /* B - scale up 4x */
     for (i = 0; i < 8; i++) {
         uint8_t row = default_logo[i];
         for (j = 0; j < 8; j++) {
             if (row & (0x80 >> j)) {
-                /* 4x4鍍忕礌鍧�*/
+                /* 4x4 pixel block */
                 for (k = 0; k < 4; k++) {
                     BG_lcd.DrawLine(logo_x + j * 4, logo_y + i * 4 + k,
                                    logo_x + j * 4 + 3, logo_y + i * 4 + k,
@@ -105,7 +103,6 @@ void draw_default_logo(void)
             }
         }
     }
-    
     /* G */
     for (i = 0; i < 8; i++) {
         uint8_t row = default_logo[8 + i];
@@ -122,14 +119,13 @@ void draw_default_logo(void)
 }
 
 /**
- * @brief 缁樺埗Logo闃舵
+ * @brief Draw logo stage
  */
 static void draw_stage_logo(void)
 {
-    /* 娓呭睆 */
+    /* Clear screen */
     BG_lcd.Clear(UI_BOOT_BG_COLOR);
-    
-    /* 缁樺埗Logo */
+    /* Draw Logo */
     if (boot_config.logo_data) {
         uint16_t logo_x = (UI_SCREEN_WIDTH - boot_config.logo_width) / 2;
         uint16_t logo_y = (UI_SCREEN_HEIGHT - boot_config.logo_height) / 2 - 20;
@@ -141,32 +137,29 @@ static void draw_stage_logo(void)
 }
 
 /**
- * @brief 缁樺埗淇℃伅闃舵
+ * @brief Draw info stage
  */
 static void draw_stage_info(void)
 {
     uint16_t y = 60;
-    
-    /* 浜у搧鍚嶇О */
+    /* Product name */
     if (boot_config.product_name) {
         draw_centered_text(y, boot_config.product_name, UI_COLOR_WHITE);
         y += 12;
     }
-    
-    /* 鐗堟湰鍙�*/
+    /* Version */
     if (boot_config.version) {
         draw_centered_text(y+5, boot_config.version, UI_COLOR_GRAY);
         y += 12;
     }
-    
-    /* 鐗堟潈淇℃伅 */
+    /* Copyright info */
     if (boot_config.copyright) {
         draw_centered_text(UI_SCREEN_HEIGHT - 15, boot_config.copyright, UI_COLOR_DARK_GRAY);
     }
 }
 
 /**
- * @brief 缁樺埗杩涘害闃舵
+ * @brief Draw progress stage
  */
 static void draw_stage_progress(void)
 {
@@ -176,7 +169,7 @@ static void draw_stage_progress(void)
 }
 
 /*===========================================================================
- * API 瀹炵幇
+ * API Implementation
  *===========================================================================*/
 
 void UI_BootScreen_Init(const UI_BootConfig_t* config)
@@ -184,9 +177,9 @@ void UI_BootScreen_Init(const UI_BootConfig_t* config)
     if (config) {
         memcpy(&boot_config, config, sizeof(UI_BootConfig_t));
     } else {
-        /* 榛樿閰嶇疆 */
+        /* Default config */
         memset(&boot_config, 0, sizeof(UI_BootConfig_t));
-        boot_config.logo_data = NULL;  /* 浣跨敤榛樿Logo */
+        boot_config.logo_data = NULL;  /* Use default Logo */
         boot_config.logo_width = 64;
         boot_config.logo_height = 32;
         boot_config.product_name = "BG Card Mini";
@@ -195,7 +188,6 @@ void UI_BootScreen_Init(const UI_BootConfig_t* config)
         boot_config.display_time = UI_BOOT_DURATION;
         boot_config.show_progress = true;
     }
-    
     boot_stage = UI_BOOT_STAGE_INIT;
     stage_timer = 0;
     current_progress = 0;

@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     16-December-2025
- * @brief    Shell IO管理器实现 - 自动切换CDC/BLE接口并提供访问保护
+ * @brief    Shell IO Manager implementation - Automatically switch CDC/BLE interfaces and provide access protection
  *****************************************************************************
  */
 
@@ -14,20 +14,20 @@
 #include <string.h>
 
 /*******************************************************************************
- * 外部依赖 - 系统Tick获取
+ * External dependency - System Tick acquisition
  ******************************************************************************/
-/* 使用FreeRTOS的tick */
+/* Use FreeRTOS tick */
 #include "FreeRTOS.h"
 #include "task.h"
 #define GET_TICK_MS()   (xTaskGetTickCount() * portTICK_PERIOD_MS)
 
 /*******************************************************************************
- * 全局变量
+ * Global variables
  ******************************************************************************/
 static ShellIOManager_t g_io_manager;
 
 /*******************************************************************************
- * 内部函数声明
+ * Internal function declarations
  ******************************************************************************/
 static uint8_t CheckCDCAvailable(void);
 static uint8_t CheckBLEAvailable(void);
@@ -35,7 +35,7 @@ static void SwitchToIO(ShellIOType_t io_type);
 static uint8_t IsTimeout(uint32_t start_tick, uint32_t timeout_ms);
 
 /*******************************************************************************
- * API实现
+ * API implementation
  ******************************************************************************/
 
 void ShellIOManager_Init(void)
@@ -48,11 +48,11 @@ void ShellIOManager_Init(void)
     g_io_manager.cdc_pending = 0;
     g_io_manager.ble_pending = 0;
     
-    /* 初始化Shell系统 */
+    /* Initialize Shell system */
     Shell_Init();
     Shell_RegisterAllModules();
     
-    /* 默认使用CDC接口 */
+    /* Default to CDC interface */
     Shell_SetIO(ShellIO_CDC_Get());
     g_io_manager.active_io = SHELL_IO_CDC;
 }
@@ -65,29 +65,29 @@ void ShellIOManager_Process(void)
     
     current_tick = GET_TICK_MS();
     
-    /* 检查各接口是否有数据 */
+    /* Check which interface has data */
     cdc_has_data = CheckCDCAvailable();
     ble_has_data = CheckBLEAvailable();
     
-    /* 更新pending标志 */
+    /* Update pending flags */
     if (cdc_has_data) g_io_manager.cdc_pending = 1;
     if (ble_has_data) g_io_manager.ble_pending = 1;
     
-    /* 检查锁定超时（防止死锁） */
+    /* Check lock timeout (prevent deadlock) */
     if (g_io_manager.state == SHELL_IO_STATE_LOCKED)
     {
         if (IsTimeout(g_io_manager.lock_tick, SHELL_IO_LOCK_TIMEOUT))
         {
-            /* 锁定超时，强制解锁 */
+            /* Lock timeout, force unlock */
             g_io_manager.state = SHELL_IO_STATE_ACTIVE;
         }
     }
     
-    /* 根据状态处理 */
+    /* Handle according to state */
     switch (g_io_manager.state)
     {
         case SHELL_IO_STATE_IDLE:
-            /* 空闲状态：检测哪个接口有数据 */
+            /* Idle state: check which interface has data */
             if (cdc_has_data)
             {
                 SwitchToIO(SHELL_IO_CDC);
@@ -103,24 +103,24 @@ void ShellIOManager_Process(void)
             break;
             
         case SHELL_IO_STATE_ACTIVE:
-            /* 活跃状态：优先处理当前接口，但可以切换 */
+            /* Active state: prioritize current interface, but can switch */
             if (g_io_manager.active_io == SHELL_IO_CDC)
             {
                 if (cdc_has_data)
                 {
-                    /* CDC有数据，继续处理 */
+                    /* CDC has data, continue processing */
                     g_io_manager.last_activity_tick = current_tick;
                 }
                 else if (ble_has_data && IsTimeout(g_io_manager.last_activity_tick, SHELL_IO_TIMEOUT_MS))
                 {
-                    /* CDC超时且BLE有数据，切换到BLE */
+                    /* CDC timeout and BLE has data, switch to BLE */
                     SwitchToIO(SHELL_IO_BLE);
                     g_io_manager.last_activity_tick = current_tick;
                 }
                 else if (!cdc_has_data && !ble_has_data && 
                          IsTimeout(g_io_manager.last_activity_tick, SHELL_IO_TIMEOUT_MS))
                 {
-                    /* 两边都没数据且超时，回到空闲 */
+                    /* Both sides have no data and timeout, return to idle */
                     g_io_manager.state = SHELL_IO_STATE_IDLE;
                 }
             }
@@ -128,27 +128,27 @@ void ShellIOManager_Process(void)
             {
                 if (ble_has_data)
                 {
-                    /* BLE有数据，继续处理 */
+                    /* BLE has data, continue processing */
                     g_io_manager.last_activity_tick = current_tick;
                 }
                 else if (cdc_has_data && IsTimeout(g_io_manager.last_activity_tick, SHELL_IO_TIMEOUT_MS))
                 {
-                    /* BLE超时且CDC有数据，切换到CDC */
+                    /* BLE timeout and CDC has data, switch to CDC */
                     SwitchToIO(SHELL_IO_CDC);
                     g_io_manager.last_activity_tick = current_tick;
                 }
                 else if (!cdc_has_data && !ble_has_data && 
                          IsTimeout(g_io_manager.last_activity_tick, SHELL_IO_TIMEOUT_MS))
                 {
-                    /* 两边都没数据且超时，回到空闲 */
+                    /* Both sides have no data and timeout, return to idle */
                     g_io_manager.state = SHELL_IO_STATE_IDLE;
                 }
             }
             break;
             
         case SHELL_IO_STATE_LOCKED:
-            /* 锁定状态：只处理当前接口，不切换 */
-            /* 更新活动时间防止被强制解锁 */
+            /* Locked state: only process current interface, do not switch */
+            /* Update activity time to prevent forced unlock */
             if ((g_io_manager.active_io == SHELL_IO_CDC && cdc_has_data) ||
                 (g_io_manager.active_io == SHELL_IO_BLE && ble_has_data))
             {
@@ -157,10 +157,10 @@ void ShellIOManager_Process(void)
             break;
     }
     
-    /* 调用Shell处理函数 */
+    /* Call Shell process function */
     Shell_Process();
     
-    /* 清除已处理的pending标志 */
+    /* Clear processed pending flags */
     if (g_io_manager.active_io == SHELL_IO_CDC && !cdc_has_data)
     {
         g_io_manager.cdc_pending = 0;
@@ -183,19 +183,19 @@ ShellIOState_t ShellIOManager_GetState(void)
 
 uint8_t ShellIOManager_TryLock(ShellIOType_t io_type)
 {
-    /* 如果已经被其他接口锁定，返回失败 */
+    /* If already locked by other interface, return failure */
     if (g_io_manager.state == SHELL_IO_STATE_LOCKED && 
         g_io_manager.active_io != io_type)
     {
         return 0;
     }
     
-    /* 锁定 */
+    /* Lock */
     g_io_manager.state = SHELL_IO_STATE_LOCKED;
     g_io_manager.active_io = io_type;
     g_io_manager.lock_tick = GET_TICK_MS();
     
-    /* 切换到对应接口 */
+    /* Switch to corresponding interface */
     SwitchToIO(io_type);
     
     return 1;
@@ -212,7 +212,7 @@ void ShellIOManager_Unlock(void)
 
 uint8_t ShellIOManager_SwitchIO(ShellIOType_t io_type)
 {
-    /* 锁定状态不允许切换 */
+    /* Switching not allowed in locked state */
     if (g_io_manager.state == SHELL_IO_STATE_LOCKED)
     {
         return 0;
@@ -231,7 +231,7 @@ void ShellIOManager_UpdateActivity(ShellIOType_t io_type)
     {
         g_io_manager.last_activity_tick = GET_TICK_MS();
         
-        /* 如果是锁定状态，也更新锁定时间 */
+        /* If in locked state, update lock time as well */
         if (g_io_manager.state == SHELL_IO_STATE_LOCKED)
         {
             g_io_manager.lock_tick = GET_TICK_MS();
@@ -250,7 +250,7 @@ const char* ShellIOManager_GetIOName(ShellIOType_t io_type)
 }
 
 /*******************************************************************************
- * 内部函数实现
+ * Internal function implementation
  ******************************************************************************/
 
 static uint8_t CheckCDCAvailable(void)
@@ -277,7 +277,7 @@ static void SwitchToIO(ShellIOType_t io_type)
 {
     if (g_io_manager.active_io == io_type)
     {
-        return;  /* 已经是该接口 */
+        return;  /* Already this interface */
     }
     
     switch (io_type)
@@ -300,7 +300,7 @@ static uint8_t IsTimeout(uint32_t start_tick, uint32_t timeout_ms)
     uint32_t current = GET_TICK_MS();
     uint32_t elapsed;
     
-    /* 处理溢出 */
+    /* Handle overflow */
     if (current >= start_tick)
     {
         elapsed = current - start_tick;

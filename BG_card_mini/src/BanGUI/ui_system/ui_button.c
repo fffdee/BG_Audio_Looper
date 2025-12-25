@@ -1,6 +1,6 @@
 /**
  * @file    ui_button.c
- * @brief   4按键输入处理模块实现
+ * @brief   4-button input processing module implementation
  * @author  BG Card Team
  * @date    2025-12-18
  */
@@ -11,15 +11,15 @@
 #include <string.h>
 
 /*===========================================================================
- * GPIO 映射
+ * GPIO mapping
  *===========================================================================*/
 
-/* 按键GPIO配置 */
+/* Button GPIO configuration */
 typedef struct {
-    uint32_t port_ie;       /* 输入使能寄存器 */
-    uint32_t port_in;       /* 输入寄存器 */
-    uint32_t port_pu;       /* 上拉寄存器 */
-    uint32_t pin;           /* 引脚位 */
+    uint32_t port_ie;       /* Input enable register */
+    uint32_t port_in;       /* Input register */
+    uint32_t port_pu;       /* Pull-up register */
+    uint32_t pin;           /* Pin index */
 } UI_ButtonGPIO_t;
 
 static const UI_ButtonGPIO_t button_gpio[UI_BTN_COUNT] = {
@@ -34,13 +34,13 @@ static const char* button_names[UI_BTN_COUNT] = {
 };
 
 /*===========================================================================
- * 私有变量
+ * Private variables
  *===========================================================================*/
 
 static UI_ButtonInfo_t button_info[UI_BTN_COUNT];
 static UI_ButtonCallback_t event_callback = NULL;
 
-/* 事件队列 */
+/* Event queue */
 #define EVENT_QUEUE_SIZE    8
 static UI_ButtonEventData_t event_queue[EVENT_QUEUE_SIZE];
 static uint8_t event_head = 0;
@@ -48,11 +48,11 @@ static uint8_t event_tail = 0;
 static uint8_t event_count = 0;
 
 /*===========================================================================
- * 私有函数
+ * Private functions
  *===========================================================================*/
 
 /**
- * @brief 读取按键GPIO状态
+ * @brief Read button GPIO state
  */
 static uint8_t read_button_gpio(UI_ButtonID_t id)
 {
@@ -61,7 +61,7 @@ static uint8_t read_button_gpio(UI_ButtonID_t id)
 }
 
 /**
- * @brief 推送事件到队列
+ * @brief Push event to queue
  */
 static void push_event(UI_ButtonID_t id, UI_ButtonEvent_t event, uint16_t duration)
 {
@@ -69,13 +69,11 @@ static void push_event(UI_ButtonID_t id, UI_ButtonEvent_t event, uint16_t durati
     evt.id = id;
     evt.event = event;
     evt.press_duration = duration;
-    
-    /* 回调通知 */
+    /* Callback notification */
     if (event_callback) {
         event_callback(&evt);
     }
-    
-    /* 入队 */
+    /* Enqueue */
     if (event_count < EVENT_QUEUE_SIZE) {
         event_queue[event_tail] = evt;
         event_tail = (event_tail + 1) % EVENT_QUEUE_SIZE;
@@ -84,26 +82,25 @@ static void push_event(UI_ButtonID_t id, UI_ButtonEvent_t event, uint16_t durati
 }
 
 /*===========================================================================
- * API 实现
+ * API Implementation
  *===========================================================================*/
 
 void UI_Button_Init(void)
 {
     uint8_t i;
-    
-    /* 初始化按键GPIO - 输入模式，内部上拉 */
+    /* Initialize button GPIO - input mode, internal pull-up */
     for (i = 0; i < UI_BTN_COUNT; i++) {
-        /* 使能输入 */
+        /* Enable input */
         GPIO_RegOneBitSet(button_gpio[i].port_ie, button_gpio[i].pin);
-        /* 禁止输出 */
+        /* Disable output */
         if (button_gpio[i].port_ie == GPIO_A_IE) {
             GPIO_RegOneBitClear(GPIO_A_OE, button_gpio[i].pin);
         } else {
             GPIO_RegOneBitClear(GPIO_B_OE, button_gpio[i].pin);
         }
-        /* 使能上拉 */
+        /* Enable pull-up */
         GPIO_RegOneBitSet(button_gpio[i].port_pu, button_gpio[i].pin);
-        /* 禁止下拉 */
+        /* Disable pull-down */
         if (button_gpio[i].port_ie == GPIO_A_IE) {
             GPIO_RegOneBitClear(GPIO_A_PD, button_gpio[i].pin);
         } else {
@@ -111,14 +108,14 @@ void UI_Button_Init(void)
         }
     }
     
-    /* 初始化按键状态 */
+    /* Initialize button states */
     memset(button_info, 0, sizeof(button_info));
     for (i = 0; i < UI_BTN_COUNT; i++) {
-        button_info[i].raw_state = 1;  /* 默认高电平(未按下) */
+        button_info[i].raw_state = 1;  /* Default high level (not pressed) */
         button_info[i].state = UI_BTN_STATE_IDLE;
     }
     
-    /* 清空事件队列 */
+    /* Clear event queue */
     event_head = 0;
     event_tail = 0;
     event_count = 0;
@@ -134,7 +131,7 @@ void UI_Button_Scan(uint16_t delta_ms)
         UI_ButtonInfo_t* btn = &button_info[i];
         current_raw = read_button_gpio((UI_ButtonID_t)i);
         
-        /* 去抖处理 */
+        /* Debounce processing */
         if (current_raw != btn->raw_state) {
             btn->debounce_cnt++;
             if (btn->debounce_cnt >= (UI_BTN_DEBOUNCE_MS / delta_ms)) {
@@ -142,16 +139,16 @@ void UI_Button_Scan(uint16_t delta_ms)
                 btn->raw_state = current_raw;
                 
                 if (current_raw == 0) {
-                    /* 按键按下 (低电平有效) */
+                    /* Button pressed (active low) */
                     btn->state = UI_BTN_STATE_PRESSED;
                     btn->press_time = 0;
                     btn->repeat_time = 0;
                     btn->long_press_fired = false;
                     push_event((UI_ButtonID_t)i, UI_BTN_EVENT_PRESSED, 0);
                 } else {
-                    /* 按键释放 */
+                    /* Button released */
                     if (btn->state == UI_BTN_STATE_PRESSED) {
-                        /* 短按释放 = 单击 */
+                        /* Short press release = click */
                         push_event((UI_ButtonID_t)i, UI_BTN_EVENT_CLICKED, btn->press_time);
                     }
                     push_event((UI_ButtonID_t)i, UI_BTN_EVENT_RELEASED, btn->press_time);
@@ -163,11 +160,11 @@ void UI_Button_Scan(uint16_t delta_ms)
             btn->debounce_cnt = 0;
         }
         
-        /* 长按和连按处理 */
+        /* Long press and repeat press processing */
         if (btn->state == UI_BTN_STATE_PRESSED || btn->state == UI_BTN_STATE_LONG_PRESSED) {
             btn->press_time += delta_ms;
             
-            /* 长按检测 */
+            /* Long press detection */
             if (!btn->long_press_fired && btn->press_time >= UI_BTN_LONG_PRESS_MS) {
                 btn->long_press_fired = true;
                 btn->state = UI_BTN_STATE_LONG_PRESSED;
@@ -175,7 +172,7 @@ void UI_Button_Scan(uint16_t delta_ms)
                 push_event((UI_ButtonID_t)i, UI_BTN_EVENT_LONG_PRESS, btn->press_time);
             }
             
-            /* 连按处理 */
+            /* Repeat press processing */
             if (btn->state == UI_BTN_STATE_LONG_PRESSED) {
                 btn->repeat_time += delta_ms;
                 if (btn->repeat_time >= UI_BTN_REPEAT_MS) {

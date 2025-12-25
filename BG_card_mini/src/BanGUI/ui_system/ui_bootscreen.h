@@ -1,14 +1,14 @@
 /**
  * @file    ui_bootscreen.h
- * @brief   开机画面模块
+ * @brief   Boot screen module
  * @author  BG Card Team
  * @date    2025-12-18
  * 
- * 功能:
- *   - 显示Logo
- *   - 显示产品名称/版本
- *   - 显示进度条
- *   - 淡入淡出效果
+ * Features:
+ *   - Display Logo
+ *   - Display product name/version
+ *   - Display progress bar
+ *   - Fade in/out effect
  */
 
 #ifndef __UI_BOOTSCREEN_H__
@@ -22,89 +22,89 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * 配置
+ * Configuration
  *===========================================================================*/
 
-/* 开机画面阶段 */
+/* Boot screen stages */
 typedef enum {
-    UI_BOOT_STAGE_INIT = 0,     /* 初始化 */
-    UI_BOOT_STAGE_LOGO,         /* 显示Logo */
-    UI_BOOT_STAGE_INFO,         /* 显示信息 */
-    UI_BOOT_STAGE_PROGRESS,     /* 加载进度 */
-    UI_BOOT_STAGE_FADEOUT,      /* 淡出 */
-    UI_BOOT_STAGE_DONE,         /* 完成 */
+    UI_BOOT_STAGE_INIT = 0,     /* Initialization */
+    UI_BOOT_STAGE_LOGO,         /* Display Logo */
+    UI_BOOT_STAGE_INFO,         /* Display info */
+    UI_BOOT_STAGE_PROGRESS,     /* Loading progress */
+    UI_BOOT_STAGE_FADEOUT,      /* Fade out */
+    UI_BOOT_STAGE_DONE,         /* Done */
 } UI_BootStage_t;
 
-/* 开机画面配置 */
+/* Boot screen configuration */
 typedef struct {
-    const uint8_t* logo_data;       /* Logo图像数据 (RGB565) */
-    uint16_t logo_width;            /* Logo宽度 */
-    uint16_t logo_height;           /* Logo高度 */
-    const char* product_name;       /* 产品名称 */
-    const char* version;            /* 版本号 */
-    const char* copyright;          /* 版权信息 */
-    uint16_t display_time;          /* 显示时间(ms) */
-    bool show_progress;             /* 是否显示进度条 */
+    const uint8_t* logo_data;       /* Logo image data (RGB565) */
+    uint16_t logo_width;            /* Logo width */
+    uint16_t logo_height;           /* Logo height */
+    const char* product_name;       /* Product name */
+    const char* version;            /* Version number */
+    const char* copyright;          /* Copyright info */
+    uint16_t display_time;          /* Display time (ms) */
+    bool show_progress;             /* Whether to show progress bar */
 } UI_BootConfig_t;
 
 /*===========================================================================
- * API 函数
+ * API Functions
  *===========================================================================*/
 
 /**
- * @brief 初始化开机画面
- * @param config 配置参数，NULL使用默认配置
+ * @brief Initialize boot screen
+ * @param config Configuration parameter, NULL for default config
  */
 void UI_BootScreen_Init(const UI_BootConfig_t* config);
 
 /**
- * @brief 开始显示开机画面
+ * @brief Start displaying boot screen
  */
 void UI_BootScreen_Start(void);
 
 /**
- * @brief 更新开机画面 (在主循环中调用)
- * @param delta_ms 时间间隔(ms)
- * @return true继续显示，false显示完成
+ * @brief Update boot screen (called in main loop)
+ * @param delta_ms Time interval (ms)
+ * @return true to continue displaying, false if display is complete
  */
 bool UI_BootScreen_Update(uint16_t delta_ms);
 
 /**
- * @brief 设置加载进度
- * @param progress 进度 0-100
- * @param message 进度消息 (可选)
+ * @brief Set loading progress
+ * @param progress Progress 0-100
+ * @param message Progress message (optional)
  */
 void UI_BootScreen_SetProgress(uint8_t progress, const char* message);
 
 /**
- * @brief 跳过开机画面
+ * @brief Skip boot screen
  */
 void UI_BootScreen_Skip(void);
 
 /**
- * @brief 检查开机画面是否完成
- * @return true已完成
+ * @brief Check if boot screen is complete
+ * @return true if complete
  */
 bool UI_BootScreen_IsDone(void);
 
 /**
- * @brief 获取当前阶段
- * @return 当前阶段
+ * @brief Get current stage
+ * @return Current stage
  */
 UI_BootStage_t UI_BootScreen_GetStage(void);
 
 /**
- * @brief 设置Logo数据
- * @param data 图像数据 (RGB565)
- * @param width 宽度
- * @param height 高度
+ * @brief Set Logo data
+ * @param data Image data (RGB565)
+ * @param width Width
+ * @param height Height
  */
 void UI_BootScreen_SetLogo(const uint8_t* data, uint16_t width, uint16_t height);
 
 /**
- * @brief 设置产品信息
- * @param name 产品名称
- * @param version 版本号
+ * @brief Set product information
+ * @param name Product name
+ * @param version Version number
  */
 void UI_BootScreen_SetProductInfo(const char* name, const char* version);
 

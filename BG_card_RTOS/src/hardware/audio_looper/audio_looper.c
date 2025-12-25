@@ -398,7 +398,7 @@ void loop_stop_recording(void)
             // nand_audio_flush_buffer(flash_device_id);
         }
         
-        // 记录录制长度并重置播放位置
+        // Record the recording length and reset the playback position
         g_loop_manager.record_length = g_loop_manager.sector_address;
         g_loop_manager.play_position = 0;
         g_loop_manager.state = LOOP_STATE_PLAYING;
@@ -407,32 +407,32 @@ void loop_stop_recording(void)
         DBG("Recording stopped manually: total_samples=%lu, record_length=%lu bytes, last_sample=%d\n",
             (unsigned long)g_loop_stats.recording_sample_count, (unsigned long)g_loop_manager.record_length, g_loop_stats.last_recorded_sample);
         
-        // 重置地址指针准备下次录制
+        // Reset address pointer for next recording
         g_loop_manager.sector_address = 0;
         g_loop_stats.recording_sample_count = 0;
     }
 }
 
 /**
- * @brief 处理录制逻辑
- * @param audio_data 音频数据
- * @param buffer 缓冲区
- * @param length 数据长度
+ * @brief Handle recording logic
+ * @param audio_data Audio data
+ * @param buffer Buffer
+ * @param length Data length
  */
 void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t length)
 {
     if (g_loop_manager.state != LOOP_STATE_RECORDING) {
-        return;  // 不在录制状态
+        return;  // Not in recording state
     }
     
-    // 移除record_flag依赖，直接处理音频数据
-    // 录制应该基于音频数据可用性，而不是定时器
+    // Remove record_flag dependency, process audio data directly
+    // Recording should be based on audio data availability, not timer
     
-    // 只使用Flash录制模式
+    // Only use Flash recording mode
     {
-        // Flash录制逻辑 - 确保长度参数正确
+        // Flash recording logic - ensure length parameter is correct
         
-        // 数据校验：检查输入音频数据是否有效
+        // Data validation: check if input audio data is valid
         uint16_t non_zero_count = 0;
         int32_t amplitude_sum = 0;
         int16_t max_amplitude = 0;
@@ -441,23 +441,23 @@ void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t lengt
             int16_t sample = audio_data[i];
             if (sample != 0) {
                 non_zero_count++;
-                amplitude_sum += (sample < 0) ? -sample : sample;  // 手动实现abs
+                amplitude_sum += (sample < 0) ? -sample : sample;  // Manually implement abs
                 if ((sample < 0 ? -sample : sample) > (max_amplitude < 0 ? -max_amplitude : max_amplitude)) {
                     max_amplitude = sample;
                 }
             }
         }
         
-        // 记录统计信息
+        // Record statistics
         g_loop_stats.recording_sample_count += length;
         if (length > 0) {
             g_loop_stats.last_recorded_sample = audio_data[length - 1];
         }
         
-        // 如果输入信号太弱，提示调整增益
+        // If input signal is too weak, prompt to adjust gain
         if (g_loop_stats.recording_sample_count % 200 == 0 && non_zero_count > 0) {
             int32_t avg_amplitude = amplitude_sum / non_zero_count;
-            if (avg_amplitude < 100) {  // 信号较弱
+            if (avg_amplitude < 100) {  // Signal is weak
                 DBG("WARNING: Input signal weak, avg_amp=%ld, max=%d, consider increasing gain\n",
                     (long)avg_amplitude, max_amplitude);
             }
@@ -465,24 +465,24 @@ void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t lengt
         
         convertInt16ArrayToUint8Array(audio_data, buffer, length);
         
-        // Flash页面大小通常是256字节，我们写入length*2字节的数据
-        uint32_t bytes_to_write = length * 2;  // 16位音频转8位需要*2
+        // Flash page size is usually 256 bytes, we write length*2 bytes of data
+        uint32_t bytes_to_write = length * 2;  // 16-bit audio to 8-bit needs *2
         uint8_t flash_device_id = loop_get_flash_device_id();
         
         uint8_t write_result;
         
-        // 使用优化的音频写入函数
+        // Use optimized audio write function
         if (flash_device_id == DEV_NAND) {
-            // NAND Flash使用页面对齐缓冲写入 - 暂时使用标准写入
+            // NAND Flash uses page-aligned buffer write - temporarily use standard write
             write_result = BG_flash_manager.PageProgram(g_loop_manager.sector_address, buffer, bytes_to_write, flash_device_id);
         } else {
-            // NOR Flash直接写入
+            // NOR Flash direct write
             write_result = BG_flash_manager.PageProgram(g_loop_manager.sector_address, buffer, bytes_to_write, flash_device_id);
         }
         
-        // 检查写入是否成功
+        // Check if write is successful
         if (write_result != FLASH_STATUS_OK) {
-            // 写入失败，停止录制
+            // Write failed, stop recording
             // DBG("Audio write failed, stopping recording\n");
             g_loop_manager.state = LOOP_STATE_PLAYING;
 
@@ -490,22 +490,22 @@ void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t lengt
         }
         
         g_loop_stats.recording_sample_count++;
-        g_loop_manager.sector_address += bytes_to_write;  // 按实际写入字节数递增
+        g_loop_manager.sector_address += bytes_to_write;  // Increment by actual written bytes
         
-//        if (rec % 500 == 0) {  // 减少调试输出频率，避免影响实时性
+//        if (rec % 500 == 0) {  // Reduce debug output frequency to avoid affecting real-time performance
 //            //DBG("Flash recording: packets=%d, addr=%d, bytes=%d, nonzero=%d, avg_amp=%d, last_sample=%d\n",
 //                rec, g_loop_manager.sector_address, bytes_to_write, non_zero_count,
 //                non_zero_count > 0 ? amplitude_sum / non_zero_count : 0, last_recorded_sample);
 //        }
         
-        // 检查Flash存储空间
+        // Check Flash storage space
         if (g_loop_manager.sector_address >= BG_flash_manager.GetTotalByte(flash_device_id)) {
             DBG("Flash full, stop recording. Address: %lu, Total: %lu (%s)\n", 
                 (unsigned long)g_loop_manager.sector_address, (unsigned long)BG_flash_manager.GetTotalByte(flash_device_id),
                 g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
             
-            g_loop_manager.record_length = g_loop_manager.sector_address;  // 正确记录录制长度
-            g_loop_manager.play_position = 0;  // 重置播放位置
+            g_loop_manager.record_length = g_loop_manager.sector_address;  // Correctly record recording length
+            g_loop_manager.play_position = 0;  // Reset playback position
             g_loop_manager.state = LOOP_STATE_PLAYING;
 
             DBG("Recording finished: total_samples=%lu, record_length=%lu, last_sample=%d\n", 
@@ -515,67 +515,67 @@ void loop_process_recording(int16_t* audio_data, uint8_t* buffer, uint16_t lengt
             g_loop_stats.playback_sample_count = 0;
         }
         
-        // 移除外部变量依赖 - 不再需要同步sectorAddress
+        // Remove external variable dependency - no need to sync sectorAddress anymore
     }
 }
 
 /**
- * @brief 处理播放逻辑
- * @param output_data 输出音频数据
- * @param buffer 缓冲区
- * @param length 数据长度
+ * @brief Handle playback logic
+ * @param output_data Output audio data
+ * @param buffer Buffer
+ * @param length Data length
  */
 void loop_process_playback(int16_t* output_data, uint8_t* buffer, uint16_t length)
 {
     if (g_loop_manager.state != LOOP_STATE_PLAYING) {
-        return;  // 不在播放状态，保持原始音频数据不变
+        return;  // Not in playback state, keep original audio data unchanged
     }
     
     uint16_t i;
     
-    // 只使用Flash播放模式
+    // Only use Flash playback mode
     {
-        // Flash播放逻辑
+        // Flash playback logic
         if (g_loop_manager.record_length == 0) {
             DBG("No recorded data in flash, record_length=0\n");
-            return;  // 没有录制数据，保持原始音频
+            return;  // No recorded data, keep original audio
         }
         
-        // 确保播放位置有效
+        // Ensure playback position is valid
         if (g_loop_manager.play_position >= g_loop_manager.record_length) {
             g_loop_manager.play_position = 0;
         }
         
-        // 计算要读取的字节数
-        uint32_t bytes_to_read = length * 2;  // 16位音频需要读取length*2字节
+        // Calculate bytes to read
+        uint32_t bytes_to_read = length * 2;  // 16-bit audio needs to read length*2 bytes
         
-        // 确保不会超过录制长度
+        // Ensure not to exceed recording length
         if (g_loop_manager.play_position + bytes_to_read > g_loop_manager.record_length) {
             bytes_to_read = g_loop_manager.record_length - g_loop_manager.play_position;
             if (bytes_to_read == 0 || bytes_to_read % 2 != 0) {
-                // 已到末尾或奇数字节，重新开始
+                // Reached the end or odd bytes, restart
                 g_loop_manager.play_position = 0;
                 bytes_to_read = (length * 2 > g_loop_manager.record_length) ?
                                g_loop_manager.record_length : length * 2;
-                if (bytes_to_read % 2 != 0) bytes_to_read--;  // 确保偶数字节
+                if (bytes_to_read % 2 != 0) bytes_to_read--;  // Ensure even bytes
                 g_loop_stats.playback_sample_count++;
                 DBG("Flash loop restart, count: %lu, length: %lu, reading: %lu\n",
                     (unsigned long)g_loop_stats.playback_sample_count, (unsigned long)g_loop_manager.record_length, (unsigned long)bytes_to_read);
             }
         }
         
-        // 确保有效的读取长度
+        // Ensure valid read length
         if (bytes_to_read == 0) {
             DBG("Warning: bytes_to_read=0, skipping playback\n");
             return;
         }
         
-        // 读取Flash数据
+        // Read Flash data
         uint8_t flash_device_id = loop_get_flash_device_id();
         BG_flash_manager.ReadData(g_loop_manager.play_position, buffer, bytes_to_read, flash_device_id);
         convertUint8ArrayToInt16Array(buffer, ReadBuf, bytes_to_read/2);
         
-        // 数据校验：检查读取的音频数据
+        // Data validation: check the read audio data
         uint16_t valid_samples = bytes_to_read / 2;
         uint16_t non_zero_read = 0;
         int32_t read_amplitude_sum = 0;
@@ -583,35 +583,35 @@ void loop_process_playback(int16_t* output_data, uint8_t* buffer, uint16_t lengt
         for (j = 0; j < valid_samples; j++) {
             if (ReadBuf[j] != 0) {
                 non_zero_read++;
-                read_amplitude_sum += (ReadBuf[j] < 0) ? -ReadBuf[j] : ReadBuf[j];  // 手动实现abs
+                read_amplitude_sum += (ReadBuf[j] < 0) ? -ReadBuf[j] : ReadBuf[j];  // Manually implement abs
             }
         }
         
-        // 记录第一个播放的样本用于校验
+        // Record the first played sample for validation
         if (g_loop_manager.play_position == 0 && valid_samples > 0) {
             g_loop_stats.first_playback_sample = ReadBuf[0];
             DBG("First playback sample: %d (should match last recorded: %d)\n",
                 g_loop_stats.first_playback_sample, g_loop_stats.last_recorded_sample);
         }
         
-        // 混合音频数据
+        // Mix audio data
         uint16_t samples_to_mix = (valid_samples < length) ? valid_samples : length;
         for (i = 0; i < samples_to_mix; i++) {
             int32_t mixed = (int32_t)output_data[i] + (int32_t)ReadBuf[i];
-            output_data[i] = __nds32__clips(mixed, 15);  // 16位饱和限制
+            output_data[i] = __nds32__clips(mixed, 15);  // 16-bit saturation limit
         }
         
         g_loop_stats.playback_sample_count += samples_to_mix;
         g_loop_manager.play_position += bytes_to_read;
         
-        // 移除外部变量依赖
+        // Remove external variable dependency
         // sectorAddress = g_loop_manager.play_position;
     }
 }
 
 /**
- * @brief 定时器更新函数，在1ms中断中调用
- * 处理所有需要实时更新的状态
+ * @brief Timer update function, called in 1ms interrupt
+ * Handles all states that need real-time update
  */
 void loop_timer_update(void)
 {
@@ -619,16 +619,16 @@ void loop_timer_update(void)
         return;
     }
     
-    // 可以在这里添加需要定时更新的逻辑
-    // 例如：LED指示、状态监控等
+    // Add logic that needs periodic update here
+    // For example: LED indication, status monitoring, etc.
     
-    // 移除外部变量同步
+    // Remove external variable sync
     // sectorAddress = (g_loop_manager.state == LOOP_STATE_PLAYING) ?
     //                g_loop_manager.play_position : g_loop_manager.sector_address;
 }
 
 /**
- * @brief 获取当前循环状态
+ * @brief Get current loop state
  */
 LoopState_t loop_get_state(void)
 {
@@ -636,7 +636,7 @@ LoopState_t loop_get_state(void)
 }
 
 /**
- * @brief 检查是否正在录制
+ * @brief Check if recording
  */
 uint8_t loop_is_recording(void)
 {
@@ -645,16 +645,16 @@ uint8_t loop_is_recording(void)
 }
 
 /**
- * @brief 检查是否正在播放
+ * @brief Check if playing
  */
 uint8_t loop_is_playing(void)
 {
-    return (g_loop_manager.state == LOOP_STATE_PLAYING ||
+    return (g_loop_manager.state == LOOP_STATE_PLAYING || 
             g_loop_manager.state == LOOP_STATE_RECORDING_AND_PLAYING) ? 1 : 0;
 }
 
 /**
- * @brief 获取当前地址
+ * @brief Get current address
  */
 uint32_t loop_get_current_address(void)
 {
@@ -663,7 +663,7 @@ uint32_t loop_get_current_address(void)
 }
 
 /**
- * @brief 获取录制长度
+ * @brief Get recording length
  */
 uint32_t loop_get_record_length(void)
 {
@@ -671,12 +671,12 @@ uint32_t loop_get_record_length(void)
 }
 
 // ============================================================================
-// 循环模式控制函数实现
+// Loop mode control function implementation
 // ============================================================================
 
 /**
- * @brief 设置循环模式
- * @param mode 要设置的循环模式
+ * @brief Set loop mode
+ * @param mode Loop mode to set
  */
 void loop_set_mode(LoopMode_t mode)
 {
@@ -684,7 +684,7 @@ void loop_set_mode(LoopMode_t mode)
         g_loop_manager.mode = mode;
         DBG("Loop mode set to %s\n", mode == LOOP_MODE_SONG ? "SONG" : "FREE");
         
-        // 如果切换到歌曲模式，需要重新计算主段信息
+        // If switching to song mode, need to recalculate master segment info
         if (mode == LOOP_MODE_SONG) {
             loop_update_master_segment_info();
         }
@@ -692,8 +692,8 @@ void loop_set_mode(LoopMode_t mode)
 }
 
 /**
- * @brief 获取当前循环模式
- * @return 当前循环模式
+ * @brief Get current loop mode
+ * @return Current loop mode
  */
 LoopMode_t loop_get_mode(void)
 {
@@ -701,8 +701,8 @@ LoopMode_t loop_get_mode(void)
 }
 
 /**
- * @brief 检查是否为歌曲模式
- * @return 1如果是歌曲模式，0如果不是
+ * @brief Check if song mode
+ * @return 1 if song mode, 0 otherwise
  */
 uint8_t loop_is_song_mode(void)
 {
@@ -710,8 +710,8 @@ uint8_t loop_is_song_mode(void)
 }
 
 /**
- * @brief 检查是否为自由模式
- * @return 1如果是自由模式，0如果不是
+ * @brief Check if free mode
+ * @return 1 if free mode, 0 otherwise
  */
 uint8_t loop_is_free_mode(void)
 {
@@ -719,8 +719,8 @@ uint8_t loop_is_free_mode(void)
 }
 
 /**
- * @brief 更新主段信息（内部使用）
- * 在歌曲模式下，找到最长的段作为主段，用于循环基准
+ * @brief Update master segment info (internal use)
+ * In song mode, find the longest segment as the master segment for loop reference
  */
 void loop_update_master_segment_info(void)
 {
@@ -728,7 +728,7 @@ void loop_update_master_segment_info(void)
     uint8_t master_index = 0;
     uint8_t i;
     
-    // 找到最长的段
+    // Find the longest segment
     for (i = 0; i < MAX_SEGMENTS; i++) {
         if (g_loop_manager.segments[i].is_active && 
             g_loop_manager.segments[i].length_bytes > max_length) {
@@ -747,28 +747,28 @@ void loop_update_master_segment_info(void)
 }
 
 /**
- * @brief 段录制处理函数 - 基于段实例
- * @param segment_index 要录制的段索引
- * @param audio_data uint32_t格式的音频数据
- * @param buffer 临时缓冲区用于数据转换
- * @param length uint32_t数据的数量
+ * @brief Segment recording handler - based on segment instance
+ * @param segment_index Index of the segment to record
+ * @param audio_data Audio data in uint32_t format
+ * @param buffer Temporary buffer for data conversion
+ * @param length Number of uint32_t data
  */
 void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data, uint8_t* buffer, uint16_t length)
 {
     if (segment_index >= MAX_SEGMENTS) {
-        return;  // 无效段索引
+        return;  // Invalid segment index
     }
     
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
     if (segment->state != SEGMENT_RECORDING) {
-        return;  // 段不在录制状态
+        return;  // Segment not in recording state
     }
     
-    uint32_t bytes_to_write = 192;  // 只存储192字节（48个uint32_t * 4字节）
+    uint32_t bytes_to_write = 192;  // Only store 192 bytes (48 uint32_t * 4 bytes)
     uint8_t write_buffer[192];
     
-    // 直接录制原始音频数据
+    // Directly record raw audio data
     convertUint32ArrayToUint8Array(audio_data, write_buffer, length);
     uint32_t write_address = segment->start_address + 
                             segment->length_pages * g_loop_manager.page_size;
@@ -777,23 +777,23 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
     uint8_t result = BG_flash_manager.PageProgram(write_address, write_buffer, bytes_to_write, flash_device_id);
     
     if (result == FLASH_STATUS_OK) {
-        segment->length_pages++;  // 更新段长度
-        // 只在段开始和结束时打印，避免频繁输出
+        segment->length_pages++;  // Update segment length
+        // Only print at segment start and end to avoid frequent output
 //        if (segment->length_pages == 1 || segment->length_pages % 100 == 0) {
 //            DBG("Segment %d recording: page %lu written\n", segment_index, (unsigned long)segment->length_pages);
 //        }
     } else {
-        // 错误信息保留，因为不会频繁出现
+        // Error message retained as it should not occur frequently
 //        DBG("Segment %d recording error: %d at address 0x%lx\n",
 //            segment_index, result, (unsigned long)write_address);
     }
 }
 
 /**
- * @brief 总录制处理函数 - 处理所有正在录制的段
- * @param audio_data uint32_t格式的音频数据
- * @param buffer 临时缓冲区用于数据转换
- * @param length uint32_t数据的数量
+ * @brief Total recording handler - handle all segments being recorded
+ * @param audio_data Audio data in uint32_t format
+ * @param buffer Temporary buffer for data conversion
+ * @param length Number of uint32_t data
  */
 void loop_process_recording_uint32(uint32_t* audio_data, uint8_t* buffer, uint16_t length)
 {
@@ -807,40 +807,40 @@ void loop_process_recording_uint32(uint32_t* audio_data, uint8_t* buffer, uint16
 }
 
 /**
- * @brief 段播放处理函数 - 基于段实例
- * @param segment_index 要播放的段索引
- * @param output_data uint32_t格式的输出音频数据（用于混音）
- * @param buffer 临时缓冲区用于数据转换
- * @param length uint32_t数据的数量
- * @return 1=成功播放, 0=无数据播放
+ * @brief Segment playback handler - based on segment instance
+ * @param segment_index Index of the segment to play
+ * @param output_data Output audio data in uint32_t format (for mixing)
+ * @param buffer Temporary buffer for data conversion
+ * @param length Number of uint32_t data
+ * @return 1=successfully played, 0=no data played
  */
 uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_data, uint8_t* buffer, uint16_t length)
 {
     if (segment_index >= MAX_SEGMENTS) {
-        return 0;  // 无效段索引
+        return 0;  // Invalid segment index
     }
     
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
     if (segment->state != SEGMENT_PLAYING || !segment->is_active) {
-        return 0;  // 段不在播放状态或未激活
+        return 0;  // Segment not in playing state or not active
     }
 
     if (segment->length_pages == 0) {
-        return 0;  // 段没有数据
+        return 0;  // Segment has no data
     }
     
-    // 检查播放位置是否需要循环
+    // Check if playback position needs to loop
     if (segment->play_position >= segment->length_pages) {
-        // 只在循环重置时打印一次
+        // Only print once when loop resets
         if (segment->play_position == segment->length_pages) {
             DBG("Segment %d loop: reset position from %lu to 0 (length=%lu)\n",
                 segment_index, (unsigned long)segment->play_position, (unsigned long)segment->length_pages);
         }
-        segment->play_position = 0;  // 重置到段开头
+        segment->play_position = 0;  // Reset to segment start
     }
     
-    // 读取段数据
+    // Read segment data
     uint32_t segment_address = segment->start_address + segment->play_position * g_loop_manager.page_size;
     uint8_t flash_device_id = loop_get_flash_device_id();
     
@@ -849,7 +849,7 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
     uint32_t samples_to_read = (length < 48) ? length : 48;
     convertUint8ArrayToUint32Array(buffer, segment_data, samples_to_read);
     
-    // 段开头淡入处理
+    // Segment fade-in at the beginning
     if (segment->play_position == 0) {
         uint16_t fade_samples = (samples_to_read < 16) ? samples_to_read : 16;
         uint16_t j;
@@ -857,7 +857,7 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
             int16_t left = (int16_t)(segment_data[j] & 0xFFFF);
             int16_t right = (int16_t)((segment_data[j] >> 16) & 0xFFFF);
             
-            uint16_t fade_factor = (j * 100) / fade_samples;  // 0-100%淡入
+            uint16_t fade_factor = (j * 100) / fade_samples;  // 0-100% fade-in
             left = (int16_t)((int32_t)left * fade_factor / 100);
             right = (int16_t)((int32_t)right * fade_factor / 100);
             
@@ -865,7 +865,7 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
         }
     }
     
-    // 混音到输出数据
+    // Mix to output data
     uint16_t j;
     for (j = 0; j < samples_to_read; j++) {
         int16_t seg_left = (int16_t)(segment_data[j] & 0xFFFF);
@@ -873,45 +873,45 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
         int16_t out_left = (int16_t)(output_data[j] & 0xFFFF);
         int16_t out_right = (int16_t)((output_data[j] >> 16) & 0xFFFF);
         
-        // 混音：每段贡献60%音量
+        // Mixing: each segment contributes 60% volume
         int32_t new_left = (int32_t)out_left + ((int32_t)seg_left * 6 / 10);
         int32_t new_right = (int32_t)out_right + ((int32_t)seg_right * 6 / 10);
         
-        // 软限幅
+        // Soft limiting
         new_left = __nds32__clips(new_left, 15);
         new_right = __nds32__clips(new_right, 15);
         
         output_data[j] = ((uint32_t)(uint16_t)new_right << 16) | ((uint32_t)(uint16_t)new_left & 0xFFFF);
     }
     
-    // 更新段播放位置
+    // Update segment playback position
     segment->play_position++;
 
-    // 不频繁打印播放状态，避免卡顿
+    // Do not print playback status frequently to avoid stutter
     // DBG("Segment %d playback: position %lu/%lu\n",
     //     segment_index, (unsigned long)segment->play_position, (unsigned long)segment->length_pages);
 
-    return 1;  // 成功播放
+    return 1;  // Successfully played
 }
 
 /**
- * @brief 总播放处理函数 - 混音所有正在播放的段
- * @param output_data uint32_t格式的输出音频数据
- * @param buffer 临时缓冲区用于数据转换
- * @param length uint32_t数据的数量
+ * @brief Total playback handler - mix all segments being played
+ * @param output_data Output audio data in uint32_t format
+ * @param buffer Temporary buffer for data conversion
+ * @param length Number of uint32_t data
  */
 void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16_t length)
 {
-    // 清零输出缓冲区
+    // Clear output buffer
     uint16_t i;
     for (i = 0; i < length; i++) {
         output_data[i] = 0;
     }
     
-    // 统计播放的段数
+    // Count number of playing segments
     uint8_t playing_count = 0;
     
-    // 处理所有正在播放的段
+    // Handle all segments being played
     for (i = 0; i < MAX_SEGMENTS; i++) {
         if (loop_process_segment_playback(i, output_data, buffer, length)) {
             playing_count++;
@@ -919,16 +919,16 @@ void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16
     }
     
     if (playing_count > 0) {
-        // 增大整体播放音量
+        // Increase overall playback volume
         for (i = 0; i < length; i++) {
             int16_t left = (int16_t)(output_data[i] & 0xFFFF);
             int16_t right = (int16_t)((output_data[i] >> 16) & 0xFFFF);
             
-            // 增益1.5倍
+            // Gain 1.5x
             int32_t boosted_left = (int32_t)left * 3 / 2;
             int32_t boosted_right = (int32_t)right * 3 / 2;
             
-            // 软限幅
+            // Soft limiting
             boosted_left = __nds32__clips(boosted_left, 15);
             boosted_right = __nds32__clips(boosted_right, 15);
             
@@ -936,20 +936,20 @@ void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16
                             ((uint32_t)(uint16_t)boosted_left & 0xFFFF);
         }
         
-        // 不频繁打印混音状态，避免卡顿
+        // Do not print mixing status frequently to avoid stutter
         // DBG("Mixed %d segments playback\n", playing_count);
     }
     
-    // 处理节拍器音频（无论是否有段在播放）
+    // Process metronome audio (regardless of whether any segment is playing)
     metronome_process_audio(output_data, length);
 }
 
 /**
- * @brief 开始录制新段
+ * @brief Start recording a new segment
  */
 void loop_start_new_segment(void)
 {
-    // 找到第一个未激活的段
+    // Find the first inactive segment
     uint8_t new_segment = MAX_SEGMENTS;
     uint8_t i;
     for (i = 0; i < MAX_SEGMENTS; i++) {
@@ -964,33 +964,33 @@ void loop_start_new_segment(void)
         return;
     }
     
-    // 计算新段的起始地址
+    // Calculate the start address of the new segment
     uint32_t start_address;
     if (new_segment == 0) {
-        // 第一段从固定地址开始
-        start_address = 0x40000;  // 避开Flash低地址
+        // The first segment starts from a fixed address
+        start_address = 0x40000;  // Avoid low addresses in Flash
     } else {
-        // 后续段根据前面段的大小来计算
+        // Subsequent segments are calculated based on the size of the previous segment
         start_address = g_loop_manager.segments[new_segment - 1].start_address + 
                        g_loop_manager.segments[new_segment - 1].length_pages * g_loop_manager.page_size;
         
-        // 确保地址是页对齐的
+        // Ensure the address is page-aligned
         if (start_address % g_loop_manager.page_size != 0) {
             start_address = ((start_address / g_loop_manager.page_size) + 1) * g_loop_manager.page_size;
         }
     }
     
-    // 初始化新段
+    // Initialize new segment
     g_loop_manager.segments[new_segment].start_address = start_address;
-    g_loop_manager.segments[new_segment].length_pages = 0;  // 从0开始，正常录制
+    g_loop_manager.segments[new_segment].length_pages = 0;  // Start from 0, normal recording
     g_loop_manager.segments[new_segment].is_active = 1;
     g_loop_manager.segments[new_segment].state = SEGMENT_RECORDING;
     g_loop_manager.segments[new_segment].play_position = 0;
     
-    // 更新活跃段计数
+    // Update active segment count
     g_loop_manager.active_segments++;
     
-    // 设置全局状态为录制（兼容性）
+    // Set global state to recording (for compatibility)
     g_loop_manager.state = LOOP_STATE_RECORDING;
     g_loop_manager.is_new_recording = 1;
     g_loop_stats.recording_sample_count = 0;
@@ -1001,8 +1001,8 @@ void loop_start_new_segment(void)
 }
 
 /**
- * @brief 停止指定段录制
- * @param segment_index 要停止的段索引
+ * @brief Stop recording the specified segment
+ * @param segment_index Index of the segment to stop
  */
 void loop_stop_current_segment(uint8_t segment_index)
 {
@@ -1018,28 +1018,28 @@ void loop_stop_current_segment(uint8_t segment_index)
         return;
     }
     
-    // 在录制结尾复制前面的数据，确保循环平滑
-    uint8_t copy_pages_to_add = 10;  // 复制前10页数据
+    // Copy previous data at the end of recording to ensure smooth looping
+    uint8_t copy_pages_to_add = 10;  // Copy the first 10 pages of data
     uint8_t copy_buffer[192];
     
-    // 确保有数据可以复制
+    // Ensure there is data to copy
     if (segment->length_pages == 0) {
         DBG("Warning: No data to copy for segment %d\n", segment_index);
         return;
     }
     
-    // 写入复制的数据页到当前段结尾
+    // Write copied pages to the end of the segment
     uint8_t flash_device_id = loop_get_flash_device_id();
     uint8_t page_count;
     for (page_count = 0; page_count < copy_pages_to_add; page_count++) {
-        // 计算要复制的源页地址（循环使用段开头的数据）
+        // Calculate the source page address to copy (loop using the beginning data of the segment)
         uint32_t source_page_index = page_count % segment->length_pages;
         uint32_t source_address = segment->start_address + source_page_index * g_loop_manager.page_size;
         
-        // 读取源页数据
+        // Read source page data
         BG_flash_manager.ReadData(source_address, copy_buffer, 192, flash_device_id);
         
-        // 写入到段结尾
+        // Write to the end of the segment
         uint32_t dest_address = segment->start_address + 
                                (segment->length_pages + page_count) * g_loop_manager.page_size;
         uint8_t write_result = BG_flash_manager.PageProgram(dest_address, copy_buffer, 192, flash_device_id);
@@ -1048,32 +1048,32 @@ void loop_stop_current_segment(uint8_t segment_index)
         }
     }
     
-    // 更新段长度（包含复制的页）
+    // Update segment length (including copied pages)
     segment->length_pages += copy_pages_to_add;
     
     DBG("Stop segment %d: recorded %lu pages with end-copy (copied %d pages)\n", 
         segment_index, (unsigned long)(segment->length_pages - copy_pages_to_add), copy_pages_to_add);
     
     if (segment->length_pages == 0) {
-        // 如果没有录制任何数据，标记段为无效
+        // If no data was recorded, mark segment as invalid
         segment->is_active = 0;
         segment->state = SEGMENT_INACTIVE;
         DBG("Segment %d has no data, marked as inactive\n", segment_index);
     } else {
-        // 设置段为播放状态
+        // Set segment to playing state
         segment->state = SEGMENT_PLAYING;
-        segment->play_position = 0;  // 重置播放位置
+        segment->play_position = 0;  // Reset playback position
         
         DBG("Stopped segment %d: %lu pages, set to PLAYING state\n",
             segment_index, (unsigned long)segment->length_pages);
     }
     
-    // 更新全局状态
+    // Update global state
     loop_update_global_state();
 }
 
 /**
- * @brief 获取已录制段数
+ * @brief Get the number of recorded segments
  */
 uint8_t loop_get_segment_count(void)
 {
@@ -1081,7 +1081,7 @@ uint8_t loop_get_segment_count(void)
 }
 
 /**
- * @brief 清除所有段
+ * @brief Clear all segments
  */
 void loop_clear_all_segments(void)
 {
@@ -1099,7 +1099,7 @@ void loop_clear_all_segments(void)
     g_loop_manager.sector_address = 0;
     g_loop_manager.play_position = 0;
     
-    // 擦除Flash
+    // Erase Flash
     uint8_t flash_device_id = loop_get_flash_device_id();
     DBG("Clearing all segments and erasing Flash (%s)...\n",
         g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
@@ -1108,12 +1108,12 @@ void loop_clear_all_segments(void)
 }
 
 // ============================================================================
-// 单段精细控制函数实现
+// Single segment fine control function implementation
 // ============================================================================
 
 /**
- * @brief 处理指定段的按键操作
- * @param segment_index 段索引 (0-3)
+ * @brief Handle button operation for the specified segment
+ * @param segment_index Segment index (0-3)
  */
 void loop_handle_segment_button(uint8_t segment_index)
 {
@@ -1126,27 +1126,27 @@ void loop_handle_segment_button(uint8_t segment_index)
     
     switch (segment->state) {
         case SEGMENT_INACTIVE:
-            // 段未激活：开始录制
+            // Segment not active: start recording
             loop_set_segment_recording(segment_index);
             DBG("Segment %d: INACTIVE -> RECORDING\n", segment_index);
             break;
             
         case SEGMENT_RECORDING:
         {
-            // 段录制中：停止录制并开始播放
+            // Segment recording: stop recording and start playback
             loop_stop_current_segment(segment_index);
             DBG("Segment %d: RECORDING -> PLAYING (stopped recording)\n", segment_index);
             break;
         }
             
         case SEGMENT_PLAYING:
-            // 段播放中：停止播放
+            // Segment playing: stop playback
             loop_set_segment_stopped(segment_index);
             DBG("Segment %d: PLAYING -> STOPPED\n", segment_index);
             break;
             
         case SEGMENT_STOPPED:
-            // 段已停止：开始播放
+            // Segment stopped: start playback
             loop_set_segment_playing(segment_index);
             DBG("Segment %d: STOPPED -> PLAYING\n", segment_index);
             break;
@@ -1154,9 +1154,9 @@ void loop_handle_segment_button(uint8_t segment_index)
 }
 
 /**
- * @brief 获取指定段的状态
- * @param segment_index 段索引 (0-3)
- * @return 段状态
+ * @brief Get the state of the specified segment
+ * @param segment_index Segment index (0-3)
+ * @return Segment state
  */
 SegmentState_t loop_get_segment_state(uint8_t segment_index)
 {
@@ -1167,7 +1167,7 @@ SegmentState_t loop_get_segment_state(uint8_t segment_index)
 }
 
 /**
- * @brief 根据各段状态智能更新全局状态
+ * @brief Intelligently update global state based on the state of each segment
  */
 void loop_update_global_state(void)
 {
@@ -1175,7 +1175,7 @@ void loop_update_global_state(void)
     uint8_t has_playing = 0;
     uint8_t i;
     
-    // 统计各段状态
+    // Count the state of each segment
     for (i = 0; i < MAX_SEGMENTS; i++) {
         if (g_loop_manager.segments[i].state == SEGMENT_RECORDING) {
             has_recording = 1;
@@ -1185,7 +1185,7 @@ void loop_update_global_state(void)
         }
     }
     
-    // 根据段状态设置全局状态
+    // Set global state according to segment states
     if (has_recording && has_playing) {
         g_loop_manager.state = LOOP_STATE_RECORDING_AND_PLAYING;
         DBG("Global state updated: RECORDING_AND_PLAYING (recording=%d, playing=%d)\n", has_recording, has_playing);

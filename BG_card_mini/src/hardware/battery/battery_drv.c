@@ -1,33 +1,31 @@
 #include "battery_drv.h"
-// 引入硬件相关头文件（根据你的平台补充，确保GPIO/ADC宏定义有效）
+// Include hardware header files according to your platform to ensure GPIO/ADC definitions are valid
 #include "gpio.h"
 #include "adc.h"
 
-// 滑动滤波缓存（长度由头文件宏定义配置）
+// ADC filter buffer (define length in header file)
 static uint16_t adc_buf[FILTER_BUF_LEN] = {0};
 static uint8_t adc_buf_idx = 0;
 
 /**
- * @brief 【驱动内部】硬件级读取电池ADC采样值
- * @return ADC原始采样值（0~4095）
- * @note 整合你提供的ADC读取逻辑
+ * @brief Read battery ADC value from hardware
+ * @return Raw ADC value (0~4095)
+ * @note Provides ADC read logic
  */
 static uint16_t battery_adc_read(void)
 {
     uint16_t bat_adc_val = 0;
-
-    // 你提供的ADC核心读取逻辑
-    GPIO_RegOneBitClear(GPIO_A_ANA_EN, GPIO_INDEX31);  // 配置GPIOA31模拟使能
-    GPIO_RegOneBitSet(GPIO_A_ANA_EN, GPIO_INDEX31);     // 使能GPIOA31模拟功能
-    bat_adc_val = ADC_SingleModeDataGet(ADC_CHANNEL_GPIOA31);  // 读取ADC通道值
-
+    // Provide ADC read logic
+    GPIO_RegOneBitClear(GPIO_A_ANA_EN, GPIO_INDEX31);  // Disable GPIOA31 analog
+    GPIO_RegOneBitSet(GPIO_A_ANA_EN, GPIO_INDEX31);     // Enable GPIOA31 analog function
+    bat_adc_val = ADC_SingleModeDataGet(ADC_CHANNEL_GPIOA31);  // Get ADC channel value
     return bat_adc_val;
 }
 
 /**
- * @brief 【驱动内部】ADC采样值转电池电压
- * @param adc_val: ADC原始采样值
- * @return 电池电压(V)
+ * @brief Convert battery ADC value to voltage
+ * @param adc_val: Raw ADC value
+ * @return Battery voltage (V)
  */
 static float adc2volt(uint16_t adc_val)
 {
@@ -36,9 +34,9 @@ static float adc2volt(uint16_t adc_val)
 }
 
 /**
- * @brief 【驱动内部】电池电压转电量百分比（粗略映射）
- * @param volt: 电池电压(V)
- * @return 电量百分比(0~100)
+ * @brief Convert battery voltage to SOC percentage (mapping)
+ * @param volt: Battery voltage (V)
+ * @return Battery SOC percentage (0~100)
  */
 static uint8_t volt2soc(float volt)
 {
@@ -52,36 +50,33 @@ static uint8_t volt2soc(float volt)
     else if (volt >= 3.65f)         return 30;
     else if (volt >= 3.6f)          return 20;
     else if (volt >= 3.4f)          return 10;
-    else if (volt >= EMPTY_VOLT)    return 5;   // 低电量提醒
-    else                            return 0;   // 电压过低
+    else if (volt >= EMPTY_VOLT)    return 5;   // Low battery warning
+    else                            return 0;   // Voltage too low
 }
 
 /**
- * @brief 【对外API】获取电池剩余电量百分比（SOC）
- * @return 电量百分比（0~100）
+ * @brief Battery API: get remaining battery SOC percentage
+ * @return Battery SOC percentage (0~100)
  */
 uint8_t battery_get_soc(void)
 {
-    // 1. 读取硬件ADC原始值（跳过滤波）
+    // 1. Get raw ADC value from hardware, apply filtering if needed
     uint16_t new_adc_val = battery_adc_read();
-    if(new_adc_val == 0) Shell_Printf("ADC Read Error!\r\n"); // 调试打印
-
-    // 2. 直接转换电压（不滤波）
+    if(new_adc_val == 0) Shell_Printf("ADC Read Error!\r\n"); // Debug print
+    // 2. Convert to voltage, apply filtering if needed
     float bat_volt = adc2volt(new_adc_val);
-
-    // 3. 电压转电量
+    // 3. Convert voltage to SOC
     return volt2soc(bat_volt);
 }
 /**
- * @brief 【对外API】获取电池实时电压（便于调试）
- * @return 电池实际电压（V）
+ * @brief Battery API: get real-time battery voltage (for display)
+ * @return Real battery voltage (V)
  */
 float battery_get_volt(void)
 {
-    // 仅读取单次ADC原始值（跳过滤波逻辑）
+    // Get raw ADC value from hardware, apply filtering logic if needed
     uint16_t new_adc_val = battery_adc_read();
-
-    // 直接用单次ADC值转换为电压返回（无平均、无缓存）
+    // Directly convert ADC value to voltage (no averaging here)
     return adc2volt(new_adc_val);
 }
 

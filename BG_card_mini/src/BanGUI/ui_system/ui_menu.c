@@ -1,6 +1,6 @@
 /**
  * @file    ui_menu.c
- * @brief   菜单系统模块实现
+ * @brief   Menu system module implementation
  * @author  BG Card Team
  * @date    2025-12-18
  */
@@ -13,21 +13,21 @@
 #include <stdio.h>
 
 /*===========================================================================
- * 私有变量
+ * Private variables
  *===========================================================================*/
 
 static UI_MenuState_t menu_state;
 static UI_Menu_t* root_menu = NULL;
 
-/* 可见菜单项数量 */
+/* Number of visible menu items */
 #define VISIBLE_ITEMS   ((UI_MENU_HEIGHT - 18) / UI_MENU_ITEM_HEIGHT)
 
 /*===========================================================================
- * 私有函数
+ * Private functions
  *===========================================================================*/
 
 /**
- * @brief 绘制单个菜单项
+ * @brief Draw a single menu item
  */
 static void draw_menu_item(uint8_t index, uint16_t y, bool selected)
 {
@@ -42,13 +42,13 @@ static void draw_menu_item(uint8_t index, uint16_t y, bool selected)
                         (selected ? UI_MENU_SEL_FG_COLOR : UI_MENU_FG_COLOR) :
                         UI_COLOR_GRAY;
     
-    /* 绘制背景 */
+    /* Draw background */
     BG_lcd.Box(0, y, UI_SCREEN_WIDTH, UI_MENU_ITEM_HEIGHT, bg_color);
     
-    /* 绘制图标 (如果有) */
+    /* Draw icon (if any) */
     uint16_t text_x = 4;
     if (item->icon) {
-        /* 简单绘制8x8图标 */
+        /* Simple draw 8x8 icon */
         uint8_t i, j;
         for (i = 0; i < 8; i++) {
             uint8_t row = item->icon[i];
@@ -61,7 +61,7 @@ static void draw_menu_item(uint8_t index, uint16_t y, bool selected)
         text_x = 16;
     }
     
-    /* 绘制菜单项名称 */
+    /* Draw menu item name */
     const char* name = item->name;
     while (*name) {
         BG_lcd.ShowChar(text_x, y + 2, *name, fg_color);
@@ -69,7 +69,7 @@ static void draw_menu_item(uint8_t index, uint16_t y, bool selected)
         name++;
     }
     
-    /* 绘制值/状态 */
+    /* Draw value/status */
     char value_str[16] = "";
     uint16_t value_x = UI_SCREEN_WIDTH - 8;
     
@@ -113,7 +113,7 @@ static void draw_menu_item(uint8_t index, uint16_t y, bool selected)
             break;
     }
     
-    /* 右对齐绘制值 */
+    /* Right-align draw value */
     if (value_str[0]) {
         int len = strlen(value_str);
         value_x = UI_SCREEN_WIDTH - 4 - (len * 8);
@@ -125,16 +125,16 @@ static void draw_menu_item(uint8_t index, uint16_t y, bool selected)
         }
     }
     
-    /* 编辑模式指示 */
+    /* Edit mode indicator */
     if (selected && menu_state.editing) {
-        /* 绘制编辑指示符 [ ] */
+        /* Draw edit indicator [ ] */
         BG_lcd.ShowChar(UI_SCREEN_WIDTH - 4 - strlen(value_str) * 8 - 10, y + 2, '[', UI_COLOR_YELLOW);
         BG_lcd.ShowChar(UI_SCREEN_WIDTH - 4, y + 2, ']', UI_COLOR_YELLOW);
     }
 }
 
 /**
- * @brief 绘制菜单标题
+ * @brief Draw menu title
  */
 static void draw_menu_title(void)
 {
@@ -142,10 +142,10 @@ static void draw_menu_title(void)
     
     uint16_t y = UI_StatusBar_GetHeight();
     
-    /* 绘制标题背景 */
+    /* Draw title background */
     BG_lcd.Box(0, y, UI_SCREEN_WIDTH, 18, UI_COLOR_DARK_GRAY);
     
-    /* 绘制标题文字 */
+    /* Draw title text */
     const char* title = menu_state.current->title;
     uint16_t x = 4;
     while (*title) {
@@ -154,14 +154,14 @@ static void draw_menu_title(void)
         title++;
     }
     
-    /* 如果有父菜单，显示返回指示 */
+    /* If there is a parent menu, show return indicator */
     if (menu_state.current->parent) {
         BG_lcd.ShowChar(UI_SCREEN_WIDTH - 12, y + 1, '<', UI_COLOR_CYAN);
     }
 }
 
 /**
- * @brief 绘制滚动条
+ * @brief Draw scrollbar
  */
 static void draw_scrollbar(void)
 {
@@ -171,41 +171,41 @@ static void draw_scrollbar(void)
     uint16_t bar_y = UI_StatusBar_GetHeight() + 18;
     uint16_t bar_height = UI_MENU_HEIGHT - 18;
     
-    /* 计算滚动条位置和大小 */
+    /* Calculate scrollbar position and size */
     uint16_t thumb_height = (bar_height * VISIBLE_ITEMS) / menu->item_count;
     if (thumb_height < 4) thumb_height = 4;
     
     uint16_t thumb_y = bar_y + (bar_height - thumb_height) * menu->scroll_offset / 
                        (menu->item_count - VISIBLE_ITEMS);
     
-    /* 绘制滚动条背景 */
+    /* Draw scrollbar background */
     BG_lcd.Box(UI_SCREEN_WIDTH - 3, bar_y, 3, bar_height, UI_COLOR_DARK_GRAY);
     
-    /* 绘制滚动条滑块 */
+    /* Draw scrollbar thumb */
     BG_lcd.Box(UI_SCREEN_WIDTH - 3, thumb_y, 3, thumb_height, UI_COLOR_LIGHT_GRAY);
 }
 
 /**
- * @brief 确保选中项可见
+ * @brief Ensure selected item is visible
  */
 static void ensure_selection_visible(void)
 {
     UI_Menu_t* menu = menu_state.current;
     if (!menu) return;
     
-    /* 向上滚动 */
+    /* Scroll up */
     if (menu->selected < menu->scroll_offset) {
         menu->scroll_offset = menu->selected;
     }
     
-    /* 向下滚动 */
+    /* Scroll down */
     if (menu->selected >= menu->scroll_offset + VISIBLE_ITEMS) {
         menu->scroll_offset = menu->selected - VISIBLE_ITEMS + 1;
     }
 }
 
 /**
- * @brief 查找下一个可见可用项
+ * @brief Find the next visible and available item
  */
 static int8_t find_next_item(int8_t from, int8_t dir)
 {
@@ -223,7 +223,7 @@ static int8_t find_next_item(int8_t from, int8_t dir)
 }
 
 /*===========================================================================
- * API 实现
+ * API Implementation
  *===========================================================================*/
 
 void UI_Menu_Init(void)
@@ -259,14 +259,14 @@ void UI_Menu_Draw(void)
     UI_Menu_t* menu = menu_state.current;
     uint16_t y = UI_StatusBar_GetHeight();
     
-    /* 清除菜单区域 */
+    /* Clear menu area */
     BG_lcd.Box(0, y, UI_SCREEN_WIDTH, UI_SCREEN_HEIGHT - y, UI_MENU_BG_COLOR);
     
-    /* 绘制标题 */
+    /* Draw title */
     draw_menu_title();
     
-    /* 绘制菜单项 */
-    y += 18;  /* 标题高度 */
+    /* Draw menu items */
+    y += 18;  /* Title height */
     uint8_t i;
     for (i = 0; i < VISIBLE_ITEMS && (menu->scroll_offset + i) < menu->item_count; i++) {
         uint8_t item_idx = menu->scroll_offset + i;
@@ -275,7 +275,7 @@ void UI_Menu_Draw(void)
         y += UI_MENU_ITEM_HEIGHT;
     }
     
-    /* 绘制滚动条 */
+    /* Draw scrollbar */
     draw_scrollbar();
     
     menu_state.need_redraw = false;
@@ -295,7 +295,7 @@ void UI_Menu_Up(void)
     UI_Menu_t* menu = menu_state.current;
     
     if (menu_state.editing) {
-        /* 编辑模式：增加值 */
+        /* Edit mode: Increase value */
         UI_MenuItem_t* item = &menu->items[menu->selected];
         if (item->type == UI_MENU_ITEM_VALUE && item->data.value.value) {
             int32_t val = *item->data.value.value + item->data.value.step;
@@ -315,7 +315,7 @@ void UI_Menu_Up(void)
             }
         }
     } else {
-        /* 导航模式：向上选择 */
+        /* Navigation mode: Select up */
         int8_t next = find_next_item(menu->selected, -1);
         if (next >= 0) {
             menu->selected = next;
@@ -333,7 +333,7 @@ void UI_Menu_Down(void)
     UI_Menu_t* menu = menu_state.current;
     
     if (menu_state.editing) {
-        /* 编辑模式：减少值 */
+        /* Edit mode: Decrease value */
         UI_MenuItem_t* item = &menu->items[menu->selected];
         if (item->type == UI_MENU_ITEM_VALUE && item->data.value.value) {
             int32_t val = *item->data.value.value - item->data.value.step;
@@ -353,7 +353,7 @@ void UI_Menu_Down(void)
             }
         }
     } else {
-        /* 导航模式：向下选择 */
+        /* Navigation mode: Select down */
         int8_t next = find_next_item(menu->selected, 1);
         if (next >= 0) {
             menu->selected = next;
@@ -382,12 +382,12 @@ void UI_Menu_Enter(void)
             
         case UI_MENU_ITEM_SUBMENU:
             if (item->data.submenu.submenu) {
-                /* 压栈当前菜单 */
+                /* Push current menu to stack */
                 if (menu_state.stack_depth < UI_MENU_MAX_DEPTH) {
                     menu_state.stack[menu_state.stack_depth++] = menu;
                 }
                 
-                /* 进入子菜单 */
+                /* Enter submenu */
                 UI_Menu_t* submenu = item->data.submenu.submenu;
                 submenu->parent = menu;
                 submenu->selected = 0;
@@ -407,7 +407,7 @@ void UI_Menu_Enter(void)
             
         case UI_MENU_ITEM_VALUE:
         case UI_MENU_ITEM_SELECT:
-            /* 进入/退出编辑模式 */
+            /* Enter/Exit edit mode */
             menu_state.editing = !menu_state.editing;
             break;
             
@@ -425,7 +425,7 @@ void UI_Menu_Enter(void)
 void UI_Menu_Back(void)
 {
     if (menu_state.editing) {
-        /* 退出编辑模式 */
+        /* Exit edit mode */
         menu_state.editing = false;
         menu_state.need_redraw = true;
         return;
@@ -433,7 +433,7 @@ void UI_Menu_Back(void)
     
     if (!menu_state.current) return;
     
-    /* 返回上级菜单 */
+    /* Return to upper menu */
     if (menu_state.stack_depth > 0) {
         menu_state.current = menu_state.stack[--menu_state.stack_depth];
     } else if (menu_state.current->parent) {

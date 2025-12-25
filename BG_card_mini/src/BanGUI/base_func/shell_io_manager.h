@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     16-December-2025
- * @brief    Shell IO管理器 - 自动切换CDC/BLE接口并提供访问保护
+ * @brief    Shell IO Manager - Automatically switch CDC/BLE interfaces and provide access protection
  *****************************************************************************
  */
 
@@ -17,100 +17,102 @@ extern "C" {
 
 #include "bg_shell.h"
 
-/*******************************************************************************
- * 配置定义
- ******************************************************************************/
-#define SHELL_IO_TIMEOUT_MS     3000    /* IO接口超时时间（毫秒），超时后可切换 */
-#define SHELL_IO_LOCK_TIMEOUT   5000    /* 锁定超时时间（毫秒），防止死锁 */
+
 
 /*******************************************************************************
- * IO接口类型枚举
+ * Configuration Definitions
+ ******************************************************************************/
+#define SHELL_IO_TIMEOUT_MS     3000    /* IO interface timeout (ms), can switch after timeout */
+#define SHELL_IO_LOCK_TIMEOUT   5000    /* Lock timeout (ms), prevents deadlock */
+
+/*******************************************************************************
+ * IO Interface Type Enumeration
  ******************************************************************************/
 typedef enum {
-    SHELL_IO_NONE = 0,      /* 无活跃接口 */
-    SHELL_IO_CDC,           /* USB CDC接口 */
-    SHELL_IO_BLE            /* BLE SPP接口 */
+    SHELL_IO_NONE = 0,      /* No active interface */
+    SHELL_IO_CDC,           /* USB CDC interface */
+    SHELL_IO_BLE            /* BLE SPP interface */
 } ShellIOType_t;
 
 /*******************************************************************************
- * IO管理器状态枚举
+ * IO Manager State Enumeration
  ******************************************************************************/
 typedef enum {
-    SHELL_IO_STATE_IDLE = 0,    /* 空闲，可接受任意接口数据 */
-    SHELL_IO_STATE_ACTIVE,      /* 活跃，正在与某接口通信 */
-    SHELL_IO_STATE_LOCKED       /* 锁定，禁止切换（正在处理命令） */
+    SHELL_IO_STATE_IDLE = 0,    /* Idle, can accept data from any interface */
+    SHELL_IO_STATE_ACTIVE,      /* Active, communicating with an interface */
+    SHELL_IO_STATE_LOCKED       /* Locked, switching forbidden (processing command) */
 } ShellIOState_t;
 
 /*******************************************************************************
- * IO管理器结构体
+ * IO Manager Structure
  ******************************************************************************/
 typedef struct {
-    ShellIOType_t   active_io;          /* 当前活跃的IO接口 */
-    ShellIOState_t  state;              /* 管理器状态 */
-    uint32_t        last_activity_tick; /* 最后活动时间 */
-    uint32_t        lock_tick;          /* 锁定开始时间 */
-    uint8_t         cdc_pending;        /* CDC有待处理数据 */
-    uint8_t         ble_pending;        /* BLE有待处理数据 */
+    ShellIOType_t   active_io;          /* Currently active IO interface */
+    ShellIOState_t  state;              /* Manager state */
+    uint32_t        last_activity_tick; /* Last activity time */
+    uint32_t        lock_tick;          /* Lock start time */
+    uint8_t         cdc_pending;        /* CDC has pending data */
+    uint8_t         ble_pending;        /* BLE has pending data */
 } ShellIOManager_t;
 
 /*******************************************************************************
- * API函数声明
+ * API Function Declarations
  ******************************************************************************/
 
 /**
- * @brief  初始化IO管理器
- * @note   在Shell_Init之后调用
+ * @brief  Initialize IO manager
+ * @note   Call after Shell_Init
  */
 void ShellIOManager_Init(void);
 
 /**
- * @brief  IO管理器处理函数
- * @note   在主循环中调用，替代直接调用Shell_Process
- *         自动检测活跃接口并处理数据
+ * @brief  IO manager process function
+ * @note   Call in main loop, replaces direct Shell_Process
+ *         Automatically detects active interface and processes data
  */
 void ShellIOManager_Process(void);
 
 /**
- * @brief  获取当前活跃的IO类型
- * @return 当前活跃的IO接口类型
+ * @brief  Get current active IO type
+ * @return Current active IO interface type
  */
 ShellIOType_t ShellIOManager_GetActiveIO(void);
 
 /**
- * @brief  获取当前状态
- * @return 管理器状态
+ * @brief  Get current state
+ * @return Manager state
  */
 ShellIOState_t ShellIOManager_GetState(void);
 
 /**
- * @brief  尝试锁定IO接口（开始处理命令时调用）
- * @param  io_type 请求锁定的IO类型
- * @return 1=成功锁定, 0=锁定失败（另一接口正在使用）
+ * @brief  Try to lock IO interface (call when starting command processing)
+ * @param  io_type IO type to request lock
+ * @return 1=lock successful, 0=lock failed (other interface in use)
  */
 uint8_t ShellIOManager_TryLock(ShellIOType_t io_type);
 
 /**
- * @brief  解锁IO接口（命令处理完成时调用）
+ * @brief  Unlock IO interface (call when command processing finished)
  */
 void ShellIOManager_Unlock(void);
 
 /**
- * @brief  强制切换到指定IO接口
- * @param  io_type 目标IO类型
- * @return 1=成功, 0=失败（当前被锁定）
+ * @brief  Force switch to specified IO interface
+ * @param  io_type Target IO type
+ * @return 1=success, 0=failed (currently locked)
  */
 uint8_t ShellIOManager_SwitchIO(ShellIOType_t io_type);
 
 /**
- * @brief  更新活动时间戳（收到数据时调用）
- * @param  io_type 收到数据的IO类型
+ * @brief  Update activity timestamp (call when data received)
+ * @param  io_type IO type that received data
  */
 void ShellIOManager_UpdateActivity(ShellIOType_t io_type);
 
 /**
- * @brief  获取IO类型名称字符串
- * @param  io_type IO类型
- * @return 名称字符串
+ * @brief  Get IO type name string
+ * @param  io_type IO type
+ * @return Name string
  */
 const char* ShellIOManager_GetIOName(ShellIOType_t io_type);
 

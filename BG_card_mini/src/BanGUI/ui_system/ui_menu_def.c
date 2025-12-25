@@ -1,11 +1,11 @@
 /**
  * @file    ui_menu_def.c
- * @brief   榛樿鑿滃崟瀹氫箟绀轰緥
+ * @brief   Default menu definition example
  * @author  BG Card Team
  * @date    2025-12-18
  * 
- * 鏈枃浠跺畾涔変簡绯荤粺榛樿鑿滃崟缁撴瀯
- * 鐢ㄦ埛鍙互鏍规嵁闇�淇敼鑿滃崟椤�
+ * This file defines the system's default menu structure.
+ * Users can modify menu items as needed.
  */
 
 #include "ui_menu.h"
@@ -15,33 +15,33 @@
 #include <stddef.h>
 
 /*===========================================================================
- * 鑿滃崟椤瑰彉閲�(缁戝畾鍒拌彍鍗曢」)
+ * Menu item variables (bound to menu items)
  *===========================================================================*/
 
-/* 闊抽璁剧疆 */
+/* Audio settings */
 static int32_t audio_volume = 50;
 static int32_t audio_bass = 0;
 static int32_t audio_treble = 0;
 static bool audio_mute = false;
 
-/* 绯荤粺璁剧疆 */
+/* System settings */
 static int32_t lcd_brightness = 80;
 static uint8_t language_idx = 0;
 static bool bt_enabled = true;
 
-/* 閫夐」鍒楄〃 */
-static const char* language_options[] = { "涓枃", "English" };
+/* Option lists */
+static const char* language_options[] = { "Chinese", "English" };
 static const char* eq_options[] = { "Flat", "Rock", "Pop", "Jazz", "Classic" };
 static uint8_t eq_idx = 0;
 
 /*===========================================================================
- * 鑿滃崟鍥炶皟鍑芥暟
+ * Menu item callback functions
  *===========================================================================*/
 
 static void on_volume_change(UI_MenuItem_t* item)
 {
     (void)item;
-    /* 瀹為檯搴旂敤涓湪杩欓噷璋冪敤闊抽椹卞姩璁剧疆闊抽噺 */
+    /* In actual application, call audio driver to set volume here */
     /* AudioDrv_SetVolume(audio_volume); */
 }
 
@@ -60,7 +60,7 @@ static void on_brightness_change(UI_MenuItem_t* item)
 static void on_language_change(UI_MenuItem_t* item)
 {
     (void)item;
-    /* 鍒囨崲璇█ */
+    /* Switch language */
 }
 
 static void on_bt_toggle(UI_MenuItem_t* item)
@@ -82,11 +82,11 @@ static void on_factory_reset(UI_MenuItem_t* item)
     UI_System_ShowPopup("Reset", "Factory Reset?", 0);
 }
 
-/* 娆㈣繋椤甸潰鍥炶皟鍑芥暟 */
+/* Welcome page callback functions */
 static void on_welcome_settings(UI_MenuItem_t* item)
 {
     (void)item;
-    /* 杩涘叆璁剧疆瀛愯彍鍗�- 鏄剧ず涓昏彍鍗�*/
+    /* Enter settings submenu - show main menu */
     UI_System_ShowMenu();
 }
 
@@ -109,10 +109,10 @@ static void on_welcome_game(UI_MenuItem_t* item)
 }
 
 /*===========================================================================
- * 瀛愯彍鍗曞畾涔�
+ * Submenu definitions
  *===========================================================================*/
 
-/* === 闊抽璁剧疆瀛愯彍鍗�=== */
+/* === Audio settings submenu === */
 static UI_MenuItem_t audio_menu_items[] = {
     UI_MENU_VALUE("Volume", &audio_volume, 0, 100, 5, "%", on_volume_change),
     UI_MENU_TOGGLE("Mute", &audio_mute, on_mute_change),
@@ -131,7 +131,7 @@ static UI_Menu_t audio_menu = {
     .parent = NULL
 };
 
-/* === 鏄剧ず璁剧疆瀛愯彍鍗�=== */
+/* === Display settings submenu === */
 static UI_MenuItem_t display_menu_items[] = {
     UI_MENU_VALUE("Brightness", &lcd_brightness, 10, 100, 10, "%", on_brightness_change),
     UI_MENU_SELECT("Language", &language_idx, language_options, 2, on_language_change),
@@ -147,7 +147,7 @@ static UI_Menu_t display_menu = {
     .parent = NULL
 };
 
-/* === 钃濈墮璁剧疆瀛愯彍鍗�=== */
+/* === Bluetooth settings submenu === */
 static UI_MenuItem_t bluetooth_menu_items[] = {
     UI_MENU_TOGGLE("Bluetooth", &bt_enabled, on_bt_toggle),
     UI_MENU_ACTION("Scan Devices", NULL),
@@ -165,7 +165,7 @@ static UI_Menu_t bluetooth_menu = {
     .parent = NULL
 };
 
-/* === 绯荤粺淇℃伅瀛愯彍鍗�=== */
+/* === System info submenu === */
 static UI_MenuItem_t system_info_items[] = {
     UI_MENU_ACTION("About", on_about),
     UI_MENU_ACTION("Factory Reset", on_factory_reset),
@@ -182,13 +182,12 @@ static UI_Menu_t system_info_menu = {
 };
 
 /*===========================================================================
- * 娆㈣繋鑿滃崟瀹氫箟 (寮�満鍚庢樉绀�
+ * Welcome menu definition (shown after boot)
  *===========================================================================*/
 
 static UI_MenuItem_t welcome_menu_items[] = {
     {
         .name = "Settings",
-
         .type = UI_MENU_ITEM_ACTION,
         .data.action.callback = on_welcome_settings,
         .enabled = true,
@@ -197,7 +196,6 @@ static UI_MenuItem_t welcome_menu_items[] = {
     },
     {
         .name = "Music",
-
         .type = UI_MENU_ITEM_ACTION,
         .data.action.callback = on_welcome_music,
         .enabled = true,
@@ -206,7 +204,6 @@ static UI_MenuItem_t welcome_menu_items[] = {
     },
     {
         .name = "About",
-
         .type = UI_MENU_ITEM_ACTION,
         .data.action.callback = on_welcome_about,
         .enabled = true,
@@ -215,7 +212,6 @@ static UI_MenuItem_t welcome_menu_items[] = {
     },
     {
         .name = "Game",
-
         .type = UI_MENU_ITEM_ACTION,
         .data.action.callback = on_welcome_game,
         .enabled = true,
@@ -234,7 +230,7 @@ static UI_Menu_t welcome_menu = {
 };
 
 /*===========================================================================
- * 涓昏彍鍗曞畾涔�
+ * Main menu definition
  *===========================================================================*/
 
 static UI_MenuItem_t main_menu_items[] = {
@@ -258,7 +254,7 @@ static UI_Menu_t main_menu = {
  *===========================================================================*/
 
 /**
- * @brief 鑾峰彇娆㈣繋鑿滃崟
+ * @brief Get welcome menu
  */
 UI_Menu_t* UI_GetWelcomeMenu(void)
 {
@@ -266,7 +262,7 @@ UI_Menu_t* UI_GetWelcomeMenu(void)
 }
 
 /**
- * @brief 鑾峰彇榛樿涓昏彍鍗�
+ * @brief Get default main menu
  */
 UI_Menu_t* UI_GetDefaultMainMenu(void)
 {
@@ -274,27 +270,26 @@ UI_Menu_t* UI_GetDefaultMainMenu(void)
 }
 
 /**
- * @brief 鍒濆鍖栬彍鍗曠郴缁�(璁剧疆鐖跺瓙鍏崇郴)
+ * @brief Initialize menu system (set parent-child relationships)
  */
 void UI_Menu_InitDefault(void)
 {
-    /* 璁剧疆瀛愯彍鍗曠殑鐖惰彍鍗�*/
+    /* Set parent for submenus */
     audio_menu.parent = &main_menu;
     display_menu.parent = &main_menu;
     bluetooth_menu.parent = &main_menu;
     system_info_menu.parent = &main_menu;
-    
-    /* 璁剧疆涓昏彍鍗�*/
+    /* Set main menu */
     UI_System_SetMainMenu(&main_menu);
 }
 
-/* 鑾峰彇闊抽噺鍊�(渚涘閮ㄨ鍙� */
+/* Get volume value (for external use) */
 int32_t UI_Menu_GetVolume(void)
 {
     return audio_volume;
 }
 
-/* 璁剧疆闊抽噺鍊�(渚涘閮ㄨ皟鐢� */
+/* Set volume value (for external use) */
 void UI_Menu_SetVolume(int32_t vol)
 {
     if (vol < 0) vol = 0;
@@ -302,13 +297,13 @@ void UI_Menu_SetVolume(int32_t vol)
     audio_volume = vol;
 }
 
-/* 鑾峰彇闈欓煶鐘舵� */
+/* Get mute status */
 bool UI_Menu_GetMute(void)
 {
     return audio_mute;
 }
 
-/* 璁剧疆闈欓煶鐘舵� */
+/* Set mute status */
 void UI_Menu_SetMute(bool mute)
 {
     audio_mute = mute;

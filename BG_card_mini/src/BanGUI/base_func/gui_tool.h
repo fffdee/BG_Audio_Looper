@@ -15,7 +15,7 @@ typedef struct
     void (*Clear)(uint16_t);
     void (*Update)(void);
     
-    /* 大字体函数 (8x16) */
+    /* Large font functions (8x16) */
     void (*ShowCharLarge)(uint16_t, uint16_t, uint8_t, uint16_t);
     void (*ShowStringLarge)(uint16_t, uint16_t, uint8_t*, uint16_t);
 

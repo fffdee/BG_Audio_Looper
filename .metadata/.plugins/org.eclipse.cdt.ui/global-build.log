@@ -1,4 +1,4 @@
-14:37:15 **** Incremental Build of configuration Debug for project BG_card_mini ****
+16:16:32 **** Incremental Build of configuration Debug for project BG_card_mini ****
 make all 
 Building file: ../bg_audio_io_manager_refactored.c
 Invoking: Andes C Compiler
@@ -346,6 +346,41 @@ Finished building: ../src/BanGUI/ui_system/ui_statusbar.c
 Building file: ../src/BanGUI/ui_system/ui_system.c
 Invoking: Andes C Compiler
 nds32le-elf-gcc -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/BanGUI/BG_List" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/BanGUI/page" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/audio" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/BG_Lcd" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/BanGUI/base_func" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/IIC" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/BG_AudioIO_Manager" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/BG_AudioIO_Manager/USB/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/BG_AudioIO_Manager/USB/src" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/BG_Encoder" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/BG_flash_manager" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/bluetooth/inc" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/BanGUI/menu_slider" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/audio_looper" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/sys_param" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/BanGUI/ui_system" -I"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BG_card_mini/src/hardware/battery" -Og -mcmodel=medium -g3 -Wall -mcpu=d1088-spu -c -fmessage-length=0 -ldsp -mext-dsp -fsingle-precision-constant -ffunction-sections -fdata-sections -MMD -MP -MF"src/BanGUI/ui_system/ui_system.d" -MT"src/BanGUI/ui_system/ui_system.d src/BanGUI/ui_system/ui_system.o" -o "src/BanGUI/ui_system/ui_system.o" "../src/BanGUI/ui_system/ui_system.c"
+../src/BanGUI/ui_system/ui_system.c: In function 'draw_idle_screen':
+../src/BanGUI/ui_system/ui_system.c:152:12: warning: pointer targets in initialization differ in signedness [-Wpointer-sign]
+            "SysSet",
+            ^
+../src/BanGUI/ui_system/ui_system.c:152:12: warning: (near initialization for 'title[0]') [-Wpointer-sign]
+../src/BanGUI/ui_system/ui_system.c:153:12: warning: pointer targets in initialization differ in signedness [-Wpointer-sign]
+            "A-CTRL",
+            ^
+../src/BanGUI/ui_system/ui_system.c:153:12: warning: (near initialization for 'title[1]') [-Wpointer-sign]
+../src/BanGUI/ui_system/ui_system.c:154:13: warning: pointer targets in initialization differ in signedness [-Wpointer-sign]
+             "Drum",
+             ^
+../src/BanGUI/ui_system/ui_system.c:154:13: warning: (near initialization for 'title[2]') [-Wpointer-sign]
+../src/BanGUI/ui_system/ui_system.c:156:9: warning: pointer targets in initialization differ in signedness [-Wpointer-sign]
+         };
+         ^
+../src/BanGUI/ui_system/ui_system.c:156:9: warning: (near initialization for 'title[3]') [-Wpointer-sign]
+../src/BanGUI/ui_system/ui_system.c:167:66: warning: passing argument 3 of 'BGUI_tool.ShowString' discards 'const' qualifier from pointer target type
+          BGUI_tool.ShowString(string_x +i*40,UI_SCREEN_HEIGHT-16,title[i],0xFFFF);
+                                                                  ^
+../src/BanGUI/ui_system/ui_system.c:167:66: note: expected 'uint8_t *' but argument is of type 'const unsigned char *'
+../src/BanGUI/ui_system/ui_system.c: In function 'UI_System_HandleEvent':
+../src/BanGUI/ui_system/ui_system.c:382:5: warning: "/*" within comment [-Wcomment]
+     /* 瀵懓鍤鍡楊槱閻烇拷*/
+ ^
+../src/BanGUI/ui_system/ui_system.c:417:25: warning: "/*" within comment [-Wcomment]
+                         /* 閺嶈宓�?��澶夎厬閻ㄥ嫬娴橀弽鍥ㄥ⒔鐞涘本鎼锋担锟�/
+ ^
+../src/BanGUI/ui_system/ui_system.c:440:13: warning: "/*" within comment [-Wcomment]
+             /* 閼挎粌宕熼悾�?��桨鐎佃壈鍩�*/
+ ^
+../src/BanGUI/ui_system/ui_system.c: At top level:
+../src/BanGUI/ui_system/ui_system.c:25:16: warning: 'selected_icon' defined but not used [-Wunused-variable]
+ static uint8_t selected_icon = 0;  // 瑜版挸澧犻柅澶夎厬閻ㄥ嫬娴橀弽锟�?-3)
+                ^
 ../src/BanGUI/ui_system/ui_system.c:46:13: warning: 'show_icon_cropped' defined but not used [-Wunused-function]
  static void show_icon_cropped(uint16_t x, uint16_t y, const unsigned char* src)
              ^
@@ -1374,6 +1409,6 @@ Finished building: output/BG_card_mini.bin
 Invoking: Size (section size listing)
 nds32le-elf-size  "BG_card_mini.adx" | tee output/.PHONY.size
    text (code + rodata)	   data	    bss	    dec	    hex	filename
- 820502 (666102 + 154400)	   6896	 144032	 971430	  ed2a6	BG_card_mini.adx
+ 822546 (666586 + 155960)	   6904	 144024	 973474	  edaa2	BG_card_mini.adx
 Finished building: output/.PHONY.size
  

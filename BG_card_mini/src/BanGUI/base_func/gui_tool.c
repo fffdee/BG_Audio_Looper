@@ -13,7 +13,7 @@ void Gui_ShowImage(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const uin
 void Gui_DrawPoint(uint16_t x0, uint16_t y0, uint16_t fc);
 void Gui_Clear(uint16_t fc);
 void Gui_update();
-/* 大字体函数 (8x16) */
+/* Large font function (8x16) */
 void Gui_ShowCharLarge(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc);
 void Gui_ShowStringLarge(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc);
 
@@ -51,7 +51,7 @@ void Gui_DrawPoint(uint16_t x0, uint16_t y0, uint16_t fc)
 void Gui_Circle(uint16_t X, uint16_t Y, uint16_t R, uint16_t fc)
 {
 	void Gui_Circle(uint16_t X, uint16_t Y, uint16_t R, uint32_t fc)
-	{ // Bresenham算法
+	{ // Bresenham algorithm
 		unsigned short a, b;
 		int c;
 		a = 0;
@@ -99,19 +99,19 @@ void Gui_ShowChar(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc)
 	unsigned char c = 0, i = 0;
 	uint16_t y;
 	uint8_t ch, w, h;
-	c = chr - ' '; // 得到偏移后的值
+	c = chr - ' '; // Get the offset value after subtracting ' '
 	if (x0 > LCD_WIDTH - 1)
 	{
 		x0 = 0;
-		y0 = y0 + 8;  // 改为8像素高度
+		y0 = y0 + 8;  // Change to 8-pixel height
 	}
 	
-	// 使用6x8字体
-	for (w = 0; w < 6; w++)  // 改为6像素宽度
+	// Use 6x8 font
+	for (w = 0; w < 6; w++)  // Change to 6-pixel width
 	{
 		y = y0;
-		ch = F6x8[c][w];  // 使用F6x8字体数组
-		for (h = 0; h < 8; h++)  // 8像素高度
+		ch = F6x8[c][w];  // Use F6x8 font array
+		for (h = 0; h < 8; h++)  // 8-pixel height
 		{
 			if ((ch >> h & 0x01) == 1)
 			{
@@ -129,11 +129,11 @@ void Gui_ShowString(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
 	while (chr[j] != '\0')
 	{
 		Gui_ShowChar(x0, y0, chr[j], fc);
-		x0 += 6;  // 改为6像素字符宽度
-		if (x0 > LCD_WIDTH - 6)  // 改为6像素边界检查
+		x0 += 6;  // Change to 6-pixel character width
+		if (x0 > LCD_WIDTH - 6)  // Change to 6-pixel boundary check
 		{
 			x0 = 0;
-			y0 += 8;  // 改为8像素行高
+			y0 += 8;  // Change to 8-pixel line height
 		}
 		j++;
 	}
@@ -144,7 +144,7 @@ void Gui_ShowNum(uint16_t x0, uint16_t y0, uint32_t num, uint16_t fc)
 	uint8_t bit_count = 0;
 	uint8_t i;
 	if (num == 0)
-	{ // 鐗规畩鎯呭喌锛�鏄竴浣嶆暟
+	{ // Special case: single digit
 		bit_count = 1;
 	}
 	else
@@ -152,16 +152,16 @@ void Gui_ShowNum(uint16_t x0, uint16_t y0, uint32_t num, uint16_t fc)
 		uint32_t temp = num;
 		while (temp != 0)
 		{
-			temp /= 10; // 鏁撮櫎10
+			temp /= 10; // Divide by 10
 			bit_count++;
 		}
 	}
 
-	char char_num[bit_count+1]; // 浣跨敤char绫诲瀷鏁扮粍
+	char char_num[bit_count+1]; // Use char type array
 	for (i = 0; i < bit_count; i++)
 	{
-		char_num[bit_count - i - 1] = (num % 10) + '0'; // 杞崲涓哄瓧绗﹀苟瀛樺偍
-		num /= 10;										// 鏇存柊num涓轰笅涓�綅鏁板瓧
+		char_num[bit_count - i - 1] = (num % 10) + '0'; // Convert to character and store
+		num /= 10;										// Update num for next digit
 
 	}
 	char_num[bit_count] = '\0';
@@ -200,20 +200,20 @@ void Gui_ShowString6x8(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
 	}
 }
 
-/* 大字体显示字符 (8x16) */
+/* Large font display character (8x16) */
 void Gui_ShowCharLarge(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc)
 {
 	unsigned char c = 0, i = 0;
 	uint16_t y;
 	uint8_t ch, w, h;
-	c = chr - ' '; // 得到偏移后的值
+	c = chr - ' '; // Get the offset value after subtracting ' '
 	if (x0 > LCD_WIDTH - 1)
 	{
 		x0 = 0;
 		y0 = y0 + 16;
 	}
 	
-	// 使用8x16字体 - 上半部分
+	// Use 8x16 font - upper part
 	for (w = 0; w < 8; w++)
 	{
 		y = y0;
@@ -228,7 +228,7 @@ void Gui_ShowCharLarge(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc)
 		}
 	}
 
-	// 使用8x16字体 - 下半部分
+	// Use 8x16 font - lower part
 	for (w = 0; w < 8; w++)
 	{
 		y = y0 + 8;
@@ -244,7 +244,7 @@ void Gui_ShowCharLarge(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc)
 	}
 }
 
-/* 大字体显示字符串 (8x16) */
+/* Large font display string (8x16) */
 void Gui_ShowStringLarge(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc)
 {
 	unsigned char j = 0;
@@ -273,7 +273,7 @@ void Gui_ShowImage(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, const uin
 
 
 
-				// 绘制点
+				// Draw point
 				Gui_DrawPoint(x0 + x,y0 + y, color565);
 			}
 		}
@@ -291,8 +291,8 @@ void Gui_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t C
 			error, // the discriminant i.e. error i.e. decision variable
 			index; // used for looping
 
-		dx = x1 - x0; // 计算x距离
-		dy = y1 - y0; // 计算y距离
+		dx = x1 - x0; // Calculate x distance
+		dy = y1 - y0; // Calculate y distance
 
 		if (dx >= 0)
 		{
@@ -317,42 +317,42 @@ void Gui_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t C
 		dx2 = dx << 1;
 		dy2 = dy << 1;
 
-		if (dx > dy) // x距离大于y距离，那么每个x轴上只有一个点，每个y轴上有若干个点
-		{			 // 且线的点数等于x距离，以x轴递增画点
+		if (dx > dy) // If x distance is greater than y distance, then there is only one point on each x axis, and several points on each y axis
+		{           // The number of points on the line is equal to the x distance, draw points by incrementing x axis
 			// initialize error term
 			error = dy2 - dx;
 
 			// draw the line
-			for (index = 0; index <= dx; index++) // 要画的点数不会超过x距离
+			for (index = 0; index <= dx; index++) // The number of points to be drawn will not exceed the x distance
 			{
-				// 画点
+				// Draw point
 				Gui_DrawPoint(x0, y0, Color);
 
 				// test if error has overflowed
-				if (error >= 0) // 是否需要增加y坐标值
+				if (error >= 0) // Whether to increase y coordinate
 				{
 					error -= dx2;
 
 					// move to next line
-					y0 += y_inc; // 增加y坐标值
+					y0 += y_inc; // Increase y coordinate
 				} // end if error overflowed
 
 				// adjust the error term
 				error += dy2;
 
 				// move to the next pixel
-				x0 += x_inc; // x坐标值每次画点后都递增1
+				x0 += x_inc; // x coordinate increases by 1 after each point is drawn
 			} // end for
 		} // end if |slope| <= 1
-		else // y轴大于x轴，则每个y轴上只有一个点，x轴若干个点
-		{	 // 以y轴为递增画点
+		else // If y axis is greater than x axis, then there is only one point on each y axis, and several points on each x axis
+		{    // Draw points by incrementing y axis
 			// initialize error term
 			error = dx2 - dy;
 
 			// draw the line
 			for (index = 0; index <= dy; index++)
 			{
-				// set the pixel
+				// Set the pixel
 				Gui_DrawPoint(x0, y0, Color);
 
 				// test if error overflowed

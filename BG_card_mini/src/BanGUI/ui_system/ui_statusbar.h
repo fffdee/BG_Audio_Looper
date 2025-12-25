@@ -1,14 +1,14 @@
 /**
  * @file    ui_statusbar.h
- * @brief   顶部状态栏模块
+ * @brief   Top status bar module
  * @author  BG Card Team
  * @date    2025-12-18
  * 
- * 功能:
- *   - 蓝牙连接状态图标
- *   - ADC输入检测 (MIC/LineIn/Guitar)
- *   - DAC输出检测 (耳机/扬声器)
- *   - 音量指示
+ * Features:
+ *   - Bluetooth connection status icon
+ *   - ADC input detection (MIC/LineIn/Guitar)
+ *   - DAC output detection (Headphone/Speaker)
+ *   - Volume indicator
  */
 
 #ifndef __UI_STATUSBAR_H__
@@ -22,79 +22,79 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * 硬件检测引脚配置 (BG Card Mini 实际硬件)
+ * Hardware detection pin configuration (BG Card Mini actual hardware)
  *===========================================================================*/
 
-/* ADC输入检测引脚 */
+/* ADC input detection pins */
 #define UI_DET_MIC_PORT         GPIO_A_IN
-#define UI_DET_MIC_PIN          GPIO_INDEX30    /* 麦克风检测 (下拉,高电平有效) */
+#define UI_DET_MIC_PIN          GPIO_INDEX30    /* MIC detection (pull-down, high level valid) */
 #define UI_DET_GUITAR_PORT      GPIO_A_IN
-#define UI_DET_GUITAR_PIN       GPIO_INDEX29    /* 吉他检测 (上拉,低电平有效) */
+#define UI_DET_GUITAR_PIN       GPIO_INDEX29    /* Guitar detection (pull-up, low level valid) */
 
-/* DAC输出检测引脚 */
+/* DAC output detection pins */
 #define UI_DET_HP_PORT          GPIO_B_IN
-#define UI_DET_HP_PIN           GPIO_INDEX4     /* 耳机检测 (上拉,低电平有效) */
+#define UI_DET_HP_PIN           GPIO_INDEX4     /* Headphone detection (pull-up, low level valid) */
 
-/* 音量旋钮ADC引脚 */
+/* Volume knob ADC pin */
 #define UI_VOLUME_ADC_PORT      GPIO_A_ANA_EN
-#define UI_VOLUME_ADC_PIN       GPIO_INDEX28    /* 主音量旋钮ADC */
+#define UI_VOLUME_ADC_PIN       GPIO_INDEX28    /* Main volume knob ADC */
 #define UI_VOLUME_ADC_CHANNEL   ADC_CHANNEL_GPIOA28
 
-/* 电池ADC引脚 */
+/* Battery ADC pin */
 #define UI_BATTERY_ADC_PORT     GPIO_A_ANA_EN
-#define UI_BATTERY_ADC_PIN      GPIO_INDEX31    /* 电池电压ADC */
+#define UI_BATTERY_ADC_PIN      GPIO_INDEX31    /* Battery voltage ADC */
 #define UI_BATTERY_ADC_CHANNEL  ADC_CHANNEL_GPIOA31
 
-/* 检测电平 (0=插入时低电平, 1=插入时高电平) */
+/* Detection level (0=low valid when inserted, 1=high valid when inserted) */
 #define UI_DET_ACTIVE_LOW       0
 #define UI_DET_ACTIVE_HIGH      1
-#define UI_DET_MIC_ACTIVE       UI_DET_ACTIVE_HIGH  /* 麦克风: 下拉,插入高电平 */
-#define UI_DET_GUITAR_ACTIVE    UI_DET_ACTIVE_LOW   /* 吉他: 上拉,插入低电平 */
-#define UI_DET_HP_ACTIVE        UI_DET_ACTIVE_LOW   /* 耳机: 上拉,插入低电平 */
+#define UI_DET_MIC_ACTIVE       UI_DET_ACTIVE_HIGH  /* MIC: pull-down, high valid when inserted */
+#define UI_DET_GUITAR_ACTIVE    UI_DET_ACTIVE_LOW   /* Guitar: pull-up, low valid when inserted */
+#define UI_DET_HP_ACTIVE        UI_DET_ACTIVE_LOW   /* Headphone: pull-up, low valid when inserted */
 
 /*===========================================================================
- * 状态定义
+ * Status definitions
  *===========================================================================*/
 
-/* 蓝牙状态 */
+/* Bluetooth status */
 typedef enum {
-    UI_BT_OFF = 0,          /* 蓝牙关闭 */
-    UI_BT_DISCONNECTED,     /* 蓝牙开启但未连接 */
-    UI_BT_CONNECTING,       /* 正在连接 */
-    UI_BT_CONNECTED,        /* 已连接 */
-    UI_BT_PLAYING,          /* 蓝牙音乐播放中 */
+    UI_BT_OFF = 0,          /* Bluetooth off */
+    UI_BT_DISCONNECTED,     /* Bluetooth on but not connected */
+    UI_BT_CONNECTING,       /* Connecting */
+    UI_BT_CONNECTED,        /* Connected */
+    UI_BT_PLAYING,          /* Bluetooth music playing */
 } UI_BTStatus_t;
 
-/* ADC输入源状态 (位标志,可同时多个) */
+/* ADC input source status (bit flag, can be multiple at once) */
 typedef enum {
-    UI_ADC_NONE     = 0x00, /* 无输入 */
-    UI_ADC_MIC      = 0x01, /* MIC已插入 */
-    UI_ADC_GUITAR   = 0x02, /* 吉他已插入 */
-    UI_ADC_USB      = 0x04, /* USB音频输入 */
-    UI_ADC_BT       = 0x08, /* 蓝牙音频输入 */
+    UI_ADC_NONE     = 0x00, /* No input */
+    UI_ADC_MIC      = 0x01, /* MIC inserted */
+    UI_ADC_GUITAR   = 0x02, /* Guitar inserted */
+    UI_ADC_USB      = 0x04, /* USB audio input */
+    UI_ADC_BT       = 0x08, /* Bluetooth audio input */
 } UI_ADCSource_t;
 
-/* DAC输出目标状态 (位标志) */
+/* DAC output target status (bit flag) */
 typedef enum {
-    UI_DAC_NONE     = 0x00, /* 无输出 */
-    UI_DAC_HP       = 0x01, /* 耳机已插入 */
-    UI_DAC_SPKR     = 0x02, /* 扬声器输出 */
-    UI_DAC_LINEOUT  = 0x04, /* LineOut输出 */
-    UI_DAC_USB      = 0x08, /* USB音频输出 */
+    UI_DAC_NONE     = 0x00, /* No output */
+    UI_DAC_HP       = 0x01, /* Headphone inserted */
+    UI_DAC_SPKR     = 0x02, /* Speaker output */
+    UI_DAC_LINEOUT  = 0x04, /* LineOut output */
+    UI_DAC_USB      = 0x08, /* USB audio output */
 } UI_DACOutput_t;
 
-/* 状态栏数据结构 */
+/* Status bar data structure */
 typedef struct {
-    UI_BTStatus_t bt_status;        /* 蓝牙状态 */
-    uint8_t adc_source;             /* ADC输入源 (UI_ADCSource_t位组合) */
-    uint8_t dac_output;             /* DAC输出目标 (UI_DACOutput_t位组合) */
-    uint8_t volume;                 /* 音量 0-100 */
-    uint8_t battery;                /* 电池电量 0-100 */
-    bool muted;                     /* 静音 */
-    bool usb_connected;             /* USB已连接 */
-    bool charging;                  /* 正在充电 */
-    uint8_t battery_level;  // 0-100百分比
-    uint8_t battery_grid;   // 0-4格数
+    UI_BTStatus_t bt_status;        /* Bluetooth status */
+    uint8_t adc_source;             /* ADC input source (UI_ADCSource_t bitwise combination) */
+    uint8_t dac_output;             /* DAC output target (UI_DACOutput_t bitwise combination) */
+    uint8_t volume;                 /* Volume 0-100 */
+    uint8_t battery;                /* Battery level 0-100 */
+    bool muted;                     /* Muted */
+    bool usb_connected;             /* USB connected */
+    bool charging;                  /* Charging */
+    uint8_t battery_level;  // 0-100 percent
+    uint8_t battery_grid;   // 0-4 grid count
 } UI_StatusBarData_t;
 
 /*===========================================================================

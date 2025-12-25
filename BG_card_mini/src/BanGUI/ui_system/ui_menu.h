@@ -1,15 +1,15 @@
 /**
  * @file    ui_menu.h
- * @brief   菜单系统模块
+ * @brief   Menu system module
  * @author  BG Card Team
  * @date    2025-12-18
  * 
- * 功能:
- *   - 多级菜单支持
- *   - 图标和文字菜单项
- *   - 滚动显示
- *   - 4按键导航 (上/下/确认/返回)
- *   - 菜单项回调
+ * Features:
+ *   - Multi-level menu support
+ *   - Icon and text menu items
+ *   - Scrolling display
+ *   - 4-key navigation (Up/Down/Enter/Back)
+ *   - Menu item callback
  */
 
 #ifndef __UI_MENU_H__
@@ -23,247 +23,247 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * 配置
+ * Configuration
  *===========================================================================*/
 
-#define UI_MENU_MAX_ITEMS       16      /* 单个菜单最大项数 */
-#define UI_MENU_MAX_NAME_LEN    20      /* 菜单项名称最大长度 */
-#define UI_MENU_MAX_DEPTH       4       /* 最大菜单深度 */
+#define UI_MENU_MAX_ITEMS       16      /* Max items per menu */
+#define UI_MENU_MAX_NAME_LEN    20      /* Max menu item name length */
+#define UI_MENU_MAX_DEPTH       4       /* Max menu depth */
 
 /*===========================================================================
- * 类型定义
+ * Type definitions
  *===========================================================================*/
 
-/* 菜单项类型 */
+/* Menu item type */
 typedef enum {
-    UI_MENU_ITEM_ACTION = 0,    /* 动作项 - 点击执行回调 */
-    UI_MENU_ITEM_SUBMENU,       /* 子菜单项 - 进入子菜单 */
-    UI_MENU_ITEM_TOGGLE,        /* 开关项 - 切换ON/OFF */
-    UI_MENU_ITEM_VALUE,         /* 数值项 - 显示/调整数值 */
-    UI_MENU_ITEM_SELECT,        /* 选择项 - 从列表中选择 */
-    UI_MENU_ITEM_BACK,          /* 返回项 - 返回上级菜单 */
+    UI_MENU_ITEM_ACTION = 0,    /* Action item - callback on click */
+    UI_MENU_ITEM_SUBMENU,       /* Submenu item - enter submenu */
+    UI_MENU_ITEM_TOGGLE,        /* Toggle item - switch ON/OFF */
+    UI_MENU_ITEM_VALUE,         /* Value item - display/adjust value */
+    UI_MENU_ITEM_SELECT,        /* Select item - choose from list */
+    UI_MENU_ITEM_BACK,          /* Back item - return to parent menu */
 } UI_MenuItemType_t;
 
-/* 前向声明 */
+/* Forward declarations */
 struct UI_Menu;
 struct UI_MenuItem;
 
-/* 菜单项回调函数 */
+/* Menu item callback function */
 typedef void (*UI_MenuCallback_t)(struct UI_MenuItem* item);
 
-/* 数值获取/设置回调 */
+/* Value get/set callback */
 typedef int32_t (*UI_MenuValueGet_t)(void);
 typedef void (*UI_MenuValueSet_t)(int32_t value);
 
-/* 菜单项结构 */
+/* Menu item structure */
 typedef struct UI_MenuItem {
-    const char* name;               /* 菜单项名称 */
-    const uint8_t* icon;            /* 图标数据 (可选, 8x8) */
-    UI_MenuItemType_t type;         /* 菜单项类型 */
+    const char* name;               /* Menu item name */
+    const uint8_t* icon;            /* Icon data (optional, 8x8) */
+    UI_MenuItemType_t type;         /* Menu item type */
     
     union {
-        /* ACTION 类型 */
+        /* ACTION type */
         struct {
             UI_MenuCallback_t callback;
         } action;
         
-        /* SUBMENU 类型 */
+        /* SUBMENU type */
         struct {
             struct UI_Menu* submenu;
         } submenu;
         
-        /* TOGGLE 类型 */
+        /* TOGGLE type */
         struct {
-            bool* value;            /* 绑定的bool变量 */
+            bool* value;            /* Bound bool variable */
             UI_MenuCallback_t on_change;
         } toggle;
         
-        /* VALUE 类型 */
+        /* VALUE type */
         struct {
-            int32_t* value;         /* 绑定的数值变量 */
+            int32_t* value;         /* Bound value variable */
             int32_t min;
             int32_t max;
             int32_t step;
-            const char* unit;       /* 单位字符串 (如 "%" "dB") */
+            const char* unit;       /* Unit string (e.g. "%" "dB") */
             UI_MenuCallback_t on_change;
         } value;
         
-        /* SELECT 类型 */
+        /* SELECT type */
         struct {
-            uint8_t* index;         /* 当前选择索引 */
-            const char** options;   /* 选项字符串数组 */
+            uint8_t* index;         /* Current selection index */
+            const char** options;   /* Option string array */
             uint8_t option_count;
             UI_MenuCallback_t on_change;
         } select;
     } data;
     
-    bool enabled;                   /* 是否可用 */
-    bool visible;                   /* 是否可见 */
-    uint32_t user_data;             /* 用户数据 */
+    bool enabled;                   /* Is enabled */
+    bool visible;                   /* Is visible */
+    uint32_t user_data;             /* User data */
 } UI_MenuItem_t;
 
-/* 菜单结构 */
+/* Menu structure */
 typedef struct UI_Menu {
-    const char* title;              /* 菜单标题 */
-    UI_MenuItem_t* items;           /* 菜单项数组 */
-    uint8_t item_count;             /* 菜单项数量 */
-    uint8_t selected;               /* 当前选中索引 */
-    uint8_t scroll_offset;          /* 滚动偏移 */
-    struct UI_Menu* parent;         /* 父菜单 */
+    const char* title;              /* Menu title */
+    UI_MenuItem_t* items;           /* Menu item array */
+    uint8_t item_count;             /* Number of menu items */
+    uint8_t selected;               /* Current selected index */
+    uint8_t scroll_offset;          /* Scroll offset */
+    struct UI_Menu* parent;         /* Parent menu */
 } UI_Menu_t;
 
-/* 菜单系统状态 */
+/* Menu system state */
 typedef struct {
-    UI_Menu_t* current;             /* 当前菜单 */
-    UI_Menu_t* stack[UI_MENU_MAX_DEPTH];  /* 菜单栈 */
-    uint8_t stack_depth;            /* 栈深度 */
-    bool editing;                   /* 是否在编辑模式(调整数值) */
-    bool need_redraw;               /* 需要重绘 */
-    bool visible;                   /* 是否可见 */
+    UI_Menu_t* current;             /* Current menu */
+    UI_Menu_t* stack[UI_MENU_MAX_DEPTH];  /* Menu stack */
+    uint8_t stack_depth;            /* Stack depth */
+    bool editing;                   /* In edit mode (adjusting value) */
+    bool need_redraw;               /* Need redraw */
+    bool visible;                   /* Is visible */
 } UI_MenuState_t;
 
 /*===========================================================================
- * API 函数
+ * API Functions
  *===========================================================================*/
 
 /**
- * @brief 初始化菜单系统
+ * @brief Initialize menu system
  */
 void UI_Menu_Init(void);
 
 /**
- * @brief 设置根菜单
- * @param menu 根菜单指针
+ * @brief Set root menu
+ * @param menu Root menu pointer
  */
 void UI_Menu_SetRoot(UI_Menu_t* menu);
 
 /**
- * @brief 获取当前菜单
- * @return 当前菜单指针
+ * @brief Get current menu
+ * @return Current menu pointer
  */
 UI_Menu_t* UI_Menu_GetCurrent(void);
 
 /**
- * @brief 绘制当前菜单
+ * @brief Draw current menu
  */
 void UI_Menu_Draw(void);
 
 /**
- * @brief 更新菜单 (处理需要重绘的情况)
+ * @brief Update menu (handle redraw if needed)
  */
 void UI_Menu_Update(void);
 
 /**
- * @brief 导航到上一项
+ * @brief Navigate to previous item
  */
 void UI_Menu_Up(void);
 
 /**
- * @brief 导航到下一项
+ * @brief Navigate to next item
  */
 void UI_Menu_Down(void);
 
 /**
- * @brief 确认/进入
+ * @brief Confirm/Enter
  */
 void UI_Menu_Enter(void);
 
 /**
- * @brief 返回
+ * @brief Back
  */
 void UI_Menu_Back(void);
 
 /**
- * @brief 返回到根菜单
+ * @brief Go to root menu
  */
 void UI_Menu_GoRoot(void);
 
 /**
- * @brief 进入指定菜单
- * @param menu 目标菜单
+ * @brief Enter specified menu
+ * @param menu Target menu
  */
 void UI_Menu_GoTo(UI_Menu_t* menu);
 
 /**
- * @brief 设置菜单可见性
- * @param visible true显示
+ * @brief Set menu visibility
+ * @param visible true to show
  */
 void UI_Menu_SetVisible(bool visible);
 
 /**
- * @brief 检查菜单是否可见
- * @return true可见
+ * @brief Check if menu is visible
+ * @return true if visible
  */
 bool UI_Menu_IsVisible(void);
 
 /**
- * @brief 检查是否在编辑模式
- * @return true编辑中
+ * @brief Check if in edit mode
+ * @return true if editing
  */
 bool UI_Menu_IsEditing(void);
 
 /**
- * @brief 请求重绘
+ * @brief Request redraw
  */
 void UI_Menu_RequestRedraw(void);
 
 /**
- * @brief 获取菜单状态
- * @return 状态指针
+ * @brief Get menu state
+ * @return State pointer
  */
 UI_MenuState_t* UI_Menu_GetState(void);
 
 /**
- * @brief 初始化默认菜单 (在ui_menu_def.c中实现)
+ * @brief Initialize default menu (implemented in ui_menu_def.c)
  */
 void UI_Menu_InitDefault(void);
 
 /**
- * @brief 获取默认主菜单
- * @return 默认主菜单指针
+ * @brief Get default main menu
+ * @return Default main menu pointer
  */
 UI_Menu_t* UI_GetDefaultMainMenu(void);
 
 /*===========================================================================
- * 便捷宏 - 用于静态定义菜单
+ * Convenience macros - for static menu definition
  *===========================================================================*/
 
-/* 定义动作菜单项 */
+/* Define action menu item */
 #define UI_MENU_ACTION(n, cb) \
     { .name = (n), .icon = NULL, .type = UI_MENU_ITEM_ACTION, \
       .data.action.callback = (cb), .enabled = true, .visible = true }
 
-/* 定义子菜单项 */
+/* Define submenu item */
 #define UI_MENU_SUBMENU(n, sub) \
     { .name = (n), .icon = NULL, .type = UI_MENU_ITEM_SUBMENU, \
       .data.submenu.submenu = (sub), .enabled = true, .visible = true }
 
-/* 定义开关项 */
+/* Define toggle item */
 #define UI_MENU_TOGGLE(n, val, cb) \
     { .name = (n), .icon = NULL, .type = UI_MENU_ITEM_TOGGLE, \
       .data.toggle.value = (val), .data.toggle.on_change = (cb), \
       .enabled = true, .visible = true }
 
-/* 定义数值项 */
+/* Define value item */
 #define UI_MENU_VALUE(n, val, mi, ma, st, un, cb) \
     { .name = (n), .icon = NULL, .type = UI_MENU_ITEM_VALUE, \
       .data.value.value = (val), .data.value.min = (mi), .data.value.max = (ma), \
       .data.value.step = (st), .data.value.unit = (un), .data.value.on_change = (cb), \
       .enabled = true, .visible = true }
 
-/* 定义选择项 */
+/* Define select item */
 #define UI_MENU_SELECT(n, idx, opts, cnt, cb) \
     { .name = (n), .icon = NULL, .type = UI_MENU_ITEM_SELECT, \
       .data.select.index = (idx), .data.select.options = (opts), \
       .data.select.option_count = (cnt), .data.select.on_change = (cb), \
       .enabled = true, .visible = true }
 
-/* 定义返回项 */
+/* Define back item */
 #define UI_MENU_BACK_ITEM(n) \
     { .name = (n), .icon = NULL, .type = UI_MENU_ITEM_BACK, \
       .enabled = true, .visible = true }
 
-/* 定义菜单 */
+/* Define menu */
 #define UI_MENU_DEF(name, title, items_array) \
     UI_Menu_t name = { \
         .title = (title), \

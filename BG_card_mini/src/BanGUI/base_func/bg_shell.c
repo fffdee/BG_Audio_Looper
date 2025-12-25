@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V2.0.0
  * @date     16-December-2025
- * @brief    閫氱敤鍛戒护琛孲hell瀹炵幇锛堜笌浼犺緭灞傝В鑰︼級
+ * @brief    Universal shell command implementation (with input/output console support)
  *****************************************************************************
  */
 
@@ -14,7 +14,7 @@
 #include "bg_shell.h"
 
 /*******************************************************************************
- * 绉佹湁鍙橀噺
+ * Static variables
  ******************************************************************************/
 static const ShellModule_t *g_Modules[SHELL_MODULE_MAX];
 static uint8_t              g_ModuleCount = 0;
@@ -26,7 +26,7 @@ static char                 g_OutBuf[SHELL_OUT_BUF_SIZE];
 static bool                 g_Init = FALSE;
 static bool                 g_WelcomeShown = FALSE;
 
-// 褰撳墠IO鎺ュ彛
+// Current IO interface
 static const ShellIO_t     *g_IO = NULL;
 
 // LCD console related
@@ -63,7 +63,7 @@ static const char *g_CatNames[MOD_CAT_MAX] = {
 };
 
 /*******************************************************************************
- * 绉佹湁鍑芥暟澹版槑
+ * Static function declarations
  ******************************************************************************/
 static void Shell_ProcessChar(char c);
 static void Shell_Execute(void);
@@ -78,7 +78,7 @@ static void Console_UpdateInputLine(const char* input, uint8_t len);
 static void Shell_SendRaw(const char *str);  /* Send to CDC only, no LCD */
 
 /*******************************************************************************
- * 鍐呯疆鍛戒护澶勭悊
+ * Internal command processing
  ******************************************************************************/
 static int Opt_HelpAll(int argc, char *argv[]);
 static int Opt_HelpMod(int argc, char *argv[]);
@@ -87,7 +87,7 @@ static int Opt_Version(int argc, char *argv[]);
 static int Opt_Clear(int argc, char *argv[]);
 static int Opt_IO(int argc, char *argv[]);
 
-// help妯″潡閫夐」
+// Help module options
 static const ShellOpt_t g_HelpOpts[] = {
     OPT("a", "all",     NULL,       "Show all modules",     Opt_HelpAll),
     OPT("m", "module",  "<name>",   "Show module help",     Opt_HelpMod),
@@ -104,7 +104,7 @@ static const ShellModule_t g_HelpModule = {
 };
 
 /*******************************************************************************
- * 鍏叡鍑芥暟
+ * Common functions
  ******************************************************************************/
 
 bool Shell_Init(void)
@@ -118,7 +118,7 @@ bool Shell_Init(void)
     g_IO = NULL;
     g_WelcomeShown = FALSE;
     
-    // 娉ㄥ唽鍐呯疆help妯″潡
+    // Register default help module
     Shell_RegisterModule(&g_HelpModule);
     
     g_Init = TRUE;
@@ -132,7 +132,7 @@ bool Shell_SetIO(const ShellIO_t *io)
         return FALSE;
     
     g_IO = io;
-    g_WelcomeShown = FALSE;  // 鍒囨崲IO鍚庨噸鏂版樉绀烘杩庝俊鎭�
+    g_WelcomeShown = FALSE;  // Reset welcome message after IO switch
     
     return TRUE;
 }
@@ -149,7 +149,7 @@ bool Shell_RegisterModule(const ShellModule_t *module)
     if(module == NULL || g_ModuleCount >= SHELL_MODULE_MAX)
         return FALSE;
     uint8_t i;
-    // 妫�煡閲嶅悕
+    // Check module name uniqueness
     for(i = 0; i < g_ModuleCount; i++)
     {
         if(strcmp(g_Modules[i]->name, module->name) == 0)
@@ -164,7 +164,7 @@ void Shell_Process(void)
 {
     if(!g_Init || !g_IO) return;
     
-    // 棣栨鏄剧ず娆㈣繋淇℃伅
+    // Show welcome message if not already done
     if(!g_WelcomeShown)
     {
         Shell_Welcome();
@@ -172,7 +172,7 @@ void Shell_Process(void)
         g_WelcomeShown = TRUE;
     }
     
-    // 浠嶪O鎺ュ彛璇诲彇鏁版嵁
+    // Read data from IO interface
     uint8_t buf[64];
     uint16_t len = 0;
     uint16_t i;
@@ -185,11 +185,11 @@ void Shell_Process(void)
     }
     else
     {
-        // 娌℃湁available鍑芥暟锛岀洿鎺ュ皾璇曡鍙�
+        // No available function, read directly
         len = g_IO->recv(buf, sizeof(buf));
     }
     
-    // 澶勭悊鎺ユ敹鍒扮殑鏁版嵁
+    // Process received data
     for(i = 0; i < len; i++)
     {
         Shell_ProcessChar((char)buf[i]);
@@ -200,7 +200,7 @@ void Shell_InputChar(char c)
 {
     if(!g_Init) return;
     
-    // 棣栨杈撳叆鏃舵樉绀烘杩庝俊鎭�
+    // First input, show welcome message
     if(!g_WelcomeShown && g_IO)
     {
         Shell_Welcome();
@@ -330,7 +330,7 @@ void Shell_NewLine(void)
 }
 
 /*******************************************************************************
- * 绉佹湁鍑芥暟
+ * Static functions
  ******************************************************************************/
 
 static void Shell_ProcessChar(char c)
@@ -393,7 +393,7 @@ static void Shell_Execute(void)
     
     if(argc == 0) goto done;
     uint16_t i;
-    // 鏌ユ壘妯″潡
+    // Find module
     const ShellModule_t *mod = NULL;
     for(i = 0; i < g_ModuleCount; i++)
     {
@@ -411,14 +411,14 @@ static void Shell_Execute(void)
         goto done;
     }
     
-    // 娌℃湁閫夐」锛屾樉绀烘ā鍧楀府鍔�
+    // No option, show module help
     if(argc < 2)
     {
         Shell_ShowModuleHelp(mod);
         goto done;
     }
     
-    // 瑙ｆ瀽閫夐」
+    // Parse option
     char *optStr = argv[1];
     if(optStr[0] != '-')
     {
@@ -435,7 +435,7 @@ static void Shell_Execute(void)
         isLong = TRUE;
     }
 
-    // 鏌ユ壘閫夐」
+    // Find option
     const ShellOpt_t *opt = NULL;
     for(i = 0; i < mod->optCount; i++)
     {
@@ -464,7 +464,7 @@ static void Shell_Execute(void)
         goto done;
     }
     
-    // 璋冪敤澶勭悊鍑芥暟
+    // Call handler function
     if(opt->handler)
     {
         int ret = opt->handler(argc - 2, &argv[2]);
@@ -537,89 +537,6 @@ static void Shell_ShowModuleHelp(const ShellModule_t *mod)
     }
 }
 
-/*******************************************************************************
- * 鍐呯疆鍛戒护瀹炵幇
- ******************************************************************************/
-
-static int Opt_HelpAll(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    uint16_t i;
-    Shell_Print("Modules:\r\n");
-    for(i = 0; i < g_ModuleCount; i++)
-    {
-        Shell_Printf(" %s: %s\r\n", g_Modules[i]->name, g_Modules[i]->desc);
-    }
-    return 0;
-}
-
-static int Opt_HelpMod(int argc, char *argv[])
-{
-    if(argc < 1)
-    {
-        Shell_Print("Usage: help -m <mod>\r\n");
-        return -1;
-    }
-    uint16_t i;
-    for(i = 0; i < g_ModuleCount; i++)
-    {
-        if(strcmp(argv[0], g_Modules[i]->name) == 0)
-        {
-            Shell_ShowModuleHelp(g_Modules[i]);
-            return 0;
-        }
-    }
-    
-    Shell_Printf("Unknown: %s\r\n", argv[0]);
-    return -1;
-}
-
-static int Opt_List(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    uint16_t i,cat;
-    for(cat = 0; cat < MOD_CAT_MAX; cat++)
-    {
-        bool has = FALSE;
-        for(i = 0; i < g_ModuleCount; i++)
-        {
-            if(g_Modules[i]->category == cat)
-            {
-                if(!has)
-                {
-                    Shell_Printf("[%s]\r\n", g_CatNames[cat]);
-                    has = TRUE;
-                }
-                Shell_Printf(" %s: %s\r\n", g_Modules[i]->name, g_Modules[i]->desc);
-            }
-        }
-    }
-    return 0;
-}
-
-static int Opt_Version(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    
-    Shell_Print("BG Card v1.0.0\r\n");
-    Shell_Printf("%s %s\r\n", __DATE__, __TIME__);
-    Shell_Printf("IO:%s\r\n", Shell_GetIOName());
-    return 0;
-}
-
-static int Opt_Clear(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Print("\033[2J\033[H");
-    return 0;
-}
-
-static int Opt_IO(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Printf("Current IO: %s\r\n", Shell_GetIOName());
-    return 0;
-}
 /*******************************************************************************
  * LCD Console Implementation
  ******************************************************************************/
