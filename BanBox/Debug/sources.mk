@@ -30,6 +30,7 @@ middleware/audio/src \
 middleware/mv_utils/src \
 middleware/rtos/freertos/src \
 middleware/rtos/rtos_api \
+src/banux/01_vfs \
 src/banux/02_device_drivers/USB/src \
 src/banux/02_device_drivers/flash \
 src/banux/02_device_drivers/lcd \
@@ -44,6 +45,7 @@ src/banux/05_component/BanGUI/menu_slider \
 src/banux/05_component/BanGUI/page \
 src/banux/05_component/BanGUI/ui_system \
 src/banux/05_component/audio_looper \
+src/banux/05_component/effect_graph \
 src/banux/05_component/sys_param \
 src/banux/06_app/BG_AudioIO_Manager \
 src/banux/06_app/audio \

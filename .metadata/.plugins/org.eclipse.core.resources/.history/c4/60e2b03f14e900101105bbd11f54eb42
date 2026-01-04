@@ -1,2 +1,0 @@
-RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>true</eraseAll><flashDriver>F\:\\project_and_dataset\\project\\bp1048_sdk_v0.1.12-master\\bp1048_sdk_v0.1.12-master\\MVsB1_Base_SDK\\tools\\b1_download_v1.7.exe</flashDriver><imageFile>F\:\\bp1048_sdk_v0.1.12-master\\BG_card_mini\\Debug\\output\\BG_card_mini.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>false</verify></rseFlashDriverModel>
-eclipse.preferences.version=1

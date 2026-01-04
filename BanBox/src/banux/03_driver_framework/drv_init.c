@@ -2,20 +2,22 @@
  *****************************************************************************
  * @file     drv_init.c
  * @author   BG Card Team  
- * @version  V1.0.0
- * @date     02-January-2026
+ * @version  V2.0.0
+ * @date     04-January-2026
  * @brief    驱动框架初始化 - 注册所有硬件驱动
  *****************************************************************************
  */
 
 #include "drv_init.h"
+#include "vfs.h"
 #include "drv_fs.h"
 #include "drv_device.h"
 #include "drv_st7735.h"
 #include "drv_w25qxx.h"
 #include "drv_battery.h"
 #include "drv_usb_cdc.h"
-#include "debug.h"  /* For DBG macro */
+#include "shell_fs.h"
+#include "debug.h"
 
 /*******************************************************************************
  * 驱动框架初始化函数
@@ -29,16 +31,31 @@ int DrvFramework_Init(void)
 {
     int ret;
     
-    /* 1. 初始化驱动文件系统 */
-    ret = DrvFs_Init();
-    if (ret != 0) {
+    /* 1. 初始化VFS核心 */
+    ret = Vfs_Init();
+    if (ret != VFS_OK) {
+        DBG("[DrvInit] VFS init failed!\n");
         return -1;
     }
     
-    /* 2. 初始化设备管理系统 */
+    /* 2. 初始化驱动文件系统（创建/driver目录） */
+    ret = DrvFs_Init();
+    if (ret != FS_OK) {
+        DBG("[DrvInit] DrvFs init failed!\n");
+        return -2;
+    }
+    
+    /* 3. 初始化Shell文件系统（创建/bin目录） */
+    ret = ShellFs_Init();
+    if (ret != VFS_OK) {
+        DBG("[DrvInit] ShellFs init failed!\n");
+        return -3;
+    }
+    
+    /* 4. 初始化设备管理系统 */
     ret = DrvDevice_Init();
     if (ret != 0) {
-        return -2;
+        return -4;
     }
     
     return 0;
@@ -105,6 +122,11 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] USB CDC registration FAILED\n");
     }
     
+    /* 注册系统命令到 /bin */
+    DBG("[DrvInit] Registering /bin commands...\n");
+    ShellFs_RegisterAllCommands();
+    DBG("[DrvInit] /bin commands registered OK\n");
+
     /* TODO: 添加更多驱动注册
      * - Audio Codec
      * - Bluetooth

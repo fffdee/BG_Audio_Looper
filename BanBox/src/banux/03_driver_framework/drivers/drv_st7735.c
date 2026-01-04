@@ -39,7 +39,7 @@ static St7735PrivData_t g_st7735_priv = {
     .width = LCD_WIDTH,
     .height = LCD_HEIGHT,
     .initialized = false,
-    .name = "ST7735_LCD"
+    .name = "ST7735-128x160"
 };
 
 /*******************************************************************************
@@ -118,7 +118,7 @@ static const FsParamDef_t st7735_params[] = {
         .get = NULL,
         .set = param_set_brightness,  // 只写
     },
-    FS_PARAM_END()
+    FS_PARAM_END
 };
 
 /*******************************************************************************

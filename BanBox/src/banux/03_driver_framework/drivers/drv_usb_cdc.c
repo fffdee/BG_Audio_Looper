@@ -271,7 +271,7 @@ static const FsParamDef_t usb_cdc_params[] = {
         .get = NULL,
         .set = param_cmd_flush,
     },
-    FS_PARAM_END()
+    FS_PARAM_END
 };
 
 /*****************************************************************************

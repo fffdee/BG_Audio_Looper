@@ -26,6 +26,7 @@
 #include "bt_a2dp_api.h"
 #include "battery_drv.h"
 #include "drv_init.h"  /* 驱动框架初始化 */
+#include "vfs.h"       /* 虚拟文件系统API */
 #include "drv_fs.h"    /* 驱动文件系统API */
 #include "drv_device.h" /* 驱动设备管理 */
 #include "chip_info.h"  /* 芯片ID读取 */
@@ -63,7 +64,7 @@ static int sys_info(int argc, char *argv[])
     Shell_Print("  MCU:       BP1048\r\n");
     Shell_Print("  Clock:     288MHz\r\n");
     Shell_Print("  Flash:     4MB\r\n");
-    Shell_Print("  RAM:       128KB\r\n");
+    Shell_Print("  RAM:       320KB\r\n");
     Shell_Printf("  Chip ID:   0x%016llX (Suffix: %04X)\r\n", chip_id, id_suffix);
     Shell_Printf("  Shell IO:  %s (%s)\r\n\r\n", 
                  ShellIOManager_GetIOName(active_io), state_str);
@@ -1222,23 +1223,40 @@ static const ShellOpt_t cat_opts[] = {
 
 DEFINE_MODULE(cat, "Display file contents", MOD_CAT_SYSTEM, cat_opts);
 
+/*----------------------------------------------------------------------------
+ * 递归打印VFS树结构
+ *----------------------------------------------------------------------------*/
+static void print_vfs_tree(VfsNode_t *node, int depth, int isLast)
+{
+    char prefix[32] = "";
+    int i;
+    for (i = 0; i < depth; i++) {
+        strcat(prefix, (i == depth - 1 && isLast) ? "   " : "│  ");
+    }
+    if (depth > 0) {
+        Shell_Print(prefix);
+        Shell_Print(isLast ? "└─ " : "├─ ");
+    }
+    Shell_Print(node->name);
+    if (node->type == VFS_NODE_DIR) Shell_Print("/");
+    Shell_Print("\r\n");
+    if (node->type == VFS_NODE_DIR && node->childCount > 0) {
+        for (i = 0; i < node->childCount; i++) {
+            print_vfs_tree(node->children[i], depth + 1, i == node->childCount - 1);
+        }
+    }
+}
+
 static int cmd_tree(int argc, char *argv[])
 {
     (void)argc; (void)argv;
-    
-    Shell_Print("\r\n/\r\n");
-    Shell_Print("└─ driver/\r\n");
-    Shell_Print("   ├─ spi/\r\n");
-    Shell_Print("   │  ├─ st7735 (LCD Display)\r\n");
-    Shell_Print("   │  └─ w25qxx (Flash Memory)\r\n");
-    Shell_Print("   ├─ i2c/\r\n");
-    Shell_Print("   ├─ i2s/\r\n");
-    Shell_Print("   ├─ sdio/\r\n");
-    Shell_Print("   ├─ power/\r\n");
-    Shell_Print("   │  └─ battery (Battery Monitor)\r\n");
-    Shell_Print("   └─ usb/\r\n");
-    Shell_Print("      └─ cdc (USB Serial)\r\n\r\n");
-    
+    VfsNode_t *root = Vfs_GetRoot();
+    if (!root) {
+        Shell_Print("VFS not initialized!\r\n");
+        return -1;
+    }
+    print_vfs_tree(root, 0, 1);
+    Shell_Print("\r\n");
     return 0;
 }
 

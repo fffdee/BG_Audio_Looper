@@ -38,6 +38,11 @@
 #include "resampler.h"
 #include "audio_decoder_api.h"
 
+// Effect Graph 模块
+#include "effect_graph.h"
+#include "effect_graph_config.h"
+#include "shell_cmd_graph.h"
+
 #include "bt_manager.h"
 // ==================== 全局缓冲区定义 ====================
 static uint32_t AudioADC1Buf[1024] = {0};
@@ -92,6 +97,15 @@ MemHandle SBC_MemHandle;
 ResamplerContext bt_resmaper;
 // ==================== 前向声明（内部函数） ====================
 static void SaveDataToSbcBuffer(uint8_t *data, uint16_t dataLen);
+
+// Effect Graph 音频设备回调函数
+static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len);
+static uint16_t ADC1_ReadMicData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len);
+static void DAC0_WriteSpeakerData(EffectNode_t *node, int32_t *in_buf, uint16_t len);
+static uint16_t USB_ReadAudioData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len);
+static void USB_WriteAudioData(EffectNode_t *node, int32_t *in_buf, uint16_t len);
+static uint16_t BT_ReadAudioData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len);
+static void SetupEffectGraphCallbacks(void);
 
 // ==================== 初始化函数群 ====================
 
@@ -255,6 +269,30 @@ void BG_audio_Init(uint16_t SampleRate)
 	
 	// 初始化Shell IO管理器（自动管理CDC和BLE接口）
 	ShellIOManager_Init();
+
+	// ========== Effect Graph 初始化 ==========
+	DBG("[Audio] Initializing Effect Graph...\n");
+	
+	// 1. 初始化 Effect Graph 核心模块
+	if (EffectGraph_Init() != 0) {
+		DBG("[Audio] ERROR: Effect Graph Init failed!\n");
+		return;
+	}
+	
+	// 2. 加载默认预设（可根据需求选择其他预设）
+	if (EffectGraphConfig_LoadPreset(GRAPH_PRESET_DEFAULT) != 0) {
+		DBG("[Audio] ERROR: Effect Graph Load Preset failed!\n");
+		return;
+	}
+	
+	// 3. 挂接实际音频设备回调
+	SetupEffectGraphCallbacks();
+	
+	// 4. 注册 Shell 命令（支持 CDC/BLE 远程控制）
+	ShellCmdGraph_Register();
+	
+	DBG("[Audio] Effect Graph initialized successfully\n");
+	// ==========================================
 
 	// 初始化Audio Looper（使用NOR Flash）
 	AudioLooper.InitWithFlashType(FLASH_TYPE_NOR);
@@ -787,4 +825,260 @@ void Audio_loop(void)
 	ShellIOManager_Process();
 
 
+}
+
+// ==================== Effect Graph 音频设备回调实现 ====================
+
+/**
+ * Guitar ADC Source 回调 - 从 ADC0 读取吉他输入数据
+ */
+static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len)
+{
+	uint16_t available_samples;
+	uint16_t samples_to_read;
+	uint16_t i;
+	uint32_t temp_buf[256];
+	
+	// 从 AudioADC1Buf 读取吉他输入数据
+	available_samples = AudioADC_DataLenGet(ADC0_MODULE);
+	samples_to_read = (max_len < available_samples) ? max_len : available_samples;
+	
+	if (samples_to_read > 256) {
+		samples_to_read = 256;
+	}
+	
+	if (samples_to_read > 0) {
+		// 读取立体声数据 (左右声道)
+		AudioADC_DataGet(ADC0_MODULE, temp_buf, samples_to_read);
+		
+		// 转换为 int32_t 格式
+		for (i = 0; i < samples_to_read; i++) {
+			out_buf[i] = (int32_t)temp_buf[i];
+		}
+		
+		return samples_to_read;
+	}
+	return 0;
+}
+
+/**
+ * Mic ADC Source 回调 - 从 ADC1 读取麦克风数据
+ */
+static uint16_t ADC1_ReadMicData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len)
+{
+	uint16_t available_samples;
+	uint16_t samples_to_read;
+	uint16_t i;
+	uint32_t temp_buf[256];
+	
+	// 从 AudioADC2Buf 读取麦克风数据
+	available_samples = AudioADC_DataLenGet(ADC1_MODULE);
+	samples_to_read = (max_len < available_samples) ? max_len : available_samples;
+	
+	if (samples_to_read > 256) {
+		samples_to_read = 256;
+	}
+	
+	if (samples_to_read > 0) {
+		AudioADC_DataGet(ADC1_MODULE, temp_buf, samples_to_read);
+		
+		// 转换为 int32_t 格式
+		for (i = 0; i < samples_to_read; i++) {
+			out_buf[i] = (int32_t)temp_buf[i];
+		}
+		
+		return samples_to_read;
+	}
+	return 0;
+}
+
+/**
+ * DAC Sink 回调 - 写入数据到 DAC0 扬声器输出
+ */
+static void DAC0_WriteSpeakerData(EffectNode_t *node, int32_t *in_buf, uint16_t len)
+{
+	uint16_t free_space;
+	uint16_t samples_to_write;
+	uint16_t i;
+	uint32_t temp_buf[256];
+	
+	// 获取 DAC FIFO 可用空间
+	free_space = AudioDAC_DataSpaceLenGet(DAC0);
+	samples_to_write = (len < free_space) ? len : free_space;
+	
+	if (samples_to_write > 256) {
+		samples_to_write = 256;
+	}
+	
+	if (samples_to_write > 0) {
+		// 转换为 uint32_t 格式
+		for (i = 0; i < samples_to_write; i++) {
+			temp_buf[i] = (uint32_t)in_buf[i];
+		}
+		
+		AudioDAC_DataSet(DAC0, temp_buf, samples_to_write);
+	}
+}
+
+/**
+ * USB Audio Source 回调 - 从 USB 读取音频数据
+ */
+static uint16_t USB_ReadAudioData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len)
+{
+	uint16_t available;
+	uint16_t samples_to_read;
+	uint16_t i;
+	uint32_t temp_buf[256];
+	
+	// 检查 USB 音频是否启用
+	if (!usb_speaker_enable) {
+		return 0;
+	}
+	
+	// 从 USB 音频接口读取数据
+	available = UsbAudioSpeakerDataLenGet();
+	samples_to_read = (max_len < available) ? max_len : available;
+	
+	if (samples_to_read > 256) {
+		samples_to_read = 256;
+	}
+	
+	if (samples_to_read > 0) {
+		UsbAudioSpeakerDataGet(temp_buf, samples_to_read);
+		
+		// 转换为 int32_t 格式
+		for (i = 0; i < samples_to_read; i++) {
+			out_buf[i] = (int32_t)temp_buf[i];
+		}
+		
+		return samples_to_read;
+	}
+	return 0;
+}
+
+/**
+ * USB Audio Sink 回调 - 写入音频数据到 USB
+ */
+static void USB_WriteAudioData(EffectNode_t *node, int32_t *in_buf, uint16_t len)
+{
+	uint16_t i;
+	uint32_t temp_buf[256];
+	uint16_t samples_to_write;
+	
+	// 检查 USB 麦克风是否启用
+	if (!usb_mic_enable) {
+		return;
+	}
+	
+	samples_to_write = len;
+	if (samples_to_write > 256) {
+		samples_to_write = 256;
+	}
+	
+	// 转换为 uint32_t 格式
+	for (i = 0; i < samples_to_write; i++) {
+		temp_buf[i] = (uint32_t)in_buf[i];
+	}
+	
+	// 写入数据到 USB 音频接口
+	UsbAudioMicDataSet(temp_buf, samples_to_write);
+}
+
+/**
+ * 蓝牙 Audio Source 回调 - 从蓝牙解码器读取音频数据
+ */
+static uint16_t BT_ReadAudioData(EffectNode_t *node, int32_t *out_buf, uint16_t max_len)
+{
+	uint16_t i;
+	int16_t *pcm_data;
+	uint16_t pcm_len;
+	
+	// 检查蓝牙是否处于流式传输状态
+	if (GetA2dpState() != BT_A2DP_STATE_STREAMING) {
+		return 0;
+	}
+	
+	// 从 SBC 解码器读取数据
+	if (mv_msize(&SBC_MemHandle) < SBC_DECODER_FIFO_MIN) {
+		return 0;
+	}
+	
+	// 解码（audio_decoder_decode 不接受参数）
+	if (audio_decoder_decode() != RT_SUCCESS) {
+		return 0;
+	}
+	
+	// 获取解码后的 PCM 数据
+	if (audio_decoder && audio_decoder->song_info) {
+		pcm_data = audio_decoder->song_info->pcm_addr;
+		pcm_len = audio_decoder->song_info->pcm_data_length;
+		
+		// 限制复制长度
+		if (pcm_len > max_len) {
+			pcm_len = max_len;
+		}
+		
+		// 转换并复制数据到缓冲区（int16_t -> int32_t）
+		for (i = 0; i < pcm_len; i++) {
+			out_buf[i] = (int32_t)pcm_data[i];
+		}
+		
+		return pcm_len;
+	}
+	
+	return 0;
+}
+
+/**
+ * 挂接 Effect Graph 节点的音频设备回调
+ */
+static void SetupEffectGraphCallbacks(void)
+{
+	EffectNode_t* node = NULL;
+	
+	DBG("[Audio] Setting up Effect Graph callbacks...\n");
+	
+	// 挂接吉他输入节点
+	node = EffectGraph_FindNodeByName("guitar_in");
+	if (node) {
+		node->func.source = ADC0_ReadGuitarData;
+		DBG("[Audio] Guitar input callback registered\n");
+	}
+	
+	// 挂接麦克风输入节点
+	node = EffectGraph_FindNodeByName("mic_in");
+	if (node) {
+		node->func.source = ADC1_ReadMicData;
+		DBG("[Audio] Mic input callback registered\n");
+	}
+	
+	// 挂接 DAC 输出节点
+	node = EffectGraph_FindNodeByName("dac_out");
+	if (node) {
+		node->func.sink = DAC0_WriteSpeakerData;
+		DBG("[Audio] DAC output callback registered\n");
+	}
+	
+	// 挂接 USB 输入节点（Speaker）
+	node = EffectGraph_FindNodeByName("usb_in");
+	if (node) {
+		node->func.source = USB_ReadAudioData;
+		DBG("[Audio] USB input callback registered\n");
+	}
+	
+	// 挂接 USB 输出节点（Mic）
+	node = EffectGraph_FindNodeByName("usb_out");
+	if (node) {
+		node->func.sink = USB_WriteAudioData;
+		DBG("[Audio] USB output callback registered\n");
+	}
+	
+	// 挂接蓝牙输入节点
+	node = EffectGraph_FindNodeByName("bt_in");
+	if (node) {
+		node->func.source = BT_ReadAudioData;
+		DBG("[Audio] BT input callback registered\n");
+	}
+	
+	DBG("[Audio] All callbacks setup completed\n");
 }

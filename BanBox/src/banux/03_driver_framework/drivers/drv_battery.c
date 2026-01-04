@@ -186,7 +186,7 @@ static const FsParamDef_t battery_params[] = {
         .get = NULL,  // 只写
         .set = param_cmd_refresh,
     },
-    FS_PARAM_END()  // 结束标记
+    FS_PARAM_END // 结束标记
 };
 
 /*****************************************************************************

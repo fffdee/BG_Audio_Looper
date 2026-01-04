@@ -148,7 +148,7 @@ static const FsParamDef_t w25qxx_params[] = {
         .get = NULL,
         .set = param_cmd_erase_chip,
     },
-    FS_PARAM_END()
+    FS_PARAM_END
 };
 
 /*******************************************************************************
