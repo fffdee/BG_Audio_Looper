@@ -1,0 +1,56 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+O_SRCS := 
+C_SRCS := 
+S_SRCS := 
+S_UPPER_SRCS := 
+OBJ_SRCS := 
+ASM_SRCS := 
+SAG_SRCS += \
+
+OBJCOPY_OUTPUTS := 
+OBJS := 
+C_DEPS := 
+GCOV_OUT := 
+SYMBOL_OUTPUTS := 
+OBJDUMP_OUTPUTS := 
+READELF_OUTPUTS := 
+GPROF_OUT := 
+SIZE_OUTPUTS := 
+EXECUTABLES := 
+S_UPPER_DEPS := 
+
+# Every subdirectory with source files must be described here
+SUBDIRS := \
+. \
+driver/driver_api/src \
+middleware/audio/src \
+middleware/mv_utils/src \
+middleware/rtos/freertos/src \
+middleware/rtos/rtos_api \
+src/banux/02_device_drivers/USB/src \
+src/banux/02_device_drivers/flash \
+src/banux/02_device_drivers/lcd \
+src/banux/02_device_drivers/power_mgr \
+src/banux/03_driver_framework/core \
+src/banux/03_driver_framework/drivers \
+src/banux/03_driver_framework \
+src/banux/04_shell_commands \
+src/banux/05_component/BanGUI/BG_List \
+src/banux/05_component/BanGUI/base_func \
+src/banux/05_component/BanGUI/menu_slider \
+src/banux/05_component/BanGUI/page \
+src/banux/05_component/BanGUI/ui_system \
+src/banux/05_component/audio_looper \
+src/banux/05_component/sys_param \
+src/banux/06_app/BG_AudioIO_Manager \
+src/banux/06_app/audio \
+src/banux/06_app/audio/effect_parameter \
+src/banux/06_app/audio/music_parameter \
+src/banux/06_app/bluetooth/src \
+src/device \
+src \
+startup \
+

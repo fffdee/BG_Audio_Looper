@@ -1,0 +1,38 @@
+src/banux/06_app/bluetooth/src/bt_avrcp_app.d src/banux/06_app/bluetooth/src/bt_avrcp_app.o: \
+ ../src/banux/06_app/bluetooth/src/bt_avrcp_app.c \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/debug.h \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/gpio.h \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/timer.h \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/timeout.h \
+ /cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_manager.h \
+ /cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_stack_callback.h \
+ /cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_common_api.h \
+ /cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_config.h \
+ /cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_avrcp_api.h \
+ /cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_app_interface.h
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h:
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/debug.h:
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h:
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/gpio.h:
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/timer.h:
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/driver/driver/inc/timeout.h:
+
+/cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_manager.h:
+
+/cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_stack_callback.h:
+
+/cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_common_api.h:
+
+/cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_config.h:
+
+/cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_avrcp_api.h:
+
+/cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/bt_app_interface.h:

@@ -116,3 +116,1960 @@ java.lang.NullPointerException
 	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
 	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
 	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+!SESSION 2026-01-04 09:44:04.005 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=1.7.0_76
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=zh
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.183
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.cdt.managedbuilder.ui.target.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.183
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.cdt.managedbuilder.ui.views.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.184
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.debug.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.184
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.deploy.nl_zh_1.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.185
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.console.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.185
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.cpuregisters.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.185
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdb.launch.cross.platform.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.185
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdb.launch.monitor.target.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.186
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdb.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.186
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/com.andestech.ide.dsf.gdbjtag.device.sid_2.0.0.201703291045.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.187
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdbjtag.launch.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.187
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.memory.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.187
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.profile.targetboard.core.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.188
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/com.andestech.ide.dsf.profile.ui_2.0.0.201703291045.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.188
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.profile.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.188
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.profile.ui.perspective.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.189
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.rtos.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.189
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.socregisters.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.189
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.variables.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.189
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/com.andestech.ide.flash.simulator.ui_3.0.0.201703291045.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.190
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.flash.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.190
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ldsag.edit.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.190
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ldsag.editor.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.190
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ldsag.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.190
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.license.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.191
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tm.diagnosis.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.191
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tm.rse.local.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.192
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tm.rse.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.192
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tracer.tracepoints.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.192
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tracer.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.192
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ui.nl.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.192
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.util.tcf.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.193
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.vep.frontend.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.193
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ant.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.193
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.device.extension.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.193
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.device.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.194
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.engine.extension.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.194
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.engine.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.194
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.195
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.195
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.core.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.195
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.core.native.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.195
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.195
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.core.win32.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.196
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.196
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.gdbjtag.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.196
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.gdbjtag.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.196
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.gdbjtag.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.197
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.mi.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.197
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.mi.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.197
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.floatingpoint.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.197
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.memorybrowser.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.197
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.search.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.198
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.traditional.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.198
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.transport.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.198
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.198
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.doc.user.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.198
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.gdb.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.199
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.gdb.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.199
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.199
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.199
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.gdb.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.199
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.gdb.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.200
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.launch.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.200
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.make.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.200
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.make.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.201
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.managedbuilder.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.201
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.managedbuilder.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.201
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.202
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.202
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.compare.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.202
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.compare.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.203
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.compare.win32.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.203
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.commands.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.203
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.beans.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.204
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.204
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.observable.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.204
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.property.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.204
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.externaltools.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.205
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filebuffers.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.205
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filesystem.java7.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.205
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filesystem.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.205
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filesystem.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.205
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.net.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.206
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.net.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.206
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.resources.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.206
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.variables.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.206
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.debug.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.206
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.debug.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.207
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.draw2d.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.207
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.core.commands.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.207
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.emf.xpath.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.207
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.bindings.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.207
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.css.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.css.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.css.swt.theme.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.di.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.dialogs.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.model.workbench.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.services.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.widgets.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.208
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.addons.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.210
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.210
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.renderers.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.210
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.210
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench3.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.211
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.211
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit.core_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.211
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.211
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit.doc_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.211
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.doc.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.212
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.212
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit.ui_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.212
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.212
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.codegen.ecore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.212
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.codegen.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.213
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.common.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.213
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.common.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.213
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.change.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.213
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.edit.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.213
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.editor.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.214
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.214
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.xmi.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.214
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.edit.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.214
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.edit.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.214
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.frameworkadmin.equinox.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.215
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.frameworkadmin.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.215
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.launcher.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.215
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.launcher.win32.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.215
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.artifact.repository.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.216
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.console.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.216
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.216
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.director.app.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.216
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.director.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.216
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.directorywatcher.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.217
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.engine.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.217
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.extensionlocation.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.217
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.garbagecollector.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.217
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.jarprocessor.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.217
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.metadata.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.218
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.metadata.repository.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.218
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.operations.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.218
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.publisher.eclipse.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.218
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.publisher.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.218
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.reconciler.dropins.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.219
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.repository.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.219
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.repository.tools.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.219
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.touchpoint.eclipse.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.219
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.touchpoint.natives.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.219
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.transport.ecf.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.220
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.importexport.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.220
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.220
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.sdk.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.220
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.sdk.scheduler.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.220
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.updatechecker.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.220
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.updatesite.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.221
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.simpleconfigurator.manipulator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.221
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.simpleconfigurator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.221
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.gef.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.221
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.base.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.221
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.222
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.222
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.webapp.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.222
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.core.manipulation.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.222
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.222
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.debug.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.222
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.launching.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.223
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.223
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jface.databinding.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.223
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jface.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.223
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jface.text.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.223
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.jgit_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.224
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jsch.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.224
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jsch.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.224
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ltk.core.refactoring.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.224
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ltk.ui.refactoring.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.224
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.platform.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.connectorservice.ssh.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.dstore.security.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.files.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.importexport.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.processes.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.services.dstore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.services.files.ftp.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.225
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.services.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.226
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.shells.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.226
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.subsystems.files.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.226
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.subsystems.files.dstore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.226
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.subsystems.files.ftp.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.226
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.227
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.search.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.227
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.227
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.swt.win32.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.227
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.team.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.227
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.team.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.227
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.text.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.tm.terminal.view.ui.nl_zh_4.5.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.browser.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.cheatsheets.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.console.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.editors.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.externaltools.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.forms.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.228
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.ide.application.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.230
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.ide.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.230
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.intro.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.230
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.intro.universal.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.230
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.monitoring.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.230
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.navigator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.231
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.navigator.resources.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.231
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.net.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.231
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.231
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.themes.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.232
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.trace.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.232
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.views.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.232
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.views.properties.tabbed.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.232
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.win32.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.232
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.workbench.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.233
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.workbench.texteditor.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-04 09:44:23.233
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.update.configurator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.equinox.p2.console 4 0 2026-01-04 09:44:23.301
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.console [249]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.provisional.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.console,  org.eclipse.equinox.p2.director.app,  org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.ui.admin,  org.eclipse.equinox.p2.installer"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.director 4 0 2026-01-04 09:44:23.304
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.director [251]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.director.app 4 0 2026-01-04 09:44:23.307
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.director.app [252]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.directorywatcher 4 0 2026-01-04 09:44:23.311
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.directorywatcher [253]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.update
+    -> Export-Package: org.eclipse.equinox.internal.p2.update; bundle-version="2.1.300.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.touchpoint.eclipse"; version="2.0.0"; x-friends:="org.eclipse.equinox.p2.reconciler.dropins,org.eclipse.equinox.p2.extensionlocation,org.eclipse.equinox.p2.directorywatcher"
+       org.eclipse.equinox.p2.touchpoint.eclipse [266]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator
+           -> Export-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.touchpoint.eclipse"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.extensionlocation 4 0 2026-01-04 09:44:23.318
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.extensionlocation [255]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.publisher.eclipse
+    -> Export-Package: org.eclipse.equinox.internal.p2.publisher.eclipse; bundle-version="1.2.0.v20150601-1708"; bundle-symbolic-name="org.eclipse.equinox.p2.publisher.eclipse"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.directorywatcher,  org.eclipse.equinox.p2.extensionlocation,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.equinox.p2.updatesite,  org.eclipse.pde.build"
+       org.eclipse.equinox.p2.publisher.eclipse [262]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.simpleconfigurator.manipulator; version="[2.0.0,3.0.0)"
+           -> Export-Package: org.eclipse.equinox.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="2.0.0"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.operations 4 0 2026-01-04 09:44:23.322
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.operations [260]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.publisher.eclipse 4 0 2026-01-04 09:44:23.325
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.publisher.eclipse [262]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.simpleconfigurator.manipulator; version="[2.0.0,3.0.0)"
+    -> Export-Package: org.eclipse.equinox.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="2.0.0"
+       org.eclipse.equinox.simpleconfigurator.manipulator [280]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.repository.tools 4 0 2026-01-04 09:44:23.327
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.repository.tools [265]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.touchpoint.eclipse 4 0 2026-01-04 09:44:23.329
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.touchpoint.eclipse [266]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator
+    -> Export-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.touchpoint.eclipse"
+       org.eclipse.equinox.simpleconfigurator.manipulator [280]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui 4 0 2026-01-04 09:44:23.330
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui [269]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui.importexport 4 0 2026-01-04 09:44:23.333
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui.importexport [270]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.ui
+    -> Export-Package: org.eclipse.equinox.internal.p2.ui; bundle-version="2.4.0.v20150425-0422"; bundle-symbolic-name="org.eclipse.equinox.p2.ui"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.ui.admin,  org.eclipse.pde.ui,  org.eclipse.equinox.p2.ui.sdk,  org.eclipse.equinox.p2.ui.rcp,  org.eclipse.equinox.p2.ui.importexport,  org.eclipse.equinox.p2.ui.sdk.scheduler,  org.eclipse.equinox.p2.discovery,  org.eclipse.equinox.p2.ui.discovery"
+       org.eclipse.equinox.p2.ui [269]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+           -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+              org.eclipse.equinox.p2.director [251]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui.sdk 4 0 2026-01-04 09:44:23.334
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui.sdk [271]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.p2.operations; version="[2.0.0,3.0.0)"
+    -> Export-Package: org.eclipse.equinox.p2.operations; bundle-version="2.4.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.operations"; version="2.0.0"
+       org.eclipse.equinox.p2.operations [260]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+           -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+              org.eclipse.equinox.p2.director [251]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui.sdk.scheduler 4 0 2026-01-04 09:44:23.336
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui.sdk.scheduler [272]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.touchpoint.eclipse; version="2.0.0"
+    -> Export-Package: org.eclipse.equinox.internal.p2.touchpoint.eclipse; bundle-version="2.1.300.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.touchpoint.eclipse"; version="2.0.0"; x-friends:="org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.extensionlocation,  org.eclipse.equinox.p2.ui.importexport,  org.eclipse.equinox.p2.ui.sdk.scheduler"
+       org.eclipse.equinox.p2.touchpoint.eclipse [266]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator
+           -> Export-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.touchpoint.eclipse"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.updatechecker 4 0 2026-01-04 09:44:23.338
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.updatechecker [273]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.p2.planner; version="[2.0.0,3.0.0)"
+    -> Export-Package: org.eclipse.equinox.p2.planner; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="2.0.0"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.updatesite 4 0 2026-01-04 09:44:23.341
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.updatesite [274]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.publisher.eclipse
+    -> Export-Package: org.eclipse.equinox.internal.p2.publisher.eclipse; bundle-version="1.2.0.v20150601-1708"; bundle-symbolic-name="org.eclipse.equinox.p2.publisher.eclipse"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.directorywatcher,  org.eclipse.equinox.p2.extensionlocation,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.equinox.p2.updatesite,  org.eclipse.pde.build"
+       org.eclipse.equinox.p2.publisher.eclipse [262]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.simpleconfigurator.manipulator; version="[2.0.0,3.0.0)"
+           -> Export-Package: org.eclipse.equinox.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="2.0.0"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.simpleconfigurator.manipulator 4 0 2026-01-04 09:44:23.343
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.simpleconfigurator.manipulator [280]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.reconciler.dropins 4 0 2026-01-04 09:44:23.661
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.reconciler.dropins [263]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1562)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.emf.ecore 2 0 2026-01-04 09:44:36.553
+!MESSAGE Both 'com.andestech.ide.ldsag' and 'com.andestech.ide.ldsag.xtext' register a package for 'http:///ide.andestech.com.ldsag/ldsag.ecore'
+
+!ENTRY org.eclipse.ui 2 2 2026-01-04 09:44:42.070
+!MESSAGE Invalid preference category path: org.eclipse.linuxtools.profiling.provider.MainPreferencePage (bundle: org.eclipse.linuxtools.binutils, page: org.eclipse.linuxtools.binutils.preferences)
+
+!ENTRY org.eclipse.ui 2 2 2026-01-04 09:44:42.153
+!MESSAGE Invalid preference category path: org.eclipse.linuxtools.profiling.provider.MainPreferencePage (bundle: org.eclipse.linuxtools.gcov.core, page: org.eclipse.linuxtools.gcov.core.preferences.colors)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:02:25.926
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.CharsetDeltaJob.run(CharsetDeltaJob.java:185)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:02:29.154
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-01-04 10:02:31.522
+!MESSAGE Indexed 'BanBox' (87 sources, 227 headers) in 5.52 sec: 19,855 declarations; 57,113 references; 0 unresolved inclusions; 109 syntax errors; 468 unresolved names (0.6%)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:03:01.953
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:03:01.990
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:03:02.102
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:03:02.197
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:03:02.475
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:25.151
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:25.401
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:25.413
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:25.479
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:25.514
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:26.643
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-01-04 10:08:26.730
+!MESSAGE Indexed 'BanBox' (114 sources, 263 headers) in 1.58 sec: 22,942 declarations; 71,265 references; 0 unresolved inclusions; 125 syntax errors; 307 unresolved names (0.32%)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:53.662
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:56.406
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:08:58.289
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:09:07.709
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:30.779
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:31.003
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:31.014
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:31.065
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:31.094
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:32.186
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-01-04 10:10:32.270
+!MESSAGE Indexed 'BanBox' (114 sources, 263 headers) in 1.49 sec: 22,942 declarations; 71,265 references; 0 unresolved inclusions; 125 syntax errors; 307 unresolved names (0.32%)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:35.399
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:37.695
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:40.509
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:42.380
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:10:51.949
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:12:14.745
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:12:17.521
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:12:19.513
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:12:29.072
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:04.128
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:04.336
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:04.346
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:04.396
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:04.425
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:05.517
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:46)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-01-04 10:13:05.594
+!MESSAGE Indexed 'BanBox' (114 sources, 263 headers) in 1.47 sec: 22,942 declarations; 71,265 references; 0 unresolved inclusions; 125 syntax errors; 307 unresolved names (0.32%)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:18.386
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:21.239
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:23.223
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:13:33.154
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:14:48.413
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:14:50.697
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:14:53.457
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:14:55.287
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.core.resources 4 2 2026-01-04 10:15:04.597
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.core.resources".
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:379)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.checkLocalChanges(SystemTempFileListener.java:386)
+	at org.eclipse.rse.files.ui.resources.SystemTempFileListener.resourceChanged(SystemTempFileListener.java:218)
+	at org.eclipse.core.internal.events.NotificationManager$1.run(NotificationManager.java:299)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:42)
+	at org.eclipse.core.internal.events.NotificationManager.notify(NotificationManager.java:289)
+	at org.eclipse.core.internal.events.NotificationManager.broadcastChanges(NotificationManager.java:152)
+	at org.eclipse.core.internal.resources.Workspace.broadcastPostChange(Workspace.java:373)
+	at org.eclipse.core.internal.resources.Workspace.endOperation(Workspace.java:1470)
+	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
+	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY com.andestech.ide.tm.rse 1 -1 2026-01-04 10:20:13.251
+!MESSAGE Fork ICEman command:D:\app\Andestech\AndeSight300RDS\ice\ICEman.exe -A -N reset-hold-script.tpl -H --port=9902:49151 --bport=9900 --tport=9901 -f "/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/_ICEman_/" 
+
+!ENTRY com.andestech.ide.tm.rse 1 -1 2026-01-04 10:20:13.252
+!MESSAGE Fork ICEman Working Directory:D:\app\Andestech\AndeSight300RDS\ice
+
+!ENTRY com.andestech.ide.tm.rse 1 -1 2026-01-04 10:20:13.252
+!MESSAGE Before exec ICEman.
+
+!ENTRY com.andestech.ide.tm.rse 1 -1 2026-01-04 10:20:13.320
+!MESSAGE After exec ICEman.
+
+!ENTRY com.andestech.ide.tm.rse 4 1 2026-01-04 10:23:35.004
+!MESSAGE 10:22:46.908 ICE Error on Target [ADP-AG101P-4GB-D1088-SPU-32I]
+!STACK 0
+java.lang.Exception: TARGET ERROR! Target is disconnected with AICE.
+
+	at com.andestech.ide.tm.rse.model.impl.TargetProcessStatus.<init>(TargetProcessStatus.java:24)
+	at com.andestech.ide.tm.rse.model.impl.TargetProcessInfo.setErrorMessage(TargetProcessInfo.java:168)
+	at com.andestech.ide.tm.rse.local.console.ProcessConsole.parseLine(ProcessConsole.java:205)
+	at com.andestech.ide.tm.rse.local.console.IceProcessConsole.parseLine(IceProcessConsole.java:51)
+	at com.andestech.ide.tm.rse.local.console.ProcessConsole.writeLine(ProcessConsole.java:246)
+	at com.andestech.ide.tm.rse.local.console.ProcessConsole.access$1(ProcessConsole.java:236)
+	at com.andestech.ide.tm.rse.local.console.ProcessConsole$1.run(ProcessConsole.java:72)

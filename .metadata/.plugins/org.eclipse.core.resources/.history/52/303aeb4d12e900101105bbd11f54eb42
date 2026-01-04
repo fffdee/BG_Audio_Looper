@@ -1,0 +1,17 @@
+src/banux/04_shell_commands/shell_io_ble.d src/banux/04_shell_commands/shell_io_ble.o: \
+ ../src/banux/04_shell_commands/shell_io_ble.c \
+ ../src/banux/04_shell_commands/shell_io_ble.h \
+ ../src/banux/04_shell_commands/bg_shell.h \
+ /cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h \
+ ../src/banux/04_shell_commands/shell_io_manager.h \
+ /cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/ble_api.h
+
+../src/banux/04_shell_commands/shell_io_ble.h:
+
+../src/banux/04_shell_commands/bg_shell.h:
+
+/cygdrive/F/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h:
+
+../src/banux/04_shell_commands/shell_io_manager.h:
+
+/cygdrive/F/bp1048_sdk_v0.1.12-master/BG_card_mini/src/banux/06_app/bluetooth/inc/ble_api.h:
