@@ -231,6 +231,11 @@ void Shell_NewLine(void);
  */
 void Shell_RegisterAllModules(void);
 
+/**
+ * @brief  Register system commands (sys, info, etc)
+ */
+void SysCmd_Register(void);
+
 /*******************************************************************************
  * LCD Console API
  ******************************************************************************/
@@ -249,15 +254,6 @@ bool Shell_SetLCD(const ShellLCD_t *lcd);
  * @note   When enabled, Shell output also displays on LCD
  */
 void Shell_ConsoleEnable(bool enable);
-
-/**
- * @brief  Register system commands
- */
-void SysCmd_Register(void);
-
-#define REGISTER_MODULE(name) \
-    extern const ShellModule_t g_##name##Module; \
-    Shell_RegisterModule(&g_##name##Module)
 
 /**
  * @brief  Check if LCD console is enabled

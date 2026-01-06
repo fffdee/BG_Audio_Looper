@@ -187,92 +187,67 @@ effect enable <id> [on|off]   # 启用/禁用效果器
 | `shell_cmd_graph.c` | 完整的Shell模块实现，包括参数校验、快照管理等 |
 | `shell_cmd_graph.h` | 添加 `bg_shell.h` 引用 |
 | `bg_shell_commands.c` | 添加效果器命令头文件和注册调用 |
+| `effect_graph_vfs.c/.h` | **新增** 效果图虚拟文件系统实现 |
+| `shell_cmd_audio_vfs.c/.h` | **新增** audio命令实现 |
+| `drv_init.c` | 添加效果图VFS初始化和audio命令注册 |
 
-## 🔄 编译和测试
+## 🆕 新增功能：/audio 虚拟文件系统
 
-### 编译步骤
-1. 确保所有文件都已保存
-2. 在项目根目录运行 `make clean`
-3. 运行 `make` 重新编译
+### 功能概述
+将效果图参数挂载到 `/audio` 目录，支持通过 VFS 命令（cd/ls/cat/echo）访问和修改参数。
 
-### 测试步骤
-1. 烧录固件到设备
-2. 通过CDC/BLE连接Shell
-3. 运行命令测试:
-```bash
-$ help -a              # 查看所有命令（应包含 graph, fx, effect）
-$ graph list           # 测试 graph 命令
-$ fx 3                 # 测试 fx 命令
-$ effect list          # 测试 effect 命令
+### 目录结构
+```
+/
+├── bin/                    # 系统命令
+├── driver/                 # 硬件驱动  
+└── audio/                  # 音频效果图 ★新增★
+    ├── graph0/             # 默认效果图
+    │   ├── info            # 图信息（只读）
+    │   ├── preset          # 当前预设ID（读写）
+    │   ├── node_count      # 节点数量（只读）
+    │   └── nodes/          # 节点目录
+    │       ├── 0_adc0/
+    │       │   ├── enabled
+    │       │   ├── bypass
+    │       │   └── type
+    │       ├── 3_drc/
+    │       │   ├── enabled
+    │       │   ├── bypass
+    │       │   ├── threshold
+    │       │   ├── ratio
+    │       │   ├── attack
+    │       │   └── release
+    │       └── ...
+    └── graph1/             # 可动态创建
 ```
 
-## 🎯 功能特性
-
-### 1. 参数范围校验
-- 自动校验参数值是否在有效范围内
-- 超范围时显示警告但仍允许设置
-- 无效参数时显示可用参数列表
-
-### 2. 快照管理
-- 4个快照槽位
-- 保存/恢复整个效果图状态
-- 支持快照命名
-
-### 3. 批量操作
-- 一键启用/禁用所有效果
-- 一键旁路所有效果
-- 便于调试和对比
-
-### 4. ID/名称双索引
-- 所有命令支持通过ID或名称访问节点
-- ID更快捷，名称更直观
-
-## 📖 使用示例
-
-### 典型工作流
+### 使用方法
 ```bash
-# 1. 查看当前节点
-$ graph list
+# 列出效果图
+$ ls /audio
+graph0/
 
-# 2. 查看节点参数范围
-$ graph params 3
+# 进入效果图
+$ cd /audio/graph0/nodes/3_drc
 
-# 3. 调节参数
-$ fx 3 threshold -25
-$ fx 3 ratio 6
+# 读取参数
+$ cat threshold
+-20
 
-# 4. 保存满意的设置
-$ graph snapshot save 0 "perfect"
+# 修改参数（需要echo支持重定向）
+$ echo -25 > threshold
 
-# 5. 继续调试
-$ fx 3 threshold -30
-
-# 6. 不满意，恢复之前的设置
-$ graph snapshot load 0
+# audio命令管理
+$ audio list
+$ audio create myGraph 1
+$ audio delete myGraph
+$ audio info graph0
 ```
 
-### A/B对比测试
-```bash
-# 保存参考状态
-$ graph snapshot save 0 reference
+详细说明请参考 `AUDIO_VFS_GUIDE.md`。
 
-# 调节参数
-$ fx 3 threshold -30
-$ fx 5 wet 80
-
-# 保存调节后状态
-$ graph snapshot save 1 bright
-
-# A/B对比
-$ graph snapshot load 0    # 加载参考
-$ graph snapshot load 1    # 加载调节后
-```
-
-## 🐛 已知问题
-
-无
-
-## 📌 下一步工作
+## 📦 未来计划
 
 1. 在实际硬件上测试所有命令
 2. 完善参数持久化（保存到Flash）
@@ -285,3 +260,4 @@ $ graph snapshot load 1    # 加载调节后
 - [GRAPH_PARAMS_GUIDE.md](./GRAPH_PARAMS_GUIDE.md) - 命令使用指南
 - [EFFECT_GRAPH_README.md](./EFFECT_GRAPH_README.md) - 效果图系统说明
 - [shell_cmd_graph.h](./shell_cmd_graph.h) - API接口文档
+- [AUDIO_VFS_GUIDE.md](./AUDIO_VFS_GUIDE.md) - 虚拟文件系统使用指南

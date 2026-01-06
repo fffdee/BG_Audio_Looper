@@ -41,6 +41,7 @@
 // Effect Graph 模块
 #include "effect_graph.h"
 #include "effect_graph_config.h"
+#include "effect_graph_vfs.h"
 #include "shell_cmd_graph.h"
 
 // System Monitor 模块
@@ -315,13 +316,16 @@ void BG_audio_Init(uint16_t SampleRate)
 		return;
 	}
 	
-	// 3. 挂接实际音频设备回调
+	// 3. 自动挂载效果图到VFS（供命令行和文件系统访问）
+	EffectGraphVfs_TryAutoMount();
+	
+	// 4. 挂接实际音频设备回调
 	SetupEffectGraphCallbacks();
 	
-	// 4. 注册 Shell 命令（支持 CDC/BLE 远程控制）
+	// 5. 注册 Shell 命令（支持 CDC/BLE 远程控制）
 	ShellCmdGraph_Register();
 	
-	// 5. 注册系统监控命令（CPU/内存/任务统计）
+	// 6. 注册系统监控命令（CPU/内存/任务统计）
 	ShellCmdSysmon_Register();
 	
 	DBG("[Audio] Effect Graph initialized successfully\n");

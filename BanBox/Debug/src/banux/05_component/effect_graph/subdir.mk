@@ -6,16 +6,22 @@
 C_SRCS += \
 ../src/banux/05_component/effect_graph/effect_graph.c \
 ../src/banux/05_component/effect_graph/effect_graph_config.c \
+../src/banux/05_component/effect_graph/effect_graph_vfs.c \
+../src/banux/05_component/effect_graph/shell_cmd_audio_vfs.c \
 ../src/banux/05_component/effect_graph/shell_cmd_graph.c 
 
 OBJS += \
 ./src/banux/05_component/effect_graph/effect_graph.o \
 ./src/banux/05_component/effect_graph/effect_graph_config.o \
+./src/banux/05_component/effect_graph/effect_graph_vfs.o \
+./src/banux/05_component/effect_graph/shell_cmd_audio_vfs.o \
 ./src/banux/05_component/effect_graph/shell_cmd_graph.o 
 
 C_DEPS += \
 ./src/banux/05_component/effect_graph/effect_graph.d \
 ./src/banux/05_component/effect_graph/effect_graph_config.d \
+./src/banux/05_component/effect_graph/effect_graph_vfs.d \
+./src/banux/05_component/effect_graph/shell_cmd_audio_vfs.d \
 ./src/banux/05_component/effect_graph/shell_cmd_graph.d 
 
 

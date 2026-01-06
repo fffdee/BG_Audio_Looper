@@ -17,6 +17,8 @@
 #include "drv_battery.h"
 #include "drv_usb_cdc.h"
 #include "shell_fs.h"
+#include "effect_graph_vfs.h"
+#include "shell_cmd_audio_vfs.h"
 #include "debug.h"
 
 /*******************************************************************************
@@ -126,6 +128,18 @@ int DrvFramework_RegisterAll(void)
     DBG("[DrvInit] Registering /bin commands...\n");
     ShellFs_RegisterAllCommands();
     DBG("[DrvInit] /bin commands registered OK\n");
+
+    /* 初始化音频效果图VFS（创建/audio目录） */
+    DBG("[DrvInit] Initializing Audio Graph VFS...\n");
+    ret = EffectGraphVfs_MountDefault();
+    if (ret == GRAPH_VFS_OK) {
+        DBG("[DrvInit] Audio Graph VFS mounted OK\n");
+    } else {
+        DBG("[DrvInit] Audio Graph VFS mount deferred (graph not ready)\n");
+    }
+    
+    /* 注册audio VFS Shell命令 */
+    ShellCmdAudioVfs_Register();
 
     /* TODO: 添加更多驱动注册
      * - Audio Codec

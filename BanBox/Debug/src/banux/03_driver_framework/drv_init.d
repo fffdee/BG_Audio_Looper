@@ -11,6 +11,11 @@ src/banux/03_driver_framework/drv_init.d src/banux/03_driver_framework/drv_init.
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/drivers/drv_battery.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/drivers/drv_usb_cdc.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_fs.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph_vfs.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph_config.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/shell_cmd_audio_vfs.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/bg_shell.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/inc/debug.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/inc/type.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc/gpio.h \
@@ -37,6 +42,16 @@ src/banux/03_driver_framework/drv_init.d src/banux/03_driver_framework/drv_init.
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/drivers/drv_usb_cdc.h:
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_fs.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph_vfs.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph_config.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/shell_cmd_audio_vfs.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/bg_shell.h:
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/inc/debug.h:
 
