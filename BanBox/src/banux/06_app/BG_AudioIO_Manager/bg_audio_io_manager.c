@@ -43,6 +43,9 @@
 #include "effect_graph_config.h"
 #include "shell_cmd_graph.h"
 
+// System Monitor 模块
+#include "shell_cmd_sysmon.h"
+
 #include "bt_manager.h"
 // ==================== 全局缓冲区定义 ====================
 static uint32_t AudioADC1Buf[1024] = {0};
@@ -317,6 +320,9 @@ void BG_audio_Init(uint16_t SampleRate)
 	
 	// 4. 注册 Shell 命令（支持 CDC/BLE 远程控制）
 	ShellCmdGraph_Register();
+	
+	// 5. 注册系统监控命令（CPU/内存/任务统计）
+	ShellCmdSysmon_Register();
 	
 	DBG("[Audio] Effect Graph initialized successfully\n");
 	// ==========================================

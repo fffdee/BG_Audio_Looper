@@ -30,6 +30,10 @@
 #include "drv_fs.h"    /* 驱动文件系统API */
 #include "drv_device.h" /* 驱动设备管理 */
 #include "chip_info.h"  /* 芯片ID读取 */
+
+/* 效果器命令模块 */
+#include "shell_cmd_effect.h"
+#include "shell_cmd_graph.h"
 /*============================================================================
  * sys module - System information
  *===========================================================================*/
@@ -1335,6 +1339,10 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(cat);
     REGISTER_MODULE(tree);
     REGISTER_MODULE(drivers);
+    
+    /* 效果图和效果器命令 */
+    ShellCmdEffect_Register();   /* effect 命令 */
+    ShellCmdGraph_Register();    /* graph 和 fx 命令 */
 
     /* 初始化驱动框架 (包含所有驱动注册) */
     /* 注意：已在main()中初始化，这里不再重复调用 */

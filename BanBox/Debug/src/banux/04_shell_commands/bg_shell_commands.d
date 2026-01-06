@@ -23,7 +23,9 @@ src/banux/04_shell_commands/bg_shell_commands.d src/banux/04_shell_commands/bg_s
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/core/drv_fs.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/core/drv_device.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/core/drv_fs.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc/chip_info.h
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc/chip_info.h \
+ ../src/banux/04_shell_commands/shell_cmd_effect.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/shell_cmd_graph.h
 
 ../src/banux/04_shell_commands/bg_shell.h:
 
@@ -72,3 +74,7 @@ src/banux/04_shell_commands/bg_shell_commands.d src/banux/04_shell_commands/bg_s
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/core/drv_fs.h:
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc/chip_info.h:
+
+../src/banux/04_shell_commands/shell_cmd_effect.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/shell_cmd_graph.h:

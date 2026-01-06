@@ -6,6 +6,8 @@
 C_SRCS += \
 ../src/banux/04_shell_commands/bg_shell.c \
 ../src/banux/04_shell_commands/bg_shell_commands.c \
+../src/banux/04_shell_commands/shell_cmd_effect.c \
+../src/banux/04_shell_commands/shell_cmd_sysmon.c \
 ../src/banux/04_shell_commands/shell_fs.c \
 ../src/banux/04_shell_commands/shell_io_ble.c \
 ../src/banux/04_shell_commands/shell_io_manager.c 
@@ -13,6 +15,8 @@ C_SRCS += \
 OBJS += \
 ./src/banux/04_shell_commands/bg_shell.o \
 ./src/banux/04_shell_commands/bg_shell_commands.o \
+./src/banux/04_shell_commands/shell_cmd_effect.o \
+./src/banux/04_shell_commands/shell_cmd_sysmon.o \
 ./src/banux/04_shell_commands/shell_fs.o \
 ./src/banux/04_shell_commands/shell_io_ble.o \
 ./src/banux/04_shell_commands/shell_io_manager.o 
@@ -20,6 +24,8 @@ OBJS += \
 C_DEPS += \
 ./src/banux/04_shell_commands/bg_shell.d \
 ./src/banux/04_shell_commands/bg_shell_commands.d \
+./src/banux/04_shell_commands/shell_cmd_effect.d \
+./src/banux/04_shell_commands/shell_cmd_sysmon.d \
 ./src/banux/04_shell_commands/shell_fs.d \
 ./src/banux/04_shell_commands/shell_io_ble.d \
 ./src/banux/04_shell_commands/shell_io_manager.d 

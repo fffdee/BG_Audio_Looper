@@ -74,6 +74,7 @@ src/banux/06_app/BG_AudioIO_Manager/bg_audio_io_manager.d src/banux/06_app/BG_Au
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph_config.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/shell_cmd_graph.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_sysmon.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/06_app/bluetooth/inc/bt_manager.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc/timeout.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/06_app/bluetooth/inc/bt_stack_callback.h \
@@ -231,6 +232,8 @@ src/banux/06_app/BG_AudioIO_Manager/bg_audio_io_manager.d src/banux/06_app/BG_Au
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/effect_graph.h:
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/shell_cmd_graph.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_sysmon.h:
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/06_app/bluetooth/inc/bt_manager.h:
 

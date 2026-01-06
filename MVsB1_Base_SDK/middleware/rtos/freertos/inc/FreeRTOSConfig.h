@@ -99,9 +99,10 @@
 #define configTICK_RATE_HZ			( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES			(  10 )
 #define configMINIMAL_STACK_SIZE		( ( uint16_t ) 256 )//( ( uint16_t ) 512 )
-#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 37 * 1024 ) )
+#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 48 * 1024 ) )  /* Increased from 37KB to 48KB for sysmon */
 #define configMAX_TASK_NAME_LEN			( 16 )
 #define configUSE_TRACE_FACILITY		1
+#define configUSE_STATS_FORMATTING_FUNCTIONS	1
 #define configUSE_16_BIT_TICKS			0
 #define configIDLE_SHOULD_YIELD			1
 #define configUSE_MUTEXES			1
@@ -156,7 +157,7 @@ to all Cortex-M ports, and do not rely on any particular library functions. */
 See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 //#define configMAX_SYSCALL_INTERRUPT_PRIORITY 	( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
 
-//0£ºÈÎÎñÇÐ»»Ê±¹Ø±ÕËùÓÐÖÐ¶Ï   1£ºÈÎÎñÇÐ»»Ê±¹Ø±ÕÖÐ¶ÏÓÅÏÈ¼¶Îª1¡¢2¡¢3µÄÖÐ¶Ï  2£ºÈÎÎñÇÐ»»Ê±¹Ø±ÕÖÐ¶ÏÓÅÏÈ¼¶Îª2¡¢3µÄÖÐ¶Ï  3£ºÈÎÎñÇÐ»»Ê±¹Ø±ÕÖÐ¶ÏÓÅÏÈ¼¶Îª3µÄÖÐ¶Ï
+//0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½Ê±ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½   1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½Ê±ï¿½Ø±ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½È¼ï¿½Îª1ï¿½ï¿½2ï¿½ï¿½3ï¿½ï¿½ï¿½Ð¶ï¿½  2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½Ê±ï¿½Ø±ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½È¼ï¿½Îª2ï¿½ï¿½3ï¿½ï¿½ï¿½Ð¶ï¿½  3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½Ê±ï¿½Ø±ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½È¼ï¿½Îª3ï¿½ï¿½ï¿½Ð¶ï¿½
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY 	0
 
 /* Normal assert() semantics without relying on the provision of an assert.h

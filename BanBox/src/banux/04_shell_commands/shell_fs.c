@@ -84,6 +84,8 @@ void ShellFs_RegisterAllCommands(void)
     ShellFs_RegisterCommand("cat");
     ShellFs_RegisterCommand("tree");
     ShellFs_RegisterCommand("drivers");
+    ShellFs_RegisterCommand("effect");
+    ShellFs_RegisterCommand("sysmon");
     // TODO: 其他命令名同理注册
     DBG("[ShellFs] All /bin commands registered\n");
 }
