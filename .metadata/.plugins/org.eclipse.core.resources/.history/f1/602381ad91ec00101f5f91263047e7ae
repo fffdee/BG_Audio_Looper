@@ -1,0 +1,245 @@
+/**
+ * @file    ui_view_home.c
+ * @brief   Home View - Main idle screen implementation
+ * @author  BG Card Team
+ * @date    2025-01-08
+ */
+
+#include "ui_view_home.h"
+#include "ui_statusbar.h"
+#include "bg_lcd.h"
+#include "gui_tool.h"
+#include "picture.h"
+#include <string.h>
+
+/*===========================================================================
+ * Private Variables
+ *===========================================================================*/
+
+static uint8_t s_selected_icon = 0;
+static void (*s_icon_callbacks[HOME_ICON_COUNT])(void) = {NULL};
+
+/* Icon resources */
+static const unsigned char* s_icons[HOME_ICON_COUNT] = {
+    gImage_setting,
+    gImage_hardware,
+    gImage_music,
+    gImage_looper
+};
+
+static const char* s_icon_titles[HOME_ICON_COUNT] = {
+    "SysSet",
+    "A-CTRL",
+    "Drum",
+    "Looper"
+};
+
+static const uint8_t s_title_lengths[HOME_ICON_COUNT] = {6, 6, 4, 6};
+
+/*===========================================================================
+ * Private Functions
+ *===========================================================================*/
+
+static void draw_banner(void)
+{
+    /* Draw BanBox banner at top */
+    uint16_t y = UI_StatusBar_GetHeight();
+    
+    /* Use pre-made banner image */
+    extern const unsigned char gImage_BanBox[];
+    
+    uint16_t row, col;
+    for (row = 0; row < 59; row++) {
+        for (col = 0; col < 160; col++) {
+            uint32_t idx = (row * 160 + col) * 2;
+            uint16_t color = gImage_BanBox[idx] | (gImage_BanBox[idx + 1] << 8);
+            BG_lcd.DrawPoint(col, y + row, color);
+        }
+    }
+}
+
+static void draw_icon(uint8_t index, bool selected)
+{
+    if (index >= HOME_ICON_COUNT) return;
+    
+    uint16_t x = 4 + index * HOME_ICON_SPACING;
+    uint16_t y = UI_SCREEN_HEIGHT - 52;
+    
+    const unsigned char* icon = s_icons[index];
+    
+    /* Draw icon image (32x32) */
+    uint16_t row, col;
+    for (row = 0; row < HOME_ICON_HEIGHT; row++) {
+        for (col = 0; col < HOME_ICON_WIDTH; col++) {
+            uint32_t idx = (row * HOME_ICON_WIDTH + col) * 2;
+            uint16_t color = icon[idx] | (icon[idx + 1] << 8);
+            BG_lcd.DrawPoint(x + col, y + row, color);
+        }
+    }
+    
+    /* Draw selection indicator if selected */
+    if (selected) {
+        /* Draw selection box around icon */
+        uint16_t box_x = x - 2;
+        uint16_t box_y = y - 2;
+        uint16_t box_w = HOME_ICON_WIDTH + 4;
+        uint16_t box_h = HOME_ICON_HEIGHT + 4;
+        
+        BG_lcd.DrawLine(box_x, box_y, box_x + box_w - 1, box_y, UI_COLOR_CYAN);
+        BG_lcd.DrawLine(box_x, box_y + box_h - 1, box_x + box_w - 1, box_y + box_h - 1, UI_COLOR_CYAN);
+        BG_lcd.DrawLine(box_x, box_y, box_x, box_y + box_h - 1, UI_COLOR_CYAN);
+        BG_lcd.DrawLine(box_x + box_w - 1, box_y, box_x + box_w - 1, box_y + box_h - 1, UI_COLOR_CYAN);
+    }
+    
+    /* Draw title text */
+    uint8_t title_len = s_title_lengths[index];
+    uint8_t string_x = (HOME_ICON_SPACING - 6 * title_len) / 2;
+    BGUI_tool.ShowString(string_x + index * HOME_ICON_SPACING, 
+                         UI_SCREEN_HEIGHT - 16, 
+                         (uint8_t*)s_icon_titles[index], 
+                         selected ? UI_COLOR_CYAN : UI_COLOR_WHITE);
+}
+
+/*===========================================================================
+ * View Callbacks
+ *===========================================================================*/
+
+static void home_on_create(void)
+{
+    s_selected_icon = 0;
+    memset(s_icon_callbacks, 0, sizeof(s_icon_callbacks));
+}
+
+static void home_on_enter(void)
+{
+    /* Redraw when entering */
+}
+
+static void home_on_exit(void)
+{
+    /* Nothing to do */
+}
+
+static void home_on_update(uint16_t delta_ms)
+{
+    (void)delta_ms;
+    /* Update status bar */
+    UI_StatusBar_Update();
+}
+
+static void home_on_draw(void)
+{
+    /* Clear screen */
+    BG_lcd.Box(0, 0, UI_SCREEN_WIDTH, UI_SCREEN_HEIGHT, UI_COLOR_BLACK);
+    
+    /* Draw status bar */
+    UI_StatusBar_Draw();
+    
+    /* Draw banner */
+    draw_banner();
+    
+    /* Draw icons */
+    for (uint8_t i = 0; i < HOME_ICON_COUNT; i++) {
+        draw_icon(i, i == s_selected_icon);
+    }
+}
+
+static bool home_on_event(UI_Event_t* event)
+{
+    if (event->type != UI_EVENT_BUTTON) {
+        return false;
+    }
+    
+    UI_ButtonEventData_t* btn = &event->data.button;
+    
+    /* Only handle click events */
+    if (btn->event != UI_BTN_EVENT_CLICKED) {
+        return false;
+    }
+    
+    switch (btn->id) {
+        case UI_BTN_UP:
+            /* Move selection left */
+            if (s_selected_icon > 0) {
+                s_selected_icon--;
+            }
+            return true;
+            
+        case UI_BTN_DOWN:
+            /* Move selection right */
+            if (s_selected_icon < HOME_ICON_COUNT - 1) {
+                s_selected_icon++;
+            }
+            return true;
+            
+        case UI_BTN_ENTER:
+            /* Execute icon callback */
+            if (s_icon_callbacks[s_selected_icon]) {
+                s_icon_callbacks[s_selected_icon]();
+            }
+            return true;
+            
+        case UI_BTN_BACK:
+            /* Show menu on back press */
+            UI_Core_SetState(UI_STATE_MENU);
+            return true;
+            
+        default:
+            break;
+    }
+    
+    return false;
+}
+
+/*===========================================================================
+ * View Instance
+ *===========================================================================*/
+
+static UI_View_t s_home_view = {
+    .name = "Home",
+    .on_create = home_on_create,
+    .on_destroy = NULL,
+    .on_enter = home_on_enter,
+    .on_exit = home_on_exit,
+    .on_update = home_on_update,
+    .on_draw = home_on_draw,
+    .on_event = home_on_event,
+    .visible = true,
+    .needs_redraw = true,
+    .z_order = 0
+};
+
+/*===========================================================================
+ * API Implementation
+ *===========================================================================*/
+
+UI_View_t* UI_View_Home_Get(void)
+{
+    return &s_home_view;
+}
+
+void UI_View_Home_Init(void)
+{
+    /* Register view for IDLE state */
+    UI_Core_RegisterView(UI_STATE_IDLE, &s_home_view);
+}
+
+uint8_t UI_View_Home_GetSelected(void)
+{
+    return s_selected_icon;
+}
+
+void UI_View_Home_SetSelected(uint8_t index)
+{
+    if (index < HOME_ICON_COUNT) {
+        s_selected_icon = index;
+        s_home_view.needs_redraw = true;
+    }
+}
+
+void UI_View_Home_SetIconCallback(uint8_t index, void (*callback)(void))
+{
+    if (index < HOME_ICON_COUNT) {
+        s_icon_callbacks[index] = callback;
+    }
+}

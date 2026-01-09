@@ -82,6 +82,7 @@ void ShellFs_RegisterAllCommands(void)
     ShellFs_RegisterCommand("pwd");
     ShellFs_RegisterCommand("cd");
     ShellFs_RegisterCommand("cat");
+    ShellFs_RegisterCommand("echo");    // 写入参数值
     ShellFs_RegisterCommand("tree");
     ShellFs_RegisterCommand("drivers");
     ShellFs_RegisterCommand("effect");

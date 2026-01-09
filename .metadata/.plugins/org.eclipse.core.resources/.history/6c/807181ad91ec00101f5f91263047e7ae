@@ -1,0 +1,143 @@
+/**
+ * @file    ui_view_menu.c
+ * @brief   Menu View - Navigation menu implementation
+ * @author  BG Card Team
+ * @date    2025-01-08
+ */
+
+#include "ui_view_menu.h"
+#include "ui_statusbar.h"
+
+/*===========================================================================
+ * Private Variables
+ *===========================================================================*/
+
+static UI_Menu_t* s_current_menu = NULL;
+
+/*===========================================================================
+ * View Callbacks
+ *===========================================================================*/
+
+static void menu_on_create(void)
+{
+    UI_Menu_Init();
+}
+
+static void menu_on_enter(void)
+{
+    UI_Menu_SetVisible(true);
+    if (s_current_menu) {
+        UI_Menu_SetRoot(s_current_menu);
+    }
+}
+
+static void menu_on_exit(void)
+{
+    UI_Menu_SetVisible(false);
+}
+
+static void menu_on_update(uint16_t delta_ms)
+{
+    (void)delta_ms;
+    UI_StatusBar_Update();
+    UI_Menu_Update();
+}
+
+static void menu_on_draw(void)
+{
+    UI_StatusBar_Draw();
+    UI_Menu_Draw();
+}
+
+static bool menu_on_event(UI_Event_t* event)
+{
+    if (event->type != UI_EVENT_BUTTON) {
+        return false;
+    }
+    
+    UI_ButtonEventData_t* btn = &event->data.button;
+    
+    /* Only handle click events */
+    if (btn->event != UI_BTN_EVENT_CLICKED &&
+        btn->event != UI_BTN_EVENT_REPEAT) {
+        return false;
+    }
+    
+    switch (btn->id) {
+        case UI_BTN_UP:
+            UI_Menu_Up();
+            return true;
+            
+        case UI_BTN_DOWN:
+            UI_Menu_Down();
+            return true;
+            
+        case UI_BTN_ENTER:
+            UI_Menu_Enter();
+            return true;
+            
+        case UI_BTN_BACK:
+            /* Check if we can go back in menu */
+            if (UI_Menu_GetCurrent() && UI_Menu_GetCurrent()->parent) {
+                UI_Menu_Back();
+            } else if (!UI_Menu_IsEditing()) {
+                /* Exit menu to home */
+                UI_Core_SetState(UI_STATE_IDLE);
+            } else {
+                UI_Menu_Back();
+            }
+            return true;
+            
+        default:
+            break;
+    }
+    
+    return false;
+}
+
+/*===========================================================================
+ * View Instance
+ *===========================================================================*/
+
+static UI_View_t s_menu_view = {
+    .name = "Menu",
+    .on_create = menu_on_create,
+    .on_destroy = NULL,
+    .on_enter = menu_on_enter,
+    .on_exit = menu_on_exit,
+    .on_update = menu_on_update,
+    .on_draw = menu_on_draw,
+    .on_event = menu_on_event,
+    .visible = true,
+    .needs_redraw = true,
+    .z_order = 0
+};
+
+/*===========================================================================
+ * API Implementation
+ *===========================================================================*/
+
+UI_View_t* UI_View_Menu_Get(void)
+{
+    return &s_menu_view;
+}
+
+void UI_View_Menu_Init(void)
+{
+    /* Register view for MENU state */
+    UI_Core_RegisterView(UI_STATE_MENU, &s_menu_view);
+}
+
+void UI_View_Menu_SetMenu(UI_Menu_t* menu)
+{
+    s_current_menu = menu;
+    if (UI_Core_GetState() == UI_STATE_MENU) {
+        UI_Menu_SetRoot(menu);
+        s_menu_view.needs_redraw = true;
+    }
+}
+
+UI_Menu_t* UI_View_Menu_GetMenu(void)
+{
+    return s_current_menu;
+}

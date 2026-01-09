@@ -60,7 +60,9 @@
 #include "otg_detect.h"
 #include "otg_device_audio.h"
 #include "ctrlvars.h"
-#include "page_manager.h"
+
+/* Page Manager - Now in BanGUI core (via bangui.h) */
+/* #include "page_manager.h" - Removed, use bangui.h */
 
 #include "bg_audio_io_manager.h"
 
@@ -68,8 +70,13 @@
 #include "audio_looper.h"
 #include "shell_lcd_adapter.h"  /* Shell LCD console adapter */
 #include "bg_shell.h"           /* Shell console API */
-#include "ui_system.h"          /* UI System (Menu, StatusBar, Boot Screen) */
+
+/* New UI Architecture - Single entry point */
+#include "bangui.h"             /* BanGUI unified UI system (includes page manager) */
+
+
 #include "drv_init.h"           /* Driver Framework Initialization */
+
 
 
 extern void SysTickInit(void);
@@ -89,7 +96,8 @@ uint16_t right_time = 0;
 uint8_t left_flag = false;
 uint8_t right_flag = false;
 
-BG_Page BG_page;
+/* BG_page 现在在 app_pages.c 中定义，通过 bangui.h 引入 */
+/* extern BG_Page BG_page; -- 由 app_pages.h 声明 */
 uint8_t UI_count = 0, UI_flag = 0;
 
 void Timer2Interrupt(void) {
@@ -299,24 +307,54 @@ void EffectTask() {
 	/* All hardware drivers (LCD, Flash, etc.) auto-initialized by framework */
 	DBG("[Task] Hardware drivers already initialized in main()\n");
 	BG_lcd.Init();
+	
 	DBG("[Task] Initializing Audio Manager...\n");
 	/* Initialize Audio Manager (includes AudioLooper which needs Flash) */
 	BG_AudioManager.Audio_Init(44100);
 
 	DBG("[Task] Initializing UI System...\n");
-	/* Initialize UI System (includes boot screen animation) */
-	UI_System_Init(NULL);   /* Use default config */
-
-	/* Initialize and set default menu */
-	UI_Menu_InitDefault();
 	
-	UI_System_Start();      /* Start boot screen */
+	/*=====================================================
+	 * NEW UI Architecture (BanGUI)
+	 * 使用统一的 BG_UI 对象接口
+	 *====================================================*/
+	
+	/* 方法1: 快速初始化 (推荐) */
+	BANGUI_QUICK_INIT();
+	
+	/* 初始化 Boot 视图 */
+	View_Boot_Init();
+	
+	/* 初始化菜单系统 */
+	//UI_Menu_InitDefault();
+	
+	/* 设置 Home 视图图标回调 */
+	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 绑定 Looper 视图 */
+	
+	/*=====================================================
+	 * BOOT SPLASH SCREEN - 开机界面
+	 * 启动 UI 系统，从开机界面开始（Logo + 进度条）
+	 * 动画由 view_boot.c 的状态机驱动，无硬延迟
+	 * 动画完成后自动切换到 Home 桌面
+	 *====================================================*/
+	BANGUI_START(UI_STATE_BOOT);
+	
+	/*=====================================================
+	 * Legacy compatibility (可选，后续移除)
+	 *====================================================*/
+	UI_System_Init(NULL);   /* Old UI System for status bar compatibility */
+	
 	DBG("[Main] System initialized successfully\n");
+	DBG("[Main] Starting from Boot Screen...\n");
 	
 	/* Initialize Shell LCD console adapter */
 	ShellLCD_Adapter_Init();
 
 	button_init();
+	
+	/* Initialize Page System (Now part of BanGUI) */
+	DBG("[Main] Initializing Page System...\n");
+	App_Pages_Init();  /* 使用新的 API，内部调用 BG_Page_Init */
 	
 	DBG("[Main] Entering main loop...\n");
 	
@@ -324,20 +362,28 @@ void EffectTask() {
 
 		BG_AudioManager.Audio_Loop();
 		
-		hardware_check();
 		/* Update UI System (handles button input, menu, status bar) */
 		if(UI_flag == 1){
 			UI_flag = 0;
 			
-			/* Scan ADC/DAC insert detection pins */
+			/* Update hardware status (Bluetooth, etc.) */
+			hardware_check();
+			
+			/* Scan ADC/DAC insert detection pins and update statusbar data */
 			UI_StatusBar_ScanDetect();
 			
 			/* If Shell console enabled, only update console display */
 			if (Shell_ConsoleIsEnabled()) {
 				Shell_ConsoleUpdate();
 			} else {
-				/* Update UI system (handles all UI logic, delta_ms ~20ms based on timer) */
-				UI_System_Update(20);
+				/* Update BanGUI system (handles views and input) */
+				BG_UI.Update(20);
+				
+				/* Update statusbar (incremental update for changed items) */
+				UI_StatusBar_Update();
+				
+				/* Update Page system (兼容旧 API) */
+				BG_page.Loop(&BG_page);
 			}
 
 #ifdef USE_FRAME_BUFFER
@@ -504,6 +550,7 @@ void FlashTask(void)
 /**
  * @brief 新 Flash 驱动架构测试任务
  * 使用重构后的 flash_bus + flash_devices + flash_nor_w25qxx 架构
+ * UI_Menu_InitDefault
  */
 void FlashNewDriverTask(void)
 {

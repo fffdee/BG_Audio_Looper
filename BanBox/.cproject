@@ -67,6 +67,13 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/03_driver_framework/drivers}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_vfs}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/effect_graph}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/bluetooth}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/bluetooth/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/components}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/resources}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/views}&quot;"/>
 								</option>
 								<option id="nds.c.compiler.option.optimization.lto.934303171" name="Link Time Optimization (-flto)" superClass="nds.c.compiler.option.optimization.lto" value="false" valueType="boolean"/>
 								<option id="nds.c.compiler.option.optimization.removesections.function.489783750" name="Remove unused function sections (-ffunction-sections)" superClass="nds.c.compiler.option.optimization.removesections.function" value="true" valueType="boolean"/>
@@ -92,7 +99,7 @@
 								<option id="nds.c.link.option.paths.1918021904" name="Library search path (-L)" superClass="nds.c.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/driver/driver}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/middleware/audio}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/06_app/bluetooth}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/bluetooth}&quot;"/>
 								</option>
 								<option id="nds.c.linker.option.cmodel.315605540" name="Code Model" superClass="nds.c.linker.option.cmodel" value="-mcmodel=medium" valueType="string"/>
 								<option id="nds32le-elf-mculib-v3s.c.link.exe.debug.option.ldscript.335648752" name="Linker Script (-T)" superClass="nds32le-elf-mculib-v3s.c.link.exe.debug.option.ldscript" value="../nds32-ae210p.ld" valueType="string"/>

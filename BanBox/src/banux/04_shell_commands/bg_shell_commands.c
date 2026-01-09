@@ -15,7 +15,7 @@
 #include "shell_io_cdc.h"
 #include "shell_io_ble.h"
 #include "shell_io_manager.h"
-#include "page_manager.h"
+
 #include "bg_lcd.h"
 #include "BG_FlashMgr.h"
 #include "flash_bus.h"
@@ -1040,6 +1040,25 @@ static const ShellOpt_t bt_opts[] = {
 DEFINE_MODULE(bt, "Bluetooth controller", MOD_CAT_HARDWARE, bt_opts);
 
 /*============================================================================
+ * ble module - BLE controller
+ *===========================================================================*/
+
+static int ble_get_status(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    /* TODO: 从BLE管理器获取实际状态 */
+    Shell_Print("BLE Status: Idle\r\n");
+    return 0;
+}
+
+static const ShellOpt_t ble_opts[] = {
+    OPT("s", "state",    NULL,      "Show BLE status",    ble_get_status),
+    OPT_END()
+};
+
+DEFINE_MODULE(ble, "BLE controller", MOD_CAT_HARDWARE, ble_opts);
+
+/*============================================================================
  * File system navigation commands (ls, pwd, cd, cat)
  *===========================================================================*/
 
@@ -1227,6 +1246,81 @@ static const ShellOpt_t cat_opts[] = {
 
 DEFINE_MODULE(cat, "Display file contents", MOD_CAT_SYSTEM, cat_opts);
 
+/*
+ * echo命令 - 写入参数值
+ * 用法: echo <value> > <parameter>
+ * 简化用法: echo <parameter> <value>
+ */
+static int cmd_echo(int argc, char *argv[])
+{
+    FsNode_t *node;
+    const char *value;
+    const char *path;
+    int ret;
+    int redirect_idx = -1;
+    int i;
+    
+    if (argc < 2) {
+        Shell_Print("echo: missing operand\r\n");
+        Shell_Print("Usage: echo <parameter> <value>\r\n");
+        Shell_Print("   or: echo <value> > <parameter>\r\n");
+        Shell_Print("Example: echo threshold -20\r\n");
+        Shell_Print("     or: echo -20 > threshold\r\n");
+        return -1;
+    }
+    
+    /* 检查是否有重定向符号 > */
+    for (i = 0; i < argc; i++) {
+        if (strcmp(argv[i], ">") == 0) {
+            redirect_idx = i;
+            break;
+        }
+    }
+    
+    if (redirect_idx > 0 && redirect_idx < argc - 1) {
+        /* 格式: echo <value> > <parameter> */
+        value = argv[0];  /* 第一个参数是值 */
+        path = argv[redirect_idx + 1];  /* > 后面是路径 */
+    } else {
+        /* 简化格式: echo <parameter> <value> */
+        path = argv[0];   /* 第一个参数是路径 */
+        value = argv[1];  /* 第二个参数是值 */
+    }
+    
+    /* 查找节点 */
+    node = DrvFs_FindNode(path);
+    if (!node) {
+        Shell_Printf("echo: %s: No such file or directory\r\n", path);
+        return -1;
+    }
+    
+    if (node->type != FS_NODE_PARAM) {
+        Shell_Printf("echo: %s: Not a parameter file\r\n", path);
+        return -1;
+    }
+    
+    /* 写入参数 */
+    ret = DrvFs_WriteParam(node, value);
+    if (ret < 0) {
+        if (ret == -2) {
+            Shell_Printf("echo: %s: Read-only parameter\r\n", path);
+        } else {
+            Shell_Printf("echo: %s: Write error\r\n", path);
+        }
+        return -1;
+    }
+    
+    Shell_Printf("OK\r\n");
+    return 0;
+}
+
+static const ShellOpt_t echo_opts[] = {
+    OPT("", "", "<param> <value>", "Write parameter value", cmd_echo),
+    OPT_END()
+};
+
+DEFINE_MODULE(echo, "Write to file", MOD_CAT_SYSTEM, echo_opts);
+
 /*----------------------------------------------------------------------------
  * 递归打印VFS树结构
  *----------------------------------------------------------------------------*/
@@ -1297,7 +1391,7 @@ static int cmd_drivers(int argc, char *argv[])
             default: bus_name = "UNKNOWN"; break;
         }
         
-        Shell_Printf("│ %-9s │ %-7s │ %-10s │\r\n", 
+        Shell_Printf("│ %-9s │ %-7s │ %-10s │\r\n",
                      devices[i]->name, 
                      bus_name,
                      devices[i]->isRegistered ? "OK" : "FAIL");
@@ -1331,12 +1425,14 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(flash);
     REGISTER_MODULE(battery);
     REGISTER_MODULE(bt);
+    REGISTER_MODULE(ble);
     
     /* 文件系统导航命令 */
     REGISTER_MODULE(ls);
     REGISTER_MODULE(pwd);
     REGISTER_MODULE(cd);
     REGISTER_MODULE(cat);
+    REGISTER_MODULE(echo);    /* 写入参数值 */
     REGISTER_MODULE(tree);
     REGISTER_MODULE(drivers);
     

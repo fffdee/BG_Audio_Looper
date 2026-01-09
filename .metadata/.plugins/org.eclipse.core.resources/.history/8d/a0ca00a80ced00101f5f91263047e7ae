@@ -1,0 +1,655 @@
+/**
+ * @file    ui_core.c
+ * @brief   UI Core - State Management and Event Coordination Implementation
+ * @author  BG Card Team
+ * @date    2025-01-08
+ */
+
+#include "ui_core.h"
+#include "ui_statusbar.h"
+#include "ui_menu.h"
+#include "ui_bootscreen.h"
+#include "bg_lcd.h"
+#include <string.h>
+
+#ifdef DEBUG
+#include "debug.h"
+#define UI_DBG(fmt, ...)    if (s_debug_enabled) DBG("[UI] " fmt, ##__VA_ARGS__)
+#else
+#define UI_DBG(fmt, ...)
+#endif
+
+/*===========================================================================
+ * Configuration
+ *===========================================================================*/
+
+#define MAX_EVENT_HANDLERS      4
+#define MAX_VIEWS_PER_STATE     4
+#define EVENT_QUEUE_SIZE        8
+
+/*===========================================================================
+ * Private Types
+ *===========================================================================*/
+
+/* Event handler entry */
+typedef struct {
+    UI_EventHandler_t handler;
+    uint8_t priority;
+} EventHandlerEntry_t;
+
+/* Popup state */
+typedef struct {
+    bool active;
+    const char* title;
+    const char* message;
+    uint16_t duration_ms;
+    uint32_t timer;
+    void (*on_close)(void);
+} PopupState_t;
+
+/* Scene definition for each state */
+typedef struct {
+    UI_View_t* views[MAX_VIEWS_PER_STATE];
+    uint8_t view_count;
+} SceneViews_t;
+
+/*===========================================================================
+ * Private Variables
+ *===========================================================================*/
+
+/* Core state */
+static UI_State_t s_current_state = UI_STATE_BOOT;
+static UI_State_t s_prev_state = UI_STATE_BOOT;
+static bool s_initialized = false;
+static bool s_ready = false;
+static bool s_needs_redraw = true;
+static bool s_debug_enabled = false;
+
+/* Views registered for each state */
+static SceneViews_t s_state_views[UI_STATE_COUNT];
+
+/* Event handlers */
+static EventHandlerEntry_t s_event_handlers[MAX_EVENT_HANDLERS];
+static uint8_t s_handler_count = 0;
+
+/* State change callback */
+static UI_StateChangeCallback_t s_state_change_callback = NULL;
+
+/* Popup state */
+static PopupState_t s_popup = {0};
+
+/* Event queue */
+static UI_Event_t s_event_queue[EVENT_QUEUE_SIZE];
+static uint8_t s_event_head = 0;
+static uint8_t s_event_tail = 0;
+static uint8_t s_event_count = 0;
+
+/* State names */
+static const char* s_state_names[UI_STATE_COUNT] = {
+    "BOOT", "IDLE", "MENU", "POPUP", "PLAYER", "LOOPER", "SETTINGS", "CUSTOM"
+};
+
+/*===========================================================================
+ * Private Functions
+ *===========================================================================*/
+
+/**
+ * @brief Push event to queue
+ */
+static bool push_event(UI_Event_t* event)
+{
+    if (s_event_count >= EVENT_QUEUE_SIZE) {
+        return false;
+    }
+    s_event_queue[s_event_tail] = *event;
+    s_event_tail = (s_event_tail + 1) % EVENT_QUEUE_SIZE;
+    s_event_count++;
+    return true;
+}
+
+/**
+ * @brief Pop event from queue
+ */
+static bool pop_event(UI_Event_t* event)
+{
+    if (s_event_count == 0) {
+        return false;
+    }
+    *event = s_event_queue[s_event_head];
+    s_event_head = (s_event_head + 1) % EVENT_QUEUE_SIZE;
+    s_event_count--;
+    return true;
+}
+
+/**
+ * @brief Call event handlers in priority order
+ */
+static bool dispatch_to_handlers(UI_Event_t* event)
+{
+    uint8_t p, i;
+    
+    /* Sort by priority (simple bubble - handler count is small) */
+    for (p = 255; p > 0; p--) {
+        for (i = 0; i < s_handler_count; i++) {
+            if (s_event_handlers[i].handler && 
+                s_event_handlers[i].priority == p) {
+                if (s_event_handlers[i].handler(event)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * @brief Dispatch event to active views
+ */
+static bool dispatch_to_views(UI_Event_t* event)
+{
+    SceneViews_t* scene = &s_state_views[s_current_state];
+    int i;
+    
+    /* Dispatch to views in reverse z-order (top first) */
+    for (i = scene->view_count - 1; i >= 0; i--) {
+        UI_View_t* view = scene->views[i];
+        if (view && view->visible && view->on_event) {
+            if (view->on_event(event)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * @brief Process a single event
+ */
+static void process_event(UI_Event_t* event)
+{
+    /* Try global handlers first */
+    if (dispatch_to_handlers(event)) {
+        return;
+    }
+    
+    /* Then dispatch to views */
+    dispatch_to_views(event);
+}
+
+/**
+ * @brief Exit current state
+ */
+static void exit_state(UI_State_t state)
+{
+    SceneViews_t* scene = &s_state_views[state];
+    uint8_t i;
+    
+    for (i = 0; i < scene->view_count; i++) {
+        UI_View_t* view = scene->views[i];
+        if (view && view->on_exit) {
+            view->on_exit();
+        }
+    }
+    
+    UI_DBG("Exit state: %s\n", s_state_names[state]);
+}
+
+/**
+ * @brief Enter new state
+ */
+static void enter_state(UI_State_t state)
+{
+    SceneViews_t* scene = &s_state_views[state];
+    uint8_t i;
+    
+    for (i = 0; i < scene->view_count; i++) {
+        UI_View_t* view = scene->views[i];
+        if (view && view->on_enter) {
+            view->on_enter();
+        }
+    }
+    
+    s_needs_redraw = true;
+    UI_DBG("Enter state: %s\n", s_state_names[state]);
+}
+
+/**
+ * @brief Perform state transition
+ */
+static void do_state_transition(UI_State_t new_state)
+{
+    if (new_state == s_current_state) {
+        return;
+    }
+    
+    UI_State_t old_state = s_current_state;
+    
+    /* Exit old state */
+    exit_state(old_state);
+    
+    /* Update state */
+    s_prev_state = old_state;
+    s_current_state = new_state;
+    
+    /* Enter new state */
+    enter_state(new_state);
+    
+    /* Notify callback */
+    if (s_state_change_callback) {
+        s_state_change_callback(old_state, new_state);
+    }
+    
+    /* Post state change event */
+    UI_Event_t event = {
+        .type = UI_EVENT_STATE_CHANGE,
+        .data.state_change.from = old_state,
+        .data.state_change.to = new_state
+    };
+    push_event(&event);
+}
+
+/**
+ * @brief Update all active views
+ */
+static void update_views(uint16_t delta_ms)
+{
+    SceneViews_t* scene = &s_state_views[s_current_state];
+    uint8_t i;
+    
+    for (i = 0; i < scene->view_count; i++) {
+        UI_View_t* view = scene->views[i];
+        if (view && view->visible && view->on_update) {
+            view->on_update(delta_ms);
+        }
+    }
+}
+
+/**
+ * @brief Draw all active views
+ */
+static void draw_views(void)
+{
+    SceneViews_t* scene = &s_state_views[s_current_state];
+    uint8_t i;
+    
+    /* Draw in z-order (bottom first) */
+    for (i = 0; i < scene->view_count; i++) {
+        UI_View_t* view = scene->views[i];
+        if (view && view->visible && view->on_draw) {
+            if (view->needs_redraw || s_needs_redraw) {
+                view->on_draw();
+                view->needs_redraw = false;
+            }
+        }
+    }
+    
+    s_needs_redraw = false;
+}
+
+/**
+ * @brief Draw popup overlay
+ */
+static void draw_popup(void)
+{
+    if (!s_popup.active) return;
+    
+    uint16_t box_w = 140;
+    uint16_t box_h = 60;
+    uint16_t box_x = (UI_SCREEN_WIDTH - box_w) / 2;
+    uint16_t box_y = (UI_SCREEN_HEIGHT - box_h) / 2;
+    
+    /* Draw popup background */
+    BG_lcd.Box(box_x, box_y, box_w, box_h, UI_COLOR_DARK_GRAY);
+    
+    /* Draw border */
+    BG_lcd.DrawLine(box_x, box_y, box_x + box_w - 1, box_y, UI_COLOR_WHITE);
+    BG_lcd.DrawLine(box_x, box_y + box_h - 1, box_x + box_w - 1, box_y + box_h - 1, UI_COLOR_WHITE);
+    BG_lcd.DrawLine(box_x, box_y, box_x, box_y + box_h - 1, UI_COLOR_WHITE);
+    BG_lcd.DrawLine(box_x + box_w - 1, box_y, box_x + box_w - 1, box_y + box_h - 1, UI_COLOR_WHITE);
+    
+    /* Draw title */
+    if (s_popup.title) {
+        uint16_t title_x = box_x + (box_w - strlen(s_popup.title) * 8) / 2;
+        const char* p = s_popup.title;
+        while (*p) {
+            BG_lcd.ShowChar(title_x, box_y + 8, *p, UI_COLOR_CYAN);
+            title_x += 8;
+            p++;
+        }
+    }
+    
+    /* Draw message */
+    if (s_popup.message) {
+        uint16_t msg_x = box_x + (box_w - strlen(s_popup.message) * 8) / 2;
+        const char* p = s_popup.message;
+        while (*p) {
+            BG_lcd.ShowChar(msg_x, box_y + 28, *p, UI_COLOR_WHITE);
+            msg_x += 8;
+            p++;
+        }
+    }
+    
+    /* Draw hint */
+    const char* hint = "[OK] Close";
+    uint16_t hint_x = box_x + (box_w - strlen(hint) * 8) / 2;
+    const char* p = hint;
+    while (*p) {
+        BG_lcd.ShowChar(hint_x, box_y + box_h - 14, *p, UI_COLOR_GRAY);
+        hint_x += 8;
+        p++;
+    }
+}
+
+/*===========================================================================
+ * API Implementation
+ *===========================================================================*/
+
+void UI_Core_Init(void)
+{
+    /* Clear state views */
+    memset(s_state_views, 0, sizeof(s_state_views));
+    
+    /* Clear event handlers */
+    memset(s_event_handlers, 0, sizeof(s_event_handlers));
+    s_handler_count = 0;
+    
+    /* Clear event queue */
+    s_event_head = 0;
+    s_event_tail = 0;
+    s_event_count = 0;
+    
+    /* Reset state */
+    s_current_state = UI_STATE_BOOT;
+    s_prev_state = UI_STATE_BOOT;
+    s_ready = false;
+    s_needs_redraw = true;
+    
+    /* Clear popup */
+    memset(&s_popup, 0, sizeof(s_popup));
+    
+    /* Initialize sub-modules */
+    UI_Button_Init();
+    UI_StatusBar_Init();
+    UI_Menu_Init();
+    
+    s_initialized = true;
+    UI_DBG("UI Core initialized\n");
+}
+
+void UI_Core_Start(UI_State_t initial_state)
+{
+    if (!s_initialized) {
+        UI_Core_Init();
+    }
+    
+    s_current_state = initial_state;
+    enter_state(initial_state);
+    
+    if (initial_state != UI_STATE_BOOT) {
+        s_ready = true;
+    }
+    
+    UI_DBG("UI Core started, initial state: %s\n", s_state_names[initial_state]);
+}
+
+void UI_Core_Update(uint16_t delta_ms)
+{
+    if (!s_initialized) return;
+    
+    /* Process event queue */
+    UI_Event_t event;
+    while (pop_event(&event)) {
+        process_event(&event);
+    }
+    
+    /* Update popup timer */
+    if (s_popup.active && s_popup.duration_ms > 0) {
+        s_popup.timer += delta_ms;
+        if (s_popup.timer >= s_popup.duration_ms) {
+            UI_Core_ClosePopup();
+        }
+    }
+    
+    /* Update active views */
+    update_views(delta_ms);
+    
+    /* Draw if needed */
+    if (s_needs_redraw) {
+        draw_views();
+    }
+    
+    /* Draw popup on top if active */
+    if (s_popup.active) {
+        draw_popup();
+    }
+}
+
+bool UI_Core_SetState(UI_State_t new_state)
+{
+    if (new_state >= UI_STATE_COUNT) {
+        return false;
+    }
+    
+    /* Close popup when changing state */
+    if (s_popup.active && new_state != UI_STATE_POPUP) {
+        UI_Core_ClosePopup();
+    }
+    
+    do_state_transition(new_state);
+    return true;
+}
+
+UI_State_t UI_Core_GetState(void)
+{
+    return s_current_state;
+}
+
+UI_State_t UI_Core_GetPrevState(void)
+{
+    return s_prev_state;
+}
+
+void UI_Core_Invalidate(void)
+{
+    uint8_t i;
+    s_needs_redraw = true;
+    
+    /* Mark all views as needing redraw */
+    SceneViews_t* scene = &s_state_views[s_current_state];
+    for (i = 0; i < scene->view_count; i++) {
+        if (scene->views[i]) {
+            scene->views[i]->needs_redraw = true;
+        }
+    }
+}
+
+bool UI_Core_IsReady(void)
+{
+    return s_ready;
+}
+
+void UI_Core_RegisterView(UI_State_t state, UI_View_t* view)
+{
+    uint8_t i;
+    if (state >= UI_STATE_COUNT || view == NULL) return;
+    
+    SceneViews_t* scene = &s_state_views[state];
+    
+    /* Check if already registered */
+    for (i = 0; i < scene->view_count; i++) {
+        if (scene->views[i] == view) {
+            return;
+        }
+    }
+    
+    /* Add view */
+    if (scene->view_count < MAX_VIEWS_PER_STATE) {
+        scene->views[scene->view_count] = view;
+        scene->view_count++;
+        
+        /* Call on_create */
+        if (view->on_create) {
+            view->on_create();
+        }
+        
+        UI_DBG("Registered view '%s' for state %s\n", 
+               view->name ? view->name : "unnamed", s_state_names[state]);
+    }
+}
+
+void UI_Core_UnregisterView(UI_View_t* view)
+{
+    uint8_t state, i, j;
+    if (view == NULL) return;
+    
+    for (state = 0; state < UI_STATE_COUNT; state++) {
+        SceneViews_t* scene = &s_state_views[state];
+        
+        for (i = 0; i < scene->view_count; i++) {
+            if (scene->views[i] == view) {
+                /* Call on_destroy */
+                if (view->on_destroy) {
+                    view->on_destroy();
+                }
+                
+                /* Remove from array */
+                for (j = i; j < scene->view_count - 1; j++) {
+                    scene->views[j] = scene->views[j + 1];
+                }
+                scene->view_count--;
+                break;
+            }
+        }
+    }
+}
+
+uint8_t UI_Core_GetActiveViews(UI_View_t** views, uint8_t max_count)
+{
+    SceneViews_t* scene = &s_state_views[s_current_state];
+    uint8_t count = 0;
+    uint8_t i;
+    
+    for (i = 0; i < scene->view_count && count < max_count; i++) {
+        if (scene->views[i] && scene->views[i]->visible) {
+            views[count++] = scene->views[i];
+        }
+    }
+    
+    return count;
+}
+
+void UI_Core_PostEvent(UI_Event_t* event)
+{
+    if (event) {
+        push_event(event);
+    }
+}
+
+void UI_Core_HandleButton(UI_ButtonEventData_t* btn_event)
+{
+    if (!btn_event) return;
+    
+    /* Handle popup button */
+    if (s_popup.active) {
+        if (btn_event->event == UI_BTN_EVENT_CLICKED) {
+            UI_Core_ClosePopup();
+        }
+        return;
+    }
+    
+    /* Create and post button event */
+    UI_Event_t event = {
+        .type = UI_EVENT_BUTTON,
+        .data.button = *btn_event
+    };
+    push_event(&event);
+}
+
+void UI_Core_RegisterEventHandler(UI_EventHandler_t handler, uint8_t priority)
+{
+    uint8_t i;
+    if (handler == NULL || s_handler_count >= MAX_EVENT_HANDLERS) return;
+    
+    /* Check if already registered */
+    for (i = 0; i < s_handler_count; i++) {
+        if (s_event_handlers[i].handler == handler) {
+            s_event_handlers[i].priority = priority;
+            return;
+        }
+    }
+    
+    /* Add new handler */
+    s_event_handlers[s_handler_count].handler = handler;
+    s_event_handlers[s_handler_count].priority = priority;
+    s_handler_count++;
+}
+
+void UI_Core_UnregisterEventHandler(UI_EventHandler_t handler)
+{
+    uint8_t i, j;
+    if (handler == NULL) return;
+    
+    for (i = 0; i < s_handler_count; i++) {
+        if (s_event_handlers[i].handler == handler) {
+            for (j = i; j < s_handler_count - 1; j++) {
+                s_event_handlers[j] = s_event_handlers[j + 1];
+            }
+            s_handler_count--;
+            break;
+        }
+    }
+}
+
+void UI_Core_OnStateChange(UI_StateChangeCallback_t callback)
+{
+    s_state_change_callback = callback;
+}
+
+void UI_Core_ShowPopup(const char* title, const char* message, 
+                       uint16_t duration_ms, void (*on_close)(void))
+{
+    s_popup.active = true;
+    s_popup.title = title;
+    s_popup.message = message;
+    s_popup.duration_ms = duration_ms;
+    s_popup.timer = 0;
+    s_popup.on_close = on_close;
+    
+    s_needs_redraw = true;
+    UI_DBG("Show popup: %s - %s\n", title ? title : "", message ? message : "");
+}
+
+void UI_Core_ClosePopup(void)
+{
+    if (!s_popup.active) return;
+    
+    void (*callback)(void) = s_popup.on_close;
+    
+    memset(&s_popup, 0, sizeof(s_popup));
+    s_needs_redraw = true;
+    
+    /* Call callback after clearing state */
+    if (callback) {
+        callback();
+    }
+    
+    UI_DBG("Popup closed\n");
+}
+
+bool UI_Core_IsPopupActive(void)
+{
+    return s_popup.active;
+}
+
+const char* UI_Core_GetStateName(UI_State_t state)
+{
+    if (state < UI_STATE_COUNT) {
+        return s_state_names[state];
+    }
+    return "UNKNOWN";
+}
+
+void UI_Core_SetDebug(bool enable)
+{
+    s_debug_enabled = enable;
+}

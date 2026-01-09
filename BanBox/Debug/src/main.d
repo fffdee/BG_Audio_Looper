@@ -88,20 +88,35 @@ src/main.d src/main.o: ../src/main.c \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc/voice_changer.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc/voice_changer_pro.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc/vocalcut.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/page/page_manager.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/page/bg_page.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/06_app/BG_AudioIO_Manager/bg_audio_io_manager.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/lcd/framebuffer.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/lcd/bg_lcd.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/audio_looper/audio_looper.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/base_func/shell_lcd_adapter.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/bg_shell.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_system.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_config.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_button.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_statusbar.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_menu.h \
- /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_bootscreen.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/bangui.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/bg_ui.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/ui_page.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/bg_page_compat.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/ui_page.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/ui_config.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_statusbar.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/ui_config.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_popup.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/../core/bg_ui.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_menu.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/ui_system.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_menu.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_statusbar.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_boot.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/bg_ui.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_home.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/../core/bg_ui.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_menu.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_looper.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/app_pages.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/../core/ui_page.h \
+ /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/../core/bg_page_compat.h \
  /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/drv_init.h
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc/gpio.h:
@@ -282,10 +297,6 @@ src/main.d src/main.o: ../src/main.c \
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc/vocalcut.h:
 
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/page/page_manager.h:
-
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/page/bg_page.h:
-
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/06_app/BG_AudioIO_Manager/bg_audio_io_manager.h:
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/lcd/framebuffer.h:
@@ -298,16 +309,50 @@ src/main.d src/main.o: ../src/main.c \
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/bg_shell.h:
 
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_system.h:
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/bangui.h:
 
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_config.h:
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/bg_ui.h:
 
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_button.h:
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/ui_page.h:
 
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_statusbar.h:
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/bg_page_compat.h:
 
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_menu.h:
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/ui_page.h:
 
-/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui_system/ui_bootscreen.h:
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/ui_config.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_statusbar.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/ui_config.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_popup.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/../core/bg_ui.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_menu.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/ui_system.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_menu.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/components/comp_statusbar.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_boot.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/core/bg_ui.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_home.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/../core/bg_ui.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_menu.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/view_looper.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/app_pages.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/../core/ui_page.h:
+
+/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/05_component/BanGUI/ui/views/../core/bg_page_compat.h:
 
 /cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/03_driver_framework/drv_init.h:

@@ -1,0 +1,49 @@
+/**
+ * @file    ui_view_menu.h
+ * @brief   Menu View - Navigation menu interface
+ * @author  BG Card Team
+ * @date    2025-01-08
+ */
+
+#ifndef __UI_VIEW_MENU_H__
+#define __UI_VIEW_MENU_H__
+
+#include "ui_core.h"
+#include "ui_menu.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*===========================================================================
+ * Menu View API
+ *===========================================================================*/
+
+/**
+ * @brief Get Menu View instance
+ * @return Pointer to Menu View
+ */
+UI_View_t* UI_View_Menu_Get(void);
+
+/**
+ * @brief Initialize Menu View
+ */
+void UI_View_Menu_Init(void);
+
+/**
+ * @brief Set the menu to display
+ * @param menu Menu to display
+ */
+void UI_View_Menu_SetMenu(UI_Menu_t* menu);
+
+/**
+ * @brief Get current menu
+ * @return Current menu pointer
+ */
+UI_Menu_t* UI_View_Menu_GetMenu(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __UI_VIEW_MENU_H__ */

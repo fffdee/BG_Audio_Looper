@@ -1,0 +1,378 @@
+/**
+ * @file    page_ui_bridge.c
+ * @brief   Page System and UI System Event Bridge Implementation
+ * @author  BG Card Team
+ * @date    2025-06-21
+ */
+
+#include "page_ui_bridge.h"
+#include "page_manager.h"
+#include "../ui_system/ui_core.h"
+#include <string.h>
+
+/*===========================================================================
+ * Private Variables
+ *===========================================================================*/
+
+/* Bridge state */
+static BG_Page* s_page = NULL;
+static PageUI_BridgeConfig_t s_config;
+static PageUI_BridgeMode_t s_mode = BRIDGE_MODE_AUTO;
+static PageUI_BridgeStats_t s_stats;
+static bool s_initialized = false;
+static bool s_page_loop_enabled = true;
+static bool s_ui_update_enabled = true;
+
+/* Custom event handlers (max 4) */
+#define MAX_CUSTOM_HANDLERS 4
+static struct {
+    PageUI_EventHandler_t handler;
+    PageUI_BridgePriority_t priority;
+} s_custom_handlers[MAX_CUSTOM_HANDLERS];
+static uint8_t s_handler_count = 0;
+
+/*===========================================================================
+ * Private Functions
+ *===========================================================================*/
+
+/**
+ * @brief Determine actual routing mode based on current state
+ */
+static PageUI_BridgeMode_t get_effective_mode(void)
+{
+    if (s_mode == BRIDGE_MODE_AUTO) {
+        /* Auto mode: route based on UI Core state */
+        UI_State_t ui_state = UI_Core_GetState();
+        
+        switch (ui_state) {
+            case UI_STATE_BOOT:
+            case UI_STATE_POPUP:
+                /* Boot screen and popup are always handled by UI system */
+                return BRIDGE_MODE_UI;
+                
+            case UI_STATE_MENU:
+                /* Menu is handled by UI system */
+                return BRIDGE_MODE_UI;
+                
+            case UI_STATE_IDLE:
+            case UI_STATE_PLAYER:
+            case UI_STATE_SETTINGS:
+            case UI_STATE_LOOPER:
+            default:
+                /* Other states can go to page system */
+                return BRIDGE_MODE_PAGE;
+        }
+    }
+    return s_mode;
+}
+
+/**
+ * @brief Call custom handlers in priority order
+ * @return true if event was consumed
+ */
+static bool call_custom_handlers(UI_ButtonEventData_t* event)
+{
+    uint8_t i;
+    
+    /* Call handlers in priority order (high to low) */
+    for (int priority = BRIDGE_PRIORITY_HIGH; priority >= BRIDGE_PRIORITY_LOW; priority--) {
+        for (i = 0; i < s_handler_count; i++) {
+            if (s_custom_handlers[i].handler != NULL &&
+                s_custom_handlers[i].priority == priority) {
+                if (s_custom_handlers[i].handler(event)) {
+                    return true;  /* Event consumed */
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * @brief Route event to Page system
+ */
+static void route_to_page(UI_ButtonEventData_t* event)
+{
+    if (s_page == NULL) return;
+    
+    /* Only handle click events for page system */
+    if (event->event != UI_BTN_EVENT_CLICKED &&
+        event->event != UI_BTN_EVENT_LONG_PRESS &&
+        event->event != UI_BTN_EVENT_REPEAT) {
+        return;
+    }
+    
+    /* Map button to page action */
+    switch (event->id) {
+        case UI_BTN_UP:
+            /* UP button -> Last (previous) */
+            s_page->Last(s_page);
+            break;
+            
+        case UI_BTN_DOWN:
+            /* DOWN button -> Next */
+            s_page->Next(s_page);
+            break;
+            
+        case UI_BTN_ENTER:
+            /* ENTER button -> Enter */
+            s_page->Enter(s_page);
+            break;
+            
+        case UI_BTN_BACK:
+            /* BACK button -> Exit */
+            if (event->event == UI_BTN_EVENT_LONG_PRESS && s_config.long_press_to_exit) {
+                /* Long press BACK: switch to UI menu */
+                PageUI_Bridge_SwitchToUI(UI_STATE_MENU);
+            } else {
+                s_page->Exit(s_page);
+            }
+            break;
+            
+        default:
+            break;
+    }
+    
+    s_stats.page_events++;
+}
+
+/**
+ * @brief Route event to UI system
+ */
+static void route_to_ui(UI_ButtonEventData_t* event)
+{
+    UI_Core_HandleButton(event);
+    s_stats.ui_events++;
+}
+
+/*===========================================================================
+ * API Implementation
+ *===========================================================================*/
+
+void PageUI_Bridge_Init(BG_Page* page, const PageUI_BridgeConfig_t* config)
+{
+    s_page = page;
+    
+    /* Apply configuration */
+    if (config) {
+        memcpy(&s_config, config, sizeof(PageUI_BridgeConfig_t));
+    } else {
+        /* Default configuration */
+        s_config.mode = BRIDGE_MODE_AUTO;
+        s_config.enable_page_callbacks = true;
+        s_config.enable_ui_callbacks = true;
+        s_config.long_press_to_exit = true;
+        s_config.update_interval_ms = 20;
+    }
+    
+    s_mode = s_config.mode;
+    
+    /* Initialize statistics */
+    memset(&s_stats, 0, sizeof(PageUI_BridgeStats_t));
+    
+    /* Initialize custom handlers */
+    memset(s_custom_handlers, 0, sizeof(s_custom_handlers));
+    s_handler_count = 0;
+    
+    /* Initialize button module */
+    UI_Button_Init();
+    
+    s_initialized = true;
+}
+
+void PageUI_Bridge_SetMode(PageUI_BridgeMode_t mode)
+{
+    s_mode = mode;
+}
+
+PageUI_BridgeMode_t PageUI_Bridge_GetMode(void)
+{
+    return s_mode;
+}
+
+void PageUI_Bridge_Update(uint16_t delta_ms)
+{
+    UI_ButtonEventData_t event;
+    
+    if (!s_initialized) return;
+    
+    /* Step 1: Scan buttons */
+    UI_Button_Scan(delta_ms);
+    
+    /* Step 2: Process all pending events */
+    while (UI_Button_GetEvent(&event)) {
+        PageUI_Bridge_ProcessEvent(&event);
+    }
+    
+    /* Step 3: Update systems based on mode */
+    PageUI_BridgeMode_t effective_mode = get_effective_mode();
+    
+    if (effective_mode == BRIDGE_MODE_PAGE && s_page_loop_enabled && s_page) {
+        /* Run page loop */
+        s_page->Loop(s_page);
+    }
+    
+    if (s_ui_update_enabled) {
+        /* Update UI Core state (without button scan, we already did that) */
+        UI_Core_Update(delta_ms);
+    }
+}
+
+void PageUI_Bridge_ProcessEvent(UI_ButtonEventData_t* event)
+{
+    if (!s_initialized || event == NULL) return;
+    
+    s_stats.total_events++;
+    
+    /* Check for disabled mode */
+    if (s_mode == BRIDGE_MODE_DISABLED) {
+        s_stats.ignored_events++;
+        return;
+    }
+    
+    /* Call custom handlers first */
+    if (call_custom_handlers(event)) {
+        return;  /* Event consumed by custom handler */
+    }
+    
+    /* Route to appropriate system */
+    PageUI_BridgeMode_t effective_mode = get_effective_mode();
+    
+    switch (effective_mode) {
+        case BRIDGE_MODE_PAGE:
+            route_to_page(event);
+            break;
+            
+        case BRIDGE_MODE_UI:
+            route_to_ui(event);
+            break;
+            
+        default:
+            s_stats.ignored_events++;
+            break;
+    }
+}
+
+void PageUI_Bridge_RegisterHandler(PageUI_EventHandler_t handler, 
+                                    PageUI_BridgePriority_t priority)
+{
+    if (handler == NULL || s_handler_count >= MAX_CUSTOM_HANDLERS) return;
+    
+    /* Check if already registered */
+    for (uint8_t i = 0; i < s_handler_count; i++) {
+        if (s_custom_handlers[i].handler == handler) {
+            /* Update priority */
+            s_custom_handlers[i].priority = priority;
+            return;
+        }
+    }
+    
+    /* Add new handler */
+    s_custom_handlers[s_handler_count].handler = handler;
+    s_custom_handlers[s_handler_count].priority = priority;
+    s_handler_count++;
+}
+
+void PageUI_Bridge_UnregisterHandler(PageUI_EventHandler_t handler)
+{
+    if (handler == NULL) return;
+    
+    for (uint8_t i = 0; i < s_handler_count; i++) {
+        if (s_custom_handlers[i].handler == handler) {
+            /* Shift remaining handlers */
+            for (uint8_t j = i; j < s_handler_count - 1; j++) {
+                s_custom_handlers[j] = s_custom_handlers[j + 1];
+            }
+            s_handler_count--;
+            break;
+        }
+    }
+}
+
+void PageUI_Bridge_SwitchToPage(uint8_t page_id)
+{
+    if (s_page == NULL) return;
+    
+    /* Switch bridge mode to page */
+    s_mode = BRIDGE_MODE_PAGE;
+    
+    /* Set page ID */
+    s_page->SetPage(s_page, page_id);
+    
+    /* Switch UI state to idle (or appropriate state) */
+    UI_Core_SetState(UI_STATE_IDLE);
+}
+
+void PageUI_Bridge_SwitchToUI(UI_State_t state)
+{
+    /* Switch bridge mode to UI */
+    s_mode = BRIDGE_MODE_UI;
+    
+    /* Set UI Core state */
+    UI_Core_SetState(state);
+}
+
+bool PageUI_Bridge_IsPageActive(void)
+{
+    return (get_effective_mode() == BRIDGE_MODE_PAGE);
+}
+
+bool PageUI_Bridge_IsUIActive(void)
+{
+    return (get_effective_mode() == BRIDGE_MODE_UI);
+}
+
+const PageUI_BridgeStats_t* PageUI_Bridge_GetStats(void)
+{
+    return &s_stats;
+}
+
+void PageUI_Bridge_ResetStats(void)
+{
+    memset(&s_stats, 0, sizeof(PageUI_BridgeStats_t));
+}
+
+void PageUI_Bridge_EnablePageLoop(bool enable)
+{
+    s_page_loop_enabled = enable;
+}
+
+void PageUI_Bridge_EnableUIUpdate(bool enable)
+{
+    s_ui_update_enabled = enable;
+}
+
+BG_Page* PageUI_Bridge_GetPage(void)
+{
+    return s_page;
+}
+
+void PageUI_Bridge_MapEventToPage(UI_ButtonEventData_t* event, BG_Page* page)
+{
+    if (event == NULL || page == NULL) return;
+    
+    /* Only map click/long-press/repeat events */
+    if (event->event != UI_BTN_EVENT_CLICKED &&
+        event->event != UI_BTN_EVENT_LONG_PRESS &&
+        event->event != UI_BTN_EVENT_REPEAT) {
+        return;
+    }
+    
+    /* Map button ID to page pressed state */
+    switch (event->id) {
+        case UI_BTN_UP:
+            page->Data.last_pressed = 1;
+            break;
+        case UI_BTN_DOWN:
+            page->Data.next_pressed = 1;
+            break;
+        case UI_BTN_ENTER:
+            page->Data.enter_pressed = 1;
+            break;
+        case UI_BTN_BACK:
+            page->Data.exit_pressed = 1;
+            break;
+        default:
+            break;
+    }
+}

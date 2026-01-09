@@ -16,6 +16,7 @@
 #include "drv_w25qxx.h"
 #include "drv_battery.h"
 #include "drv_usb_cdc.h"
+#include "bt_vfs_driver.h"
 #include "shell_fs.h"
 #include "effect_graph_vfs.h"
 #include "shell_cmd_audio_vfs.h"
@@ -124,6 +125,53 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] USB CDC registration FAILED\n");
     }
     
+    /* 初始化并挂载蓝牙设备到VFS */
+    DBG("[DrvInit] Initializing Bluetooth VFS drivers...\n");
+    
+    /* 初始化BT驱动 */
+    ret = BtVfs_Init();
+    if (ret == 0) {
+        VfsNode_t *driverDir = Vfs_FindNode("/driver");
+        if (driverDir) {
+            VfsNode_t *btNode = BtVfs_Mount(driverDir);
+            if (btNode) {
+                total++;
+                DBG("[DrvInit] BT device mounted at /driver/bt\n");
+            } else {
+                failed++;
+                DBG("[DrvInit] BT mount FAILED\n");
+            }
+        } else {
+            failed++;
+            DBG("[DrvInit] ERROR: /driver not found\n");
+        }
+    } else {
+        failed++;
+        DBG("[DrvInit] BT init FAILED\n");
+    }
+    
+    /* 初始化BLE驱动 */
+    ret = BleVfs_Init();
+    if (ret == 0) {
+        VfsNode_t *driverDir = Vfs_FindNode("/driver");
+        if (driverDir) {
+            VfsNode_t *bleNode = BleVfs_Mount(driverDir);
+            if (bleNode) {
+                total++;
+                DBG("[DrvInit] BLE device mounted at /driver/ble\n");
+            } else {
+                failed++;
+                DBG("[DrvInit] BLE mount FAILED\n");
+            }
+        } else {
+            failed++;
+            DBG("[DrvInit] ERROR: /driver not found\n");
+        }
+    } else {
+        failed++;
+        DBG("[DrvInit] BLE init FAILED\n");
+    }
+    
     /* 注册系统命令到 /bin */
     DBG("[DrvInit] Registering /bin commands...\n");
     ShellFs_RegisterAllCommands();
@@ -141,9 +189,17 @@ int DrvFramework_RegisterAll(void)
     /* 注册audio VFS Shell命令 */
     ShellCmdAudioVfs_Register();
 
+    /* 初始化蓝牙VFS（创建/bluetooth目录） */
+    DBG("[DrvInit] Initializing Bluetooth VFS...\n");
+    ret = BtVfsDriver_MountDefault();
+    if (ret == BT_VFS_OK) {
+        DBG("[DrvInit] Bluetooth VFS mounted OK\n");
+    } else {
+        DBG("[DrvInit] Bluetooth VFS mount deferred (bluetooth not ready)\n");
+    }
+    
     /* TODO: 添加更多驱动注册
      * - Audio Codec
-     * - Bluetooth
      */
     
     DBG("[DrvInit] Registration complete: %d success, %d failed\n", total, failed);
