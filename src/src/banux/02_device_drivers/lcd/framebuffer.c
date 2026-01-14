@@ -7,8 +7,11 @@
 static FrameBuffer g_framebuffer;
 
 // 静态分配显存缓冲区 (20,480 * 2 = 40,960 字节 ≈ 40KB)
+#ifndef USE_FRAME_BUFFER
+static uint16_t framebuffer_memory[1];
+#else
 static uint16_t framebuffer_memory[FB_SIZE];
-
+#endif
 // 初始化帧缓冲
 void FrameBuffer_Init(void) {
     g_framebuffer.buffer = framebuffer_memory;
@@ -150,7 +153,7 @@ void FrameBuffer_FlushDirty(void) {
     uint16_t x, y;
     
     // 设置脏区域
-    Lcd_SetRegion(g_framebuffer.dirty_x1, g_framebuffer.dirty_y1, 
+    Lcd_SetRegion(g_framebuffer.dirty_x1, g_framebuffer.dirty_y1,
                   g_framebuffer.dirty_x2, g_framebuffer.dirty_y2);
     Lcd_WriteIndex(0x2C);
     
@@ -241,7 +244,7 @@ void FrameBuffer_FillMenuRect(uint16_t x, uint16_t y, uint16_t width, uint16_t h
 void FrameBuffer_DrawMenuBorder(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color, uint16_t border_width) {
     // 上边框
     FrameBuffer_FillRect(x, y, width, border_width, color);
-    // 下边框  
+    // 下边框
     FrameBuffer_FillRect(x, y + height - border_width, width, border_width, color);
     // 左边框
     FrameBuffer_FillRect(x, y, border_width, height, color);

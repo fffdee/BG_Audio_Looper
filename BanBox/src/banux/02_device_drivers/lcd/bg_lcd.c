@@ -229,7 +229,7 @@ uint16_t LCD_BGR2RGB(uint16_t c){
   rgb=(b<<11)+(g<<5)+(r<<0);
   return(rgb);
 }
-//閻㈣崵鍤庨崙鑺ユ殶閿涘奔濞囬悽藱resenham 閻㈣崵鍤庣粻妤佺《
+
 void gui_DrawLine(uint16_t x0, uint16_t y0,uint16_t x1, uint16_t y1,uint16_t Color){
 int dx,             // difference in x's
     dy,             // difference in y's

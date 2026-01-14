@@ -99,8 +99,8 @@ uint16_t right_time = 0;
 uint8_t left_flag = false;
 uint8_t right_flag = false;
 
-/* BG_page 现在在 app_pages.c 中定义，通过 bangui.h 引入 */
-/* extern BG_Page BG_page; -- 由 app_pages.h 声明 */
+/* BG_page 鐜板湪鍦�app_pages.c 涓畾涔夛紝閫氳繃 bangui.h 寮曞叆 */
+/* extern BG_Page BG_page; -- 鐢�app_pages.h 澹版槑 */
 uint8_t UI_count = 0, UI_flag = 0;
 
 void Timer2Interrupt(void) {
@@ -120,7 +120,7 @@ void Timer2Interrupt(void) {
 	}
 	//BG_page.Loop(&BG_page);
 #ifdef CFG_APP_USB_AUDIO_MODE_EN
-	UsbAudioTimer1msProcess(); //1ms锟叫断硷拷锟�
+	UsbAudioTimer1msProcess(); //1ms閿熷彨鏂》鎷烽敓锟�
 #endif
 }
 
@@ -130,9 +130,6 @@ uint32_t SendCount = 0;
 uint32_t RecvCount = 0;
 uint32_t result[100];
 
-//2锟斤拷全锟斤拷buf锟节伙拷锟斤拷ADC锟斤拷DAC锟捷ｏ拷注锟解单位
-
-//
 
 int16_t CRC[100] = { 0 };
 static int16_t WriteBufer[96] = { 0 };
@@ -153,7 +150,8 @@ const char* spimIO[][4] = {
 //    cs      miso     clk      mosi
 		{ "A22", "A7", "A6", "A5" }, { "A8", "A22", "A21", "A20" }, };
 
-static uint8_t DmaChannelMap[29] = { 255, //PERIPHERAL_ID_SPIS_RX = 0,		//0
+static uint8_t DmaChannelMap[29] = {
+		255, //PERIPHERAL_ID_SPIS_RX = 0,		//0
 		255, //PERIPHERAL_ID_SPIS_TX,			//1
 		255, //PERIPHERAL_ID_TIMER3,			//2
 		255, //PERIPHERAL_ID_SDIO_RX,			//3
@@ -161,7 +159,7 @@ static uint8_t DmaChannelMap[29] = { 255, //PERIPHERAL_ID_SPIS_RX = 0,		//0
 		255, //PERIPHERAL_ID_UART0_RX,			//5
 		255, //PERIPHERAL_ID_TIMER1,				//6
 		255, //PERIPHERAL_ID_TIMER2,				//7
-		255, //PERIPHERAL_ID_SDPIF_RX,			//8 SPDIF_RX /TX锟斤拷使锟斤拷同一通锟斤拷
+		255, //PERIPHERAL_ID_SDPIF_RX,			//8
 		255, //PERIPHERAL_ID_SDPIF_TX,			//9
 		0, //PERIPHERAL_ID_SPIM_RX,			//10
 		1, //PERIPHERAL_ID_SPIM_TX,			//11
@@ -241,42 +239,37 @@ void button_init()
 /*============================================================================
  * Looper 4-Button Control
  * Button mapping:
- *   GPIO_A0  -> Segment 0 (按键按下为低电平)
+ *   GPIO_A0  -> Segment 0 (鎸夐敭鎸変笅涓轰綆鐢靛钩)
  *   GPIO_B5  -> Segment 1
  *   GPIO_A15 -> Segment 2
  *   GPIO_A16 -> Segment 3 Sending
  *===========================================================================*/
 
-/* 按键状态记录（用于边沿检测） */
-static uint8_t looper_btn_last_state[4] = {1, 1, 1, 1};  /* 上拉，默认高电平 */
+/* 鎸夐敭鐘舵�璁板綍锛堢敤浜庤竟娌挎娴嬶級 */
+static uint8_t looper_btn_last_state[4] = {1, 1, 1, 1};  /* 涓婃媺锛岄粯璁ら珮鐢靛钩 */
 static uint8_t looper_btn_debounce[4] = {0, 0, 0, 0};
 
-/**
- * @brief 处理Looper按键输入
- * @note  在主循环中周期性调用，实现4个按键控制4个段
- *        每次按下切换段状态: INACTIVE->RECORDING->PLAYING->STOPPED->PLAYING...
- */
 void Looper_ProcessButtons(void)
 {
 	uint8_t btn_current[4];
 	uint8_t i;
 
-	/* 读取4个按键当前状态（低电平有效） */
+	/* 璇诲彇4涓寜閿綋鍓嶇姸鎬侊紙浣庣數骞虫湁鏁堬級 */
 	btn_current[0] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX0) ? 1 : 0;
 	btn_current[1] = GPIO_RegOneBitGet(GPIO_B_IN, GPIO_INDEX5) ? 1 : 0;
 	btn_current[2] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX15) ? 1 : 0;
 	btn_current[3] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX16) ? 1 : 0;
 
-	/* 处理每个按键 */
+	/* 澶勭悊姣忎釜鎸夐敭 */
 	for (i = 0; i < 4; i++)
 	{
 		if (btn_current[i] == 0 && looper_btn_last_state[i] == 1)
 		{
-			/* 下降沿检测 - 按键按下 */
+			/* 涓嬮檷娌挎娴�- 鎸夐敭鎸変笅 */
 			looper_btn_debounce[i]++;
-			if (looper_btn_debounce[i] >= 3)  /* 简单去抖 */
+			if (looper_btn_debounce[i] >= 3)  /* 绠�崟鍘绘姈 */
 			{
-				/* 调用Looper段按键处理 */
+				/* 璋冪敤Looper娈垫寜閿鐞�*/
 				AudioLooper.SegmentButtonPress(i);
 				looper_btn_debounce[i] = 0;
 				looper_btn_last_state[i] = 0;
@@ -284,7 +277,7 @@ void Looper_ProcessButtons(void)
 		}
 		else if (btn_current[i] == 1)
 		{
-			/* 按键释放 */
+			/* 鎸夐敭閲婃斁 */
 			looper_btn_last_state[i] = 1;
 			looper_btn_debounce[i] = 0;
 		}
@@ -313,8 +306,8 @@ void EffectTask() {
 
 	/*=====================================================
 	 * System Parameter Initialization
-	 * 从内部Flash加载保存的参数到全局变量
-	 * 必须在硬件初始化后、功能模块初始化前调用
+	 * 浠庡唴閮‵lash鍔犺浇淇濆瓨鐨勫弬鏁板埌鍏ㄥ眬鍙橀噺
+	 * 蹇呴』鍦ㄧ‖浠跺垵濮嬪寲鍚庛�鍔熻兘妯″潡鍒濆鍖栧墠璋冪敤
 	 *====================================================*/
 	DBG("[Task] Loading system parameters from flash...\n");
 	{
@@ -332,23 +325,17 @@ void EffectTask() {
 
 	DBG("[Task] Initializing UI System...\n");
 
-	/*=====================================================
-	 * NEW UI Architecture (BanGUI)
-	 * 使用统一的 BG_UI 对象接口
-	 *====================================================*/
 
-	/* 快速初始化 (已包含 Boot/Home/Menu/Looper 视图) */
 	BANGUI_QUICK_INIT();
 
 
-	/* 设置 Home 视图图标回调 */
-	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 绑定 Looper 视图 */
+	/* 璁剧疆 Home 瑙嗗浘鍥炬爣鍥炶皟 */
+	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 缁戝畾 Looper 瑙嗗浘 */
 
 	/*=====================================================
-	 * BOOT SPLASH SCREEN - 开机界面
-	 * 启动 UI 系统，从开机界面开始（Logo + 进度条）
-	 * 动画由 view_boot.c 的状态机驱动，无硬延迟
-	 * 动画完成后自动切换到 Home 桌面
+	 * BOOT SPLASH SCREEN - 寮�満鐣岄潰
+	 * 鍚姩 UI 绯荤粺锛屼粠寮�満鐣岄潰寮�锛圠ogo + 杩涘害鏉★級
+	 * 鍔ㄧ敾鐢�view_boot.c 鐨勭姸鎬佹満椹卞姩锛屾棤纭欢杩�	 * 鍔ㄧ敾瀹屾垚鍚庤嚜鍔ㄥ垏鎹㈠埌 Home 妗岄潰
 	 *====================================================*/
 	BANGUI_START(UI_STATE_BOOT);
 
@@ -360,9 +347,6 @@ void EffectTask() {
 	ShellLCD_Adapter_Init();
 
 	button_init();
-
-	/* 旧Pag=-e系统已禁用，使用BanGUI系统 */
-	/* App_Pages_Init(); */
 
 	DBG("[Main] Entering main loop...\n");
 
@@ -403,42 +387,41 @@ void FlashTask(void)
 	spi_init();
 	BG_lcd.Init();
 	BG_lcd.Clear(RED);
-	// 初始化闪存管理器
+	// 鍒濆鍖栭棯瀛樼鐞嗗櫒
 	BG_flash_manager.Init();
 
-	// 读取两个NOR Flash的ID
+	// 璇诲彇涓や釜NOR Flash鐨処D
 	uint8_t manufacturerID, memoryType, deviceID;
 
 	DBG("========== Dual NOR Flash Test ==========\n");
 
-	// 读取第一个NOR Flash ID (CS = A21)
+	// 璇诲彇绗竴涓狽OR Flash ID (CS = A21)
 	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID, DEV_NOR1);
 	DBG("NOR1 (CS=A21) ID: 0x%02X 0x%02X 0x%02X\n", manufacturerID, memoryType, deviceID);
 
-	// 读取第二个NOR Flash ID (CS = A22)
+	// 璇诲彇绗簩涓狽OR Flash ID (CS = A22)
 	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID, DEV_NOR2);
 	DBG("NOR2 (CS=A22) ID: 0x%02X 0x%02X 0x%02X\n", manufacturerID, memoryType, deviceID);
 
-	// ================== Flash读写测试 ==================
+	// ================== Flash璇诲啓娴嬭瘯 ==================
 	DBG("========== Flash Sector Test Start ==========\n");
 
-	// 测试数据缓冲区
+	// 娴嬭瘯鏁版嵁缂撳啿鍖�
 	uint8_t write_buffer[256];
 	uint8_t read_buffer[256];
-	uint32_t test_address = 0x1000; // 使用第二个4K扇区，避开地址0
-	uint16_t test_size = 256;		// 测试数据大小
+	uint32_t test_address = 0x1000; // 浣跨敤绗簩涓�K鎵囧尯锛岄伩寮�湴鍧�
+	uint16_t test_size = 256;		// 娴嬭瘯鏁版嵁澶у皬
 	uint16_t i;
 	bool test_passed = true;
 
-	// 1. 准备测试数据
+	// 1. 鍑嗗娴嬭瘯鏁版嵁
 	DBG("Preparing test data...\n");
 	for (i = 0; i < test_size; i++)
 	{
-		write_buffer[i] = (uint8_t)(0xA0 + (i & 0x0F)); // 模式：A0,A1,A2...AF,A0,A1...
+		write_buffer[i] = (uint8_t)(0xA0 + (i & 0x0F)); // 妯″紡锛欰0,A1,A2...AF,A0,A1...
 	}
 
-	// 打印写入数据（前32字节）
-	DBG("Write data (first 32 bytes):\n");
+	// 鎵撳嵃鍐欏叆鏁版嵁锛堝墠32瀛楄妭锛�	DBG("Write data (first 32 bytes):\n");
 	for (i = 0; i < 32 && i < test_size; i++)
 	{
 		if (i % 16 == 0)
@@ -447,10 +430,10 @@ void FlashTask(void)
 	}
 	DBG("\n");
 
-	// ========== 测试NOR1 (CS=A21) ==========
+	// ========== 娴嬭瘯NOR1 (CS=A21) ==========
 	DBG("\n=== Testing NOR1 (CS=A21) ===\n");
 
-	// 单字节测试
+	// 鍗曞瓧鑺傛祴璇�
 	uint8_t test_byte = 0xAA;
 	uint8_t read_byte;
 	BG_flash_manager.SectorErase(test_address, DEV_NOR1);
@@ -460,7 +443,7 @@ void FlashTask(void)
 	    test_byte, read_byte, (test_byte == read_byte) ? "[OK]" : "[FAIL]");
 	if (test_byte != read_byte) test_passed = false;
 
-	// 256字节测试
+	// 256瀛楄妭娴嬭瘯
 	BG_flash_manager.SectorErase(test_address, DEV_NOR1);
 	DBG("Writing %d bytes to NOR1 at 0x%08lX...\n", test_size, (unsigned long)test_address);
 	BG_flash_manager.PageProgram(test_address, write_buffer, test_size, DEV_NOR1);
@@ -468,7 +451,7 @@ void FlashTask(void)
 	memset(read_buffer, 0, sizeof(read_buffer));
 	BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NOR1);
 
-	// 验证数据
+	// 楠岃瘉鏁版嵁
 	bool nor1_ok = true;
 	uint16_t error_count = 0;
 	for (i = 0; i < test_size; i++)
@@ -489,10 +472,10 @@ void FlashTask(void)
 		test_passed = false;
 	}
 
-	// ========== 测试NOR2 (CS=A22) ==========
+	// ========== 娴嬭瘯NOR2 (CS=A22) ==========
 	DBG("\n=== Testing NOR2 (CS=A22) ===\n");
 
-	// 单字节测试
+	// 鍗曞瓧鑺傛祴璇�
 	test_byte = 0x55;
 	BG_flash_manager.SectorErase(test_address, DEV_NOR2);
 	BG_flash_manager.PageProgram(test_address, &test_byte, 1, DEV_NOR2);
@@ -501,10 +484,10 @@ void FlashTask(void)
 	    test_byte, read_byte, (test_byte == read_byte) ? "[OK]" : "[FAIL]");
 	if (test_byte != read_byte) test_passed = false;
 
-	// 256字节测试 - 使用不同的测试模式
+	// 256瀛楄妭娴嬭瘯 - 浣跨敤涓嶅悓鐨勬祴璇曟ā寮�
 	for (i = 0; i < test_size; i++)
 	{
-		write_buffer[i] = (uint8_t)(0x50 + (i & 0x0F)); // 模式：50,51,52...5F
+		write_buffer[i] = (uint8_t)(0x50 + (i & 0x0F)); // 妯″紡锛�0,51,52...5F
 	}
 
 	BG_flash_manager.SectorErase(test_address, DEV_NOR2);
@@ -514,7 +497,7 @@ void FlashTask(void)
 	memset(read_buffer, 0, sizeof(read_buffer));
 	BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NOR2);
 
-	// 验证数据
+	// 楠岃瘉鏁版嵁
 	bool nor2_ok = true;
 	error_count = 0;
 	for (i = 0; i < test_size; i++)
@@ -535,7 +518,7 @@ void FlashTask(void)
 		test_passed = false;
 	}
 
-	// ========== 显示测试结果 ==========
+	// ========== 鏄剧ず娴嬭瘯缁撴灉 ==========
 	if (test_passed)
 	{
 		DBG("\n========== Dual NOR Flash Test PASSED ==========\n");
@@ -553,101 +536,26 @@ void FlashTask(void)
 	DBG("========== Flash Test End ==========\n");
 }
 
-/**
- * @brief 新 Flash 驱动架构测试任务
- * 使用重构后的 flash_bus + flash_devices + flash_nor_w25qxx 架构
- * UI_Menu_InitDefault
- */
+
 void FlashNewDriverTask(void)
 {
 	spi_init();
 	BG_lcd.Init();
-	BG_lcd.Clear(BLUE);  // 蓝色表示使用新驱动
-
+	BG_lcd.Clear(BLUE);  // 钃濊壊琛ㄧず浣跨敤鏂伴┍鍔�
 	DBG("\n");
 	DBG("**************************************************\n");
 	DBG("*     New Flash Driver Architecture Test        *\n");
 	DBG("**************************************************\n");
 
-	// 运行完整测试
+	// 杩愯瀹屾暣娴嬭瘯
 	FlashNewDriver_Test();
 
-	// 测试完成，显示结果颜色已在测试函数中设置
+	// 娴嬭瘯瀹屾垚锛屾樉绀虹粨鏋滈鑹插凡鍦ㄦ祴璇曞嚱鏁颁腑璁剧疆
 	DBG("\nNew Flash Driver test completed.\n");
 	DBG("You can also run FlashNewDriver_QuickTest() for quick debug.\n");
 }
 
-//static uint8_t DmaTxBuf[512];
-//static uint8_t DmaRxBuf[1024];
-//static uint8_t DmaTempBuf[512];
-//static uint8_t DmaTempBuf1[512];
-//#define DMA_TST_BUF_LEN 10
-//
-//static void DmaInterruptUart1Tx(void)
-//{
-//	static int Flag = 0;
-//	if(DMA_InterruptFlagGet(PERIPHERAL_ID_UART1_TX, DMA_THRESHOLD_INT))
-//	{
-//		if(Flag==0)
-//		{
-//			DMA_CircularDataPut(PERIPHERAL_ID_UART1_TX, DmaTempBuf, sizeof(DmaTempBuf)/2);
-//			Flag = 1;
-//		}else
-//		{
-//			DMA_CircularDataPut(PERIPHERAL_ID_UART1_TX, DmaTempBuf1, sizeof(DmaTempBuf1)/2);
-//			Flag = 0;
-//		}
-//
-//		UARTS_DMA_TxIntFlgClr(UART_PORT1, DMA_THRESHOLD_INT);
-//		//DBG("\nUART1 TX DMA_THRESHOLD_INT\n");
-//	}
-//	if(DMA_InterruptFlagGet(PERIPHERAL_ID_UART1_TX, DMA_DONE_INT))
-//	{
-//		UARTS_DMA_TxIntFlgClr(UART_PORT1, DMA_DONE_INT);
-//		DBG("\nUART1 TX DMA_DONE_INT\n");
-//	}
-//	if(DMA_InterruptFlagGet(PERIPHERAL_ID_UART1_TX, DMA_ERROR_INT))
-//	{
-//		UARTS_DMA_TxIntFlgClr(UART_PORT1, DMA_ERROR_INT);
-//		DBG("\nUART1 TX DMA_ERROR_INT\n");
-//	}
-//}
-//void SerialTask() {
-//
-//	int i,Echo;
-//	UARTS_DMA_TxInit(UART_PORT1, (void*)DmaTxBuf, sizeof(DmaTxBuf), DMA_TST_BUF_LEN, DmaInterruptUart1Tx);//配置
-//
-//		//step 4:开始传输数据
-//	UARTS_DMA_SendDataStart(UART_PORT1,DmaTxBuf,256);
-//
-//	DMA_ChannelDisable(PERIPHERAL_ID_UART1_RX);
-//	DMA_CircularConfig(PERIPHERAL_ID_UART1_RX,sizeof(DmaRxBuf)/2,DmaRxBuf,sizeof(DmaRxBuf));
-//	DMA_ChannelEnable(PERIPHERAL_ID_UART1_RX);
-//
-//	//step 4:使能RX
-//	UART1_IOCtl(UART_IOCTL_DMA_RX_EN, 1);
-//
-//	DBG("\n***** you will receive what you have sent *****\n");
-//	while(1)
-//	{
-//		//数据处理示例：
-//		Echo = DMA_CircularDataLenGet(PERIPHERAL_ID_UART1_RX);
-//		if(Echo>0)
-//		{
-//			DMA_CircularDataGet(PERIPHERAL_ID_UART1_RX,DmaRxBuf,Echo);
-//			for(i=0;i<Echo;i++)
-//			{
-//				DBG("%c",DmaRxBuf[i]);//展示此次收到的数据
-//			}
-//		}
-//	}
-//
-//}
 
-//void btTask()
-//{
-//	BtStackServiceRun();
-//}
 void prvInitialiseHeap(void);
 int main(void) {
 	Chip_Init(1);
@@ -709,19 +617,14 @@ int main(void) {
 	DrvFramework_FullInit();
 	DBG("[Main] Driver Framework initialized successfully\n");
 
-	/* 选择要运行的测试：
-	 * - FlashTask: 测试旧的 bg_flash_manager (双 NOR Flash 支持)
-	 * - FlashNewDriverTask: 测试新重构的 Flash 驱动架构 (外部Flash)
-	 * - InternalFlashTestTask: 测试芯片内部 Flash 读写
-	 */
-	//xTaskCreate( (TaskFunction_t)FlashTask, "FlashTask", 512, NULL, 1, NULL );  // 旧驱动测试
-	//xTaskCreate( (TaskFunction_t)FlashNewDriverTask, "FlashNewDriverTask", 1024, NULL, 1, NULL );  // 新驱动测试
-	// xTaskCreate( (TaskFunction_t)InternalFlashTestTask, "InternalFlashTest", 1024, NULL, 1, NULL );  // 内部Flash测试
 
-	/* 只运行一个任务，栈设置为4096 (16KB) 避免溢出 */
+	//xTaskCreate( (TaskFunction_t)FlashTask, "FlashTask", 512, NULL, 1, NULL );
+	//xTaskCreate( (TaskFunction_t)FlashNewDriverTask, "FlashNewDriverTask", 1024, NULL, 1, NULL );
+	// xTaskCreate( (TaskFunction_t)InternalFlashTestTask, "InternalFlashTest", 1024, NULL, 1, NULL );
+
+
 	xTaskCreate((TaskFunction_t )EffectTask, "EffectTask", 4096, NULL, 1, NULL);
 
-	//xTaskCreate( (TaskFunction_t)btTask, "btTask",2048, NULL, 1, NULL );
 
 	DBG("[Main] Starting FreeRTOS scheduler...\n");
 	vTaskStartScheduler();

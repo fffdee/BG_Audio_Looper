@@ -1,7 +1,7 @@
 /**
  *******************************************************************************
  * @file    audio_adc.h
- * @brief	Ä£Äâ¡Æ¦¤µ÷ÖÆA/D×ª»»Æ÷£¨ASDM£©Çý¶¯³ÌÐò½Ó¿Ú
+ * @brief	Ä£ï¿½ï¿½Æ¦ï¿½ï¿½ï¿½ï¿½ï¿½A/D×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ASDMï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
  *
  * @author  Sam
  * @version V1.0.0
@@ -97,7 +97,7 @@ extern "C" {
 ////////////////////////////////////////////
 
 /**
- * ADC Ä£¿é
+ * ADC Ä£ï¿½ï¿½
  */
 typedef enum _ADC_MODULE
 {
@@ -122,7 +122,7 @@ typedef enum _ADC_DMIC_DOWN_SAMPLLE_RATE
 
 typedef enum AUDIO_ADC_INPUT
 {
-  LINEIN_NONE,				//none£¬ÓÃÓÚ¹Ø±Õµ±Ç°PGAÏÂµÄchannelÑ¡Ôñ
+  LINEIN_NONE,				//noneï¿½ï¿½ï¿½ï¿½ï¿½Ú¹Ø±Õµï¿½Ç°PGAï¿½Âµï¿½channelÑ¡ï¿½ï¿½
   LINEIN1_LEFT,
   LINEIN1_RIGHT,
 
@@ -140,466 +140,466 @@ typedef enum AUDIO_ADC_INPUT
 } AUDIO_ADC_INPUT;
 
 /**
- * AGC Ä£Ê½Ê¹ÄÜÑ¡Ôñ
+ * AGC Ä£Ê½Ê¹ï¿½ï¿½Ñ¡ï¿½ï¿½
  */
 typedef enum _AGC_CHANNEL
 {
-    AGC_DISABLE	        = 0x00,       /**<½ûÖ¹AGC¹¦ÄÜ */
-    AGC_RIGHT_ONLY      = 0x01,       /**<½öÓÒÍ¨µÀÊ¹ÄÜAGC¹¦ÄÜ*/
-    AGC_LEFT_ONLY       = 0x02,       /**<½ö×óÍ¨µÀÊ¹ÄÜAGC¹¦ÄÜ*/
-    AGC_STEREO_OPEN     = 0x03        /**<×óÓÒË«Í¨µÀÊ¹ÄÜAGC¹¦ÄÜ*/
+    AGC_DISABLE	        = 0x00,       /**<ï¿½ï¿½Ö¹AGCï¿½ï¿½ï¿½ï¿½ */
+    AGC_RIGHT_ONLY      = 0x01,       /**<ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½AGCï¿½ï¿½ï¿½ï¿½*/
+    AGC_LEFT_ONLY       = 0x02,       /**<ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½AGCï¿½ï¿½ï¿½ï¿½*/
+    AGC_STEREO_OPEN     = 0x03        /**<ï¿½ï¿½ï¿½ï¿½Ë«Í¨ï¿½ï¿½Ê¹ï¿½ï¿½AGCï¿½ï¿½ï¿½ï¿½*/
 
 } AGC_CHANNEL;
 
 /**
- * @brief  ADC Ä£¿éÊ¹ÄÜ£¨×Ü¿ª¹Ø£©
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½Ü¿ï¿½ï¿½Ø£ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_Enable(ADC_MODULE ADCModule);
 
 /**
- * @brief  ËùÓÐADC Ä£¿éÊ¹ÄÜ£¨×Ü¿ª¹Ø£©
- * @param  ÎÞ
- * @return ÎÞ
- * @note ÓÃÓÚ3Â·ÒÔÉÏADCÊ±£¬±£Ö¤¸÷¸öADC²ÉÑùµÄÏàÎ»ÏàÍ¬¡£
- * @note µ÷ÓÃ¸Ãº¯ÊýµÄµØ·½ÐèÒª×¢Òâ¹Ø±ÕÖÐ¶Ï,·ÀÖ¹º¯ÊýÄÚ²¿Ö´ÐÐÊ±±»ÖÐ¶Ï´ò¶Ï
+ * @brief  ï¿½ï¿½ï¿½ï¿½ADC Ä£ï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½Ü¿ï¿½ï¿½Ø£ï¿½
+ * @param  ï¿½ï¿½
+ * @return ï¿½ï¿½
+ * @note ï¿½ï¿½ï¿½ï¿½3Â·ï¿½ï¿½ï¿½ï¿½ADCÊ±ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½ï¿½ï¿½ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Í¬ï¿½ï¿½
+ * @note ï¿½ï¿½ï¿½Ã¸Ãºï¿½ï¿½ï¿½ï¿½ÄµØ·ï¿½ï¿½ï¿½Òª×¢ï¿½ï¿½Ø±ï¿½ï¿½Ð¶ï¿½,ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½Ö´ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ð¶Ï´ï¿½ï¿½
  */
 void AudioADC_AllModuleEnable(void);
 
 /**
- * @brief  ADC Ä£¿é¹Ø±Õ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½Ø±ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_Disable(ADC_MODULE ADCModule);
 
 /**
- * @brief  ADC Ä£¿é×óÓÒÍ¨µÀÊ¹ÄÜÑ¡Ôñ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  IsLeftEn     TRUE,×óÍ¨µÀÄÜÊ¹; FALSE,×óÍ¨µÀ¹Ø±Õ
- * @param  IsRightEn    TRUE,ÓÒÍ¨µÀÄÜÊ¹; FALSE,ÓÒÍ¨µÀ¹Ø±Õ
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½Ñ¡ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  IsLeftEn     TRUE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½Ê¹; FALSE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ø±ï¿½
+ * @param  IsRightEn    TRUE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½Ê¹; FALSE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ø±ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_LREnable(ADC_MODULE ADCModule, bool IsLeftEn, bool IsRightEn);
 
 /**
- * @brief  ADC Ä£¿éÊÇ·ñ½»»»×óÓÒÍ¨µÀÊäÈë
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  IsSwap       TRUE,×óÓÒÍ¨µÀ½»»»ÊäÈë; FALSE,×óÓÒÍ¨µÀÕý³£ÊäÈë
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½Ç·ñ½»»ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  IsSwap       TRUE,ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½; FALSE,ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_ChannelSwap(ADC_MODULE ADCModule, bool IsSwap);
 
 /**
- * @brief  ADC Ä£¿é¸ßÍ¨ÂË²¨Æ÷½ØÖ¹ÆµÂÊ²ÎÊýÅäÖÃ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  Coefficient  ÂË²¨Æ÷ÏµÊý£¬12bitÎ»¿í£¬Ä¬ÈÏÖµ0xFFE¡£
- *   @arg  Coefficient = 0xFFE  48k²ÉÑùÂÊÏÂÔÚ20Hz´¦Ë¥¼õ-1.5db¡£
- *   @arg  Coefficient = 0xFFC  48k²ÉÑùÂÊÏÂÔÚ40Hz´¦Ë¥¼õ-1.5db¡£
- *   @arg  Coefficient = 0xFFD  32k²ÉÑùÂÊÏÂÔÚ40Hz´¦Ë¥¼õ-1.5db¡£
- * @return ÎÞ
- * @Note ¸Ãº¯Êý±ØÐëÔÚAudioADC_Enable()º¯Êýµ÷ÓÃÖ®ºó
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½Í¨ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹Æµï¿½Ê²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  Coefficient  ï¿½Ë²ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½12bitÎ»ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½Öµ0xFFEï¿½ï¿½
+ *   @arg  Coefficient = 0xFFE  48kï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½20Hzï¿½ï¿½Ë¥ï¿½ï¿½-1.5dbï¿½ï¿½
+ *   @arg  Coefficient = 0xFFC  48kï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½40Hzï¿½ï¿½Ë¥ï¿½ï¿½-1.5dbï¿½ï¿½
+ *   @arg  Coefficient = 0xFFD  32kï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½40Hzï¿½ï¿½Ë¥ï¿½ï¿½-1.5dbï¿½ï¿½
+ * @return ï¿½ï¿½
+ * @Note ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½AudioADC_Enable()ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½
  */
 void AudioADC_HighPassFilterConfig(ADC_MODULE ADCModule, uint16_t Coefficient);
 
 /**
- * @brief  ADC Ä£¿é¸ßÍ¨ÂË²¨ÊÇ·ñÊ¹ÄÜ£¨È¥³ýÖ±Á÷Æ«Á¿£©
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  IsHpfEn      TRUE,ÄÜÊ¹¸ßÍ¨ÂË²¨Æ÷£¬FALSE,¹Ø±Õ¸ßÍ¨ÂË²¨Æ÷
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½Í¨ï¿½Ë²ï¿½ï¿½Ç·ï¿½Ê¹ï¿½Ü£ï¿½È¥ï¿½ï¿½Ö±ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  IsHpfEn      TRUE,ï¿½ï¿½Ê¹ï¿½ï¿½Í¨ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½FALSE,ï¿½Ø±Õ¸ï¿½Í¨ï¿½Ë²ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_HighPassFilterSet(ADC_MODULE ADCModule, bool IsHpfEn);
 
 /**
- * @brief  ADC Ä£¿éÇå³ý¼Ä´æÆ÷ºÍÄÚ´æÖÐµÄÊýÖµ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ðµï¿½ï¿½ï¿½Öµ
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_Clear(ADC_MODULE ADCModule);
 
 /**
- * @brief  ADC Ä£¿é²ÉÑùÂÊÅäÖÃ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  SampleRate   ADC²ÉÑùÂÊÖµ£¬9ÖÖ²ÉÑùÂÊ
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  SampleRate   ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½9ï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_SampleRateSet(ADC_MODULE ADCModule, uint32_t SampleRate);
 
 /**
- * @brief  »ñÈ¡ADC Ä£¿é²ÉÑùÂÊÅäÖÃÖµ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return µ±Ç°²ÉÑùÂÊÅäÖÃÖµ
+ * @brief  ï¿½ï¿½È¡ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
  */
 uint32_t AudioADC_SampleRateGet(ADC_MODULE ADCModule);
 
 /**
- * @brief  ADC Ä£¿éµ­Èëµ­³öÊ±¼äÉèÖÃ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  FadeTime     µ­Èëµ­³öÊ±¼ä, µ¥Î»:Ms
- * @return ÎÞ
- * @Note   ½¨ÒéÊ±¼äÎª10Ms£¬Ê±¼ä²»ÄÜÉèÖÃÎª0£¬Èç¹ûÏë¹Ø±Õµ­Èëµ­³ö¹¦ÄÜÇëµ÷ÓÃº¯ÊýAudioADC_FadeDisable();
+ * @brief  ADC Ä£ï¿½éµ­ï¿½ëµ­ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  FadeTime     ï¿½ï¿½ï¿½ëµ­ï¿½ï¿½Ê±ï¿½ï¿½, ï¿½ï¿½Î»:Ms
+ * @return ï¿½ï¿½
+ * @Note   ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Îª10Msï¿½ï¿½Ê±ï¿½ä²»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø±Õµï¿½ï¿½ëµ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½AudioADC_FadeDisable();
  */
 void AudioADC_FadeTimeSet(ADC_MODULE ADCModule, uint8_t FadeTime);
 
 /**
- * @brief  ADC Ä£¿éµ­Èëµ­³ö¹¦ÄÜÊ¹ÄÜ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½éµ­ï¿½ëµ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_FadeEnable(ADC_MODULE ADCModule);
 
 /**
- * @brief  ADC Ä£¿éµ­Èëµ­³ö¹¦ÄÜ½ûÓÃ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½éµ­ï¿½ëµ­ï¿½ï¿½ï¿½ï¿½ï¿½Ü½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_FadeDisable(ADC_MODULE ADCModule);
 
 /**
- * @brief  ADC Ä£¿éÊý×Ö¾²Òô¿ØÖÆ£¬×óÓÒÍ¨µÀ·Ö±ð¶ÀÁ¢¿ØÖÆ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  LeftMuteEn   TRUE,×óÍ¨µÀ¾²ÒôÊ¹ÄÜ; FALSE,×óÍ¨µÀÈ¡Ïû¾²Òô
- * @param  RightMuteEn  TRUE,ÓÒÍ¨µÀ¾²ÒôÊ¹ÄÜ; FALSE,ÓÒÍ¨µÀÈ¡Ïû¾²Òô
- * @return ÎÞ
- * @Note   ¸Ãº¯ÊýÄÚ²¿²»´øÑÓÊ±£¬ÅäÖÃÓ²¼þ¼Ä´æÆ÷Ö®ºóÁ¢¼´ÍË³ö¡£Èç¹ûÐèÒªµÈ´ý¾²Òô¶¯×÷Íê³É£¬ÔòÒªÔÚº¯ÊýÍâ²¿×öÑÓÊ±
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  LeftMuteEn   TRUE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½; FALSE,ï¿½ï¿½Í¨ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  RightMuteEn  TRUE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½; FALSE,ï¿½ï¿½Í¨ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
+ * @Note   ï¿½Ãºï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½Òªï¿½Úºï¿½ï¿½ï¿½ï¿½â²¿ï¿½ï¿½ï¿½ï¿½Ê±
  */
 void AudioADC_DigitalMute(ADC_MODULE ADCModule, bool LeftMuteEn, bool RightMuteEn);
 
 /**
- * @brief  ADC Ä£¿éÈí¼þ¾²Òô¿ØÖÆ£¬×óÓÒÍ¨µÀ·Ö±ð¶ÀÁ¢¿ØÖÆ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  LeftMuteEn   TRUE,×óÍ¨µÀ¾²ÒôÊ¹ÄÜ; FALSE,×óÍ¨µÀÈ¡Ïû¾²Òô
- * @param  RightMuteEn  TRUE,ÓÒÍ¨µÀ¾²ÒôÊ¹ÄÜ; FALSE,ÓÒÍ¨µÀÈ¡Ïû¾²Òô
- * @return ÎÞ
- * @Note   ¸Ãº¯ÊýÄÚ²¿´øÑÓÊ±£¬Èç¹ûÊÇ¾²Òô²Ù×÷£¬»áÑÓÊ±µÈ´ýÒôÁ¿½µµÍµ½0Ö®ºóÍË³ö¸Ãº¯Êý¡£
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  LeftMuteEn   TRUE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½; FALSE,ï¿½ï¿½Í¨ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  RightMuteEn  TRUE,ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½; FALSE,ï¿½ï¿½Í¨ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
+ * @Note   ï¿½Ãºï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½0Ö®ï¿½ï¿½ï¿½Ë³ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½
  */
 void AudioADC_SoftMute(ADC_MODULE ADCModule, bool LeftMuteEn, bool RightMuteEn);
 
 /**
- * @brief  ADC Ä£¿éÒôÁ¿ÉèÖÃ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  LeftVol      ×óÉùµÀÒôÁ¿Öµ£¬0x00:¾²Òô, 0x001:-72dB, 0xFFF:0dB
- * @param  RightVol     ÓÒÉùµÀÒôÁ¿Öµ£¬0x00:¾²Òô, 0x001:-72dB, 0xFFF:0dB
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  LeftVol      ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x00:ï¿½ï¿½ï¿½ï¿½, 0x001:-72dB, 0xFFF:0dB
+ * @param  RightVol     ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x00:ï¿½ï¿½ï¿½ï¿½, 0x001:-72dB, 0xFFF:0dB
+ * @return ï¿½ï¿½
  */
 void AudioADC_VolSet(ADC_MODULE ADCModule, uint16_t LeftVol, uint16_t RightVol);
 
 
 /**
- * @brief  ADC Ä£¿éÒôÁ¿ÉèÖÃ£¨×óÓÒÉùµÀ¶ÀÁ¢ÉèÖÃ£©
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  ChannelSel   ×óÓÒÉùµÀÑ¡Ôñ£¬0x00: ÎÞ£»0x1£º×óÉùµÀ£»0x2£ºÓÒÉùµÀ
- * @param  Vol     		ÒôÁ¿Öµ£¬0x00:¾²Òô, 0x001:-72dB, 0xFFF:0dB¡¢
- * @note   µ±ChannelSelÎª3Ê±£¬Í¬Ê±Ñ¡ÔñÁË×óÓÒÉùµÀ£¬´ËÊ±VolÅäÖÃ¶Ô×óÓÒÉùµÀ¾ùÓÐÐ§£¬×óÓÒÉùµÀÒôÁ¿ÖµÒ»ÖÂ
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  ChannelSel   ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½0x00: ï¿½Þ£ï¿½0x1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0x2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  Vol     		ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x00:ï¿½ï¿½ï¿½ï¿½, 0x001:-72dB, 0xFFF:0dBï¿½ï¿½
+ * @note   ï¿½ï¿½ChannelSelÎª3Ê±ï¿½ï¿½Í¬Ê±Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Volï¿½ï¿½ï¿½Ã¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÒ»ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_VolSetChannel(ADC_MODULE ADCModule, ADC_CHANNEL ChannelSel, uint16_t Vol);
 
 /**
- * @brief  ADC Ä£¿éÒôÁ¿»ñÈ¡
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  *LeftVol      ×óÉùµÀÒôÁ¿Öµ£¬0x00:¾²Òô, 0x001:-72dB, 0xFFF:0dB
- * @param  *RightVol     ÓÒÉùµÀÒôÁ¿Öµ£¬0x00:¾²Òô, 0x001:-72dB, 0xFFF:0dB
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  *LeftVol      ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x00:ï¿½ï¿½ï¿½ï¿½, 0x001:-72dB, 0xFFF:0dB
+ * @param  *RightVol     ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x00:ï¿½ï¿½ï¿½ï¿½, 0x001:-72dB, 0xFFF:0dB
+ * @return ï¿½ï¿½
  */
 void AudioADC_VolGet(ADC_MODULE ADCModule, uint16_t* LeftVol, uint16_t* RightVol);
 
 /**
- * @brief  ADC Ä£¿éÄ£Äâ²¿·ÖÉÏµç³õÊ¼»¯
- * @param  ÎÞ
- * @return ÎÞ
- * @note Èç¹ûDACÄ£¿é¹¤×÷£¬ÉÏµçÏÈ×öDACÉÏµç²Ù×÷£¬·ñÔò»áÓÐpopÉù
+ * @brief  ADC Ä£ï¿½ï¿½Ä£ï¿½â²¿ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ê¼ï¿½ï¿½
+ * @param  ï¿½ï¿½
+ * @return ï¿½ï¿½
+ * @note ï¿½ï¿½ï¿½DACÄ£ï¿½é¹¤ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½DACï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½popï¿½ï¿½
  */
 void AudioADC_AnaInit(void);
 
 /**
- * @brief  ADC Ä£¿éÄ£Äâ²¿·ÖÈ¥³õÊ¼»¯
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½Ä£ï¿½â²¿ï¿½ï¿½È¥ï¿½ï¿½Ê¼ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AnaDeInit(ADC_MODULE ADCModule);
 
 /**
- * @brief  ADC PAGÍ¨µÀÑ¡Ôñ
- * @param  ADCModule	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
+ * @brief  ADC PAGÍ¨ï¿½ï¿½Ñ¡ï¿½ï¿½
+ * @param  ADCModule	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
  * @param  ChannelSel   0,Left;	1:Right
- * @param  InputSel 	PGAÊäÈëÍ¨Â·Ñ¡Ôñ¡£¾ßÌå¼ûAUDIO_ADC_INPUTÃ¶¾ÙÖµº¬Òå
- * @note   ²ÎÊý3Ñ¡ÔñÊ±ÐèÒªºÍ²ÎÊý1ºÍ²ÎÊý2¶ÔÓ¦£¬ÐèÒªºÍdatasheet¶ÔÕÕ
- * @return ÎÞ
+ * @param  InputSel 	PGAï¿½ï¿½ï¿½ï¿½Í¨Â·Ñ¡ï¿½ñ¡£¾ï¿½ï¿½ï¿½ï¿½AUDIO_ADC_INPUTÃ¶ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
+ * @note   ï¿½ï¿½ï¿½ï¿½3Ñ¡ï¿½ï¿½Ê±ï¿½ï¿½Òªï¿½Í²ï¿½ï¿½ï¿½1ï¿½Í²ï¿½ï¿½ï¿½2ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½datasheetï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_PGASel(ADC_MODULE ADCModule, ADC_CHANNEL ChannelSel, AUDIO_ADC_INPUT InputSel);
 
 /**
- * @brief  ADC PAGÔöÒæÅäÖÃ
- * @param  ADCModule	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
+ * @brief  ADC PAGï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
  * @param  ChannelSel   0,Left;	1:Right
- * @param  InputSel 	InputSel PGAÊäÈëÍ¨Â·Ñ¡Ôñ¡£¾ßÌå¼ûAUDIO_ADC_INPUTÃ¶¾ÙÖµº¬Òå
- * @param  Gain 		PGAÔöÒæÉèÖÃ¡£ÅäÖÃ·¶Î§¡¾0-63¡¿¡£
- * @param  GainBoostSel 0:0dB; 1:9dB; 2:18dB; 3:27dB¡£¸Ã²ÎÊýÖ»ÓÐÑ¡ÔñinputÎªmicÊ±²ÅÓÐÓÃ¡£
- * @note   ²ÎÊý3Ñ¡ÔñÊ±ÐèÒªºÍ²ÎÊý1ºÍ²ÎÊý2¶ÔÓ¦£¬ÐèÒªºÍdatasheet¶ÔÕÕ¡£
- * @note   ²ÎÊý4¾ßÌåÖµ¶ÔÓ¦µÄÊµ¼ÊdBÊýÇë²Î¿¼±¾ÎÄ¼þÍ·µÄÔöÒæ±í£¬²»Í¬inputÍ¬ÑùµÄÖµ¶ÔÓ¦µÄ²ÎÊýÖµ²»Í¬¡£
- * @note   ²ÎÊý5Ö»ÓÐÔÚinputÎªMICµÄÊ±ºò²ÅÓÐÐ§
- * @return ÎÞ
+ * @param  InputSel 	InputSel PGAï¿½ï¿½ï¿½ï¿½Í¨Â·Ñ¡ï¿½ñ¡£¾ï¿½ï¿½ï¿½ï¿½AUDIO_ADC_INPUTÃ¶ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
+ * @param  Gain 		PGAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½ï¿½ï¿½ï¿½Ã·ï¿½Î§ï¿½ï¿½0-63ï¿½ï¿½ï¿½ï¿½
+ * @param  GainBoostSel 0:0dB; 1:9dB; 2:18dB; 3:27dBï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½Ö»ï¿½ï¿½Ñ¡ï¿½ï¿½inputÎªmicÊ±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+ * @note   ï¿½ï¿½ï¿½ï¿½3Ñ¡ï¿½ï¿½Ê±ï¿½ï¿½Òªï¿½Í²ï¿½ï¿½ï¿½1ï¿½Í²ï¿½ï¿½ï¿½2ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½datasheetï¿½ï¿½ï¿½Õ¡ï¿½
+ * @note   ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Ó¦ï¿½ï¿½Êµï¿½ï¿½dBï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬inputÍ¬ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Ó¦ï¿½Ä²ï¿½ï¿½ï¿½Öµï¿½ï¿½Í¬ï¿½ï¿½
+ * @note   ï¿½ï¿½ï¿½ï¿½5Ö»ï¿½ï¿½ï¿½ï¿½inputÎªMICï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+ * @return ï¿½ï¿½
  */
 void AudioADC_PGAGainSet(ADC_MODULE ADCModule, ADC_CHANNEL ChannelSel, AUDIO_ADC_INPUT InputSel, uint16_t Gain, uint8_t GainBoostSel);
 
 /**
- * @brief  ADC Ä£¿éMic Bias1µçÑ¹Ê¹ÄÜ
- * @param  IsMicBiasEn  MIC Bias1Ê¹ÄÜ
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½Mic Bias1ï¿½ï¿½Ñ¹Ê¹ï¿½ï¿½
+ * @param  IsMicBiasEn  MIC Bias1Ê¹ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_MicBias1Enable(bool IsMicBiasEn);
 
 /**
- * @brief  ADCÄ£¿éPGAÄ£¿éÄ£Ê½Ñ¡Ôñ
- * @param  LeftMode:  	×óÍ¨µÀÄ£Ê½Ñ¡Ôñ   0£¬PGAÄ£¿é²î·ÖÊäÈë    1£¬PGAÄ£¿éµ¥¶ËÊäÈë      Ä¬ÈÏÎªµ¥¶ËÊäÈë
- * @param  RightMode:  	ÓÒÍ¨µÀÄ£Ê½Ñ¡Ôñ   0£¬ PGAÄ£¿é²î·ÖÊäÈë    1£¬PGAÄ£¿éµ¥¶ËÊäÈë     Ä¬ÈÏÎªµ¥¶ËÊäÈë
- * @note ²î·ÖÄ£Ê½Ö»ÓÐADC0Ä£¿éÖ§³Ö¡£
- * @return ÎÞ
+ * @brief  ADCÄ£ï¿½ï¿½PGAÄ£ï¿½ï¿½Ä£Ê½Ñ¡ï¿½ï¿½
+ * @param  LeftMode:  	ï¿½ï¿½Í¨ï¿½ï¿½Ä£Ê½Ñ¡ï¿½ï¿½   0ï¿½ï¿½PGAÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½    1ï¿½ï¿½PGAÄ£ï¿½éµ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½      Ä¬ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  RightMode:  	ï¿½ï¿½Í¨ï¿½ï¿½Ä£Ê½Ñ¡ï¿½ï¿½   0ï¿½ï¿½ PGAÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½    1ï¿½ï¿½PGAÄ£ï¿½éµ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½     Ä¬ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @note ï¿½ï¿½ï¿½Ä£Ê½Ö»ï¿½ï¿½ADC0Ä£ï¿½ï¿½Ö§ï¿½Ö¡ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_PGAMode(uint8_t LeftMode, uint8_t RightMode);
 
 /**
- * @brief  PGAÄ£¿é²î·ÖÊäÈëµçÑ¹ÔöÒæ¿ØÖÆ
- * @param  LeftGainSel:  	×óÍ¨µÀÔöÒæÑ¡Ôñ.0:0dB;1:6dB;2:10dB;3:15dB
- * @param  RightGainSel: 	ÓÒÍ¨µÀÔöÒæÑ¡Ôñ.0:0dB;1:6dB;2:10dB;3:15dB
- * @note ²î·ÖÄ£Ê½Ö»ÓÐADC0Ä£¿éÖ§³Ö
- * @return ÎÞ
+ * @brief  PGAÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  LeftGainSel:  	ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½.0:0dB;1:6dB;2:10dB;3:15dB
+ * @param  RightGainSel: 	ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½.0:0dB;1:6dB;2:10dB;3:15dB
+ * @note ï¿½ï¿½ï¿½Ä£Ê½Ö»ï¿½ï¿½ADC0Ä£ï¿½ï¿½Ö§ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_PGADiffGainSel(uint8_t leftdifGainSel, uint8_t rightdifGainSel);
 
 /**
- * @brief  AGCÄ£¿éPGAÄ£¿é¹ýÁã¼ì²âÊ¹ÄÜ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  IsLeftEn:  	×óÍ¨µÀÊ¹ÄÜ
- * @param  IsRightEn: 	ÓÒÍ¨µÀÊ¹ÄÜ
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½PGAÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  IsLeftEn:  	ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param  IsRightEn: 	ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_PGAZeroCrossEnable(ADC_MODULE ADCModule, bool IsLeftEn, bool IsRightEn);
 
 /**
- * @brief  ASDMÄ£¿éÊ¹ÄÜDMIC¹¦ÄÜ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ASDMÄ£ï¿½ï¿½Ê¹ï¿½ï¿½DMICï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_DMICEnable(ADC_MODULE ADCModule);
 
 /**
- * @brief  ASDMÄ£¿é½ûÄÜDMIC¹¦ÄÜ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ASDMÄ£ï¿½ï¿½ï¿½ï¿½ï¿½DMICï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_DMICDisable(ADC_MODULE ADCModule);
 
 /**
- * @brief  DMIC½µ²ÉÑùÂÊ±¶ÊýÑ¡Ôñ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  DownSampleRate    DOWN_SR_64,64±¶½µ²ÉÑù; DOWN_SR_128,128±¶½µ²ÉÑù
- * @return ÎÞ
+ * @brief  DMICï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  DownSampleRate    DOWN_SR_64,64ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½; DOWN_SR_128,128ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_DMICDownSampleSel(ADC_MODULE ADCModule, ADC_DMIC_DSR DownSampleRate);
 
 /**
- * @brief  ADC Ä£¿éAGCÄ£¿éÍ¨µÀÑ¡Ôñ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  IsLeftEn  	×óÍ¨µÀÊ¹ÄÜ
- * @param  IsRightEn	ÓÒÍ¨µÀÊ¹ÄÜ
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½AGCÄ£ï¿½ï¿½Í¨ï¿½ï¿½Ñ¡ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  IsLeftEn  	ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param  IsRightEn	ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCChannelSel(ADC_MODULE ADCModule, bool IsLeftEn, bool IsRightEn);
 
 /**
- * @brief  ADC Ä£¿éÓÃÓÚÕûÀíAGCÔöÒæ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  GainOffset 	ÔöÒæÆ«ÒÆÉèÖÃ¡£¡¾8 ~ 15¡¿-->¡¾-4dB ~ -0.5dB¡¿;¡¾0 ~ 7¡¿-->¡¾0dB ~ 3.5dB¡¿.
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½AGCï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  GainOffset 	ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½ï¿½ï¿½8 ~ 15ï¿½ï¿½-->ï¿½ï¿½-4dB ~ -0.5dBï¿½ï¿½;ï¿½ï¿½0 ~ 7ï¿½ï¿½-->ï¿½ï¿½0dB ~ 3.5dBï¿½ï¿½.
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCGainOffset(ADC_MODULE ADCModule, uint8_t GainOffset);
 
 /**
- * @brief  ADC Ä£¿éAGCÄ£¿éÔöÒæ×î´óË®Æ½
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  MaxLevel     AGCÄ£¿éÔöÒæ×î´óË®Æ½.¡¾0 ~ 31¡¿-->¡¾-3 ~ -34dB¡¿
- * @return ÎÞ
+ * @brief  ADC Ä£ï¿½ï¿½AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë®Æ½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  MaxLevel     AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë®Æ½.ï¿½ï¿½0 ~ 31ï¿½ï¿½-->ï¿½ï¿½-3 ~ -34dBï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCMaxLevel(ADC_MODULE ADCModule, uint8_t MaxLevel);
 
 /**
- * @brief  AGCÄ£¿éÔöÒæÄ¿±êË®Æ½
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  TargetLevel	AGCÄ£¿éÔöÒæÄ¿±êË®Æ½.¡¾0 ~ 31¡¿-->¡¾-3 ~ -34dB¡¿
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Ë®Æ½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  TargetLevel	AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Ë®Æ½.ï¿½ï¿½0 ~ 31ï¿½ï¿½-->ï¿½ï¿½-3 ~ -34dBï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCTargetLevel(ADC_MODULE ADCModule, uint8_t TargetLevel);
 
 /**
- * @brief  AGCÄ£Ä£¿é¿Éµ÷½ÚµÄ×î´óÔöÒæ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  MaxGain		AGCÄ£¿é×î´óÔöÒæ.¡¾0 ~ 63¡¿-->¡¾ 39.64 ~ -20.3dB¡¿,step:-0.95dB.
- * @return ÎÞ
+ * @brief  AGCÄ£Ä£ï¿½ï¿½Éµï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  MaxGain		AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.ï¿½ï¿½0 ~ 63ï¿½ï¿½-->ï¿½ï¿½ 39.64 ~ -20.3dBï¿½ï¿½,step:-0.95dB.
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCMaxGain(ADC_MODULE ADCModule, uint8_t MaxGain);
 
 /**
- * @brief  AGCÄ£Ä£¿é¿Éµ÷½ÚµÄ×îÐ¡ÔöÒæ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  MinGain		AGCÄ£¿é×îÐ¡ÔöÒæ.¡¾0 ~ 63¡¿-->¡¾ 39.64 ~ -20.3dB¡¿,step:-0.95dB.
- * @return ÎÞ
+ * @brief  AGCÄ£Ä£ï¿½ï¿½Éµï¿½ï¿½Úµï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  MinGain		AGCÄ£ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½.ï¿½ï¿½0 ~ 63ï¿½ï¿½-->ï¿½ï¿½ 39.64 ~ -20.3dBï¿½ï¿½,step:-0.95dB.
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCMinGain(ADC_MODULE ADCModule, uint8_t MinGain);
 
 /**
- * @brief  AGCÄ£¿éÖ¡Ê±¼ä
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  FrameTime	Ö¡Ê±¼äÉèÖÃ¡£ µ¥Î»£ºms¡£ ·¶Î§¡¾ 1 ~ 4096¡¿
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½Ö¡Ê±ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  FrameTime	Ö¡Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½ ï¿½ï¿½Î»ï¿½ï¿½msï¿½ï¿½ ï¿½ï¿½Î§ï¿½ï¿½ 1 ~ 4096ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCFrameTime(ADC_MODULE ADCModule, uint16_t FrameTime);
 
 /**
- * @brief  AGCÄ£¿é±£³ÖÊ±¼ä£¬¿ªÊ¼AGCËã·¨×ÔÊÊÓ¦ÔöÒæÖ®Ç°µÄ±£³ÖÊ±¼ä¡£
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  HoldTime		AGC¿ªÊ¼Ëã·¨Ö®Ç°µÄ±£³ÖÊ±¼ä¡£µ¥Î»£ºms¡£·¶Î§¡¾0*FrameTime ~ 31*FrameTime¡¿
- * @note   HoldTime±ØÐëÎªFrameTimerµÄÕûÊý±¶£¬·ñÔòÄÚ²¿Ò²»áËÄÉáÎåÈë¡£
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½é±£ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Ê¼AGCï¿½ã·¨ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Ö®Ç°ï¿½Ä±ï¿½ï¿½ï¿½Ê±ï¿½ä¡£
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  HoldTime		AGCï¿½ï¿½Ê¼ï¿½ã·¨Ö®Ç°ï¿½Ä±ï¿½ï¿½ï¿½Ê±ï¿½ä¡£ï¿½ï¿½Î»ï¿½ï¿½msï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½0*FrameTime ~ 31*FrameTimeï¿½ï¿½
+ * @note   HoldTimeï¿½ï¿½ï¿½ï¿½ÎªFrameTimerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë¡£
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCHoldTime(ADC_MODULE ADCModule, uint32_t HoldTime);
 
 /**
- * @brief  AGCÄ£¿éµ±ÊäÈëÐÅºÅÌ«´óÊ±£¬AGCÔöÒæË¥¼õµÄ²½½øÊ±¼äÉèÖÃ¡£
- * @param  ADCModule    	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  AttackStepTime 	AGCÔöÒæÔöÇ¿µÄ²½½øÊ±¼ä£¬µ¥Î»Îªms,·¶Î§Îª1 ~ 4096 ms
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½éµ±ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½Ì«ï¿½ï¿½Ê±ï¿½ï¿½AGCï¿½ï¿½ï¿½ï¿½Ë¥ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+ * @param  ADCModule    	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  AttackStepTime 	AGCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½Ä²ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»Îªms,ï¿½ï¿½Î§Îª1 ~ 4096 ms
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCAttackStepTime(ADC_MODULE ADCModule, uint16_t AttackStepTime);
 
 /**
- * @brief  AGCÄ£¿éµ±ÊäÈëÐÅºÅÌ«Ð¡Ê±£¬AGCÔöÒæÔöÇ¿µÄ²½½øÊ±¼äÉèÖÃ¡£
- * @param  ADCModule    	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  DecayStepTime 	AGCÔöÒæÔöÇ¿µÄ²½½øÊ±¼ä£¬µ¥Î»Îªms,·¶Î§Îª1 ~ 4096 ms
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½éµ±ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½Ì«Ð¡Ê±ï¿½ï¿½AGCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½Ä²ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+ * @param  ADCModule    	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  DecayStepTime 	AGCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½Ä²ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»Îªms,ï¿½ï¿½Î§Îª1 ~ 4096 ms
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCDecayStepTime(ADC_MODULE ADCModule, uint16_t DecayStepTime);
 
 /**
- * @brief  AGCÄ£¿éAGCÔëÉùãÐÖµÉèÖÃ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  NoiseThreshold£º ÔëÒôãÐÖµÉèÖÃ,·¶Î§£º¡¾0 ~ 31¡¿¶ÔÓ¦Öµ£º¡¾-90dB ~ -28dB¡¿£¬step£º2dB
- * 						      Ä¬ÈÏÎª 01111,¼´-60 dB
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½AGCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  NoiseThresholdï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½0 ~ 31ï¿½ï¿½ï¿½ï¿½Ó¦Öµï¿½ï¿½ï¿½ï¿½-90dB ~ -28dBï¿½ï¿½ï¿½ï¿½stepï¿½ï¿½2dB
+ * 						      Ä¬ï¿½ï¿½Îª 01111,ï¿½ï¿½-60 dB
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCNoiseThreshold(ADC_MODULE ADCModule, uint8_t NoiseThreshold);
 
 /**
- * @brief  AGCÄ£¿éAGCÄ£¿éÔëÉùÄ£Ê½Ñ¡Ôñ,
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  NoiseMode£º	0: ADCÊä³öÊý¾ÝµçÆ½ÓëÔëÉùãÐÖµÅÐ¶Ï£¬È·¶¨¸ÃÊäÈëÊÇ·ñÎªÔëÉù£»
- * 						1: ADCÊäÈëÊý¾ÝµçÆ½ÓëÔëÉùãÐÖµÅÐ¶Ï£¬È·¶¨¸ÃÊäÈëÊÇ·ñÎªÔëÉù¡£
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½Ñ¡ï¿½ï¿½,
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  NoiseModeï¿½ï¿½	0: ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½Ð¶Ï£ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * 						1: ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½Ð¶Ï£ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCNoiseMode(ADC_MODULE ADCModule, uint8_t NoiseMode);
 
 /**
- * @brief  AGCÄ£¿éAGCÄ£¿éÔëÉùGate¹¦ÄÜÊ¹ÄÜ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  NoiseGateEnable£º 0:½ûÖ¹ÔëÉùGate¹¦ÄÜ; 1:Ê¹ÄÜÔëÉùGate¹¦ÄÜ
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Gateï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  NoiseGateEnableï¿½ï¿½ 0:ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½Gateï¿½ï¿½ï¿½ï¿½; 1:Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Gateï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCNoiseGateEnable(ADC_MODULE ADCModule, bool NoiseGateEnable);
 
 /**
- * @brief  AGCÄ£¿éAGCÄ£¿éÔëÉùGateÄ£Ê½Ñ¡Ôñ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  NoiseGateMode 	0:  µ±¼ì²éµ½¹ýÁãÐÅºÅÊ±£¬PCMÊý¾Ýmute/unmute
- *							1:  PCMÊý¾ÝÁ¢¼´mute/unmute
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½GateÄ£Ê½Ñ¡ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  NoiseGateMode 	0:  ï¿½ï¿½ï¿½ï¿½éµ½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½Ê±ï¿½ï¿½PCMï¿½ï¿½ï¿½ï¿½mute/unmute
+ *							1:  PCMï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½mute/unmute
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCNoiseGateMode(ADC_MODULE ADCModule, uint8_t NoiseGateMode);
 
 /**
- * @brief  AGCÄ£¿éAGCÄ£¿éÔëÉù±£³ÖÊ±¼äÉèÖÃ¡£
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  NoiseHoldTime	ÔëÉù³ÖÐøNoiseHoldTimeºó£¬ÔëÉùÏà¹ØËã·¨¿ªÊ¼Ö´ÐÐ¡£µ¥Î»£¨ms£©
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  NoiseHoldTime	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½NoiseHoldTimeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã·¨ï¿½ï¿½Ê¼Ö´ï¿½Ð¡ï¿½ï¿½ï¿½Î»ï¿½ï¿½msï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCNoiseHoldTime(ADC_MODULE ADCModule, uint8_t NoiseHoldTime);
 
 /**
- * @brief  AGCÄ£¿é»ñÈ¡AGCÔöÒæ
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return AGCÔöÒæ
- * @note   ·µ»ØµÄÖµ²¢²»ÊÇAGCµÄÊµ¼ÊÔöÒæÖµ£¬AGCÊµ¼ÊÔöÒæÖµÓë¼Ä´æÆ÷Öµ
- * 		        Ö®¼äµÄ×ª»»¼ûAGCÊµ¼ÊÔöÒæÖµÓë¼Ä´æÆ÷Öµ¶ÔÓ¦±í
+ * @brief  AGCÄ£ï¿½ï¿½ï¿½È¡AGCï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return AGCï¿½ï¿½ï¿½ï¿½
+ * @note   ï¿½ï¿½ï¿½Øµï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½AGCï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½AGCÊµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Ä´ï¿½ï¿½ï¿½Öµ
+ * 		        Ö®ï¿½ï¿½ï¿½Øªï¿½ï¿½ï¿½ï¿½AGCÊµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Ä´ï¿½ï¿½ï¿½Öµï¿½ï¿½Ó¦ï¿½ï¿½
  */
 uint8_t AudioADC_AGCGainGet(ADC_MODULE ADCModule);
 
 /**
- * @brief  AGCÄ£¿é»ñÈ¡AGCÄ£¿é¾²ÒôÐÅÏ¢
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return AGCÄ£¿é¾²Òô±êÖ¾
+ * @brief  AGCÄ£ï¿½ï¿½ï¿½È¡AGCÄ£ï¿½é¾²ï¿½ï¿½ï¿½ï¿½Ï¢
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return AGCÄ£ï¿½é¾²ï¿½ï¿½ï¿½ï¿½Ö¾
  */
 uint8_t AudioADC_AGCMuteGet(ADC_MODULE ADCModule);
 
 /**
- * @brief  AGCÄ£¿é»ñÈ¡AGCÄ£¿é¸üÐÂ±êÖ¾Î»
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return AGCÄ£¿é¸üÐÂ±êÖ¾Î»
+ * @brief  AGCÄ£ï¿½ï¿½ï¿½È¡AGCÄ£ï¿½ï¿½ï¿½ï¿½Â±ï¿½Ö¾Î»
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return AGCÄ£ï¿½ï¿½ï¿½ï¿½Â±ï¿½Ö¾Î»
  */
 uint8_t AudioADC_AGCUpdateFlagGet(ADC_MODULE ADCModule);
 
 /**
- * @brief  AGCÄ£¿éÇå³ýAGCÄ£¿é¸üÐÂ±êÖ¾Î»
- * @param  ADCModule 	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  AGCÄ£ï¿½ï¿½ï¿½ï¿½ï¿½AGCÄ£ï¿½ï¿½ï¿½ï¿½Â±ï¿½Ö¾Î»
+ * @param  ADCModule 	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_AGCUpdateFlagClear(ADC_MODULE ADCModule);
 
 /**
- * @brief  VCOMÊ¹ÓÃÎªMic¹©µçÆ«ÖÃµçÔ´
- * @param  Config 0: VCOM,DACÖ±ÍÆ¶ú»ú; 1:MicBias; 2:PowerDown VCOM
- * @return ÎÞ
- * @note   Ñ¡ÔñVCOM×÷Îªmic¹©µçµçÔ´£¬Ôò²»ÄÜÊ¹ÓÃDACÊä³öÃâÇý¶¯¶ú»ú¡£
- * @note   Èç¹ûDAC¹¤×÷£¬ÔòÏÈÅäÖÃDACÉÏµç£¬·ñÔòDAC»áÓÐÉÏµçpopÉù
+ * @brief  VCOMÊ¹ï¿½ï¿½ÎªMicï¿½ï¿½ï¿½ï¿½Æ«ï¿½Ãµï¿½Ô´
+ * @param  Config 0: VCOM,DACÖ±ï¿½Æ¶ï¿½ï¿½ï¿½; 1:MicBias; 2:PowerDown VCOM
+ * @return ï¿½ï¿½
+ * @note   Ñ¡ï¿½ï¿½VCOMï¿½ï¿½Îªmicï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½DACï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @note   ï¿½ï¿½ï¿½DACï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DACï¿½Ïµç£¬ï¿½ï¿½ï¿½ï¿½DACï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½popï¿½ï¿½
  */
 void AudioADC_VcomConfig(uint8_t Config);
 
 
 /**
  * @brief  Dynamic-Element-Matching enable signal
- * @param  ADCModule    0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @param  IsLeftEn  	×óÍ¨µÀÊ¹ÄÜ
- * @param  IsRightEn	ÓÒÍ¨µÀÊ¹ÄÜ
- * @return ÎÞ
+ * @param  ADCModule    0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @param  IsLeftEn  	ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param  IsRightEn	ï¿½ï¿½Í¨ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_DynamicElementMatch(ADC_MODULE ADCModule, bool IsLeftEn, bool IsRightEn);
 
 
 /**
- * @brief  ¹¦ÄÜÖØÖÃ
- * @param  ADCModule 	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule 	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_FuncReset(ADC_MODULE ADCModule);
 
 /**
- * @brief  ¼Ä´æÆ÷ÖØÖÃ
- * @param  ÎÞ
- * @return ÎÞ
+ * @brief  ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_RegReset(void);
 
 /**
- * @brief  ²éÑ¯ADC²ÉÑù¹ý³ÌÊÇ·ñÊý¾ÝÒç³ö
- * @param  ADCModule 	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return TREU£ºÓÐÒç³ö¹ý
+ * @brief  ï¿½ï¿½Ñ¯ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ADCModule 	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return TREUï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 bool AudioADC_IsOverflow(ADC_MODULE ADCModule);
 
 /**
- * @brief Çå³ýADC²ÉÑù¹ý³ÌÊÇ·ñÊý¾ÝÒç³ö±êÖ¾
- * @param  ADCModule 	0,ADC0Ä£¿é; 1,ADC1Ä£¿é
- * @return ÎÞ
+ * @brief ï¿½ï¿½ï¿½ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾
+ * @param  ADCModule 	0,ADC0Ä£ï¿½ï¿½; 1,ADC1Ä£ï¿½ï¿½
+ * @return ï¿½ï¿½
  */
 void AudioADC_OverflowClear(ADC_MODULE ADCModule);
 
@@ -611,7 +611,3 @@ void AudioADC_PowerDown(void);
 
 #endif //__AUDIO_ADC_H__
 
-/**
- * @}
- * @}
- */

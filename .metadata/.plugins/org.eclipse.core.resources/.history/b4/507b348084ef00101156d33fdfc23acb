@@ -1,0 +1,2 @@
+   text (code + rodata)	   data	    bss	    dec	    hex	filename
+ 987810 (761266 + 226544)	   6360	 236316	1230486	 12c696	BanBox.adx

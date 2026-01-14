@@ -391,8 +391,10 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.system.boot_count = 0;
     
     /* Volume defaults */
-    g_sys_param.volume.guitar_volume = 80;
-    g_sys_param.volume.mic_volume = 80;
+    g_sys_param.volume.guitar1_volume = 80;
+    g_sys_param.volume.guitar2_volume = 80;
+    g_sys_param.volume.mic1_volume = 80;
+    g_sys_param.volume.mic2_volume = 80;
     g_sys_param.volume.output_volume = 80;
     
     /* Looper defaults */
@@ -466,8 +468,10 @@ void SysParam_Print(void) {
     Shell_Printf("  BootStatus: %d\n", g_sys_param.system.current_boot_status);
     Shell_Printf("  BootCount:  %d\n", g_sys_param.system.boot_count);
     Shell_Printf("\n--- Volume ---\n");
-    Shell_Printf("  Guitar:     %d\n", g_sys_param.volume.guitar_volume);
-    Shell_Printf("  Mic:        %d\n", g_sys_param.volume.mic_volume);
+    Shell_Printf("  Guitar1:    %d\n", g_sys_param.volume.guitar1_volume);
+    Shell_Printf("  Guitar2:    %d\n", g_sys_param.volume.guitar2_volume);
+    Shell_Printf("  Mic1:       %d\n", g_sys_param.volume.mic1_volume);
+    Shell_Printf("  Mic2:       %d\n", g_sys_param.volume.mic2_volume);
     Shell_Printf("  Output:     %d\n", g_sys_param.volume.output_volume);
     Shell_Printf("\n--- Looper ---\n");
     Shell_Printf("  LoopCount:  %d\n", g_sys_param.looper.loop_count);
@@ -498,16 +502,16 @@ void SysParam_PrintModule(const char *module) {
         SysParam_Print();
         return;
     }
-    
     Shell_Printf("=== Module: %s ===\n", module);
-    
     if (strcmp(module, "system") == 0 || strcmp(module, "sys") == 0) {
         Shell_Printf("  BootStatus: %d\n", g_sys_param.system.current_boot_status);
         Shell_Printf("  BootCount:  %d\n", g_sys_param.system.boot_count);
     }
     else if (strcmp(module, "audio") == 0 || strcmp(module, "vol") == 0) {
-        Shell_Printf("  Guitar:     %d\n", g_sys_param.volume.guitar_volume);
-        Shell_Printf("  Mic:        %d\n", g_sys_param.volume.mic_volume);
+        Shell_Printf("  Guitar1:    %d\n", g_sys_param.volume.guitar1_volume);
+        Shell_Printf("  Guitar2:    %d\n", g_sys_param.volume.guitar2_volume);
+        Shell_Printf("  Mic1:       %d\n", g_sys_param.volume.mic1_volume);
+        Shell_Printf("  Mic2:       %d\n", g_sys_param.volume.mic2_volume);
         Shell_Printf("  Output:     %d\n", g_sys_param.volume.output_volume);
     }
     else if (strcmp(module, "looper") == 0) {

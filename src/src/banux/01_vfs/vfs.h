@@ -4,33 +4,29 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     04-January-2026
- * @brief    虚拟文件系统 - 类Linux树形目录结构
+ * @brief    铏氭嫙鏂囦欢绯荤粺 - 绫籐inux鏍戝舰鐩綍缁撴瀯
  *****************************************************************************
  * @attention
  *
- * 本模块实现类Linux虚拟文件系统，提供：
- * 1. 树形目录结构（/driver/spi/st7735/param1, /bin/sys/info）
- * 2. 节点类型：目录节点(DIR) / 参数节点(PARAM) / 设备节点(DEV)
- * 3. 路径解析与导航
- * 4. 与Shell命令系统绑定（cd/pwd/ls/cat/echo）
- *
- * 目录结构示例：
- *   /
- *   ├── bin                    # 系统命令
- *   │   └── sys
- *   │       ├── info
- *   │       ├── mem
- *   │       └── tasks
- *   └── driver                 # 硬件驱动
- *       ├── spi
- *       │   ├── st7735
- *       │   │   ├── name
- *       │   │   ├── width
- *       │   │   └── height
- *       │   └── w25q64
- *       ├── i2c
- *       ├── i2s
- *       └── usb
+ * 鏈ā鍧楀疄鐜扮被Linux铏氭嫙鏂囦欢绯荤粺锛屾彁渚涳細
+ * 1. 鏍戝舰鐩綍缁撴瀯锛�driver/spi/st7735/param1, /bin/sys/info锛� * 2. 鑺傜偣绫诲瀷锛氱洰褰曡妭鐐�DIR) / 鍙傛暟鑺傜偣(PARAM) / 璁惧鑺傜偣(DEV)
+ * 3. 璺緞瑙ｆ瀽涓庡鑸� * 4. 涓嶴hell鍛戒护绯荤粺缁戝畾锛坈d/pwd/ls/cat/echo锛� *
+ * 鐩綍缁撴瀯绀轰緥锛� *   /
+ *   鈹溾攢鈹�bin                    # 绯荤粺鍛戒护
+ *   鈹�  鈹斺攢鈹�sys
+ *   鈹�      鈹溾攢鈹�info
+ *   鈹�      鈹溾攢鈹�mem
+ *   鈹�      鈹斺攢鈹�tasks
+ *   鈹斺攢鈹�driver                 # 纭欢椹卞姩
+ *       鈹溾攢鈹�spi
+ *       鈹�  鈹溾攢鈹�st7735
+ *       鈹�  鈹�  鈹溾攢鈹�name
+ *       鈹�  鈹�  鈹溾攢鈹�width
+ *       鈹�  鈹�  鈹斺攢鈹�height
+ *       鈹�  鈹斺攢鈹�w25q64
+ *       鈹溾攢鈹�i2c
+ *       鈹溾攢鈹�i2s
+ *       鈹斺攢鈹�usb
  *
  *****************************************************************************
  */
@@ -45,146 +41,125 @@ extern "C" {
 #include "type.h"
 
 /*******************************************************************************
- * 配置定义 - 针对嵌入式系统优化，减少内存占用
+ * 閰嶇疆瀹氫箟 - 閽堝宓屽叆寮忕郴缁熶紭鍖栵紝鍑忓皯鍐呭瓨鍗犵敤
  ******************************************************************************/
-#define VFS_MAX_PATH_LEN     64      /* 最大路径长度 */
-#define VFS_MAX_NAME_LEN     16      /* 节点名称最大长度 */
-#define VFS_MAX_CHILDREN     32      /* 每个目录最大子节点数（增加以支持多节点效果图） */
-#define VFS_MAX_PARAM_LEN    32      /* 参数值最大长度 */
-#define VFS_MAX_NODES        256     /* 系统最大节点数（增加以支持效果图VFS） */
+#define VFS_MAX_PATH_LEN     64      /* 鏈�ぇ璺緞闀垮害 */
+#define VFS_MAX_NAME_LEN     16      /* 鑺傜偣鍚嶇О鏈�ぇ闀垮害 */
+#define VFS_MAX_CHILDREN     32      /* 姣忎釜鐩綍鏈�ぇ瀛愯妭鐐规暟锛堝鍔犱互鏀寔澶氳妭鐐规晥鏋滃浘锛�*/
+#define VFS_MAX_PARAM_LEN    32      /* 鍙傛暟鍊兼渶澶ч暱搴�*/
+#define VFS_MAX_NODES        256     /* 绯荤粺鏈�ぇ鑺傜偣鏁帮紙澧炲姞浠ユ敮鎸佹晥鏋滃浘VFS锛�*/
 
 /*******************************************************************************
- * 节点类型定义
+ * 鑺傜偣绫诲瀷瀹氫箟
  ******************************************************************************/
 typedef enum {
-    VFS_NODE_DIR = 0,        /* 目录节点 */
-    VFS_NODE_PARAM,          /* 参数节点（可读写） */
-    VFS_NODE_DEV,            /* 设备节点（关联驱动） */
-    VFS_NODE_CMD,            /* 命令节点（/bin/命令） */
+    VFS_NODE_DIR = 0,        /* 鐩綍鑺傜偣 */
+    VFS_NODE_PARAM,          /* 鍙傛暟鑺傜偣锛堝彲璇诲啓锛�*/
+    VFS_NODE_DEV,            /* 璁惧鑺傜偣锛堝叧鑱旈┍鍔級 */
+    VFS_NODE_CMD,            /* 鍛戒护鑺傜偣锛�bin/鍛戒护锛�*/
 } VfsNodeType_t;
 
 /*******************************************************************************
- * 参数读写回调函数类型
+ * 鍙傛暟璇诲啓鍥炶皟鍑芥暟绫诲瀷
  ******************************************************************************/
 /**
- * @brief  参数读取回调
- * @param  buf: 输出缓冲区
- * @param  maxLen: 缓冲区最大长度
- * @param  userData: 用户数据（设备私有数据）
- * @return 实际读取的长度，-1表示错误
+ * @brief  鍙傛暟璇诲彇鍥炶皟
+ * @param  buf: 杈撳嚭缂撳啿鍖� * @param  maxLen: 缂撳啿鍖烘渶澶ч暱搴� * @param  userData: 鐢ㄦ埛鏁版嵁锛堣澶囩鏈夋暟鎹級
+ * @return 瀹為檯璇诲彇鐨勯暱搴︼紝-1琛ㄧず閿欒
  */
 typedef int (*VfsParamGet_t)(char *buf, uint16_t maxLen, void *userData);
 
 /**
- * @brief  参数写入回调
- * @param  value: 写入的值字符串
- * @param  userData: 用户数据（设备私有数据）
- * @return 0成功，-1失败
+ * @brief  鍙傛暟鍐欏叆鍥炶皟
+ * @param  value: 鍐欏叆鐨勫�瀛楃涓� * @param  userData: 鐢ㄦ埛鏁版嵁锛堣澶囩鏈夋暟鎹級
+ * @return 0鎴愬姛锛�1澶辫触
  */
 typedef int (*VfsParamSet_t)(const char *value, void *userData);
 
 /*******************************************************************************
- * 文件系统节点结构（树形结构）
+ * 鏂囦欢绯荤粺鑺傜偣缁撴瀯锛堟爲褰㈢粨鏋勶級
  ******************************************************************************/
 typedef struct VfsNode {
-    char                name[VFS_MAX_NAME_LEN];      /* 节点名称 */
-    VfsNodeType_t       type;                        /* 节点类型 */
-    struct VfsNode     *parent;                      /* 父节点 */
-    struct VfsNode     *children[VFS_MAX_CHILDREN];  /* 子节点数组 */
-    uint8_t             childCount;                  /* 子节点数量 */
+    char                name[VFS_MAX_NAME_LEN];      /* 鑺傜偣鍚嶇О */
+    VfsNodeType_t       type;                        /* 鑺傜偣绫诲瀷 */
+    struct VfsNode     *parent;                      /* 鐖惰妭鐐�*/
+    struct VfsNode     *children[VFS_MAX_CHILDREN];  /* 瀛愯妭鐐规暟缁�*/
+    uint8_t             childCount;                  /* 瀛愯妭鐐规暟閲�*/
     
-    /* 参数节点专用 */
-    VfsParamGet_t       paramGet;                    /* 参数读取函数 */
-    VfsParamSet_t       paramSet;                    /* 参数写入函数 */
-    const char         *paramDesc;                   /* 参数描述 */
+    /* 鍙傛暟鑺傜偣涓撶敤 */
+    VfsParamGet_t       paramGet;                    /* 鍙傛暟璇诲彇鍑芥暟 */
+    VfsParamSet_t       paramSet;                    /* 鍙傛暟鍐欏叆鍑芥暟 */
+    const char         *paramDesc;                   /* 鍙傛暟鎻忚堪 */
     
-    /* 设备/参数节点专用 */
-    void               *userData;                    /* 用户私有数据 */
-    void               *driver;                      /* 关联的驱动指针 */
+    /* 璁惧/鍙傛暟鑺傜偣涓撶敤 */
+    void               *userData;                    /* 鐢ㄦ埛绉佹湁鏁版嵁 */
+    void               *driver;                      /* 鍏宠仈鐨勯┍鍔ㄦ寚閽�*/
 } VfsNode_t;
 
 /*******************************************************************************
- * 错误码定义
- ******************************************************************************/
+ * 閿欒鐮佸畾涔� ******************************************************************************/
 typedef enum {
-    VFS_OK = 0,              /* 成功 */
-    VFS_ERR_NOT_FOUND,       /* 路径不存在 */
-    VFS_ERR_NOT_DIR,         /* 不是目录 */
-    VFS_ERR_NOT_PARAM,       /* 不是参数节点 */
-    VFS_ERR_READ_ONLY,       /* 参数只读 */
-    VFS_ERR_NO_MEMORY,       /* 内存不足 */
-    VFS_ERR_NAME_TOO_LONG,   /* 名称过长 */
-    VFS_ERR_DIR_FULL,        /* 目录已满 */
-    VFS_ERR_ALREADY_EXISTS,  /* 节点已存在 */
-    VFS_ERR_INVALID_PATH,    /* 无效路径 */
+    VFS_OK = 0,              /* 鎴愬姛 */
+    VFS_ERR_NOT_FOUND,       /* 璺緞涓嶅瓨鍦�*/
+    VFS_ERR_NOT_DIR,         /* 涓嶆槸鐩綍 */
+    VFS_ERR_NOT_PARAM,       /* 涓嶆槸鍙傛暟鑺傜偣 */
+    VFS_ERR_READ_ONLY,       /* 鍙傛暟鍙 */
+    VFS_ERR_NO_MEMORY,       /* 鍐呭瓨涓嶈冻 */
+    VFS_ERR_NAME_TOO_LONG,   /* 鍚嶇О杩囬暱 */
+    VFS_ERR_DIR_FULL,        /* 鐩綍宸叉弧 */
+    VFS_ERR_ALREADY_EXISTS,  /* 鑺傜偣宸插瓨鍦�*/
+    VFS_ERR_INVALID_PATH,    /* 鏃犳晥璺緞 */
 } VfsError_t;
 
 /*******************************************************************************
- * 目录列举回调函数类型
+ * 鐩綍鍒椾妇鍥炶皟鍑芥暟绫诲瀷
  ******************************************************************************/
 typedef void (*VfsListCallback_t)(VfsNode_t *node, void *userData);
 
 /*******************************************************************************
- * 核心API函数
+ * 鏍稿績API鍑芥暟
  ******************************************************************************/
 
 /**
- * @brief  初始化虚拟文件系统（仅创建根节点）
- * @return VFS_OK成功，其他失败
- */
+ * @brief  鍒濆鍖栬櫄鎷熸枃浠剁郴缁燂紙浠呭垱寤烘牴鑺傜偣锛� * @return VFS_OK鎴愬姛锛屽叾浠栧け璐� */
 VfsError_t Vfs_Init(void);
 
 /**
- * @brief  获取根节点
- * @return 根节点指针
- */
+ * @brief  鑾峰彇鏍硅妭鐐� * @return 鏍硅妭鐐规寚閽� */
 VfsNode_t* Vfs_GetRoot(void);
 
 /**
- * @brief  获取当前工作目录节点
- * @return 当前目录节点指针
+ * @brief  鑾峰彇褰撳墠宸ヤ綔鐩綍鑺傜偣
+ * @return 褰撳墠鐩綍鑺傜偣鎸囬拡
  */
 VfsNode_t* Vfs_GetCwd(void);
 
 /**
- * @brief  获取当前工作目录路径字符串
- * @param  buf: 输出缓冲区
- * @param  maxLen: 缓冲区大小
- * @return VFS_OK成功
+ * @brief  鑾峰彇褰撳墠宸ヤ綔鐩綍璺緞瀛楃涓� * @param  buf: 杈撳嚭缂撳啿鍖� * @param  maxLen: 缂撳啿鍖哄ぇ灏� * @return VFS_OK鎴愬姛
  */
 VfsError_t Vfs_GetCwdPath(char *buf, uint16_t maxLen);
 
 /**
- * @brief  切换当前目录
- * @param  path: 目标路径（支持相对路径和绝对路径）
- * @return VFS_OK成功，其他失败
- */
+ * @brief  鍒囨崲褰撳墠鐩綍
+ * @param  path: 鐩爣璺緞锛堟敮鎸佺浉瀵硅矾寰勫拰缁濆璺緞锛� * @return VFS_OK鎴愬姛锛屽叾浠栧け璐� */
 VfsError_t Vfs_Cd(const char *path);
 
 /**
- * @brief  根据路径查找节点
- * @param  path: 路径（绝对或相对）
- * @return 节点指针，NULL表示未找到
- */
+ * @brief  鏍规嵁璺緞鏌ユ壘鑺傜偣
+ * @param  path: 璺緞锛堢粷瀵规垨鐩稿锛� * @return 鑺傜偣鎸囬拡锛孨ULL琛ㄧず鏈壘鍒� */
 VfsNode_t* Vfs_FindNode(const char *path);
 
 /**
- * @brief  在指定目录下创建子目录
- * @param  parent: 父目录节点
- * @param  name: 目录名
- * @return 新创建的目录节点，NULL表示失败
+ * @brief  鍦ㄦ寚瀹氱洰褰曚笅鍒涘缓瀛愮洰褰� * @param  parent: 鐖剁洰褰曡妭鐐� * @param  name: 鐩綍鍚� * @return 鏂板垱寤虹殑鐩綍鑺傜偣锛孨ULL琛ㄧず澶辫触
  */
 VfsNode_t* Vfs_CreateDir(VfsNode_t *parent, const char *name);
 
 /**
- * @brief  在指定目录下创建参数节点
- * @param  parent: 父目录节点
- * @param  name: 参数名
- * @param  desc: 参数描述
- * @param  get: 读取回调
- * @param  set: 写入回调（NULL表示只读）
- * @param  userData: 用户数据
- * @return 新创建的参数节点，NULL表示失败
+ * @brief  鍦ㄦ寚瀹氱洰褰曚笅鍒涘缓鍙傛暟鑺傜偣
+ * @param  parent: 鐖剁洰褰曡妭鐐� * @param  name: 鍙傛暟鍚� * @param  desc: 鍙傛暟鎻忚堪
+ * @param  get: 璇诲彇鍥炶皟
+ * @param  set: 鍐欏叆鍥炶皟锛圢ULL琛ㄧず鍙锛� * @param  userData: 鐢ㄦ埛鏁版嵁
+ * @return 鏂板垱寤虹殑鍙傛暟鑺傜偣锛孨ULL琛ㄧず澶辫触
  */
 VfsNode_t* Vfs_CreateParam(VfsNode_t *parent, const char *name, 
                             const char *desc,
@@ -192,80 +167,67 @@ VfsNode_t* Vfs_CreateParam(VfsNode_t *parent, const char *name,
                             void *userData);
 
 /**
- * @brief  在指定目录下创建设备节点
- * @param  parent: 父目录节点
- * @param  name: 设备名
- * @param  userData: 设备私有数据
- * @return 新创建的设备节点，NULL表示失败
+ * @brief  鍦ㄦ寚瀹氱洰褰曚笅鍒涘缓璁惧鑺傜偣
+ * @param  parent: 鐖剁洰褰曡妭鐐� * @param  name: 璁惧鍚� * @param  userData: 璁惧绉佹湁鏁版嵁
+ * @return 鏂板垱寤虹殑璁惧鑺傜偣锛孨ULL琛ㄧず澶辫触
  */
 VfsNode_t* Vfs_CreateDevice(VfsNode_t *parent, const char *name, void *userData);
 
 /**
- * @brief  在指定目录下创建通用节点
- * @param  parent: 父目录节点
- * @param  name: 节点名
- * @param  type: 节点类型
- * @param  userData: 用户数据
- * @return 新创建的节点，NULL表示失败
+ * @brief  鍦ㄦ寚瀹氱洰褰曚笅鍒涘缓閫氱敤鑺傜偣
+ * @param  parent: 鐖剁洰褰曡妭鐐� * @param  name: 鑺傜偣鍚� * @param  type: 鑺傜偣绫诲瀷
+ * @param  userData: 鐢ㄦ埛鏁版嵁
+ * @return 鏂板垱寤虹殑鑺傜偣锛孨ULL琛ㄧず澶辫触
  */
 VfsNode_t* Vfs_CreateNode(VfsNode_t *parent, const char *name, VfsNodeType_t type, void *userData);
 
 /**
- * @brief  读取参数值
- * @param  node: 参数节点
- * @param  buf: 输出缓冲区
- * @param  maxLen: 缓冲区大小
- * @return 读取的字节数，-1错误，-2只写参数
+ * @brief  璇诲彇鍙傛暟鍊� * @param  node: 鍙傛暟鑺傜偣
+ * @param  buf: 杈撳嚭缂撳啿鍖� * @param  maxLen: 缂撳啿鍖哄ぇ灏� * @return 璇诲彇鐨勫瓧鑺傛暟锛�1閿欒锛�2鍙啓鍙傛暟
  */
 int Vfs_ReadParam(VfsNode_t *node, char *buf, uint16_t maxLen);
 
 /**
- * @brief  写入参数值
- * @param  node: 参数节点
- * @param  value: 写入的值
- * @return VFS_OK成功
+ * @brief  鍐欏叆鍙傛暟鍊� * @param  node: 鍙傛暟鑺傜偣
+ * @param  value: 鍐欏叆鐨勫�
+ * @return VFS_OK鎴愬姛
  */
 VfsError_t Vfs_WriteParam(VfsNode_t *node, const char *value);
 
 /**
- * @brief  列举目录内容
- * @param  node: 目录节点
- * @param  callback: 回调函数
- * @param  userData: 用户数据
- * @return VFS_OK成功
+ * @brief  鍒椾妇鐩綍鍐呭
+ * @param  node: 鐩綍鑺傜偣
+ * @param  callback: 鍥炶皟鍑芥暟
+ * @param  userData: 鐢ㄦ埛鏁版嵁
+ * @return VFS_OK鎴愬姛
  */
 VfsError_t Vfs_ListDir(VfsNode_t *node, VfsListCallback_t callback, void *userData);
 
 /**
- * @brief  删除节点（递归删除子节点）
- * @param  node: 要删除的节点
- * @return VFS_OK成功
+ * @brief  鍒犻櫎鑺傜偣锛堥�褰掑垹闄ゅ瓙鑺傜偣锛� * @param  node: 瑕佸垹闄ょ殑鑺傜偣
+ * @return VFS_OK鎴愬姛
  */
 VfsError_t Vfs_RemoveNode(VfsNode_t *node);
 
 /**
- * @brief  获取节点类型名称字符串
- * @param  type: 节点类型
- * @return 类型名称字符串
- */
+ * @brief  鑾峰彇鑺傜偣绫诲瀷鍚嶇О瀛楃涓� * @param  type: 鑺傜偣绫诲瀷
+ * @return 绫诲瀷鍚嶇О瀛楃涓� */
 const char* Vfs_GetTypeName(VfsNodeType_t type);
 
 /**
- * @brief  根据路径创建目录（递归创建）
- * @param  path: 绝对路径（如 "/bin/sys"）
- * @return 创建的目录节点，NULL表示失败
+ * @brief  鏍规嵁璺緞鍒涘缓鐩綍锛堥�褰掑垱寤猴級
+ * @param  path: 缁濆璺緞锛堝 "/bin/sys"锛� * @return 鍒涘缓鐨勭洰褰曡妭鐐癸紝NULL琛ㄧず澶辫触
  */
 VfsNode_t* Vfs_Mkdir(const char *path);
 
 /**
- * @brief VFS参数节点定义结构体
- */
+ * @brief VFS鍙傛暟鑺傜偣瀹氫箟缁撴瀯浣� */
 typedef struct {
-    const char *name;    // 参数名
-    const char *desc;    // 参数描述
-    int (*get)(char *buf, uint16_t maxLen, void *userData); // 读回调
-    int (*set)(const char *buf, void *userData);            // 写回调
-    void *userData;     // 用户数据
+    const char *name;    // 鍙傛暟鍚�
+    const char *desc;    // 鍙傛暟鎻忚堪
+    int (*get)(char *buf, uint16_t maxLen, void *userData); // 璇诲洖璋�
+    int (*set)(const char *buf, void *userData);            // 鍐欏洖璋�
+    void *userData;     // 鐢ㄦ埛鏁版嵁
 } FsParamDef_t;
 
 #define FS_PARAM_END {NULL, NULL, NULL, NULL, NULL}

@@ -1,8 +1,0 @@
-src/banux/05_component/BanGUI/menu_slider/menu_slider_demo.d src/banux/05_component/BanGUI/menu_slider/menu_slider_demo.o: \
- ../src/banux/05_component/BanGUI/menu_slider/menu_slider_demo.c \
- ../src/banux/05_component/BanGUI/menu_slider/menu_slider_demo.h \
- ../src/banux/05_component/BanGUI/menu_slider/menu_slider_demo_config.h
-
-../src/banux/05_component/BanGUI/menu_slider/menu_slider_demo.h:
-
-../src/banux/05_component/BanGUI/menu_slider/menu_slider_demo_config.h:

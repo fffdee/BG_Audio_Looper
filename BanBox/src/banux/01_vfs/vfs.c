@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     04-January-2026
- * @brief    虚拟文件系统核心实现
+ * @brief    铏氭嫙鏂囦欢绯荤粺鏍稿績瀹炵幇
  *****************************************************************************
  */
 
@@ -14,10 +14,16 @@
 #include "debug.h"
 
 /*******************************************************************************
- * 静态变量
+ * 闈欐�鍙橀噺
  ******************************************************************************/
+#ifdef VFS_EN
 static VfsNode_t g_NodePool[VFS_MAX_NODES];
 static uint8_t   g_NodeUsed[VFS_MAX_NODES];
+#else
+
+	static VfsNode_t g_NodePool[0];
+	static uint8_t   g_NodeUsed[0];
+#endif
 static uint8_t   g_NodeCount = 0;
 
 static VfsNode_t *g_RootNode = NULL;
@@ -25,7 +31,7 @@ static VfsNode_t *g_CwdNode = NULL;
 static bool       g_Initialized = FALSE;
 
 /*******************************************************************************
- * 内部函数声明
+ * 鍐呴儴鍑芥暟澹版槑
  ******************************************************************************/
 static VfsNode_t* AllocNode(void);
 static void FreeNode(VfsNode_t *node);
@@ -35,7 +41,7 @@ static int ParsePath(const char *path, char segments[][VFS_MAX_NAME_LEN], int ma
 static void BuildPath(VfsNode_t *node, char *buf, uint16_t maxLen);
 
 /*******************************************************************************
- * 内存管理
+ * 鍐呭瓨绠＄悊
  ******************************************************************************/
 
 static VfsNode_t* AllocNode(void)
@@ -85,7 +91,7 @@ static void InitNode(VfsNode_t *node, const char *name, VfsNodeType_t type)
 }
 
 /*******************************************************************************
- * 路径解析
+ * 璺緞瑙ｆ瀽
  ******************************************************************************/
 
 static int ParsePath(const char *path, char segments[][VFS_MAX_NAME_LEN], int maxSegments)
@@ -97,7 +103,7 @@ static int ParsePath(const char *path, char segments[][VFS_MAX_NAME_LEN], int ma
     
     if (!path || !segments) return -1;
     
-    /* 跳过开头的斜杠 */
+    /* 璺宠繃寮�ご鐨勬枩鏉�*/
     while (*p == '/') p++;
     start = p;
     
@@ -116,7 +122,7 @@ static int ParsePath(const char *path, char segments[][VFS_MAX_NAME_LEN], int ma
         }
     }
     
-    /* 处理最后一段 */
+    /* 澶勭悊鏈�悗涓� */
     if (start < p) {
         len = p - start;
         if (len > 0 && len < VFS_MAX_NAME_LEN) {
@@ -180,7 +186,7 @@ static void BuildPath(VfsNode_t *node, char *buf, uint16_t maxLen)
 }
 
 /*******************************************************************************
- * 公共API实现
+ * 鍏叡API瀹炵幇
  ******************************************************************************/
 
 VfsError_t Vfs_Init(void)
@@ -189,12 +195,12 @@ VfsError_t Vfs_Init(void)
     
     DBG("[VFS] Initializing...\n");
     
-    /* 初始化内存池 */
+    /* 鍒濆鍖栧唴瀛樻睜 */
     memset(g_NodePool, 0, sizeof(g_NodePool));
     memset(g_NodeUsed, 0, sizeof(g_NodeUsed));
     g_NodeCount = 0;
     
-    /* 创建根节点 "/" */
+    /* 鍒涘缓鏍硅妭鐐�"/" */
     g_RootNode = AllocNode();
     if (!g_RootNode) {
         DBG("[VFS] ERROR: Failed to alloc root node!\n");
@@ -258,7 +264,7 @@ VfsError_t Vfs_Cd(const char *path)
                 current = current->parent;
             }
         } else if (strcmp(segments[i], ".") == 0) {
-            /* 当前目录 */
+            /* 褰撳墠鐩綍 */
         } else {
             target = FindChildByName(current, segments[i]);
             if (!target) {
@@ -304,7 +310,7 @@ VfsNode_t* Vfs_FindNode(const char *path)
                 current = current->parent;
             }
         } else if (strcmp(segments[i], ".") == 0) {
-            /* 当前目录 */
+            /* 褰撳墠鐩綍 */
         } else {
             target = FindChildByName(current, segments[i]);
             if (!target) {
@@ -326,7 +332,7 @@ VfsNode_t* Vfs_CreateDir(VfsNode_t *parent, const char *name)
     if (strlen(name) >= VFS_MAX_NAME_LEN) return NULL;
     if (parent->childCount >= VFS_MAX_CHILDREN) return NULL;
     
-    /* 检查是否已存在 */
+    /* 妫�煡鏄惁宸插瓨鍦�*/
     if (FindChildByName(parent, name)) return NULL;
     
     node = AllocNode();
@@ -358,11 +364,11 @@ VfsNode_t* Vfs_Mkdir(const char *path)
         child = FindChildByName(current, segments[i]);
         if (child) {
             if (child->type != VFS_NODE_DIR) {
-                return NULL;  /* 路径中存在非目录节点 */
+                return NULL;  /* 璺緞涓瓨鍦ㄩ潪鐩綍鑺傜偣 */
             }
             current = child;
         } else {
-            /* 创建目录 */
+            /* 鍒涘缓鐩綍 */
             current = Vfs_CreateDir(current, segments[i]);
             if (!current) return NULL;
         }
@@ -378,7 +384,7 @@ VfsNode_t* Vfs_CreateParam(VfsNode_t *parent, const char *name,
 {
     VfsNode_t *node;
     
-    /* 参数至少需要get或set其中一个 */
+    /* 鍙傛暟鑷冲皯闇�get鎴杝et鍏朵腑涓�釜 */
     if (!parent || !name || (!get && !set)) {
         return NULL;
     }
@@ -451,7 +457,7 @@ int Vfs_ReadParam(VfsNode_t *node, char *buf, uint16_t maxLen)
 {
     if (!node || !buf || maxLen == 0) return -1;
     if (node->type != VFS_NODE_PARAM) return -1;
-    if (!node->paramGet) return -2;  /* -2 表示只写参数 */
+    if (!node->paramGet) return -2;  /* -2 琛ㄧず鍙啓鍙傛暟 */
     
     return node->paramGet(buf, maxLen, node->userData);
 }
@@ -504,7 +510,7 @@ VfsError_t Vfs_RemoveNode(VfsNode_t *node)
     if (!node) return VFS_ERR_NOT_FOUND;
     if (node == g_RootNode) return VFS_ERR_INVALID_PATH;
     
-    /* 递归删除所有子节点 */
+    /* 閫掑綊鍒犻櫎鎵�湁瀛愯妭鐐�*/
     for (i = 0; i < node->childCount; i++) {
         if (node->children[i]) {
             Vfs_RemoveNode(node->children[i]);

@@ -1,29 +1,23 @@
 /**
- * flash_test.h - 新 Flash 驱动架构测试头文件
- */
+ * flash_test.h - 鏂�Flash 椹卞姩鏋舵瀯娴嬭瘯澶存枃浠� */
 
 #ifndef __FLASH_TEST_H__
 #define __FLASH_TEST_H__
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#ifdef NOR_FLASH_TEST
 /**
- * @brief Flash 驱动架构完整测试
- * 测试包括：
- * - Flash 管理器初始化
- * - 设备枚举
- * - 单字节读写
- * - 页读写（256字节）
- * - 跨页读写（512字节）
- * - 两个 NOR Flash 设备（CS=A21, CS=A22）
- */
+ * @brief Flash 椹卞姩鏋舵瀯瀹屾暣娴嬭瘯
+ * 娴嬭瘯鍖呮嫭锛� * - Flash 绠＄悊鍣ㄥ垵濮嬪寲
+ * - 璁惧鏋氫妇
+ * - 鍗曞瓧鑺傝鍐� * - 椤佃鍐欙紙256瀛楄妭锛� * - 璺ㄩ〉璇诲啓锛�12瀛楄妭锛� * - 涓や釜 NOR Flash 璁惧锛圕S=A21, CS=A22锛� */
 void FlashNewDriver_Test(void);
 
 /**
- * @brief 快速功能测试（用于调试）
- * 仅测试基本的读写功能，输出简洁
- */
+ * @brief 蹇�鍔熻兘娴嬭瘯锛堢敤浜庤皟璇曪級
+ * 浠呮祴璇曞熀鏈殑璇诲啓鍔熻兘锛岃緭鍑虹畝娲� */
 void FlashNewDriver_QuickTest(void);
+#endif
 
 #endif /* __FLASH_TEST_H__ */

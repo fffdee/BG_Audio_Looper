@@ -28,6 +28,7 @@ RM := rm -rf
 -include middleware/mv_utils/src/subdir.mk
 -include middleware/rtos/freertos/src/subdir.mk
 -include middleware/rtos/rtos_api/subdir.mk
+-include src/banux/01_hal_drivers/adc/subdir.mk
 -include src/banux/01_vfs/subdir.mk
 -include src/banux/02_device_drivers/USB/src/subdir.mk
 -include src/banux/02_device_drivers/bluetooth/subdir.mk
@@ -39,9 +40,7 @@ RM := rm -rf
 -include src/banux/03_driver_framework/drivers/subdir.mk
 -include src/banux/03_driver_framework/subdir.mk
 -include src/banux/04_shell_commands/subdir.mk
--include src/banux/05_component/BanGUI/BG_List/subdir.mk
 -include src/banux/05_component/BanGUI/base_func/subdir.mk
--include src/banux/05_component/BanGUI/menu_slider/subdir.mk
 -include src/banux/05_component/BanGUI/ui/components/subdir.mk
 -include src/banux/05_component/BanGUI/ui/core/subdir.mk
 -include src/banux/05_component/BanGUI/ui/views/subdir.mk

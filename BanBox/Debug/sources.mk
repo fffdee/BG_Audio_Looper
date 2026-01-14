@@ -29,6 +29,7 @@ middleware/audio/src \
 middleware/mv_utils/src \
 middleware/rtos/freertos/src \
 middleware/rtos/rtos_api \
+src/banux/01_hal_drivers/adc \
 src/banux/01_vfs \
 src/banux/02_device_drivers/USB/src \
 src/banux/02_device_drivers/bluetooth \
@@ -40,9 +41,7 @@ src/banux/03_driver_framework/core \
 src/banux/03_driver_framework/drivers \
 src/banux/03_driver_framework \
 src/banux/04_shell_commands \
-src/banux/05_component/BanGUI/BG_List \
 src/banux/05_component/BanGUI/base_func \
-src/banux/05_component/BanGUI/menu_slider \
 src/banux/05_component/BanGUI/ui/components \
 src/banux/05_component/BanGUI/ui/core \
 src/banux/05_component/BanGUI/ui/views \

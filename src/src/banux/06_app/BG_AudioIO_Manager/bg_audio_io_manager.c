@@ -89,14 +89,14 @@ BG_Audio_Io_Manager BG_AudioManager = {
 #include "bt_stack_service.h"
 
 #define BT_SBC_PACKET_SIZE 595
-#define BT_SBC_DECODER_INPUT_LEN (4 * 1024)
+#define BT_SBC_DECODER_INPUT_LEN (2 * 1024)
 #define BT_SBC_LEVEL_HIGH (BT_SBC_DECODER_INPUT_LEN - BT_SBC_PACKET_SIZE * 4)
 #define BT_SBC_LEVEL_LOW (BT_SBC_PACKET_SIZE * 6)
 #define BT_SBC_LEVEL_START (BT_SBC_LEVEL_HIGH - BT_SBC_PACKET_SIZE * 3)
 #define SBC_DECODER_FIFO_MIN (119 * 2)
 
 uint8_t a2dp_sbcBuf[BT_SBC_DECODER_INPUT_LEN];
-static uint8_t decoder_buf[1024 * 20] = {0};
+static uint8_t decoder_buf[1024 * 4] = {0};
 static uint8_t DecoderInitialized = 0;
 
 MemHandle SBC_MemHandle;
@@ -318,8 +318,8 @@ void BG_audio_Init(uint16_t SampleRate)
 		return;
 	}
 
-	// 3. 自动挂载效果图到VFS（供命令行和文件系统访问）
-	EffectGraphVfs_TryAutoMount();
+//	// 3. 自动挂载效果图到VFS（供命令行和文件系统访问）
+//	EffectGraphVfs_TryAutoMount();
 
 	// 4. 挂接实际音频设备回调
 	SetupEffectGraphCallbacks();
@@ -460,54 +460,7 @@ static void ProcessSpeakerSwitch(void)
 	}
 }
 
-/*
-static void Detect_check()
-{
-	switch(BG_AudioManager.Audio_data.det_state)
-	{
-		case NONE:
-			break;
-		case MIC_DET_IN:
-			GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA1);
-			Shell_Printf("Mic Detect IN! \n");
 
-			BG_AudioManager.Audio_data.det_state = NONE;
-			break;
-		case MIC_DET_OUT:
-
-			Shell_Printf("Mic Detect OUT! \n");
-			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_DAC0_TX);
-			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_ADC0_RX);
-			BG_AudioManager.Audio_data.det_state  = NONE;
-			break;
-		case GUITAR_DET_IN:
-			GPIO_RegOneBitClear(GPIO_A_OUT, GPIOA17);
-			Shell_Printf("Guitar Detect IN! \n");
-			BG_AudioManager.Audio_data.det_state = NONE;
-			break;
-		case GUITAR_DET_OUT:
-			GPIO_RegOneBitSet(GPIO_A_OUT, GPIOA17);
-			Shell_Printf("Guiatr Detect OUT! \n");
-			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_DAC0_TX);
-			DMA_CircularFIFOClear(PERIPHERAL_ID_AUDIO_ADC1_RX);
-			BG_AudioManager.Audio_data.det_state = NONE;
-			break;
-		case EARPHONE_DET:
-			GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
-			Shell_Printf("Line Out Detect ! \n");
-			BG_AudioManager.Audio_data.det_state  = NONE;
-			break;
-		case SPEAKER_DET:
-			GPIO_RegOneBitClear(GPIO_B_OUT, GPIOB6);
-			Shell_Printf("Speaker mode ! \n");
-			BG_AudioManager.Audio_data.det_state  = NONE;
-			break;
-		default:
-			Shell_Printf("Param Err,please check! \n");
-			break;
-	}
-}
-*/
 /**
  * 读取音频数据（ADC和混音）
  */
@@ -992,7 +945,7 @@ void Audio_loop(void)
 	BtStackServiceRun();
 	SetVolume();
 	OTG_DeviceRequestProcess();
-	
+
 	/* CDC串口任务处理 - 必须周期性调用以接收数据 */
 	OTG_DeviceCDC_Task();
 

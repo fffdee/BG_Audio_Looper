@@ -35,6 +35,7 @@
 #include "task.h"
 
 #include "bangui.h"
+#include "audio_setting.h"
 
 /* 效果器命令模块 */
 #include "shell_cmd_effect.h"
@@ -175,6 +176,35 @@ static int sys_reboot(int argc, char *argv[])
     (void)argc; (void)argv;
     Shell_Print("System rebooting...\r\n");
     Reset_McuSystem ();
+    return 0;
+}
+
+/* Factory reset - restore default settings */
+static int sys_factory_reset(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    Shell_Print("\r\n========================================\r\n");
+    Shell_Print("Factory Reset - Restore Default Settings\r\n");
+    Shell_Print("========================================\r\n");
+    Shell_Print("WARNING: All settings will be lost!\r\n\r\n");
+    
+    /* Load default parameters */
+    Shell_Print("Loading default parameters...\r\n");
+    SysParam_LoadDefault();
+    
+    /* Save to flash */
+    Shell_Print("Saving to flash...\r\n");
+    if (SysParam_Save() == SYSPARAM_OK) {
+        Shell_Print("Factory reset completed successfully!\r\n");
+        Shell_Print("Default graph loaded with 14 nodes and 13 edges.\r\n");
+        Shell_Print("\r\nPlease reboot to apply changes.\r\n");
+        Shell_Print("Use: sys -b\r\n");
+    } else {
+        Shell_Print("ERROR: Failed to save parameters!\r\n");
+        return -1;
+    }
+    
+    Shell_Print("========================================\r\n\r\n");
     return 0;
 }
 
@@ -372,6 +402,7 @@ static const ShellOpt_t sys_opts[] = {
     OPT("t", "tasks",   NULL,      "List running tasks",   sys_tasks),
     OPT("u", "uptime",  NULL,      "Show uptime",          sys_uptime),
     OPT("b", "reboot",  NULL,      "Reboot system",        sys_reboot),
+    OPT("f", "factory", NULL,      "Factory reset (restore defaults)", sys_factory_reset),
     OPT("o", "io",      "[cmd]",   "IO control (cdc/ble/lock/unlock)", sys_io),
     OPT("c", "console", "[cmd]",   "LCD console (on/off/clear)",       sys_console),
     OPT("d", "dbglcd",  "[cmd]",   "DBG to LCD (on/off)",              sys_dbglcd),
@@ -386,39 +417,72 @@ DEFINE_MODULE(sys, "System information", MOD_CAT_SYSTEM, sys_opts);
  * audio module - Audio control
  *===========================================================================*/
 
-/* 吉他音量 */
-static int audio_guitar_vol(int argc, char *argv[])
+/* 吉他1音量 */
+static int audio_guitar1_vol(int argc, char *argv[])
 {
     if(argc < 1)
     {
-        Shell_Printf("Guitar volume: %d\r\n", SYSPARAM_AUDIO()->guitar_volume);
+        Shell_Printf("Guitar1 volume: %d\r\n", SYSPARAM_AUDIO()->guitar1_volume);
         return 0;
     }
-    
     int vol = atoi(argv[0]);
     if(vol < 0) vol = 0;
     if(vol > 100) vol = 100;
-    SYSPARAM_AUDIO()->guitar_volume = vol;
+    AudioSetting_SetGuitar1VolumePercent(vol);
+    SYSPARAM_AUDIO()->guitar1_volume = vol;
     SysParam_MarkModified();
-    Shell_Printf("Guitar volume: %d\r\n", vol);
+    Shell_Printf("Guitar1 volume: %d\r\n", vol);
     return 0;
 }
-
-/* 麦克风音量 */
-static int audio_mic_vol(int argc, char *argv[])
+/* 吉他2音量 */
+static int audio_guitar2_vol(int argc, char *argv[])
 {
     if(argc < 1)
     {
-        Shell_Printf("Mic volume: %d\r\n", SYSPARAM_AUDIO()->mic_volume);
+        Shell_Printf("Guitar2 volume: %d\r\n",SYSPARAM_AUDIO()->guitar2_volume = vol);
         return 0;
     }
-    
     int vol = atoi(argv[0]);
     if(vol < 0) vol = 0;
     if(vol > 100) vol = 100;
-    SYSPARAM_AUDIO()->mic_volume = vol;
+    AudioSetting_SetGuitar2VolumePercent(vol);
+    SYSPARAM_AUDIO()->guitar2_volume = vol;
     SysParam_MarkModified();
-    Shell_Printf("Mic volume: %d\r\n", vol);
+    Shell_Printf("Guitar2 volume: %d\r\n", vol);
+    return 0;
+}
+/* 麦克风1音量 */
+static int audio_mic1_vol(int argc, char *argv[])
+{
+    if(argc < 1)
+    {
+        Shell_Printf("Mic1 volume: %d\r\n", SYSPARAM_AUDIO()->mic1_volume = vol);
+        return 0;
+    }
+    int vol = atoi(argv[0]);
+    if(vol < 0) vol = 0;
+    if(vol > 100) vol = 100;
+    AudioSetting_SetMic1VolumePercent(vol);
+    SYSPARAM_AUDIO()->mic1_volume = vol;
+    SysParam_MarkModified();
+    Shell_Printf("Mic1 volume: %d\r\n", vol);
+    return 0;
+}
+/* 麦克风2音量 */
+static int audio_mic2_vol(int argc, char *argv[])
+{
+    if(argc < 1)
+    {
+        Shell_Printf("Mic2 volume: %d\r\n", SYSPARAM_AUDIO()->mic2_volume = vol);
+        return 0;
+    }
+    int vol = atoi(argv[0]);
+    if(vol < 0) vol = 0;
+    if(vol > 100) vol = 100;
+    AudioSetting_SetMic2VolumePercent(vol);
+    SYSPARAM_AUDIO()->mic2_volume = vol;
+    SysParam_MarkModified();
+    Shell_Printf("Mic2 volume: %d\r\n", vol);
     return 0;
 }
 
@@ -462,8 +526,10 @@ static int audio_mute(int argc, char *argv[])
 
 
 static const ShellOpt_t audio_opts[] = {
-    OPT("g", "guitar",  "<0-100>",  "Guitar volume",        audio_guitar_vol),
-    OPT("i", "mic",     "<0-100>",  "Mic volume",           audio_mic_vol),
+    OPT("g1", "guitar1",  "<0-100>",  "Guitar1 volume",        audio_guitar1_vol),
+    OPT("g2", "guitar2",  "<0-100>",  "Guitar2 volume",        audio_guitar2_vol),
+    OPT("m1", "mic1",     "<0-100>",  "Mic1 volume",           audio_mic1_vol),
+    OPT("m2", "mic2",     "<0-100>",  "Mic2 volume",           audio_mic2_vol),
     OPT("o", "output",  "<0-100>",  "Output volume",        audio_output_vol),
     OPT("m", "mute",    "<0|1>",    "Mute on/off",          audio_mute),
     OPT("S", "save",    NULL,       "Save audio params",    audio_save_param),
@@ -471,6 +537,660 @@ static const ShellOpt_t audio_opts[] = {
 };
 
 DEFINE_MODULE(audio, "Audio control", MOD_CAT_PARAM, audio_opts);
+
+/*============================================================================
+ * chain module - Effect Graph Architecture (Multi-source, Graph-based)
+ *===========================================================================*/
+
+static const char* node_type_names[] = {"SOURCE", "EFFECT", "MIXER", "OUTPUT"};
+static const char* source_type_names[] = {"Guitar", "Mic", "BT", "USB", "Line"};
+static const char* effect_type_names[] = {
+    "None", "EQ", "Comp", "Reverb", "Delay", "Chorus", 
+    "Dist", "Wah", "Flanger", "Phaser", "Tremolo"
+};
+static const char* output_type_names[] = {"HP", "SPK", "LineOut"};
+
+static uint8_t g_current_graph = 0;  /* Current working graph */
+
+/* Helper: Allocate node from pool */
+static int alloc_node_id(void) {
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int i;
+    for (i = 0; i < MAX_GRAPH_NODES; i++) {
+        if (!(ac->node_used_mask & (1 << i))) {
+            ac->node_used_mask |= (1 << i);
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* Helper: Free node from pool */
+static void free_node_id(uint8_t id) {
+    if (id < MAX_GRAPH_NODES) {
+        SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+        ac->node_used_mask &= ~(1 << id);
+        memset(&ac->node_pool[id], 0, sizeof(GraphNode_t));
+    }
+}
+
+/* Helper: Get current graph */
+static EffectGraph_t* get_current_graph(void) {
+    if (g_current_graph >= SYSPARAM_AUDIOCHAIN()->graph_count) {
+        return NULL;
+    }
+    return &SYSPARAM_AUDIOCHAIN()->graphs[g_current_graph];
+}
+
+/* Helper: Find graph by name */
+static int find_graph_by_name(const char *name) {
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int i;
+    for (i = 0; i < ac->graph_count; i++) {
+        if (strcmp(ac->graphs[i].name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* Helper: Validate graph (all sources must lead to outputs) */
+static int validate_graph(EffectGraph_t *graph) {
+    /* TODO: Implement graph validation - DFS from each source to find output */
+    /* For now, just check basic structure */
+    if (graph->node_count == 0) return 0;  /* Empty graph is valid */
+    
+    uint8_t has_source = 0, has_output = 0;
+    GraphNode_t *nodes = SYSPARAM_AUDIOCHAIN()->node_pool;
+    int i;
+    
+    for (i = 0; i < graph->node_count; i++) {
+        uint8_t nid = graph->node_ids[i];
+        if (nodes[nid].node_type == NODE_TYPE_SOURCE) has_source = 1;
+        if (nodes[nid].node_type == NODE_TYPE_OUTPUT) has_output = 1;
+    }
+    
+    if (has_source && !has_output) {
+        Shell_Print("Error: Source nodes without output!\r\n");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* graph list - List all graphs */
+static int chain_graph_list(int argc, char *argv[]) {
+    (void)argc; (void)argv;
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int i;
+    
+    Shell_Printf("=== Effect Graphs (%d/%d) ===\r\n", ac->graph_count, MAX_EFFECT_GRAPHS);
+    Shell_Printf("HP uses: Graph %d\r\n", ac->active_graph_hp);
+    Shell_Printf("SPK uses: Graph %d\r\n", ac->active_graph_spk);
+    Shell_Printf("Current: Graph %d\r\n\r\n", g_current_graph);
+    
+    for (i = 0; i < ac->graph_count; i++) {
+        EffectGraph_t *g = &ac->graphs[i];
+        Shell_Printf("[%d] %s - %d nodes, %d edges%s\r\n",
+                    i, g->name, g->node_count, g->edge_count,
+                    (i == g_current_graph) ? " *" : "");
+    }
+    return 0;
+}
+
+/* graph create <name> - Create new graph */
+static int chain_graph_create(int argc, char *argv[]) {
+    if (argc < 1) {
+        Shell_Print("Usage: chain graph create <name>\r\n");
+        return -1;
+    }
+    
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    if (ac->graph_count >= MAX_EFFECT_GRAPHS) {
+        Shell_Printf("Max graphs reached (%d)\r\n", MAX_EFFECT_GRAPHS);
+        return -1;
+    }
+    
+    if (find_graph_by_name(argv[0]) >= 0) {
+        Shell_Print("Graph name already exists\r\n");
+        return -1;
+    }
+    
+    uint8_t idx = ac->graph_count++;
+    EffectGraph_t *g = &ac->graphs[idx];
+    memset(g, 0, sizeof(EffectGraph_t));
+    strncpy(g->name, argv[0], GRAPH_NAME_LEN - 1);
+    memset(g->node_ids, 0xFF, MAX_GRAPH_NODES);
+    
+    SysParam_MarkModified();
+    Shell_Printf("Created graph %d: %s\r\n", idx, g->name);
+    return 0;
+}
+
+/* graph delete <name> - Delete graph */
+static int chain_graph_delete(int argc, char *argv[]) {
+    if (argc < 1) {
+        Shell_Print("Usage: chain graph delete <name>\r\n");
+        return -1;
+    }
+    
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    
+    /* Cannot delete if only one graph left */
+    if (ac->graph_count <= 1) {
+        Shell_Print("Cannot delete last graph\r\n");
+        return -1;
+    }
+    
+    int idx = find_graph_by_name(argv[0]);
+    if (idx < 0) {
+        Shell_Print("Graph not found\r\n");
+        return -1;
+    }
+    
+    EffectGraph_t *g = &ac->graphs[idx];
+    int i;
+    
+    /* Free all nodes in this graph */
+    for (i = 0; i < g->node_count; i++) {
+        free_node_id(g->node_ids[i]);
+    }
+    
+    /* Shift remaining graphs */
+    for (i = idx; i < ac->graph_count - 1; i++) {
+        memcpy(&ac->graphs[i], &ac->graphs[i + 1], sizeof(EffectGraph_t));
+    }
+    ac->graph_count--;
+    
+    /* Update active graph indices */
+    if (ac->active_graph_hp == idx) ac->active_graph_hp = 0;
+    else if (ac->active_graph_hp > idx) ac->active_graph_hp--;
+    
+    if (ac->active_graph_spk == idx) ac->active_graph_spk = 0;
+    else if (ac->active_graph_spk > idx) ac->active_graph_spk--;
+    
+    if (g_current_graph == idx) g_current_graph = 0;
+    else if (g_current_graph > idx) g_current_graph--;
+    
+    /* If only one graph left, both HP and SPK use it */
+    if (ac->graph_count == 1) {
+        ac->active_graph_hp = 0;
+        ac->active_graph_spk = 0;
+    }
+    
+    SysParam_MarkModified();
+    Shell_Print("Graph deleted\r\n");
+    return 0;
+}
+
+/* graph select <hp|spk> <name> - Select graph for HP or SPK */
+static int chain_graph_select(int argc, char *argv[]) {
+    if (argc < 2) {
+        Shell_Print("Usage: chain graph select <hp|spk> <name>\r\n");
+        return -1;
+    }
+    
+    int idx = find_graph_by_name(argv[1]);
+    if (idx < 0) {
+        Shell_Print("Graph not found\r\n");
+        return -1;
+    }
+    
+    if (strcmp(argv[0], "hp") == 0) {
+        SYSPARAM_AUDIOCHAIN()->active_graph_hp = idx;
+        Shell_Printf("HP uses graph %d\r\n", idx);
+    } else if (strcmp(argv[0], "spk") == 0) {
+        SYSPARAM_AUDIOCHAIN()->active_graph_spk = idx;
+        Shell_Printf("SPK uses graph %d\r\n", idx);
+    } else {
+        Shell_Print("Invalid output (hp or spk)\r\n");
+        return -1;
+    }
+    
+    SysParam_MarkModified();
+    return 0;
+}
+
+/* graph use <name> - Switch current working graph */
+static int chain_graph_use(int argc, char *argv[]) {
+    if (argc < 1) {
+        Shell_Printf("Current graph: %d (%s)\r\n", 
+                    g_current_graph,
+                    SYSPARAM_AUDIOCHAIN()->graphs[g_current_graph].name);
+        return 0;
+    }
+    
+    int idx = find_graph_by_name(argv[0]);
+    if (idx < 0) {
+        Shell_Print("Graph not found\r\n");
+        return -1;
+    }
+    
+    g_current_graph = idx;
+    Shell_Printf("Switched to graph %d: %s\r\n", idx, argv[0]);
+    return 0;
+}
+
+/* Helper: Get short name for node */
+static void get_node_short_name(GraphNode_t *n, char *buf, int max_len) {
+    if (n->node_type == NODE_TYPE_SOURCE) {
+        snprintf(buf, max_len, "%s", source_type_names[n->subtype]);
+    } else if (n->node_type == NODE_TYPE_EFFECT) {
+        snprintf(buf, max_len, "%s", effect_type_names[n->subtype]);
+    } else if (n->node_type == NODE_TYPE_MIXER) {
+        snprintf(buf, max_len, "Mixer");
+    } else if (n->node_type == NODE_TYPE_OUTPUT) {
+        snprintf(buf, max_len, "%s", output_type_names[n->subtype]);
+    } else {
+        snprintf(buf, max_len, "N%d", 0);
+    }
+}
+
+/* Helper: Find all input nodes that connect to a target node */
+static int find_inputs_to_node(EffectGraph_t *g, uint8_t target, uint8_t *inputs, int max_inputs) {
+    int count = 0;
+    int i;
+    for (i = 0; i < g->edge_count && count < max_inputs; i++) {
+        if (g->edges[i].to_node == target) {
+            inputs[count++] = g->edges[i].from_node;
+        }
+    }
+    return count;
+}
+
+/* Helper: Find output node from a source */
+static uint8_t find_output_from_node(EffectGraph_t *g, uint8_t source) {
+    int i;
+    for (i = 0; i < g->edge_count; i++) {
+        if (g->edges[i].from_node == source) {
+            return g->edges[i].to_node;
+        }
+    }
+    return 0xFF;
+}
+
+/* graph show [id] - Show graph topology as ASCII art */
+static int chain_graph_show(int argc, char *argv[]) {
+    int idx = g_current_graph;
+    int i, j;
+    char name_buf[20];
+    
+    /* Parse graph ID */
+    if (argc >= 1) {
+        idx = atoi(argv[0]);
+        if (idx < 0 || idx >= SYSPARAM_AUDIOCHAIN()->graph_count) {
+            Shell_Print("Invalid graph ID\r\n");
+            return -1;
+        }
+    }
+    
+    EffectGraph_t *g = &SYSPARAM_AUDIOCHAIN()->graphs[idx];
+    GraphNode_t *nodes = SYSPARAM_AUDIOCHAIN()->node_pool;
+    
+    Shell_Printf("\r\n=== Graph %d: %s ===\r\n", idx, g->name);
+    Shell_Printf("Nodes: %d/%d, Edges: %d/%d\r\n\r\n", g->node_count, MAX_GRAPH_NODES, g->edge_count, MAX_GRAPH_EDGES);
+    
+    if (g->node_count == 0) {
+        Shell_Print("  (Empty graph)\r\n");
+        return 0;
+    }
+    
+    /* Print compact topology diagram - trace each source to output */
+    Shell_Print("Signal Flow Paths:\r\n");
+    Shell_Print("+========================================================+\r\n");
+    
+    /* Group nodes by type */
+    uint8_t sources[8];
+    int src_count = 0;
+    
+    for (i = 0; i < g->node_count; i++) {
+        uint8_t nid = g->node_ids[i];
+        GraphNode_t *n = &nodes[nid];
+        if (n->node_type == NODE_TYPE_SOURCE && src_count < 8) {
+            sources[src_count++] = nid;
+        }
+    }
+    
+    /* Follow each source to its destination */
+    for (i = 0; i < src_count; i++) {
+        uint8_t current = sources[i];
+        GraphNode_t *n = &nodes[current];
+        uint8_t visited[32];
+        int visit_count = 0;
+        
+        get_node_short_name(n, name_buf, sizeof(name_buf));
+        Shell_Printf("  N%-2d %-10s", current, name_buf);
+        visited[visit_count++] = current;
+        
+        /* Follow the chain */
+        int depth = 0;
+        while (depth < 20) {
+            uint8_t next = find_output_from_node(g, current);
+            if (next == 0xFF) break;
+            
+            /* Check for cycles */
+            int is_visited = 0;
+            for (j = 0; j < visit_count; j++) {
+                if (visited[j] == next) {
+                    is_visited = 1;
+                    break;
+                }
+            }
+            if (is_visited) {
+                Shell_Print(" --> [CYCLE]");
+                break;
+            }
+            
+            GraphNode_t *next_node = &nodes[next];
+            get_node_short_name(next_node, name_buf, sizeof(name_buf));
+            
+            /* Check if next node has multiple inputs (convergence point) */
+            uint8_t inputs[8];
+            int input_count = find_inputs_to_node(g, next, inputs, 8);
+            
+            if (input_count > 1) {
+                Shell_Printf(" --+-> N%-2d %-10s", next, name_buf);
+            } else {
+                Shell_Printf(" --> N%-2d %-10s", next, name_buf);
+            }
+            
+            visited[visit_count++] = next;
+            current = next;
+            depth++;
+        }
+        Shell_Print("\r\n");
+    }
+    
+    Shell_Print("+========================================================+\r\n\r\n");
+    
+    /* Show detailed node information */
+    Shell_Print("Node Details:\r\n");
+    Shell_Print("------------------------------------------------------------\r\n");
+    for (i = 0; i < g->node_count; i++) {
+        uint8_t nid = g->node_ids[i];
+        GraphNode_t *n = &nodes[nid];
+        
+        get_node_short_name(n, name_buf, sizeof(name_buf));
+        Shell_Printf("  N%-2d: %-10s [%s] Vol=%3d%%", 
+                     nid, name_buf, 
+                     n->enabled ? "ON " : "OFF", 
+                     n->volume);
+        
+        if (n->node_type == NODE_TYPE_EFFECT && n->preset > 0) {
+            Shell_Printf(" Preset=%d", n->preset);
+        }
+        
+        /* Show connections */
+        uint8_t inputs[8];
+        int input_count = find_inputs_to_node(g, nid, inputs, 8);
+        if (input_count > 0) {
+            Shell_Print("  <--");
+            for (j = 0; j < input_count; j++) {
+                Shell_Printf(" N%d", inputs[j]);
+                if (j < input_count - 1) Shell_Print(",");
+            }
+        }
+        
+        Shell_Print("\r\n");
+    }
+    
+    Shell_Print("\r\n");
+    return 0;
+}
+
+/* node add <type> <subtype> - Add node to current graph */
+static int chain_node_add(int argc, char *argv[]) {
+    if (argc < 2) {
+        Shell_Print("Usage: chain node add <type> <subtype>\r\n");
+        Shell_Print("Types: 0=SRC 1=FX 2=MIX 3=OUT\r\n");
+        Shell_Print("SRC: 0=Guitar 1=Mic 2=BT 3=USB 4=Line\r\n");
+        Shell_Print("FX: 1=EQ 2=Comp 3=Reverb 4=Delay ...\r\n");
+        Shell_Print("OUT: 0=HP 1=SPK 2=LineOut\r\n");
+        return -1;
+    }
+    
+    EffectGraph_t *g = get_current_graph();
+    if (!g) {
+        Shell_Print("No active graph\r\n");
+        return -1;
+    }
+    
+    if (g->node_count >= MAX_GRAPH_NODES) {
+        Shell_Print("Graph full\r\n");
+        return -1;
+    }
+    
+    int node_type = atoi(argv[0]);
+    int subtype = atoi(argv[1]);
+    
+    if (node_type < 0 || node_type >= NODE_TYPE_MAX) {
+        Shell_Print("Invalid node type\r\n");
+        return -1;
+    }
+    
+    int nid = alloc_node_id();
+    if (nid < 0) {
+        Shell_Print("Node pool full\r\n");
+        return -1;
+    }
+    
+    /* Initialize node */
+    GraphNode_t *node = &SYSPARAM_AUDIOCHAIN()->node_pool[nid];
+    memset(node, 0, sizeof(GraphNode_t));
+    node->node_type = node_type;
+    node->subtype = subtype;
+    node->enabled = 1;
+    node->volume = 80;
+    
+    /* Add to graph */
+    g->node_ids[g->node_count++] = nid;
+    SysParam_MarkModified();
+    
+    Shell_Printf("Added N%d: %s\r\n", nid, node_type_names[node_type]);
+    return 0;
+}
+
+/* node del <id> - Delete node from current graph */
+static int chain_node_del(int argc, char *argv[]) {
+    if (argc < 1) {
+        Shell_Print("Usage: chain node del <node_id>\r\n");
+        return -1;
+    }
+    
+    EffectGraph_t *g = get_current_graph();
+    int i, j, found = -1;
+    int nid = atoi(argv[0]);
+    
+    if (!g) return -1;
+    
+    /* Find node in graph */
+    for (i = 0; i < g->node_count; i++) {
+        if (g->node_ids[i] == nid) {
+            found = i;
+            break;
+        }
+    }
+    
+    if (found < 0) {
+        Shell_Print("Node not in this graph\r\n");
+        return -1;
+    }
+    
+    /* Remove all edges in this graph */
+    for (i = 0; i < g->edge_count; ) {
+        if (g->edges[i].from_node == nid || g->edges[i].to_node == nid) {
+            /* Shift remaining edges */
+            for (j = i; j < g->edge_count - 1; j++) {
+                g->edges[j] = g->edges[j + 1];
+            }
+            g->edge_count--;
+        } else {
+            i++;
+        }
+    }
+    
+    /* Remove from graph */
+    for (i = found; i < g->node_count - 1; i++) {
+        g->node_ids[i] = g->node_ids[i + 1];
+    }
+    g->node_count--;
+    g->node_ids[g->node_count] = 0xFF;
+    
+    /* Free node */
+    free_node_id(nid);
+    SysParam_MarkModified();
+    
+    Shell_Printf("Deleted N%d\r\n", nid);
+    return 0;
+}
+
+/* edge add <from> <to> - Add connection */
+static int chain_edge_add(int argc, char *argv[]) {
+    if (argc < 2) {
+        Shell_Print("Usage: chain edge add <from_node> <to_node>\r\n");
+        return -1;
+    }
+    
+    EffectGraph_t *g = get_current_graph();
+    if (!g) return -1;
+    
+    if (g->edge_count >= MAX_GRAPH_EDGES) {
+        Shell_Print("Max edges reached\r\n");
+        return -1;
+    }
+    
+    int from = atoi(argv[0]);
+    int to = atoi(argv[1]);
+    int i, from_ok = 0, to_ok = 0;
+    
+    /* Check if nodes exist in graph */
+    for (i = 0; i < g->node_count; i++) {
+        if (g->node_ids[i] == from) from_ok = 1;
+        if (g->node_ids[i] == to) to_ok = 1;
+    }
+    
+    if (!from_ok || !to_ok) {
+        Shell_Print("Node not in graph\r\n");
+        return -1;
+    }
+    
+    /* Check if edge already exists */
+    for (i = 0; i < g->edge_count; i++) {
+        if (g->edges[i].from_node == from && g->edges[i].to_node == to) {
+            Shell_Print("Edge already exists\r\n");
+            return -1;
+        }
+    }
+    
+    g->edges[g->edge_count].from_node = from;
+    g->edges[g->edge_count].to_node = to;
+    g->edge_count++;
+    
+    SysParam_MarkModified();
+    Shell_Printf("Added edge N%d -> N%d\r\n", from, to);
+    return 0;
+}
+
+/* edge del <from> <to> - Delete connection */
+static int chain_edge_del(int argc, char *argv[]) {
+    if (argc < 2) {
+        Shell_Print("Usage: chain edge del <from_node> <to_node>\r\n");
+        return -1;
+    }
+    
+    EffectGraph_t *g = get_current_graph();
+    if (!g) return -1;
+    
+    int from = atoi(argv[0]);
+    int to = atoi(argv[1]);
+    int i, j;
+    
+    for (i = 0; i < g->edge_count; i++) {
+        if (g->edges[i].from_node == from && g->edges[i].to_node == to) {
+            /* Shift remaining edges */
+            for (j = i; j < g->edge_count - 1; j++) {
+                g->edges[j] = g->edges[j + 1];
+            }
+            g->edge_count--;
+            SysParam_MarkModified();
+            Shell_Print("Edge deleted\r\n");
+            return 0;
+        }
+    }
+    
+    Shell_Print("Edge not found\r\n");
+    return -1;
+}
+
+/* chain mode <0-2> - Set output mode */
+static int chain_mode(int argc, char *argv[]) {
+    if (argc < 1) {
+        const char *mode_str[] = {"Auto", "Headphone", "Speaker"};
+        Shell_Printf("Output mode: %d (%s)\r\n", 
+                    SYSPARAM_AUDIOCHAIN()->output_mode,
+                    mode_str[SYSPARAM_AUDIOCHAIN()->output_mode]);
+        return 0;
+    }
+    
+    int mode = atoi(argv[0]);
+    if (mode < 0 || mode > 2) {
+        Shell_Print("Invalid mode (0:Auto 1:HP 2:SPK)\r\n");
+        return -1;
+    }
+    
+    SYSPARAM_AUDIOCHAIN()->output_mode = mode;
+    SysParam_MarkModified();
+    Shell_Printf("Output mode: %d\r\n", mode);
+    return 0;
+}
+
+/* chain save - Save with validation */
+static int chain_save(int argc, char *argv[]) {
+    (void)argc; (void)argv;
+    
+    /* Validate all graphs */
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int i;
+    for (i = 0; i < ac->graph_count; i++) {
+        if (validate_graph(&ac->graphs[i]) < 0) {
+            Shell_Printf("Graph %d validation failed\r\n", i);
+            return -1;
+        }
+    }
+    
+    SysParam_Status_t status = SysParam_SaveModule("chain");
+    if (status == SYSPARAM_OK) {
+        Shell_Print("Chain params saved\r\n");
+        return 0;
+    }
+    Shell_Printf("Save failed: %d\r\n", status);
+    return -1;
+}
+
+static const ShellOpt_t chain_opts[] = {
+    /* Graph management */
+    OPT("l", "graph-list",    NULL,           "List all graphs",          chain_graph_list),
+    OPT("c", "graph-create",  "<name>",       "Create graph",             chain_graph_create),
+    OPT("d", "graph-delete",  "<name>",       "Delete graph",             chain_graph_delete),
+    OPT("s", "graph-select",  "<hp|spk> <name>", "Select graph",          chain_graph_select),
+    OPT("u", "graph-use",     "<name>",       "Switch graph",             chain_graph_use),
+    OPT("w", "graph-show",    "[id]",         "Show graph topology",      chain_graph_show),
+    
+    /* Node management */
+    OPT("n", "node-add",      "<type> <sub>", "Add node",                 chain_node_add),
+    OPT("r", "node-del",      "<id>",         "Delete node",              chain_node_del),
+    
+    /* Edge management */
+    OPT("e", "edge-add",      "<from> <to>",  "Add edge",                 chain_edge_add),
+    OPT("x", "edge-del",      "<from> <to>",  "Delete edge",              chain_edge_del),
+    
+    /* Config */
+    OPT("m", "mode",          "<0-2>",        "Output mode",              chain_mode),
+    OPT("S", "save",          NULL,           "Save (validate)",          chain_save),
+    OPT_END()
+};
+
+DEFINE_MODULE(chain, "Effect Graph (Multi-source DAG)", MOD_CAT_PARAM, chain_opts);
 
 /*============================================================================
  * gpio module - GPIO control
@@ -568,7 +1288,11 @@ static int lcd_bgcolor(int argc, char *argv[])
     uint16_t color = (uint16_t)strtol(argv[0], NULL, 16);
     SYSPARAM_LCD()->bg_color = color;
     SysParam_MarkModified();
-    Shell_Printf("BG Color: 0x%04X\r\n", color);
+    
+
+    BG_UI.SetBackgroundColor(color);
+    
+    Shell_Printf("BG Color: 0x%04X (Applied)\r\n", color);
     return 0;
 }
 
@@ -977,7 +1701,8 @@ static int flash_test_cmd(int argc, char *argv[])
     }
     
     Shell_Printf("Testing device %d...\r\n", dev_id);
-    FlashNewDriver_Test();
+
+    //FlashNewDriver_Test();
     // ret = BG_FlashMgr.TestDevice(dev_id);
     
     // if (ret == BG_FLASH_OK) {
@@ -1599,7 +2324,9 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(battery);
     REGISTER_MODULE(bt);
     REGISTER_MODULE(ble);
-    
+    REGISTER_MODULE(chain);
+    #ifdef VFS_EN
+
     /* 文件系统导航命令 */
     REGISTER_MODULE(ls);
     REGISTER_MODULE(pwd);
@@ -1607,8 +2334,9 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(cat);
     REGISTER_MODULE(echo);    /* 写入参数值 */
     REGISTER_MODULE(tree);
+
+    #endif /* VFS_EN */
     REGISTER_MODULE(drivers);
-    
     /* 效果图和效果器命令 */
     ShellCmdEffect_Register();   /* effect 命令 */
     ShellCmdGraph_Register();    /* graph 和 fx 命令 */

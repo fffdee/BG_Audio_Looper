@@ -52,8 +52,10 @@ typedef struct __attribute__((packed)) {
 
 /* Audio parameters structure */
 typedef struct __attribute__((packed)) {
-    uint8_t  guitar_volume;     /* Guitar volume 0-100 */
-    uint8_t  mic_volume;        /* Mic volume 0-100 */
+    uint8_t  guitar1_volume;     /* Guitar1 volume 0-100 */
+    uint8_t  guitar2_volume;     /* Guitar2 volume 0-100 */
+    uint8_t  mic1_volume;        /* Mic1 volume 0-100 */
+    uint8_t  mic2_volume;        /* Mic2 volume 0-100 */
     uint8_t  output_volume;
 } SysParam_Volume_t;
 
@@ -96,28 +98,28 @@ typedef struct __attribute__((packed)) {
     uint8_t  data[32];          /* User data */
 } SysParam_User_t;
 
-#define BG_PARAM_CHAIN_MAX      2   // 支持两条参数链
-#define BG_PARAM_CHAIN_NAME_LEN 16  // 链名称长度
+#define BG_PARAM_CHAIN_MAX      2   // 鏀寔涓ゆ潯鍙傛暟閾�
+#define BG_PARAM_CHAIN_NAME_LEN 16  // 閾惧悕绉伴暱搴�
 #define MAX_NODES 8
 
 typedef struct {
 
-    char name[BG_PARAM_CHAIN_NAME_LEN]; // 效果节点名称
+    char name[BG_PARAM_CHAIN_NAME_LEN]; // 鏁堟灉鑺傜偣鍚嶇О
     uint8_t enabled;
     uint16_t id;
     
 }BG_EffectNode_t;
 
 typedef struct {
-    char name[BG_PARAM_CHAIN_NAME_LEN]; // 链名称，如 "ChainA"、"ChainB"
-    uint8_t enabled;                    // 是否启用
-    BG_EffectNode_t nodes[MAX_NODES];   // 节点ID数组，最多支持8个节点
+    char name[BG_PARAM_CHAIN_NAME_LEN]; // 閾惧悕绉帮紝濡�"ChainA"銆�ChainB"
+    uint8_t enabled;                    // 鏄惁鍚敤
+    BG_EffectNode_t nodes[MAX_NODES];   // 鑺傜偣ID鏁扮粍锛屾渶澶氭敮鎸�涓妭鐐�
     uint8_t node_count;
 } BG_ParamChain_t;
 
 typedef struct {
-    BG_ParamChain_t chains[BG_PARAM_CHAIN_MAX]; // 两条链
-    uint8_t active_chain;                       // 当前激活链索引（0或1）
+    BG_ParamChain_t chains[BG_PARAM_CHAIN_MAX]; // 涓ゆ潯閾�
+    uint8_t active_chain;                       // 褰撳墠婵�椿閾剧储寮曪紙0鎴�锛�
 } BG_ParamChainManager_t;
 
 /* Node types in effect graph */
@@ -163,7 +165,7 @@ typedef enum {
     OUTPUT_TYPE_MAX
 } OutputType_t;
 
-#define MAX_GRAPH_NODES        32  /* Maximum nodes in pool */
+#define MAX_GRAPH_NODES        64  /* Maximum nodes in pool */
 #define MAX_GRAPH_EDGES        48  /* Maximum edges per graph */
 #define MAX_EFFECT_GRAPHS      4   /* Maximum effect graphs */
 #define GRAPH_NAME_LEN         12  /* Graph name length */
@@ -237,7 +239,7 @@ typedef struct __attribute__((packed)) {
     /* Parameter modules */
     SysParam_System_t    system;      /* System parameters */
     SysParam_Volume_t    volume;       /* Audio parameters */
-    BG_ParamChainManager_t chain_manager;/* 参数链管理器 */
+    BG_ParamChainManager_t chain_manager;/* 鍙傛暟閾剧鐞嗗櫒 */
     SysParam_Looper_t    looper;      /* Looper parameters */
     SysParam_Bluetooth_t bluetooth;   /* Bluetooth parameters */
     SysParam_LCD_t       lcd;         /* LCD parameters */
