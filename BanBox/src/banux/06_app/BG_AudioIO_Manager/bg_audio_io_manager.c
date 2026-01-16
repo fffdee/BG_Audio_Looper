@@ -50,6 +50,7 @@
 #include "shell_cmd_sysmon.h"
 
 #include "bt_manager.h"
+
 // ==================== 全局缓冲区定义 ====================
 static uint32_t AudioADC1Buf[1024] = {0};
 static uint32_t AudioADC2Buf[1024] = {0};
@@ -192,7 +193,7 @@ static void InitADC1Mic(void)
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
 	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 12, 2);
 	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 12, 2);
-	AudioADC_VolSet(ADC1_MODULE, 0xFFF, 0xFFF);
+
 }
 
 // 初始化数字化ADC采样
@@ -267,6 +268,8 @@ static void InitDetectionGPIO(void)
 	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX29);
 	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX29);
 
+	ADC_PowerkeyChannelEnable();
+
 	// GPIO_A_INDEX30: 麦克风检测输入，下拉
 	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX30);
 	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX30);
@@ -338,7 +341,19 @@ void BG_audio_Init(uint16_t SampleRate)
 
 //	AudioDAC_FadeDisable(DAC0);
 //
-//	AudioDAC_Pause(DAC0);
+//
+//	AudioSetting_SetMic1VolumePercent(g_sys_param.volume.mic1_volume);
+//
+//
+//	AudioSetting_SetMic2VolumePercent(g_sys_param.volume.mic2_volume);
+//
+//
+//
+//	AudioSetting_SetGuitar1VolumePercent( g_sys_param.volume.guitar1_volume );
+//
+//
+//	AudioSetting_SetGuitar2VolumePercent( g_sys_param.volume.guitar2_volume );
+
 
 
 }
@@ -353,6 +368,7 @@ static void SetVolume(void)
 	DC_Data = ADC_SingleModeDataGet(ADC_CHANNEL_GPIOA28) * 4;
 	AudioDAC_VolSet(DAC0, DC_Data, DC_Data);
 	AudioDAC_VolSet(DAC1, DC_Data, 0);
+
 }
 
 

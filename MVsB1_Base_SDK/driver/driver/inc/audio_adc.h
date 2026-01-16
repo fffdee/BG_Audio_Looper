@@ -530,7 +530,7 @@ void AudioADC_AGCNoiseHoldTime(ADC_MODULE ADCModule, uint8_t NoiseHoldTime);
  * @param  ADCModule    0,ADC0ģ��; 1,ADC1ģ��
  * @return AGC����
  * @note   ���ص�ֵ������AGC��ʵ������ֵ��AGCʵ������ֵ��Ĵ���ֵ
- * 		        ֮���ت����AGCʵ������ֵ��Ĵ���ֵ��Ӧ��
+ * 		        ֮���ת����AGCʵ������ֵ��Ĵ���ֵ��Ӧ��
  */
 uint8_t AudioADC_AGCGainGet(ADC_MODULE ADCModule);
 
@@ -611,3 +611,7 @@ void AudioADC_PowerDown(void);
 
 #endif //__AUDIO_ADC_H__
 
+/**
+ * @}
+ * @}
+ */

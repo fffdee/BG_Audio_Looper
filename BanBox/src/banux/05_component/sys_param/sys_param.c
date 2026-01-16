@@ -17,7 +17,7 @@
 #include "bg_shell.h"   /* Shell_Printf for print functions */
 #include <string.h>
 #include <stdio.h>
-
+#include "audio_setting.h"
 /* Debug output */
 #ifdef CFG_APP_CONFIG
 #include "debug.h"
@@ -354,6 +354,20 @@ SysParam_Status_t SysParam_Init(void) {
     g_param_modified = 0;
     g_param_initialized = 1;
     PARAM_DBG("[PARAM] Init complete, loaded %lu bytes\n", (unsigned long)sizeof(SysParam_t));
+
+    	AudioSetting_SetMic1VolumePercent(g_sys_param.volume.mic1_volume);
+
+
+    	AudioSetting_SetMic2VolumePercent(g_sys_param.volume.mic2_volume);
+
+
+
+    	AudioSetting_SetGuitar1VolumePercent( g_sys_param.volume.guitar1_volume );
+
+
+    	AudioSetting_SetGuitar2VolumePercent( g_sys_param.volume.guitar2_volume );
+
+
     return SYSPARAM_OK;
 }
 

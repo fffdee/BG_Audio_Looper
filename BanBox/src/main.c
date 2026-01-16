@@ -73,7 +73,7 @@
 #include "sys_param.h"
 #include "shell_lcd_adapter.h"  /* Shell LCD console adapter */
 #include "bg_shell.h"           /* Shell console API */
-
+#include "audio_setting.h"
 /* New UI Architecture - Single entry point */
 #include "bangui.h"             /* BanGUI unified UI system (includes page manager) */
 
@@ -285,13 +285,21 @@ void Looper_ProcessButtons(void)
 }
 
 
+uint8_t time_count = 0;
 void hardware_check()
 {
 
 	UI_StatusBar_SetBTStatus(GetA2dpState());
-
+	time_count++;
+	if(time_count>=100){
+		if(ADC_SingleModeDataGet(ADC_CHANNEL_POWERKEY)>4000){
+			 AudioSetting_SetGuitar2VolumePercent(AudioSetting_GetGuitar2VolumePercent) ;
+		}else{
+			 AudioSetting_SetGuitar2VolumePercent(0) ;
+		}
+		time_count = 0;
+	}
 }
-
 
 void EffectTask() {
 

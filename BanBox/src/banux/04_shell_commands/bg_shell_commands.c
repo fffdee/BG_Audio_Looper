@@ -26,25 +26,25 @@
 #include "dac.h"
 #include "bt_a2dp_api.h"
 #include "battery_drv.h"
-#include "drv_init.h"  /* 驱动框架初始化 */
-#include "vfs.h"       /* 虚拟文件系统API */
-#include "drv_fs.h"    /* 驱动文件系统API */
-#include "drv_device.h" /* 驱动设备管理 */
-#include "chip_info.h"  /* 芯片ID读取 */
+#include "drv_init.h"  /* 椹卞姩妗嗘灦鍒濆鍖�*/
+#include "vfs.h"       /* 铏氭嫙鏂囦欢绯荤粺API */
+#include "drv_fs.h"    /* 椹卞姩鏂囦欢绯荤粺API */
+#include "drv_device.h" /* 椹卞姩璁惧绠＄悊 */
+#include "chip_info.h"  /* 鑺墖ID璇诲彇 */
 #include "FreeRTOS.h"
 #include "task.h"
 
 #include "bangui.h"
 #include "audio_setting.h"
 
-/* 效果器命令模块 */
+/* 鏁堟灉鍣ㄥ懡浠ゆā鍧�*/
 #include "shell_cmd_effect.h"
 #include "shell_cmd_graph.h"
 
-/* UI控制命令模块 */
+/* UI鎺у埗鍛戒护妯″潡 */
 #include "shell_cmd_ui.h"
 
-/* 参数保存模块 */
+/* 鍙傛暟淇濆瓨妯″潡 */
 #include "sys_param.h"
 
 /*============================================================================
@@ -344,7 +344,7 @@ static int sys_rotate(int argc, char *argv[])
     if (argc < 1)
     {
         /* Show current rotation angle */
-        Shell_Printf("Current rotation: %d° (", current_rotation * 90);
+        Shell_Printf("Current rotation: %d掳 (", current_rotation * 90);
         switch (current_rotation)
         {
             case 0: Shell_Print("Portrait)\r\n"); break;
@@ -353,10 +353,10 @@ static int sys_rotate(int argc, char *argv[])
             case 3: Shell_Print("Landscape Inverted)\r\n"); break;
         }
         Shell_Print("\r\nUsage:\r\n");
-        Shell_Print("  sys -r 0    - 0° (Portrait)\r\n");
-        Shell_Print("  sys -r 1    - 90° (Landscape)\r\n");
-        Shell_Print("  sys -r 2    - 180° (Portrait Inverted)\r\n");
-        Shell_Print("  sys -r 3    - 270° (Landscape Inverted)\r\n");
+        Shell_Print("  sys -r 0    - 0掳 (Portrait)\r\n");
+        Shell_Print("  sys -r 1    - 90掳 (Landscape)\r\n");
+        Shell_Print("  sys -r 2    - 180掳 (Portrait Inverted)\r\n");
+        Shell_Print("  sys -r 3    - 270掳 (Landscape Inverted)\r\n");
         return 0;
     }
     
@@ -370,7 +370,7 @@ static int sys_rotate(int argc, char *argv[])
     
     current_rotation = (uint8_t)rotation;
     Lcd_SetRotation(current_rotation);
-    Shell_Printf("Screen rotated to %d°\r\n", current_rotation * 90);
+    Shell_Printf("Screen rotated to %d掳\r\n", current_rotation * 90);
     
     /* Clear screen after rotation */
     BG_lcd.Clear(BLACK);
@@ -406,7 +406,7 @@ static const ShellOpt_t sys_opts[] = {
     OPT("o", "io",      "[cmd]",   "IO control (cdc/ble/lock/unlock)", sys_io),
     OPT("c", "console", "[cmd]",   "LCD console (on/off/clear)",       sys_console),
     OPT("d", "dbglcd",  "[cmd]",   "DBG to LCD (on/off)",              sys_dbglcd),
-    OPT("r", "rotate_distr",  "[0-3]",   "Rotate screen (0/1/2/3 = 0°/90°/180°/270°)", sys_rotate),
+    OPT("r", "rotate_distr",  "[0-3]",   "Rotate screen (0/1/2/3 = 0掳/90掳/180掳/270掳)", sys_rotate),
     OPT("s", "chipid",  NULL,      "Show chip unique ID",  sys_chipid),
     OPT_END()
 };
@@ -417,7 +417,7 @@ DEFINE_MODULE(sys, "System information", MOD_CAT_SYSTEM, sys_opts);
  * audio module - Audio control
  *===========================================================================*/
 
-/* 吉他1音量 */
+/* 鍚変粬1闊抽噺 */
 static int audio_guitar1_vol(int argc, char *argv[])
 {
     if(argc < 1)
@@ -434,12 +434,12 @@ static int audio_guitar1_vol(int argc, char *argv[])
     Shell_Printf("Guitar1 volume: %d\r\n", vol);
     return 0;
 }
-/* 吉他2音量 */
+/* 鍚変粬2闊抽噺 */
 static int audio_guitar2_vol(int argc, char *argv[])
 {
     if(argc < 1)
     {
-        Shell_Printf("Guitar2 volume: %d\r\n",SYSPARAM_AUDIO()->guitar2_volume = vol);
+        Shell_Printf("Guitar2 volume: %d\r\n",SYSPARAM_AUDIO()->guitar2_volume);
         return 0;
     }
     int vol = atoi(argv[0]);
@@ -451,12 +451,12 @@ static int audio_guitar2_vol(int argc, char *argv[])
     Shell_Printf("Guitar2 volume: %d\r\n", vol);
     return 0;
 }
-/* 麦克风1音量 */
+/* 楹﹀厠椋�闊抽噺 */
 static int audio_mic1_vol(int argc, char *argv[])
 {
     if(argc < 1)
     {
-        Shell_Printf("Mic1 volume: %d\r\n", SYSPARAM_AUDIO()->mic1_volume = vol);
+        Shell_Printf("Mic1 volume: %d\r\n", SYSPARAM_AUDIO()->mic1_volume);
         return 0;
     }
     int vol = atoi(argv[0]);
@@ -468,12 +468,12 @@ static int audio_mic1_vol(int argc, char *argv[])
     Shell_Printf("Mic1 volume: %d\r\n", vol);
     return 0;
 }
-/* 麦克风2音量 */
+/* 楹﹀厠椋�闊抽噺 */
 static int audio_mic2_vol(int argc, char *argv[])
 {
     if(argc < 1)
     {
-        Shell_Printf("Mic2 volume: %d\r\n", SYSPARAM_AUDIO()->mic2_volume = vol);
+        Shell_Printf("Mic2 volume: %d\r\n", SYSPARAM_AUDIO()->mic2_volume);
         return 0;
     }
     int vol = atoi(argv[0]);
@@ -486,7 +486,7 @@ static int audio_mic2_vol(int argc, char *argv[])
     return 0;
 }
 
-/* 输出音量 */
+/* 杈撳嚭闊抽噺 */
 static int audio_output_vol(int argc, char *argv[])
 {
     if(argc < 1)
@@ -1276,7 +1276,7 @@ static int lcd_bl(int argc, char *argv[])
     return 0;
 }
 
-/* 背景颜色 */
+/* 鑳屾櫙棰滆壊 */
 static int lcd_bgcolor(int argc, char *argv[])
 {
     if(argc < 1)
@@ -1892,7 +1892,7 @@ DEFINE_MODULE(battery, "battery controller", MOD_CAT_HARDWARE, battery_opts);
 	 return 0;
 }
 
-/* 蓝牙名称设置 */
+/* 钃濈墮鍚嶇О璁剧疆 */
 static int bt_set_name(int argc, char *argv[])
 {
     if (argc < 1) {
@@ -1900,7 +1900,7 @@ static int bt_set_name(int argc, char *argv[])
         return 0;
     }
     
-    /* 复制名称，最多15个字符（保留\0） */
+    /* 澶嶅埗鍚嶇О锛屾渶澶�5涓瓧绗︼紙淇濈暀\0锛�*/
     strncpy(SYSPARAM_BLUETOOTH()->device_name, argv[0], 15);
     SYSPARAM_BLUETOOTH()->device_name[15] = '\0';
     SysParam_MarkModified();
@@ -1909,7 +1909,7 @@ static int bt_set_name(int argc, char *argv[])
     return 0;
 }
 
-/* A2DP音量 */
+/* A2DP闊抽噺 */
 static int bt_a2dp_vol(int argc, char *argv[])
 {
     if (argc < 1) {
@@ -1943,7 +1943,7 @@ DEFINE_MODULE(bt, "Bluetooth controller", MOD_CAT_HARDWARE, bt_opts);
 static int ble_get_status(int argc, char *argv[])
 {
     (void)argc; (void)argv;
-    /* TODO: 从BLE管理器获取实际状态 */
+    /* TODO: 浠嶣LE绠＄悊鍣ㄨ幏鍙栧疄闄呯姸鎬�*/
     Shell_Print("BLE Status: Idle\r\n");
     return 0;
 }
@@ -1967,7 +1967,7 @@ static int cmd_ls(int argc, char *argv[])
     int lineLen = 0;
     int itemsInLine = 0;
     
-    /* 如果有参数，使用参数查找节点；否则使用当前工作目录 */
+    /* 濡傛灉鏈夊弬鏁帮紝浣跨敤鍙傛暟鏌ユ壘鑺傜偣锛涘惁鍒欎娇鐢ㄥ綋鍓嶅伐浣滅洰褰�*/
     if (argc > 0) {
         node = DrvFs_FindNode(argv[0]);
         if (!node) {
@@ -1975,7 +1975,7 @@ static int cmd_ls(int argc, char *argv[])
             return -1;
         }
     } else {
-        /* 无参数时，列出当前工作目录 */
+        /* 鏃犲弬鏁版椂锛屽垪鍑哄綋鍓嶅伐浣滅洰褰�*/
         node = DrvFs_GetCwd();
         if (!node) {
             Shell_Print("ls: cannot get current directory\r\n");
@@ -1998,7 +1998,7 @@ static int cmd_ls(int argc, char *argv[])
         FsNode_t *child = node->children[i];
         char itemBuf[64];
         
-        /* 格式化单个项目 */
+        /* 鏍煎紡鍖栧崟涓」鐩�*/
         switch (child->type) {
             case FS_NODE_DIR:
                 snprintf(itemBuf, sizeof(itemBuf), "\033[1;34m%s\033[0m", child->name);
@@ -2014,27 +2014,27 @@ static int cmd_ls(int argc, char *argv[])
                 break;
         }
         
-        /* 添加到行缓冲 */
+        /* 娣诲姞鍒拌缂撳啿 */
         if (lineLen + strlen(itemBuf) + 4 < sizeof(lineBuf)) {
             strcat(lineBuf, itemBuf);
             lineLen += strlen(itemBuf);
             itemsInLine++;
             
-            /* 添加分隔符或换行 */
+            /* 娣诲姞鍒嗛殧绗︽垨鎹㈣ */
             if (itemsInLine >= 2) {
-                /* 输出这一行 */
+                /* 杈撳嚭杩欎竴琛�*/
                 Shell_Printf("%s\r\n", lineBuf);
                 lineBuf[0] = '\0';
                 lineLen = 0;
                 itemsInLine = 0;
             } else if (i < node->childCount - 1) {
-                strcat(lineBuf, "    ");  /* 4个空格分隔 */
+                strcat(lineBuf, "    ");  /* 4涓┖鏍煎垎闅�*/
                 lineLen += 4;
             }
         }
     }
     
-    /* 输出剩余项目 */
+    /* 杈撳嚭鍓╀綑椤圭洰 */
     if (itemsInLine > 0) {
         Shell_Printf("%s\r\n", lineBuf);
     }
@@ -2076,7 +2076,7 @@ DEFINE_MODULE(pwd, "Print working directory", MOD_CAT_SYSTEM, pwd_opts);
 static int cmd_cd(int argc, char *argv[])
 {
     if (argc < 1) {
-        /* 无参数时返回根目录 */
+        /* 鏃犲弬鏁版椂杩斿洖鏍圭洰褰�*/
         if (DrvFs_Cd("/") != FS_OK) {
             Shell_Print("cd: error\r\n");
             return -1;
@@ -2144,9 +2144,8 @@ static const ShellOpt_t cat_opts[] = {
 DEFINE_MODULE(cat, "Display file contents", MOD_CAT_SYSTEM, cat_opts);
 
 /*
- * echo命令 - 写入参数值
- * 用法: echo <value> > <parameter>
- * 简化用法: echo <parameter> <value>
+ * echo鍛戒护 - 鍐欏叆鍙傛暟鍊� * 鐢ㄦ硶: echo <value> > <parameter>
+ * 绠�寲鐢ㄦ硶: echo <parameter> <value>
  */
 static int cmd_echo(int argc, char *argv[])
 {
@@ -2166,7 +2165,7 @@ static int cmd_echo(int argc, char *argv[])
         return -1;
     }
     
-    /* 检查是否有重定向符号 > */
+    /* 妫�煡鏄惁鏈夐噸瀹氬悜绗﹀彿 > */
     for (i = 0; i < argc; i++) {
         if (strcmp(argv[i], ">") == 0) {
             redirect_idx = i;
@@ -2175,16 +2174,16 @@ static int cmd_echo(int argc, char *argv[])
     }
     
     if (redirect_idx > 0 && redirect_idx < argc - 1) {
-        /* 格式: echo <value> > <parameter> */
-        value = argv[0];  /* 第一个参数是值 */
-        path = argv[redirect_idx + 1];  /* > 后面是路径 */
+        /* 鏍煎紡: echo <value> > <parameter> */
+        value = argv[0];  /* 绗竴涓弬鏁版槸鍊�*/
+        path = argv[redirect_idx + 1];  /* > 鍚庨潰鏄矾寰�*/
     } else {
-        /* 简化格式: echo <parameter> <value> */
-        path = argv[0];   /* 第一个参数是路径 */
-        value = argv[1];  /* 第二个参数是值 */
+        /* 绠�寲鏍煎紡: echo <parameter> <value> */
+        path = argv[0];   /* 绗竴涓弬鏁版槸璺緞 */
+        value = argv[1];  /* 绗簩涓弬鏁版槸鍊�*/
     }
     
-    /* 查找节点 */
+    /* 鏌ユ壘鑺傜偣 */
     node = DrvFs_FindNode(path);
     if (!node) {
         Shell_Printf("echo: %s: No such file or directory\r\n", path);
@@ -2196,7 +2195,7 @@ static int cmd_echo(int argc, char *argv[])
         return -1;
     }
     
-    /* 写入参数 */
+    /* 鍐欏叆鍙傛暟 */
     ret = DrvFs_WriteParam(node, value);
     if (ret < 0) {
         if (ret == -2) {
@@ -2219,18 +2218,17 @@ static const ShellOpt_t echo_opts[] = {
 DEFINE_MODULE(echo, "Write to file", MOD_CAT_SYSTEM, echo_opts);
 
 /*----------------------------------------------------------------------------
- * 递归打印VFS树结构
- *----------------------------------------------------------------------------*/
+ * 閫掑綊鎵撳嵃VFS鏍戠粨鏋� *----------------------------------------------------------------------------*/
 static void print_vfs_tree(VfsNode_t *node, int depth, int isLast)
 {
     char prefix[32] = "";
     int i;
     for (i = 0; i < depth; i++) {
-        strcat(prefix, (i == depth - 1 && isLast) ? "   " : "│  ");
+        strcat(prefix, (i == depth - 1 && isLast) ? "   " : "鈹� ");
     }
     if (depth > 0) {
         Shell_Print(prefix);
-        Shell_Print(isLast ? "└─ " : "├─ ");
+        Shell_Print(isLast ? "鈹斺攢 " : "鈹溾攢 ");
     }
     Shell_Print(node->name);
     if (node->type == VFS_NODE_DIR) Shell_Print("/");
@@ -2273,9 +2271,9 @@ static int cmd_drivers(int argc, char *argv[])
     devices = DrvDevice_GetList(&count);
     
     Shell_Print("\r\nRegistered Drivers:\r\n");
-    Shell_Print("┌───────────┬─────────┬────────────┐\r\n");
-    Shell_Print("│ Name      │ Bus     │ Status     │\r\n");
-    Shell_Print("├───────────┼─────────┼────────────┤\r\n");
+    Shell_Print("鈹屸攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�攢鈹攢鈹�攢鈹�攢鈹�攢鈹�攢鈹攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�攼\r\n");
+    Shell_Print("鈹�Name      鈹�Bus     鈹�Status     鈹俓r\n");
+    Shell_Print("鈹溾攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�攢鈹尖攢鈹�攢鈹�攢鈹�攢鈹�攢鈹尖攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�敜\r\n");
     
     for (i = 0; i < count; i++) {
         const char *bus_name;
@@ -2288,13 +2286,13 @@ static int cmd_drivers(int argc, char *argv[])
             default: bus_name = "UNKNOWN"; break;
         }
         
-        Shell_Printf("│ %-9s │ %-7s │ %-10s │\r\n",
+        Shell_Printf("鈹�%-9s 鈹�%-7s 鈹�%-10s 鈹俓r\n",
                      devices[i]->name, 
                      bus_name,
                      devices[i]->isRegistered ? "OK" : "FAIL");
     }
     
-    Shell_Print("└───────────┴─────────┴────────────┘\r\n");
+    Shell_Print("鈹斺攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�攢鈹粹攢鈹�攢鈹�攢鈹�攢鈹�攢鈹粹攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�攢鈹�敇\r\n");
     Shell_Printf("Total: %d drivers\r\n\r\n", count);
     return 0;
 }
@@ -2309,7 +2307,7 @@ DEFINE_MODULE(drivers, "List device drivers", MOD_CAT_SYSTEM, drivers_opts);
 /*============================================================================
  * Module registration
  *===========================================================================*/
-    /* 参数保存命令 */
+    /* 鍙傛暟淇濆瓨鍛戒护 */
     extern void ShellCmd_Param_Init(void);
 void Shell_RegisterAllModules(void)
 {
@@ -2327,27 +2325,27 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(chain);
     #ifdef VFS_EN
 
-    /* 文件系统导航命令 */
+    /* 鏂囦欢绯荤粺瀵艰埅鍛戒护 */
     REGISTER_MODULE(ls);
     REGISTER_MODULE(pwd);
     REGISTER_MODULE(cd);
     REGISTER_MODULE(cat);
-    REGISTER_MODULE(echo);    /* 写入参数值 */
+    REGISTER_MODULE(echo);    /* 鍐欏叆鍙傛暟鍊�*/
     REGISTER_MODULE(tree);
 
     #endif /* VFS_EN */
     REGISTER_MODULE(drivers);
-    /* 效果图和效果器命令 */
-    ShellCmdEffect_Register();   /* effect 命令 */
-    ShellCmdGraph_Register();    /* graph 和 fx 命令 */
+    /* 鏁堟灉鍥惧拰鏁堟灉鍣ㄥ懡浠�*/
+    ShellCmdEffect_Register();   /* effect 鍛戒护 */
+    ShellCmdGraph_Register();    /* graph 鍜�fx 鍛戒护 */
     
-    /* UI控制命令 */
-    UICmd_Register();            /* ui 命令 */
+    /* UI鎺у埗鍛戒护 */
+    UICmd_Register();            /* ui 鍛戒护 */
     
 
-    ShellCmd_Param_Init();       /* param 命令 */
+    ShellCmd_Param_Init();       /* param 鍛戒护 */
 
-    /* 初始化驱动框架 (包含所有驱动注册) */
-    /* 注意：已在main()中初始化，这里不再重复调用 */
+    /* 鍒濆鍖栭┍鍔ㄦ鏋�(鍖呭惈鎵�湁椹卞姩娉ㄥ唽) */
+    /* 娉ㄦ剰锛氬凡鍦╩ain()涓垵濮嬪寲锛岃繖閲屼笉鍐嶉噸澶嶈皟鐢�*/
     /* DrvFramework_FullInit(); */
 }
