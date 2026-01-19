@@ -47,6 +47,9 @@
 /* 鍙傛暟淇濆瓨妯″潡 */
 #include "sys_param.h"
 
+/* Chain Graph Apply 妯″潡 */
+#include "chain_graph_apply.h"
+
 /*============================================================================
  * Common save function for modules
  *===========================================================================*/
@@ -739,9 +742,25 @@ static int chain_graph_select(int argc, char *argv[]) {
     if (strcmp(argv[0], "hp") == 0) {
         SYSPARAM_AUDIOCHAIN()->active_graph_hp = idx;
         Shell_Printf("HP uses graph %d\r\n", idx);
+        
+        // Apply the selected graph to running EffectGraph
+        if (ChainGraph_ApplyToEffectGraph(idx) == 0) {
+            Shell_Print("Graph applied successfully\r\n");
+        } else {
+            Shell_Print("Failed to apply graph\r\n");
+        }
+        
     } else if (strcmp(argv[0], "spk") == 0) {
         SYSPARAM_AUDIOCHAIN()->active_graph_spk = idx;
         Shell_Printf("SPK uses graph %d\r\n", idx);
+        
+        // Apply the selected graph to running EffectGraph
+        if (ChainGraph_ApplyToEffectGraph(idx) == 0) {
+            Shell_Print("Graph applied successfully\r\n");
+        } else {
+            Shell_Print("Failed to apply graph\r\n");
+        }
+        
     } else {
         Shell_Print("Invalid output (hp or spk)\r\n");
         return -1;
@@ -749,6 +768,46 @@ static int chain_graph_select(int argc, char *argv[]) {
     
     SysParam_MarkModified();
     return 0;
+}
+
+/* graph apply <name> - Apply graph to running EffectGraph */
+static int chain_graph_apply(int argc, char *argv[]) {
+    if (argc < 1) {
+        Shell_Print("Usage: chain graph apply <name>\r\n");
+        return -1;
+    }
+    
+    int idx = find_graph_by_name(argv[0]);
+    if (idx < 0) {
+        Shell_Print("Graph not found\r\n");
+        return -1;
+    }
+    
+    // Apply the graph to running EffectGraph
+    if (ChainGraph_ApplyToEffectGraph(idx) == 0) {
+        Shell_Printf("Graph '%s' applied successfully\r\n", argv[0]);
+    } else {
+        Shell_Print("Failed to apply graph\r\n");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* graph save <name> - Save current EffectGraph to chain graph */
+static int chain_graph_save(int argc, char *argv[]) {
+    if (argc < 1) {
+        Shell_Print("Usage: chain graph save <name>\r\n");
+        return -1;
+    }
+    
+    if (ChainGraph_SaveByName(argv[0]) == 0) {
+        Shell_Printf("Saved current EffectGraph to chain graph '%s'\r\n", argv[0]);
+        return 0;
+    } else {
+        Shell_Print("Failed to save graph\r\n");
+        return -1;
+    }
 }
 
 /* graph use <name> - Switch current working graph */
@@ -1148,8 +1207,18 @@ static int chain_mode(int argc, char *argv[]) {
 static int chain_save(int argc, char *argv[]) {
     (void)argc; (void)argv;
     
-    /* Validate all graphs */
+    /* First, save current EffectGraph state to default chain graph (index 0) */
+    if (ChainGraph_SaveFromEffectGraph(0) != 0) {
+        Shell_Print("Failed to save current EffectGraph state\r\n");
+        return -1;
+    }
+    
+    /* Set this graph as active for both HP and SPK */
     SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    ac->active_graph_hp = 0;
+    ac->active_graph_spk = 0;
+    
+    /* Validate all graphs */
     int i;
     for (i = 0; i < ac->graph_count; i++) {
         if (validate_graph(&ac->graphs[i]) < 0) {
@@ -1173,6 +1242,8 @@ static const ShellOpt_t chain_opts[] = {
     OPT("c", "graph-create",  "<name>",       "Create graph",             chain_graph_create),
     OPT("d", "graph-delete",  "<name>",       "Delete graph",             chain_graph_delete),
     OPT("s", "graph-select",  "<hp|spk> <name>", "Select graph",          chain_graph_select),
+    OPT("a", "graph-apply",   "<name>",       "Apply graph to EffectGraph", chain_graph_apply),
+    OPT("v", "graph-save",    "<name>",       "Save EffectGraph to chain", chain_graph_save),
     OPT("u", "graph-use",     "<name>",       "Switch graph",             chain_graph_use),
     OPT("w", "graph-show",    "[id]",         "Show graph topology",      chain_graph_show),
     

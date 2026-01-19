@@ -76,7 +76,6 @@
             <children xsi:type="basic:PartSashContainer" xmi:id="_2thBFvLFEfC0xtFPMte2_w" contributorURI="platform:/plugin/com.andestech.ide.deploy" containerData="1561" selectedElement="_2thBF_LFEfC0xtFPMte2_w">
               <children xsi:type="basic:PartStack" xmi:id="_2thBF_LFEfC0xtFPMte2_w" elementId="topLeft" contributorURI="platform:/plugin/com.andestech.ide.deploy" containerData="5223" selectedElement="_2thBGPLFEfC0xtFPMte2_w">
                 <tags>active</tags>
-                <tags>noFocus</tags>
                 <children xsi:type="advanced:Placeholder" xmi:id="_2thBGPLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.navigator.ProjectExplorer" contributorURI="platform:/plugin/com.andestech.ide.deploy" ref="_2thCg_LFEfC0xtFPMte2_w"/>
                 <children xsi:type="advanced:Placeholder" xmi:id="_2thBGfLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.CView" contributorURI="platform:/plugin/com.andestech.ide.deploy" toBeRendered="false" ref="_2thC0fLFEfC0xtFPMte2_w"/>
                 <children xsi:type="advanced:Placeholder" xmi:id="_2thBGvLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.views.ResourceNavigator" contributorURI="platform:/plugin/com.andestech.ide.deploy" toBeRendered="false" ref="_2thC0vLFEfC0xtFPMte2_w"/>
@@ -362,7 +361,7 @@
       <tags>categoryTag:Help</tags>
     </sharedElements>
     <sharedElements xsi:type="advanced:Area" xmi:id="_2thCd_LFEfC0xtFPMte2_w" elementId="org.eclipse.ui.editorss" contributorURI="platform:/plugin/com.andestech.ide.deploy" selectedElement="_2thCePLFEfC0xtFPMte2_w">
-      <children xsi:type="basic:PartStack" xmi:id="_2thCePLFEfC0xtFPMte2_w" elementId="org.eclipse.e4.primaryDataStack" contributorURI="platform:/plugin/com.andestech.ide.deploy" selectedElement="_2thCgvLFEfC0xtFPMte2_w">
+      <children xsi:type="basic:PartStack" xmi:id="_2thCePLFEfC0xtFPMte2_w" elementId="org.eclipse.e4.primaryDataStack" contributorURI="platform:/plugin/com.andestech.ide.deploy" selectedElement="_2thCefLFEfC0xtFPMte2_w">
         <tags>org.eclipse.e4.primaryDataStack</tags>
         <tags>EditorStack</tags>
         <children xsi:type="basic:Part" xmi:id="_2thCefLFEfC0xtFPMte2_w" elementId="org.eclipse.e4.ui.compatibility.editor" contributorURI="platform:/plugin/com.andestech.ide.deploy" contributionURI="bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityEditor" label="auto_tune.h" iconURI="platform:/plugin/org.eclipse.cdt.ui/icons/obj16/c_file_obj.gif" closeable="true">
@@ -415,11 +414,6 @@
           <tags>org.eclipse.cdt.ui.editor.CEditor</tags>
           <tags>removeOnHide</tags>
         </children>
-        <children xsi:type="basic:Part" xmi:id="_2thCgvLFEfC0xtFPMte2_w" elementId="org.eclipse.e4.ui.compatibility.editor" contributorURI="platform:/plugin/com.andestech.ide.deploy" contributionURI="bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityEditor" label="Andes Project Creator" iconURI="platform:/plugin/com.andestech.ide.cdt.managedbuilder.ui.target/icons/elcl16/newmngcc_app.gif" closeable="true">
-          <tags>Editor</tags>
-          <tags>com.andestech.ide.cdt.managedbuilder.ui.target.forms.editor.CProjectFormEditor</tags>
-          <tags>removeOnHide</tags>
-        </children>
       </children>
     </sharedElements>
     <sharedElements xsi:type="basic:Part" xmi:id="_2thCg_LFEfC0xtFPMte2_w" elementId="org.eclipse.ui.navigator.ProjectExplorer" contributorURI="platform:/plugin/com.andestech.ide.deploy" contributionURI="bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityView" label="Project Explorer" iconURI="platform:/plugin/org.eclipse.ui.navigator.resources/icons/full/eview16/resource_persp.gif" tooltip="" closeable="true">
@@ -427,6 +421,7 @@
       <tags>View</tags>
       <tags>categoryTag:General</tags>
       <tags>active</tags>
+      <tags>activeOnClose</tags>
       <menus xmi:id="_2thChPLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.navigator.ProjectExplorer" contributorURI="platform:/plugin/com.andestech.ide.deploy">
         <tags>ViewMenu</tags>
         <tags>menuContribution:menu</tags>
@@ -739,52 +734,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDRvLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.workbench.file" contributorURI="platform:/plugin/com.andestech.ide.deploy">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDR_LFEfC0xtFPMte2_w" elementId="new.group">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_2thDSPLFEfC0xtFPMte2_w" elementId="com.andestech.ide.cdt.managedbuilder.ui.target.OpenCProjectForm" iconURI="platform:/plugin/com.andestech.ide.cdt.managedbuilder.ui.target/icons/elcl16/newndsc_app.gif" command="_2thq0vLFEfC0xtFPMte2_w">
-          <persistedState key="IIdentifier" value="com.andestech.ide.cdt.managedbuilder.ui.target/com.andestech.ide.cdt.managedbuilder.ui.target.OpenCProjectForm"/>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDSfLFEfC0xtFPMte2_w" elementId="newWizardDropDown">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDSvLFEfC0xtFPMte2_w" elementId="new.ext" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDS_LFEfC0xtFPMte2_w" elementId="save.group" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDTPLFEfC0xtFPMte2_w" elementId="save">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDTfLFEfC0xtFPMte2_w" elementId="saveAll">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDTvLFEfC0xtFPMte2_w" elementId="save.ext" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_2thDT_LFEfC0xtFPMte2_w" elementId="print" contributorURI="platform:/plugin/com.andestech.ide.deploy" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" command="_2thsTvLFEfC0xtFPMte2_w"/>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDUPLFEfC0xtFPMte2_w" elementId="print.ext" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDUfLFEfC0xtFPMte2_w" elementId="build.group">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDUvLFEfC0xtFPMte2_w" elementId="build" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDU_LFEfC0xtFPMte2_w" elementId="build.ext" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDVPLFEfC0xtFPMte2_w" elementId="additions">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDVfLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.buildConfigToolbarAction" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDVvLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.buildActiveConfigToolbarAction">
-          <tags>Opaque</tags>
-        </children>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_NBPo0PTqEfC8Opk0-19Seg" elementId="print" contributorURI="platform:/plugin/com.andestech.ide.deploy" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" command="_2thsTvLFEfC0xtFPMte2_w"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDV_LFEfC0xtFPMte2_w" elementId="additions" contributorURI="platform:/plugin/com.andestech.ide.deploy" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -792,84 +742,18 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDcfLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.CElementCreationActionSet" contributorURI="platform:/plugin/com.andestech.ide.deploy" visible="false">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDcvLFEfC0xtFPMte2_w" elementId="CCWizards">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDc_LFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.actions.NewProjectDropDown">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDdPLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.actions.NewFolderDropDown">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDdfLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.actions.NewFileDropDown">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDdvLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.actions.NewTypeDropDown">
-          <tags>Opaque</tags>
-        </children>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDd_LFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.flashburnerActionSet" contributorURI="platform:/plugin/com.andestech.ide.deploy">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDePLFEfC0xtFPMte2_w" elementId="FlashBurner">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDefLFEfC0xtFPMte2_w" elementId="com.andestech.ide.flash.ui.toolbarAction">
-          <tags>Opaque</tags>
-        </children>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDevLFEfC0xtFPMte2_w" elementId="org.eclipse.debug.ui.launchActionSet" contributorURI="platform:/plugin/com.andestech.ide.deploy">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDe_LFEfC0xtFPMte2_w" elementId="debug">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDfPLFEfC0xtFPMte2_w" elementId="org.eclipse.debug.internal.ui.actions.DebugDropDownAction">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDffLFEfC0xtFPMte2_w" elementId="org.eclipse.debug.internal.ui.actions.RunDropDownAction">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDfvLFEfC0xtFPMte2_w" elementId="org.eclipse.debug.internal.ui.actions.ProfileDropDownAction">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDf_LFEfC0xtFPMte2_w" elementId="org.eclipse.ui.externaltools.ExternalToolMenuDelegateToolbar" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDgPLFEfC0xtFPMte2_w" elementId="profile">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDgfLFEfC0xtFPMte2_w" elementId="com.andestech.ide.dsf.gdb.launch.monitor.target.action.MonitorTargetShortcutAction">
-          <tags>Opaque</tags>
-        </children>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDgvLFEfC0xtFPMte2_w" elementId="org.eclipse.search.searchActionSet" contributorURI="platform:/plugin/com.andestech.ide.deploy">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDg_LFEfC0xtFPMte2_w" elementId="Search">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDhPLFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.actions.OpenType" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDhfLFEfC0xtFPMte2_w" elementId="org.eclipse.search.OpenSearchDialogPage">
-          <tags>Opaque</tags>
-        </children>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDhvLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.edit.text.actionSet.presentation" contributorURI="platform:/plugin/com.andestech.ide.deploy">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDh_LFEfC0xtFPMte2_w" elementId="Presentation">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDiPLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.edit.text.toggleBlockSelectionMode">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDifLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.edit.text.toggleShowWhitespaceCharacters">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDivLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.edit.text.toggleShowSelectedElementOnly" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDi_LFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.edit.text.c.toggleMarkOccurrences">
-          <tags>Opaque</tags>
-        </children>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDjPLFEfC0xtFPMte2_w" elementId="group.nav" contributorURI="platform:/plugin/com.andestech.ide.deploy" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -877,31 +761,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDjvLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.workbench.navigate" contributorURI="platform:/plugin/com.andestech.ide.deploy">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDj_LFEfC0xtFPMte2_w" elementId="history.group">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDkPLFEfC0xtFPMte2_w" elementId="group.application" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDkfLFEfC0xtFPMte2_w" elementId="backardHistory">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDkvLFEfC0xtFPMte2_w" elementId="forwardHistory">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDk_LFEfC0xtFPMte2_w" elementId="pin.group">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_2thDlPLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.window.pinEditor" contributorURI="platform:/plugin/com.andestech.ide.deploy" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_2thquvLFEfC0xtFPMte2_w"/>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDlfLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.edit.text.gotoNextAnnotation" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDlvLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.edit.text.gotoPreviousAnnotation" visible="false">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDl_LFEfC0xtFPMte2_w" elementId="org.eclipse.ui.edit.text.gotoLastEditPosition">
-          <tags>Opaque</tags>
-        </children>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_NBReAPTqEfC8Opk0-19Seg" elementId="org.eclipse.ui.window.pinEditor" contributorURI="platform:/plugin/com.andestech.ide.deploy" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_2thquvLFEfC0xtFPMte2_w"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDmPLFEfC0xtFPMte2_w" elementId="group.editor" contributorURI="platform:/plugin/com.andestech.ide.deploy" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -913,12 +773,6 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_2thDnPLFEfC0xtFPMte2_w" elementId="org.eclipse.ui.workbench.help" contributorURI="platform:/plugin/com.andestech.ide.deploy" visible="false">
         <tags>Draggable</tags>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDnfLFEfC0xtFPMte2_w" elementId="group.help">
-          <tags>Opaque</tags>
-        </children>
-        <children xsi:type="menu:DirectToolItem" xmi:id="_2thDnvLFEfC0xtFPMte2_w" elementId="group.application" visible="false">
-          <tags>Opaque</tags>
-        </children>
       </children>
       <children xsi:type="menu:ToolControl" xmi:id="_2thDn_LFEfC0xtFPMte2_w" elementId="PerspectiveSpacer" contributorURI="platform:/plugin/com.andestech.ide.deploy" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.renderers.swt/org.eclipse.e4.ui.workbench.renderers.swt.LayoutModifierToolControl">
         <tags>stretch</tags>
@@ -1789,6 +1643,23 @@
     <tags>View</tags>
     <tags>categoryTag:Debug</tags>
   </descriptors>
+  <trimContributions xmi:id="_2r10UF9tEeO-yojH_y4TJA" elementId="org.eclipse.ui.ide.application.trimcontribution.QuickAccess" contributorURI="platform:/plugin/org.eclipse.ui.ide.application" toBeRendered="false" parentId="org.eclipse.ui.main.toolbar" positionInParent="last">
+    <children xsi:type="menu:ToolControl" xmi:id="_76uUAF9tEeO-yojH_y4TJA" elementId="Spacer Glue" contributorURI="platform:/plugin/org.eclipse.ui.ide.application" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.renderers.swt/org.eclipse.e4.ui.workbench.renderers.swt.LayoutModifierToolControl">
+      <tags>glue</tags>
+      <tags>move_after:PerspectiveSpacer</tags>
+      <tags>SHOW_RESTORE_MENU</tags>
+    </children>
+    <children xsi:type="menu:ToolControl" xmi:id="_8tJPcF9tEeO-yojH_y4TJA" elementId="SearchField" contributorURI="platform:/plugin/org.eclipse.ui.ide.application" contributionURI="bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.quickaccess.SearchField">
+      <tags>move_after:Spacer Glue</tags>
+      <tags>HIDEABLE</tags>
+      <tags>SHOW_RESTORE_MENU</tags>
+    </children>
+    <children xsi:type="menu:ToolControl" xmi:id="_9LgmcF9tEeO-yojH_y4TJA" elementId="Search-PS Glue" contributorURI="platform:/plugin/org.eclipse.ui.ide.application" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.renderers.swt/org.eclipse.e4.ui.workbench.renderers.swt.LayoutModifierToolControl">
+      <tags>glue</tags>
+      <tags>move_after:SearchField</tags>
+      <tags>SHOW_RESTORE_MENU</tags>
+    </children>
+  </trimContributions>
   <snippets xsi:type="advanced:Perspective" xmi:id="_2thpx_LFEfC0xtFPMte2_w" elementId="org.eclipse.cdt.ui.CPerspective" contributorURI="platform:/plugin/com.andestech.ide.deploy" selectedElement="_2thpyPLFEfC0xtFPMte2_w" label="C/C++" iconURI="platform:/plugin/org.eclipse.cdt.ui/icons/view16/c_pers.gif" tooltip="C/C++">
     <persistedState key="persp.hiddenItems" value="persp.hideToolbarSC:org.eclipse.debug.ui.commands.RunToLine,persp.hideToolbarSC:org.eclipse.jdt.ui.actions.OpenProjectWizard,persp.hideToolbarSC:print,persp.hideToolbarSC:org.eclipse.ui.edit.text.toggleShowSelectedElementOnly,persp.hideToolbarSC:org.eclipse.cdt.ui.buildConfigToolbarAction,persp.hideToolbarSC:org.eclipse.ui.project.buildAll,persp.hideToolbarSC:org.eclipse.tm.terminal.view.ui.commands.launchToolbar,persp.hideToolbarSC:org.eclipse.cdt.ui.CElementCreationActionSet,persp.hideToolbarSC:org.eclipse.cdt.ui.actions.NewProjectDropDown,persp.hideToolbarSC:org.eclipse.cdt.ui.actions.NewFolderDropDown,persp.hideToolbarSC:org.eclipse.cdt.ui.actions.NewFileDropDown,persp.hideToolbarSC:org.eclipse.cdt.ui.actions.NewTypeDropDown,persp.hideToolbarSC:org.eclipse.ui.externaltools.ExternalToolMenuDelegateToolbar,persp.hideToolbarSC:org.eclipse.debug.ui.main.toolbar,persp.hideToolbarSC:org.eclipse.debug.ui.commands.SkipAllBreakpoints,persp.hideToolbarSC:org.eclipse.cdt.ui.navigate.opentype,persp.hideToolbarSC:org.eclipse.ui.navigate.next,persp.hideToolbarSC:org.eclipse.ui.navigate.previous,persp.hideToolbarSC:org.eclipse.ui.workbench.help,"/>
     <tags>persp.actionSet:com.andestech.ide.dsf.gdb.launch.monitor.target.launchActionSet</tags>

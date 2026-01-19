@@ -18,6 +18,7 @@
 #include "drv_usb_cdc.h"
 #include "bt_vfs_driver.h"
 #include "shell_fs.h"
+#include "effect_graph.h"
 #include "effect_graph_vfs.h"
 #include "shell_cmd_audio_vfs.h"
 #include "debug.h"

@@ -28,6 +28,7 @@
 #include "otg_detect.h"
 #include "otg_device_audio.h"
 #include "otg_device_cdc.h"
+#include "reverb.h"
 #include "bg_shell.h"
 #include "shell_io_cdc.h"
 #include "shell_io_ble.h"
@@ -42,6 +43,7 @@
 #include "effect_graph.h"
 #include "effect_graph_config.h"
 #include "effect_graph_vfs.h"
+#include "chain_graph_apply.h"
 #include "shell_cmd_graph.h"
 
 #include "otg_device_cdc.h"
@@ -321,16 +323,19 @@ void BG_audio_Init(uint16_t SampleRate)
 		return;
 	}
 
-//	// 3. 自动挂载效果图到VFS（供命令行和文件系统访问）
+	// 3. 自动应用保存的chain graphs（如果有的话）
+	ChainGraph_AutoApplyOnStartup();
+
+//	// 4. 自动挂载效果图到VFS（供命令行和文件系统访问）
 //	EffectGraphVfs_TryAutoMount();
 
-	// 4. 挂接实际音频设备回调
+	// 5. 挂接实际音频设备回调
 	SetupEffectGraphCallbacks();
 
-	// 5. 注册 Shell 命令（支持 CDC/BLE 远程控制）
+	// 6. 注册 Shell 命令（支持 CDC/BLE 远程控制）
 	ShellCmdGraph_Register();
 
-	// 6. 注册系统监控命令（CPU/内存/任务统计）
+	// 7. 注册系统监控命令（CPU/内存/任务统计）
 	ShellCmdSysmon_Register();
 
 	DBG("[Audio] Effect Graph initialized successfully\n");
@@ -834,7 +839,7 @@ static void AudioLoopWithGraph(void)
 	uint16_t processed_samples;
 	uint16_t adc0_avail, adc1_avail;
 	bool bt_streaming;
-	EffectGraph_t *graph;
+	EffectGraphRuntime_t *graph;
 	const uint16_t MIN_FRAME = 48;
 	const uint16_t MAX_FRAME = 640;  /* 支持 SBC 最大帧长 ~595 */
 	static bool last_bt_streaming = false;  /* 上一帧的蓝牙状态 */
@@ -1383,12 +1388,21 @@ static void Expander_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_
  */
 static void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
 {
-	(void)node;
-	
 	if (in_count < 1 || !in_bufs[0]) {
 		return;
 	}
-	
+
+	/* 同步EffectGraph参数到全局DRC单元 */
+	gCtrlVars.mic_drc_unit.threshold[0] = node->params.drc.threshold;
+	gCtrlVars.mic_drc_unit.ratio[0] = node->params.drc.ratio;
+	gCtrlVars.mic_drc_unit.attack_tc[0] = node->params.drc.attack;
+	gCtrlVars.mic_drc_unit.release_tc[0] = node->params.drc.release;
+
+	/* 应用参数配置到SDK */
+	#if CFG_AUDIO_EFFECT_MIC_DRC_EN
+	AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
+	#endif
+
 	#if CFG_AUDIO_EFFECT_MIC_DRC_EN
 	if (gCtrlVars.mic_drc_unit.enable) {
 		AudioEffectDRCApply(&gCtrlVars.mic_drc_unit,
@@ -1412,12 +1426,41 @@ static void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
  */
 static void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
 {
-	(void)node;
+	uint8_t i;
 	
 	if (in_count < 1 || !in_bufs[0]) {
 		return;
 	}
-	
+
+	/* 同步EffectGraph参数到全局EQ单元 */
+	gCtrlVars.mic_out_eq_unit.filter_count = node->params.eq.band_count;
+	gCtrlVars.mic_out_eq_unit.pregain = 0;  /* 预增益设为0 */
+
+	/* 设置EQ频段参数 */
+	for (i = 0; i < node->params.eq.band_count && i < 10; i++) {
+		gCtrlVars.mic_out_eq_unit.eq_params[i].enable = 1;
+		gCtrlVars.mic_out_eq_unit.eq_params[i].type = EQ_FILTER_TYPE_PEAKING;
+		/* 根据频段索引设置中心频率 */
+		switch (i) {
+			case 0: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 100; break;   /* 低频 */
+			case 1: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 250; break;
+			case 2: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 630; break;
+			case 3: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 1600; break;
+			case 4: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 4000; break;
+			case 5: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 6300; break;
+			case 6: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 10000; break;
+			case 7: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 14000; break; /* 高频 */
+			default: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 1000; break;
+		}
+		gCtrlVars.mic_out_eq_unit.eq_params[i].Q = 724;  /* Q=0.707 */
+		gCtrlVars.mic_out_eq_unit.eq_params[i].gain = node->params.eq.band_gains[i] * 256;  /* 转换为Q8.8格式 */
+	}
+
+	/* 应用参数配置到SDK */
+	#if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
+	AudioEffectEQFilterConfig(&gCtrlVars.mic_out_eq_unit, 48000);
+	#endif
+
 	#if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
 	if (gCtrlVars.mic_out_eq_unit.enable) {
 		AudioEffectEQApply(&gCtrlVars.mic_out_eq_unit,
@@ -1466,13 +1509,28 @@ static void Passthrough_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t 
  */
 static void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
 {
-	(void)node;
-	
 	if (in_count < 1 || !in_bufs[0]) {
 		return;
 	}
 
-	if (gCtrlVars.reverb_unit.enable) {
+	/* 同步EffectGraph参数到SDK音效单元 */
+	gCtrlVars.reverb_unit.dry_scale = 100;  /* 干声始终100% */
+	gCtrlVars.reverb_unit.wet_scale = node->params.reverb.wet_dry;
+	gCtrlVars.reverb_unit.roomsize_scale = node->params.reverb.room_size;
+	gCtrlVars.reverb_unit.damping_scale = node->params.reverb.damping;
+	gCtrlVars.reverb_unit.width_scale = 50;  /* 立体声分离度固定50% */
+
+	/* 应用参数配置到SDK */
+	if (gCtrlVars.reverb_unit.ct) {
+		reverb_configure(gCtrlVars.reverb_unit.ct,
+		                gCtrlVars.reverb_unit.dry_scale,
+		                gCtrlVars.reverb_unit.wet_scale,
+		                gCtrlVars.reverb_unit.width_scale,
+		                gCtrlVars.reverb_unit.roomsize_scale,
+		                gCtrlVars.reverb_unit.damping_scale);
+	}
+
+	if (gCtrlVars.reverb_unit.enable && gCtrlVars.reverb_unit.wet_scale > 0) {
 		AudioEffectReverbApply(&gCtrlVars.reverb_unit,
 		                       (int16_t *)in_bufs[0],
 		                       (int16_t *)out_buf,

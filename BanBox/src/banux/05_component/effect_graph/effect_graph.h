@@ -5,13 +5,13 @@
  * @version  V1.0.0
  * @date     04-January-2026
  * @brief    音频效果器图 - 基于图数据结构的音频处理链路
- * 
+ *
  * 功能说明:
  *   - 输入源节点: ADC0, ADC1, USB_IN, BT_IN
  *   - 输出源节点: DAC0, USB_OUT
  *   - 处理节点: 混音器(Mixer), 各种效果器(Reverb, DRC, EQ等)
  *   - 支持灵活的音频路由和效果链配置
- * 
+ *
  * 使用方法:
  *   1. EffectGraph_Init() 初始化图系统
  *   2. EffectGraph_CreateFromConfig() 从配置创建图
@@ -32,8 +32,8 @@ extern "C" {
 /*******************************************************************************
  * 配置定义
  ******************************************************************************/
-#define EFFECT_GRAPH_MAX_NODES      16      /* 最大节点数 */
-#define EFFECT_GRAPH_MAX_EDGES      32      /* 最大边数 */
+#define EFFECT_GRAPH_MAX_NODES      16    /* 最大节点数 */
+#define EFFECT_GRAPH_MAX_EDGES      32     /* 最大边数 */
 #define EFFECT_GRAPH_MAX_INPUTS     4       /* 最大输入端口数 */
 #define EFFECT_GRAPH_MAX_OUTPUTS    4       /* 最大输出端口数 */
 #define EFFECT_GRAPH_NAME_LEN       16      /* 节点名称长度 */
@@ -44,29 +44,29 @@ extern "C" {
  ******************************************************************************/
 typedef enum {
     /* 源节点 - 产生数据 */
-    NODE_TYPE_SOURCE_ADC0 = 0,      /* ADC0输入源 (吉他) */
-    NODE_TYPE_SOURCE_ADC1,          /* ADC1输入源 (麦克风) */
-    NODE_TYPE_SOURCE_USB_IN,        /* USB音频输入 */
-    NODE_TYPE_SOURCE_BT_IN,         /* 蓝牙音频输入 */
+    EFFECT_NODE_TYPE_SOURCE_ADC0 = 0,      /* ADC0输入源 (吉他) */
+    EFFECT_NODE_TYPE_SOURCE_ADC1,          /* ADC1输入源 (麦克风) */
+    EFFECT_NODE_TYPE_SOURCE_USB_IN,        /* USB音频输入 */
+    EFFECT_NODE_TYPE_SOURCE_BT_IN,         /* 蓝牙音频输入 */
     
     /* 输出节点 - 消费数据 */
-    NODE_TYPE_SINK_DAC0,            /* DAC0输出 */
-    NODE_TYPE_SINK_USB_OUT,         /* USB音频输出 */
+    EFFECT_NODE_TYPE_SINK_DAC0,            /* DAC0输出 */
+    EFFECT_NODE_TYPE_SINK_USB_OUT,         /* USB音频输出 */
     
     /* 处理节点 - 处理数据 */
-    NODE_TYPE_MIXER,                /* 混音器 */
-    NODE_TYPE_EFFECT_REVERB,        /* 混响效果 */
-    NODE_TYPE_EFFECT_DRC,           /* 动态范围压缩 */
-    NODE_TYPE_EFFECT_EQ,            /* 均衡器 */
-    NODE_TYPE_EFFECT_EXPANDER,      /* 扩展器 */
-    NODE_TYPE_EFFECT_HOWLING,       /* 啸叫抑制 */
-    NODE_TYPE_EFFECT_NOISE_GATE,    /* 噪声门 */
-    NODE_TYPE_EFFECT_GAIN,          /* 增益控制 */
-    NODE_TYPE_EFFECT_DELAY,         /* 延迟效果 */
-    NODE_TYPE_EFFECT_CHORUS,        /* 合唱效果 */
-    NODE_TYPE_LOOPER,               /* 循环录音器 */
+    EFFECT_NODE_TYPE_MIXER,                /* 混音器 */
+    EFFECT_NODE_TYPE_EFFECT_REVERB,        /* 混响效果 */
+    EFFECT_NODE_TYPE_EFFECT_DRC,           /* 动态范围压缩 */
+    EFFECT_NODE_TYPE_EFFECT_EQ,            /* 均衡器 */
+    EFFECT_NODE_TYPE_EFFECT_EXPANDER,      /* 扩展器 */
+    EFFECT_NODE_TYPE_EFFECT_HOWLING,       /* 啸叫抑制 */
+    EFFECT_NODE_TYPE_EFFECT_NOISE_GATE,    /* 噪声门 */
+    EFFECT_NODE_TYPE_EFFECT_GAIN,          /* 增益控制 */
+    EFFECT_NODE_TYPE_EFFECT_DELAY,         /* 延迟效果 */
+    EFFECT_NODE_TYPE_EFFECT_CHORUS,        /* 合唱效果 */
+    EFFECT_NODE_TYPE_LOOPER,               /* 循环录音器 */
     
-    NODE_TYPE_MAX
+    EFFECT_NODE_TYPE_MAX
 } EffectNodeType_t;
 
 /*******************************************************************************
@@ -99,7 +99,7 @@ typedef enum {
  ******************************************************************************/
 typedef struct EffectNode EffectNode_t;
 typedef struct EffectEdge EffectEdge_t;
-typedef struct EffectGraph EffectGraph_t;
+typedef struct EffectGraph EffectGraphRuntime_t;
 
 /*******************************************************************************
  * 节点处理回调函数类型
@@ -308,7 +308,7 @@ GraphError_t EffectGraph_Init(void);
  * @brief 获取图实例
  * @return 图指针
  */
-EffectGraph_t* EffectGraph_GetInstance(void);
+EffectGraphRuntime_t* EffectGraph_GetInstance(void);
 
 /**
  * @brief 从配置创建图

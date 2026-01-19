@@ -114,23 +114,23 @@ static int NodeTypeGet(char *buf, uint16_t maxLen, void *userData)
     if (!node || !buf) return -1;
     
     switch (node->type) {
-        case NODE_TYPE_SOURCE_ADC0: type_str = "adc0"; break;
-        case NODE_TYPE_SOURCE_ADC1: type_str = "adc1"; break;
-        case NODE_TYPE_SOURCE_USB_IN: type_str = "usb_in"; break;
-        case NODE_TYPE_SOURCE_BT_IN: type_str = "bt_in"; break;
-        case NODE_TYPE_SINK_DAC0: type_str = "dac0"; break;
-        case NODE_TYPE_SINK_USB_OUT: type_str = "usb_out"; break;
-        case NODE_TYPE_MIXER: type_str = "mixer"; break;
-        case NODE_TYPE_EFFECT_REVERB: type_str = "reverb"; break;
-        case NODE_TYPE_EFFECT_DRC: type_str = "drc"; break;
-        case NODE_TYPE_EFFECT_EQ: type_str = "eq"; break;
-        case NODE_TYPE_EFFECT_EXPANDER: type_str = "expander"; break;
-        case NODE_TYPE_EFFECT_HOWLING: type_str = "howling"; break;
-        case NODE_TYPE_EFFECT_NOISE_GATE: type_str = "noise_gate"; break;
-        case NODE_TYPE_EFFECT_GAIN: type_str = "gain"; break;
-        case NODE_TYPE_EFFECT_DELAY: type_str = "delay"; break;
-        case NODE_TYPE_EFFECT_CHORUS: type_str = "chorus"; break;
-        case NODE_TYPE_LOOPER: type_str = "looper"; break;
+        case EFFECT_NODE_TYPE_SOURCE_ADC0: type_str = "adc0"; break;
+        case EFFECT_NODE_TYPE_SOURCE_ADC1: type_str = "adc1"; break;
+        case EFFECT_NODE_TYPE_SOURCE_USB_IN: type_str = "usb_in"; break;
+        case EFFECT_NODE_TYPE_SOURCE_BT_IN: type_str = "bt_in"; break;
+        case EFFECT_NODE_TYPE_SINK_DAC0: type_str = "dac0"; break;
+        case EFFECT_NODE_TYPE_SINK_USB_OUT: type_str = "usb_out"; break;
+        case EFFECT_NODE_TYPE_MIXER: type_str = "mixer"; break;
+        case EFFECT_NODE_TYPE_EFFECT_REVERB: type_str = "reverb"; break;
+        case EFFECT_NODE_TYPE_EFFECT_DRC: type_str = "drc"; break;
+        case EFFECT_NODE_TYPE_EFFECT_EQ: type_str = "eq"; break;
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER: type_str = "expander"; break;
+        case EFFECT_NODE_TYPE_EFFECT_HOWLING: type_str = "howling"; break;
+        case EFFECT_NODE_TYPE_EFFECT_NOISE_GATE: type_str = "noise_gate"; break;
+        case EFFECT_NODE_TYPE_EFFECT_GAIN: type_str = "gain"; break;
+        case EFFECT_NODE_TYPE_EFFECT_DELAY: type_str = "delay"; break;
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS: type_str = "chorus"; break;
+        case EFFECT_NODE_TYPE_LOOPER: type_str = "looper"; break;
         default: break;
     }
     
@@ -420,7 +420,7 @@ static void CreateNodeParams(VfsNode_t *nodeDir, EffectNode_t *node)
     
     /* 根据节点类型创建特定参数 */
     switch (node->type) {
-        case NODE_TYPE_EFFECT_DRC:
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
             Vfs_CreateParam(nodeDir, "threshold", "Threshold dB (-60~0)", 
                             DrcThresholdGet, DrcThresholdSet, node);
             Vfs_CreateParam(nodeDir, "ratio", "Ratio (1~20)", 
@@ -431,7 +431,7 @@ static void CreateNodeParams(VfsNode_t *nodeDir, EffectNode_t *node)
                             DrcReleaseGet, DrcReleaseSet, node);
             break;
             
-        case NODE_TYPE_EFFECT_REVERB:
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
             Vfs_CreateParam(nodeDir, "room", "Room size (0~100)", 
                             ReverbRoomGet, ReverbRoomSet, node);
             Vfs_CreateParam(nodeDir, "damp", "Damping (0~100)", 
@@ -440,12 +440,12 @@ static void CreateNodeParams(VfsNode_t *nodeDir, EffectNode_t *node)
                             ReverbWetGet, ReverbWetSet, node);
             break;
             
-        case NODE_TYPE_EFFECT_GAIN:
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
             Vfs_CreateParam(nodeDir, "gain", "Gain dB (-60~+20)", 
                             GainGet, GainSet, node);
             break;
             
-        case NODE_TYPE_EFFECT_DELAY:
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
             Vfs_CreateParam(nodeDir, "time", "Delay ms (10~1000)", 
                             DelayTimeGet, DelayTimeSet, node);
             Vfs_CreateParam(nodeDir, "feedback", "Feedback (0~100)", 
@@ -454,14 +454,14 @@ static void CreateNodeParams(VfsNode_t *nodeDir, EffectNode_t *node)
                             DelayWetGet, DelayWetSet, node);
             break;
             
-        case NODE_TYPE_EFFECT_EXPANDER:
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
             Vfs_CreateParam(nodeDir, "threshold", "Threshold dB (-80~0)", 
                             ExpanderThresholdGet, ExpanderThresholdSet, node);
             Vfs_CreateParam(nodeDir, "ratio", "Ratio (1~10)", 
                             ExpanderRatioGet, ExpanderRatioSet, node);
             break;
             
-        case NODE_TYPE_EFFECT_EQ:
+        case EFFECT_NODE_TYPE_EFFECT_EQ:
             /* EQ bands - 简化实现 */
             {
                 int i;
@@ -551,7 +551,7 @@ GraphVfsError_t EffectGraphVfs_Init(void)
     return GRAPH_VFS_OK;
 }
 
-GraphVfsHandle_t* EffectGraphVfs_Mount(const char *graph_name, EffectGraph_t *graph)
+GraphVfsHandle_t* EffectGraphVfs_Mount(const char *graph_name, EffectGraphRuntime_t *graph)
 {
     GraphVfsHandle_t *handle;
     VfsNode_t *graphDir, *nodesDir;
@@ -660,7 +660,7 @@ GraphVfsError_t EffectGraphVfs_Refresh(GraphVfsHandle_t *handle)
     
     /* 简单实现：卸载后重新挂载 */
     char name[16];
-    EffectGraph_t *graph = handle->graph;
+    EffectGraphRuntime_t *graph = handle->graph;
     
     strncpy(name, handle->name, sizeof(name) - 1);
     EffectGraphVfs_Unmount(handle);
@@ -694,7 +694,7 @@ GraphVfsHandle_t* EffectGraphVfs_CreateGraph(const char *graph_name, GraphPreset
 {
     /* 创建新的效果图实例 */
     /* 注意：这需要效果图系统支持多实例，当前简化实现 */
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     
     if (!graph_name) return NULL;
     
@@ -750,7 +750,7 @@ int EffectGraphVfs_ListGraphs(void (*callback)(const char *name, GraphVfsHandle_
  */
 GraphVfsError_t EffectGraphVfs_MountDefault(void)
 {
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     GraphVfsError_t err;
     
     /* 初始化VFS */
@@ -789,7 +789,7 @@ GraphVfsError_t EffectGraphVfs_MountDefault(void)
  */
 GraphVfsError_t EffectGraphVfs_TryAutoMount(void)
 {
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     int count;
     
     DBG("[GraphVfs] TryAutoMount: Start\n");

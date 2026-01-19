@@ -78,7 +78,7 @@ typedef enum {
  */
 typedef struct {
     char name[16];              /* 图名称，如"graph0" */
-    EffectGraph_t *graph;       /* 关联的效果图实例 */
+    EffectGraphRuntime_t *graph;       /* 关联的效果图实例 */
     VfsNode_t *root_dir;        /* 图根目录节点 */
     VfsNode_t *info_node;       /* info节点 */
     VfsNode_t *preset_node;     /* preset节点 */
@@ -105,7 +105,7 @@ GraphVfsError_t EffectGraphVfs_Init(void);
  * @return 图VFS句柄，NULL表示失败
  * @note   会在/audio下创建对应的目录结构
  */
-GraphVfsHandle_t* EffectGraphVfs_Mount(const char *graph_name, EffectGraph_t *graph);
+GraphVfsHandle_t* EffectGraphVfs_Mount(const char *graph_name, EffectGraphRuntime_t *graph);
 
 /**
  * @brief  卸载效果图

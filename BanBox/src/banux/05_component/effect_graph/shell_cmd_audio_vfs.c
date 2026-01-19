@@ -94,7 +94,7 @@ static int CmdList(int argc, char *argv[])
  */
 static int CmdMount(int argc, char *argv[])
 {
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     GraphVfsHandle_t *handle;
     (void)argc;
     (void)argv;

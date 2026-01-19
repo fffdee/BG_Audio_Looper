@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug.h"
+#include "audio_effect.h"  /* For AudioEffectReverbConfig */
+#include "ctrlvars.h"      /* For gCtrlVars */
 
 /*******************************************************************************
  * 参数范围定义 (用于校验)
@@ -114,13 +116,13 @@ static GraphSnapshot_t g_Snapshots[SNAPSHOT_MAX_SLOTS];
 static const ParamRange_t* GetParamRangeTable(EffectNodeType_t type)
 {
     switch (type) {
-        case NODE_TYPE_EFFECT_REVERB:   return g_ReverbParamRange;
-        case NODE_TYPE_EFFECT_DRC:      return g_DrcParamRange;
-        case NODE_TYPE_EFFECT_EQ:       return g_EqParamRange;
-        case NODE_TYPE_EFFECT_GAIN:     return g_GainParamRange;
-        case NODE_TYPE_EFFECT_DELAY:    return g_DelayParamRange;
-        case NODE_TYPE_EFFECT_EXPANDER: return g_ExpanderParamRange;
-        case NODE_TYPE_MIXER:           return g_MixerParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:   return g_ReverbParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_DRC:      return g_DrcParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_EQ:       return g_EqParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:     return g_GainParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:    return g_DelayParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER: return g_ExpanderParamRange;
+        case EFFECT_NODE_TYPE_MIXER:           return g_MixerParamRange;
         default:                        return NULL;
     }
 }
@@ -215,14 +217,14 @@ static void PrintNodeParams(EffectNode_t *node)
                  node->bypass ? "[Bypass]" : "");
     
     switch (node->type) {
-        case NODE_TYPE_EFFECT_REVERB:
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
             Shell_Printf("Type: REVERB\n");
             Shell_Printf("  room   = %d (0-100)\n", node->params.reverb.room_size);
             Shell_Printf("  damp   = %d (0-100)\n", node->params.reverb.damping);
             Shell_Printf("  wet    = %d (0-100)\n", node->params.reverb.wet_dry);
             break;
             
-        case NODE_TYPE_EFFECT_DRC:
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
             Shell_Printf("Type: DRC\n");
             Shell_Printf("  threshold = %d dB\n", node->params.drc.threshold);
             Shell_Printf("  ratio     = %d\n", node->params.drc.ratio);
@@ -230,7 +232,7 @@ static void PrintNodeParams(EffectNode_t *node)
             Shell_Printf("  release   = %d ms\n", node->params.drc.release);
             break;
             
-        case NODE_TYPE_EFFECT_EQ:
+        case EFFECT_NODE_TYPE_EFFECT_EQ:
             Shell_Printf("Type: EQ (%d bands)\n", node->params.eq.band_count);
             {
                 uint8_t i;
@@ -240,25 +242,25 @@ static void PrintNodeParams(EffectNode_t *node)
             }
             break;
             
-        case NODE_TYPE_EFFECT_GAIN:
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
             Shell_Printf("Type: GAIN\n");
             Shell_Printf("  gain = %d dB\n", node->params.gain.gain_db);
             break;
             
-        case NODE_TYPE_EFFECT_DELAY:
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
             Shell_Printf("Type: DELAY\n");
             Shell_Printf("  time     = %d ms\n", node->params.delay.delay_ms);
             Shell_Printf("  feedback = %d (0-100)\n", node->params.delay.feedback);
             Shell_Printf("  wet      = %d (0-100)\n", node->params.delay.wet_dry);
             break;
             
-        case NODE_TYPE_EFFECT_EXPANDER:
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
             Shell_Printf("Type: EXPANDER\n");
             Shell_Printf("  threshold = %d dB\n", node->params.expander.threshold);
             Shell_Printf("  ratio     = %d\n", node->params.expander.ratio);
             break;
             
-        case NODE_TYPE_MIXER:
+        case EFFECT_NODE_TYPE_MIXER:
             Shell_Printf("Type: MIXER (%d inputs)\n", node->params.mixer.input_count);
             {
                 uint8_t i;
@@ -268,15 +270,15 @@ static void PrintNodeParams(EffectNode_t *node)
             }
             break;
             
-        case NODE_TYPE_SOURCE_ADC0:
-        case NODE_TYPE_SOURCE_ADC1:
-        case NODE_TYPE_SOURCE_USB_IN:
-        case NODE_TYPE_SOURCE_BT_IN:
+        case EFFECT_NODE_TYPE_SOURCE_ADC0:
+        case EFFECT_NODE_TYPE_SOURCE_ADC1:
+        case EFFECT_NODE_TYPE_SOURCE_USB_IN:
+        case EFFECT_NODE_TYPE_SOURCE_BT_IN:
             Shell_Printf("Type: SOURCE (no params)\n");
             break;
             
-        case NODE_TYPE_SINK_DAC0:
-        case NODE_TYPE_SINK_USB_OUT:
+        case EFFECT_NODE_TYPE_SINK_DAC0:
+        case EFFECT_NODE_TYPE_SINK_USB_OUT:
             Shell_Printf("Type: SINK (no params)\n");
             break;
             
@@ -311,38 +313,80 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
     /* ret == -2 只是警告，继续设置 */
     
     switch (node->type) {
-        case NODE_TYPE_EFFECT_REVERB:
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
             if (strcmp(param_name, "room") == 0) {
                 node->params.reverb.room_size = (uint8_t)value;
+                /* 同步到全局混响单元 */
+                extern ControlVariablesContext gCtrlVars;
+                gCtrlVars.reverb_unit.roomsize_scale = (int32_t)value;
+                AudioEffectReverbConfig(&gCtrlVars.reverb_unit);
             } else if (strcmp(param_name, "damp") == 0) {
                 node->params.reverb.damping = (uint8_t)value;
+                /* 同步到全局混响单元 */
+                extern ControlVariablesContext gCtrlVars;
+                gCtrlVars.reverb_unit.damping_scale = (int32_t)value;
+                AudioEffectReverbConfig(&gCtrlVars.reverb_unit);
             } else if (strcmp(param_name, "wet") == 0) {
                 node->params.reverb.wet_dry = (uint8_t)value;
+                /* 同步到全局混响单元 */
+                extern ControlVariablesContext gCtrlVars;
+                gCtrlVars.reverb_unit.wet_scale = (int32_t)value;
+                AudioEffectReverbConfig(&gCtrlVars.reverb_unit);
             } else {
                 return -1;
             }
             break;
             
-        case NODE_TYPE_EFFECT_DRC:
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
             if (strcmp(param_name, "threshold") == 0) {
                 node->params.drc.threshold = (int16_t)value;
+                /* 同步到全局DRC单元 */
+                extern ControlVariablesContext gCtrlVars;
+                gCtrlVars.mic_drc_unit.threshold[0] = (int16_t)value;
+                #if CFG_AUDIO_EFFECT_MIC_DRC_EN
+                AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
+                #endif
             } else if (strcmp(param_name, "ratio") == 0) {
                 node->params.drc.ratio = (uint8_t)value;
+                /* 同步到全局DRC单元 */
+                extern ControlVariablesContext gCtrlVars;
+                gCtrlVars.mic_drc_unit.ratio[0] = (uint8_t)value;
+                #if CFG_AUDIO_EFFECT_MIC_DRC_EN
+                AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
+                #endif
             } else if (strcmp(param_name, "attack") == 0) {
                 node->params.drc.attack = (uint8_t)value;
+                /* 同步到全局DRC单元 */
+                extern ControlVariablesContext gCtrlVars;
+                gCtrlVars.mic_drc_unit.attack_tc[0] = (uint8_t)value;
+                #if CFG_AUDIO_EFFECT_MIC_DRC_EN
+                AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
+                #endif
             } else if (strcmp(param_name, "release") == 0) {
                 node->params.drc.release = (uint8_t)value;
+                /* 同步到全局DRC单元 */
+                extern ControlVariablesContext gCtrlVars;
+                gCtrlVars.mic_drc_unit.release_tc[0] = (uint8_t)value;
+                #if CFG_AUDIO_EFFECT_MIC_DRC_EN
+                AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
+                #endif
             } else {
                 return -1;
             }
             break;
             
-        case NODE_TYPE_EFFECT_EQ:
+        case EFFECT_NODE_TYPE_EFFECT_EQ:
             /* 支持 band0, band1, ..., band9 */
             if (strncmp(param_name, "band", 4) == 0 && param_name[4] >= '0' && param_name[4] <= '9') {
                 uint8_t band = param_name[4] - '0';
                 if (band < 10) {
                     node->params.eq.band_gains[band] = (int8_t)value;
+                    /* 同步到全局EQ单元 */
+                    extern ControlVariablesContext gCtrlVars;
+                    gCtrlVars.mic_out_eq_unit.eq_params[band].gain = (int32_t)value * 256;  /* 转换为Q8.8格式 */
+                    #if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
+                    AudioEffectEQFilterConfig(&gCtrlVars.mic_out_eq_unit, 48000);
+                    #endif
                 } else {
                     return -1;
                 }
@@ -351,7 +395,7 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
             }
             break;
             
-        case NODE_TYPE_EFFECT_GAIN:
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
             if (strcmp(param_name, "gain") == 0) {
                 node->params.gain.gain_db = (int16_t)value;
             } else {
@@ -359,7 +403,7 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
             }
             break;
             
-        case NODE_TYPE_EFFECT_DELAY:
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
             if (strcmp(param_name, "time") == 0) {
                 node->params.delay.delay_ms = (uint16_t)value;
             } else if (strcmp(param_name, "feedback") == 0) {
@@ -371,7 +415,7 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
             }
             break;
             
-        case NODE_TYPE_EFFECT_EXPANDER:
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
             if (strcmp(param_name, "threshold") == 0) {
                 node->params.expander.threshold = (int16_t)value;
             } else if (strcmp(param_name, "ratio") == 0) {
@@ -381,7 +425,7 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
             }
             break;
             
-        case NODE_TYPE_MIXER:
+        case EFFECT_NODE_TYPE_MIXER:
             /* 支持 in0_gain, in1_gain, ... */
             if (strncmp(param_name, "in", 2) == 0 && param_name[2] >= '0' && param_name[2] <= '3') {
                 uint8_t ch = param_name[2] - '0';
@@ -415,7 +459,7 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
     if (!node || !param_name || !value) return -1;
     
     switch (node->type) {
-        case NODE_TYPE_EFFECT_REVERB:
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
             if (strcmp(param_name, "room") == 0) {
                 *value = node->params.reverb.room_size;
             } else if (strcmp(param_name, "damp") == 0) {
@@ -427,7 +471,7 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
             }
             break;
             
-        case NODE_TYPE_EFFECT_DRC:
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
             if (strcmp(param_name, "threshold") == 0) {
                 *value = node->params.drc.threshold;
             } else if (strcmp(param_name, "ratio") == 0) {
@@ -441,7 +485,7 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
             }
             break;
             
-        case NODE_TYPE_EFFECT_EQ:
+        case EFFECT_NODE_TYPE_EFFECT_EQ:
             if (strncmp(param_name, "band", 4) == 0 && param_name[4] >= '0' && param_name[4] <= '9') {
                 uint8_t band = param_name[4] - '0';
                 if (band < 10) {
@@ -454,7 +498,7 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
             }
             break;
             
-        case NODE_TYPE_EFFECT_GAIN:
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
             if (strcmp(param_name, "gain") == 0) {
                 *value = node->params.gain.gain_db;
             } else {
@@ -462,7 +506,7 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
             }
             break;
             
-        case NODE_TYPE_EFFECT_DELAY:
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
             if (strcmp(param_name, "time") == 0) {
                 *value = node->params.delay.delay_ms;
             } else if (strcmp(param_name, "feedback") == 0) {
@@ -474,7 +518,7 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
             }
             break;
             
-        case NODE_TYPE_EFFECT_EXPANDER:
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
             if (strcmp(param_name, "threshold") == 0) {
                 *value = node->params.expander.threshold;
             } else if (strcmp(param_name, "ratio") == 0) {
@@ -484,7 +528,7 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
             }
             break;
             
-        case NODE_TYPE_MIXER:
+        case EFFECT_NODE_TYPE_MIXER:
             if (strncmp(param_name, "in", 2) == 0 && param_name[2] >= '0' && param_name[2] <= '3') {
                 uint8_t ch = param_name[2] - '0';
                 if (ch < EFFECT_GRAPH_MAX_INPUTS && strstr(param_name, "_gain")) {
@@ -533,7 +577,7 @@ static void PrintHelp(void)
 /* 列出所有节点 */
 static int CmdList(void)
 {
-    EffectGraph_t *graph = EffectGraph_GetInstance();
+    EffectGraphRuntime_t *graph = EffectGraph_GetInstance();
     uint8_t i;
     
     if (!graph) {
@@ -551,23 +595,23 @@ static int CmdList(void)
         const char *type_str = "Unknown";
         
         switch (node->type) {
-            case NODE_TYPE_SOURCE_ADC0: type_str = "ADC0"; break;
-            case NODE_TYPE_SOURCE_ADC1: type_str = "ADC1"; break;
-            case NODE_TYPE_SOURCE_USB_IN: type_str = "USB_IN"; break;
-            case NODE_TYPE_SOURCE_BT_IN: type_str = "BT_IN"; break;
-            case NODE_TYPE_SINK_DAC0: type_str = "DAC0"; break;
-            case NODE_TYPE_SINK_USB_OUT: type_str = "USB_OUT"; break;
-            case NODE_TYPE_MIXER: type_str = "MIXER"; break;
-            case NODE_TYPE_EFFECT_REVERB: type_str = "REVERB"; break;
-            case NODE_TYPE_EFFECT_DRC: type_str = "DRC"; break;
-            case NODE_TYPE_EFFECT_EQ: type_str = "EQ"; break;
-            case NODE_TYPE_EFFECT_EXPANDER: type_str = "EXPANDER"; break;
-            case NODE_TYPE_EFFECT_HOWLING: type_str = "HOWLING"; break;
-            case NODE_TYPE_EFFECT_NOISE_GATE: type_str = "NOISE_GATE"; break;
-            case NODE_TYPE_EFFECT_GAIN: type_str = "GAIN"; break;
-            case NODE_TYPE_EFFECT_DELAY: type_str = "DELAY"; break;
-            case NODE_TYPE_EFFECT_CHORUS: type_str = "CHORUS"; break;
-            case NODE_TYPE_LOOPER: type_str = "LOOPER"; break;
+            case EFFECT_NODE_TYPE_SOURCE_ADC0: type_str = "ADC0"; break;
+            case EFFECT_NODE_TYPE_SOURCE_ADC1: type_str = "ADC1"; break;
+            case EFFECT_NODE_TYPE_SOURCE_USB_IN: type_str = "USB_IN"; break;
+            case EFFECT_NODE_TYPE_SOURCE_BT_IN: type_str = "BT_IN"; break;
+            case EFFECT_NODE_TYPE_SINK_DAC0: type_str = "DAC0"; break;
+            case EFFECT_NODE_TYPE_SINK_USB_OUT: type_str = "USB_OUT"; break;
+            case EFFECT_NODE_TYPE_MIXER: type_str = "MIXER"; break;
+            case EFFECT_NODE_TYPE_EFFECT_REVERB: type_str = "REVERB"; break;
+            case EFFECT_NODE_TYPE_EFFECT_DRC: type_str = "DRC"; break;
+            case EFFECT_NODE_TYPE_EFFECT_EQ: type_str = "EQ"; break;
+            case EFFECT_NODE_TYPE_EFFECT_EXPANDER: type_str = "EXPANDER"; break;
+            case EFFECT_NODE_TYPE_EFFECT_HOWLING: type_str = "HOWLING"; break;
+            case EFFECT_NODE_TYPE_EFFECT_NOISE_GATE: type_str = "NOISE_GATE"; break;
+            case EFFECT_NODE_TYPE_EFFECT_GAIN: type_str = "GAIN"; break;
+            case EFFECT_NODE_TYPE_EFFECT_DELAY: type_str = "DELAY"; break;
+            case EFFECT_NODE_TYPE_EFFECT_CHORUS: type_str = "CHORUS"; break;
+            case EFFECT_NODE_TYPE_LOOPER: type_str = "LOOPER"; break;
             default: break;
         }
         
@@ -739,7 +783,7 @@ static int CmdParam(int argc, char *argv[])
     
     /* 根据节点类型和参数名读取/设置参数 */
     switch (node->type) {
-        case NODE_TYPE_EFFECT_REVERB:
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
             if (strcmp(param, "room") == 0) {
                 if (argc >= 5) {
                     node->params.reverb.room_size = atoi(argv[4]);
@@ -761,7 +805,7 @@ static int CmdParam(int argc, char *argv[])
             }
             break;
             
-        case NODE_TYPE_EFFECT_DRC:
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
             if (strcmp(param, "threshold") == 0) {
                 if (argc >= 5) {
                     node->params.drc.threshold = atoi(argv[4]);
@@ -788,7 +832,7 @@ static int CmdParam(int argc, char *argv[])
             }
             break;
             
-        case NODE_TYPE_EFFECT_GAIN:
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
             if (strcmp(param, "gain") == 0) {
                 if (argc >= 5) {
                     node->params.gain.gain_db = atoi(argv[4]);
@@ -800,7 +844,7 @@ static int CmdParam(int argc, char *argv[])
             }
             break;
             
-        case NODE_TYPE_EFFECT_DELAY:
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
             if (strcmp(param, "time") == 0) {
                 if (argc >= 5) {
                     node->params.delay.delay_ms = atoi(argv[4]);
@@ -849,7 +893,7 @@ static int CmdSnapshotSave(int argc, char *argv[])
 {
     int slot;
     uint8_t i;
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     GraphSnapshot_t *snap;
     
     if (argc < 4) {
@@ -903,7 +947,7 @@ static int CmdSnapshotLoad(int argc, char *argv[])
 {
     int slot;
     uint8_t i;
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     GraphSnapshot_t *snap;
     
     if (argc < 4) {
@@ -1004,7 +1048,7 @@ static int CmdSnapshot(int argc, char *argv[])
  */
 static int CmdAllFx(int argc, char *argv[])
 {
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     uint8_t i;
     bool enable;
     int count = 0;
@@ -1025,7 +1069,7 @@ static int CmdAllFx(int argc, char *argv[])
     for (i = 0; i < graph->node_count; i++) {
         EffectNode_t *node = &graph->nodes[i];
         /* 只处理效果器节点，跳过源/输出节点 */
-        if (node->type >= NODE_TYPE_MIXER && node->type < NODE_TYPE_MAX) {
+        if (node->type >= EFFECT_NODE_TYPE_MIXER && node->type < EFFECT_NODE_TYPE_MAX) {
             EffectGraph_SetNodeEnabled(node, enable);
             count++;
         }
@@ -1040,7 +1084,7 @@ static int CmdAllFx(int argc, char *argv[])
  */
 static int CmdAllBypass(int argc, char *argv[])
 {
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     uint8_t i;
     bool bypass;
     int count = 0;
@@ -1060,7 +1104,7 @@ static int CmdAllBypass(int argc, char *argv[])
     
     for (i = 0; i < graph->node_count; i++) {
         EffectNode_t *node = &graph->nodes[i];
-        if (node->type >= NODE_TYPE_MIXER && node->type < NODE_TYPE_MAX) {
+        if (node->type >= EFFECT_NODE_TYPE_MIXER && node->type < EFFECT_NODE_TYPE_MAX) {
             EffectGraph_SetNodeBypass(node, bypass);
             count++;
         }

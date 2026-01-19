@@ -64,40 +64,40 @@ static void SetDefaultEffectParams(EffectNode_t *node)
     if (!node) return;
     
     switch (node->type) {
-        case NODE_TYPE_EFFECT_REVERB:
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
             node->params.reverb.room_size = DEFAULT_REVERB_ROOM_SIZE;
             node->params.reverb.damping = DEFAULT_REVERB_DAMPING;
             node->params.reverb.wet_dry = DEFAULT_REVERB_WET_DRY;
             break;
             
-        case NODE_TYPE_EFFECT_DRC:
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
             node->params.drc.threshold = DEFAULT_DRC_THRESHOLD;
             node->params.drc.ratio = DEFAULT_DRC_RATIO;
             node->params.drc.attack = DEFAULT_DRC_ATTACK;
             node->params.drc.release = DEFAULT_DRC_RELEASE;
             break;
             
-        case NODE_TYPE_EFFECT_EQ:
+        case EFFECT_NODE_TYPE_EFFECT_EQ:
             node->params.eq.band_count = DEFAULT_EQ_BAND_COUNT;
             memset(node->params.eq.band_gains, 0, sizeof(node->params.eq.band_gains));
             break;
             
-        case NODE_TYPE_EFFECT_EXPANDER:
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
             node->params.expander.threshold = DEFAULT_EXPANDER_THRESHOLD;
             node->params.expander.ratio = DEFAULT_EXPANDER_RATIO;
             break;
             
-        case NODE_TYPE_EFFECT_GAIN:
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
             node->params.gain.gain_db = DEFAULT_GAIN_DB;
             break;
             
-        case NODE_TYPE_EFFECT_DELAY:
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
             node->params.delay.delay_ms = DEFAULT_DELAY_MS;
             node->params.delay.feedback = DEFAULT_DELAY_FEEDBACK;
             node->params.delay.wet_dry = DEFAULT_DELAY_WET_DRY;
             break;
             
-        case NODE_TYPE_MIXER:
+        case EFFECT_NODE_TYPE_MIXER:
             {
                 int i;
                 node->params.mixer.input_count = EFFECT_GRAPH_MAX_INPUTS;
@@ -176,7 +176,7 @@ GraphError_t EffectGraphConfig_LoadPreset(GraphPreset_t preset)
 {
     GraphConfig_t config;
     GraphError_t err;
-    EffectGraph_t *graph;
+    EffectGraphRuntime_t *graph;
     uint8_t i;
     
     DBG("[GraphConfig] Loading preset: %s\n", 

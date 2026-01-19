@@ -68,32 +68,32 @@ typedef enum {
  ******************************************************************************/
 #define DEFAULT_NODES_CONFIG { \
     /* ===== 输入源节点 ===== */ \
-    { NODE_ID_ADC0_GUITAR, NODE_TYPE_SOURCE_ADC0,   "guitar_in", true,  {0} }, \
-    { NODE_ID_ADC1_MIC,    NODE_TYPE_SOURCE_ADC1,   "mic_in",    true,  {0} }, \
-    { NODE_ID_USB_IN,      NODE_TYPE_SOURCE_USB_IN, "usb_in",    true,  {0} }, \
-    { NODE_ID_BT_IN,       NODE_TYPE_SOURCE_BT_IN,  "bt_in",     true,  {0} }, \
+    { NODE_ID_ADC0_GUITAR, EFFECT_NODE_TYPE_SOURCE_ADC0,   "guitar_in", true,  {0} }, \
+    { NODE_ID_ADC1_MIC,    EFFECT_NODE_TYPE_SOURCE_ADC1,   "mic_in",    true,  {0} }, \
+    { NODE_ID_USB_IN,      EFFECT_NODE_TYPE_SOURCE_USB_IN, "usb_in",    true,  {0} }, \
+    { NODE_ID_BT_IN,       EFFECT_NODE_TYPE_SOURCE_BT_IN,  "bt_in",     true,  {0} }, \
     \
     /* ===== ADC 混音器节点 ===== */ \
-    { NODE_ID_ADC_MIXER,   NODE_TYPE_MIXER,         "adc_mixer", true,  {0} }, \
+    { NODE_ID_ADC_MIXER,   EFFECT_NODE_TYPE_MIXER,         "adc_mixer", true,  {0} }, \
     \
     /* ===== ADC 效果器链节点 ===== */ \
-    { NODE_ID_EXPANDER,    NODE_TYPE_EFFECT_EXPANDER, "expander",  true,  {0} }, \
-    { NODE_ID_DRC,         NODE_TYPE_EFFECT_DRC,      "drc",       true,  {0} }, \
-    { NODE_ID_EQ,          NODE_TYPE_EFFECT_EQ,       "eq",        true,  {0} }, \
-    { NODE_ID_REVERB,      NODE_TYPE_EFFECT_REVERB,   "reverb",    true,  {0} }, \
+    { NODE_ID_EXPANDER,    EFFECT_NODE_TYPE_EFFECT_EXPANDER, "expander",  true,  {0} }, \
+    { NODE_ID_DRC,         EFFECT_NODE_TYPE_EFFECT_DRC,      "drc",       true,  {0} }, \
+    { NODE_ID_EQ,          EFFECT_NODE_TYPE_EFFECT_EQ,       "eq",        true,  {0} }, \
+    { NODE_ID_REVERB,      EFFECT_NODE_TYPE_EFFECT_REVERB,   "reverb",    true,  {0} }, \
     \
     /* ===== USB/BT 混音器 ===== */ \
-    { NODE_ID_USB_BT_MIXER, NODE_TYPE_MIXER,         "usb_bt_mixer", true, {0} }, \
+    { NODE_ID_USB_BT_MIXER, EFFECT_NODE_TYPE_MIXER,         "usb_bt_mixer", true, {0} }, \
     \
     /* ===== USB/BT EQ ===== */ \
-    { NODE_ID_USB_BT_EQ,   NODE_TYPE_EFFECT_EQ,      "usb_bt_eq", true,  {0} }, \
+    { NODE_ID_USB_BT_EQ,   EFFECT_NODE_TYPE_EFFECT_EQ,      "usb_bt_eq", true,  {0} }, \
     \
     /* ===== 最终混音器 ===== */ \
-    { NODE_ID_FINAL_MIXER, NODE_TYPE_MIXER,          "final_mixer", true, {0} }, \
+    { NODE_ID_FINAL_MIXER, EFFECT_NODE_TYPE_MIXER,          "final_mixer", true, {0} }, \
     \
     /* ===== 输出节点 ===== */ \
-    { NODE_ID_DAC0_OUT,    NODE_TYPE_SINK_DAC0,      "dac_out",   true,  {0} }, \
-    { NODE_ID_USB_OUT,     NODE_TYPE_SINK_USB_OUT,   "usb_out",   true,  {0} }, \
+    { NODE_ID_DAC0_OUT,    EFFECT_NODE_TYPE_SINK_DAC0,      "dac_out",   true,  {0} }, \
+    { NODE_ID_USB_OUT,     EFFECT_NODE_TYPE_SINK_USB_OUT,   "usb_out",   true,  {0} }, \
 }
 
 /*******************************************************************************
@@ -157,15 +157,15 @@ typedef enum {
 #define DEFAULT_DRC_THRESHOLD       (-20)   /* 阈值 dB */
 #define DEFAULT_DRC_RATIO           4       /* 压缩比 */
 #define DEFAULT_DRC_ATTACK          10      /* 启动时间 ms */
-#define DEFAULT_DRC_RELEASE         100     /* 释放时间 ms */
+#define DEFAULT_DRC_RELEASE         200     /* 释放时间 ms */
 
 /* EQ默认参数 */
 #define DEFAULT_EQ_BAND_COUNT       5       /* 频段数 */
 #define DEFAULT_EQ_BAND_GAINS       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* 扩展器默认参数 */
-#define DEFAULT_EXPANDER_THRESHOLD  (-40)   /* 阈值 dB */
-#define DEFAULT_EXPANDER_RATIO      2       /* 扩展比 */
+#define DEFAULT_EXPANDER_THRESHOLD  (-20)   /* 阈值 dB */
+#define DEFAULT_EXPANDER_RATIO      1      /* 扩展比 */
 
 /* 增益默认参数 */
 #define DEFAULT_GAIN_DB             0       /* 增益 dB */
@@ -197,11 +197,11 @@ typedef enum {
 #define SIMPLE_NODE_COUNT   5
 
 #define SIMPLE_NODES_CONFIG { \
-    { 0, NODE_TYPE_SOURCE_ADC0,   "ADC0",    true, {0} }, \
-    { 1, NODE_TYPE_SOURCE_ADC1,   "ADC1",    true, {0} }, \
-    { 2, NODE_TYPE_MIXER,         "Mixer",   true, {0} }, \
-    { 3, NODE_TYPE_SINK_DAC0,     "DAC0",    true, {0} }, \
-    { 4, NODE_TYPE_SINK_USB_OUT,  "USB_Out", true, {0} }, \
+    { 0, EFFECT_NODE_TYPE_SOURCE_ADC0,   "ADC0",    true, {0} }, \
+    { 1, EFFECT_NODE_TYPE_SOURCE_ADC1,   "ADC1",    true, {0} }, \
+    { 2, EFFECT_NODE_TYPE_MIXER,         "Mixer",   true, {0} }, \
+    { 3, EFFECT_NODE_TYPE_SINK_DAC0,     "DAC0",    true, {0} }, \
+    { 4, EFFECT_NODE_TYPE_SINK_USB_OUT,  "USB_Out", true, {0} }, \
 }
 
 #define SIMPLE_EDGES_CONFIG { \
@@ -220,9 +220,9 @@ typedef enum {
 #define BT_SPEAKER_NODE_COUNT   3
 
 #define BT_SPEAKER_NODES_CONFIG { \
-    { 0, NODE_TYPE_SOURCE_BT_IN,  "BT_In",   true, {0} }, \
-    { 1, NODE_TYPE_EFFECT_EQ,     "EQ",      true, {0} }, \
-    { 2, NODE_TYPE_SINK_DAC0,     "DAC0",    true, {0} }, \
+    { 0, EFFECT_NODE_TYPE_SOURCE_BT_IN,  "BT_In",   true, {0} }, \
+    { 1, EFFECT_NODE_TYPE_EFFECT_EQ,     "EQ",      true, {0} }, \
+    { 2, EFFECT_NODE_TYPE_SINK_DAC0,     "DAC0",    true, {0} }, \
 }
 
 #define BT_SPEAKER_EDGES_CONFIG { \

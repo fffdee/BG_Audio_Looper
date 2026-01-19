@@ -1,0 +1,631 @@
+/**
+ * Chain Graph Application Module Implementation
+ */
+
+#include "chain_graph_apply.h"
+#include "effect_graph.h"
+#include "effect_graph_config.h"
+#include "sys_param.h"
+#include "ctrlvars.h"
+#include <string.h>
+#include <stdio.h>
+#include "debug.h"
+
+/**
+ * @brief Allocate a free node ID from the node pool
+ * @return node ID on success, -1 on failure
+ */
+static int alloc_node_id(void)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int i;
+
+    if (!ac) return -1;
+
+    // Find first free node ID
+    for (i = 0; i < MAX_GRAPH_NODES; i++) {
+        if ((ac->node_used_mask & (1 << i)) == 0) {
+            ac->node_used_mask |= (1 << i);
+            return i;
+        }
+    }
+
+    return -1; // No free nodes
+}
+
+/**
+ * @brief Free a node ID back to the pool
+ * @param node_id Node ID to free
+ */
+static void free_node_id(int node_id)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+
+    if (ac && node_id >= 0 && node_id < MAX_GRAPH_NODES) {
+        ac->node_used_mask &= ~(1 << node_id);
+    }
+}
+
+/**
+ * @brief Apply a chain graph configuration to the running EffectGraph instance
+ * @param graph_idx Index of the graph in the audio chain
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_ApplyToEffectGraph(int graph_idx)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    EffectGraph_t *chain_graph;
+    GraphConfig_t config;
+    NodeConfig_t nodes[MAX_GRAPH_NODES];
+    EdgeConfig_t edges[MAX_GRAPH_EDGES];
+    int i, node_idx;
+    uint8_t node_id;
+
+    if (!ac || graph_idx < 0 || graph_idx >= ac->graph_count) {
+        DBG("[ChainGraph] Invalid graph index: %d\n", graph_idx);
+        return -1;
+    }
+
+    chain_graph = &ac->graphs[graph_idx];
+    DBG("[ChainGraph] Applying graph '%s' (idx=%d) to EffectGraph\n",
+        chain_graph->name, graph_idx);
+    DBG("[ChainGraph] Graph has %d nodes, %d edges\n",
+        chain_graph->node_count, chain_graph->edge_count);
+
+    // Build GraphConfig_t from chain graph
+    memset(&config, 0, sizeof(GraphConfig_t));
+    config.sample_rate = 48000;  // Default sample rate
+    config.node_count = chain_graph->node_count;
+    config.edge_count = chain_graph->edge_count;
+    config.nodes = nodes;
+    config.edges = edges;
+
+    // Convert nodes from node pool
+    for (i = 0; i < chain_graph->node_count && i < MAX_GRAPH_NODES; i++) {
+        node_id = chain_graph->node_ids[i];
+        if (node_id >= MAX_GRAPH_NODES) {
+            DBG("[ChainGraph] Invalid node ID: %d\n", node_id);
+            continue;
+        }
+
+        GraphNode_t *chain_node = &ac->node_pool[node_id];
+        NodeConfig_t *node_config = &nodes[i];
+
+        // Set node ID
+        node_config->node_id = node_id;
+
+        // Convert node type and subtype to EffectGraph types
+        switch (chain_node->node_type) {
+            case NODE_TYPE_SOURCE:
+                // Convert source types
+                switch (chain_node->subtype) {
+                    case SOURCE_TYPE_GUITAR:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC0;
+                        break;
+                    case SOURCE_TYPE_MIC:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC1;
+                        break;
+                    case SOURCE_TYPE_BT:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_BT_IN;
+                        break;
+                    case SOURCE_TYPE_USB:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_USB_IN;
+                        break;
+                    default:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC0;
+                        break;
+                }
+                // Set source node name
+                switch (chain_node->subtype) {
+                    case SOURCE_TYPE_GUITAR:
+                        node_config->name = "guitar_in";
+                        break;
+                    case SOURCE_TYPE_MIC:
+                        node_config->name = "mic_in";
+                        break;
+                    case SOURCE_TYPE_BT:
+                        node_config->name = "bt_in";
+                        break;
+                    case SOURCE_TYPE_USB:
+                        node_config->name = "usb_in";
+                        break;
+                    default:
+                        node_config->name = "source";
+                        break;
+                }
+                break;
+
+            case NODE_TYPE_EFFECT:
+                // Convert effect types
+                switch (chain_node->subtype) {
+                    case EFFECT_TYPE_EQ:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_EQ;
+                        node_config->name = "eq";
+                        break;
+                    case EFFECT_TYPE_COMPRESSOR:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_DRC;
+                        node_config->name = "drc";
+                        break;
+                    case EFFECT_TYPE_REVERB:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_REVERB;
+                        node_config->name = "reverb";
+                        break;
+                    case EFFECT_TYPE_DELAY:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_DELAY;
+                        node_config->name = "delay";
+                        break;
+                    default:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_GAIN;
+                        node_config->name = "effect";
+                        break;
+                }
+                break;
+
+            case NODE_TYPE_MIXER:
+                node_config->type = EFFECT_NODE_TYPE_MIXER;
+                if (i == 0) {
+                    node_config->name = "adc_mixer";
+                } else {
+                    node_config->name = "final_mixer";
+                }
+                break;
+
+            case NODE_TYPE_OUTPUT:
+                // Convert output types
+                switch (chain_node->subtype) {
+                    case OUTPUT_TYPE_HEADPHONE:
+                    case OUTPUT_TYPE_SPEAKER:
+                        node_config->type = EFFECT_NODE_TYPE_SINK_DAC0;
+                        node_config->name = "dac_out";
+                        break;
+                    default:
+                        node_config->type = EFFECT_NODE_TYPE_SINK_USB_OUT;
+                        node_config->name = "usb_out";
+                        break;
+                }
+                break;
+
+            default:
+                DBG("[ChainGraph] Unknown node type: %d\n", chain_node->node_type);
+                continue;
+        }
+
+        // Set enabled state
+        node_config->enabled = chain_node->enabled;
+
+        // Copy parameters from node pool
+        memcpy(&node_config->params, &chain_node->params, sizeof(EffectParams_t));
+    }
+
+    // Copy edges (connections)
+    for (i = 0; i < chain_graph->edge_count && i < MAX_GRAPH_EDGES; i++) {
+        GraphEdge_t *chain_edge = &chain_graph->edges[i];
+        EdgeConfig_t *edge_config = &edges[i];
+
+        edge_config->src_node_id = chain_edge->from_node;
+        edge_config->dst_node_id = chain_edge->to_node;
+        edge_config->src_port = 0;  // Default port
+        edge_config->dst_port = 0;    // Default port
+    }
+
+    // Apply to running EffectGraph
+    GraphError_t err = EffectGraph_CreateFromConfig(&config);
+    if (err != GRAPH_OK) {
+        DBG("[ChainGraph] Failed to apply graph config (error=%d)\n", err);
+        DBG("[ChainGraph] Config: %d nodes, %d edges\n", config.node_count, config.edge_count);
+        return -1;
+    }
+
+    // Rebuild the graph topology
+    err = EffectGraph_Build();
+    if (err != GRAPH_OK) {
+        DBG("[ChainGraph] Failed to rebuild graph (error=%d)\n", err);
+        return -1;
+    }
+
+    // Sync parameters to global audio effect units
+    if (ChainGraph_SyncParamsToGlobalUnits() != 0) {
+        DBG("[ChainGraph] Failed to sync parameters to global units\n");
+        return -1;
+    }
+
+    DBG("[ChainGraph] Successfully applied graph '%s'\n", chain_graph->name);
+    return 0;
+}
+
+/**
+ * @brief Apply the currently active graph for headphones
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_ApplyActiveHP(void)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    return ChainGraph_ApplyToEffectGraph(ac->active_graph_hp);
+}
+
+/**
+ * @brief Apply the currently active graph for speakers
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_ApplyActiveSPK(void)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    return ChainGraph_ApplyToEffectGraph(ac->active_graph_spk);
+}
+
+/**
+ * @brief Apply a named graph to the running EffectGraph
+ * @param name Graph name
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_ApplyByName(const char *name)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int i;
+
+    for (i = 0; i < ac->graph_count; i++) {
+        if (strcmp(ac->graphs[i].name, name) == 0) {
+            return ChainGraph_ApplyToEffectGraph(i);
+        }
+    }
+
+    DBG("[ChainGraph] Graph '%s' not found\n", name);
+    return -1;
+}
+
+/**
+ * @brief Auto-apply saved chain graphs on system startup
+ * If saved graphs exist, apply the active ones; otherwise keep default preset
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_AutoApplyOnStartup(void)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int result = -1;
+
+    // Check if we have saved chain graphs and validate data
+    if (ac && ac->graph_count > 0 && ac->graph_count <= MAX_EFFECT_GRAPHS) {
+        int valid_graphs = 0;
+        int i;
+
+        // Validate each graph
+        for (i = 0; i < ac->graph_count; i++) {
+            EffectGraph_t *graph = &ac->graphs[i];
+            if (graph->node_count <= MAX_GRAPH_NODES &&
+                graph->edge_count <= MAX_GRAPH_EDGES) {
+                valid_graphs++;
+            }
+        }
+
+        if (valid_graphs == 0) {
+            DBG("[ChainGraph] No valid saved graphs found, keeping default preset\n");
+            return 0;
+        }
+
+        DBG("[ChainGraph] Found %d valid saved graphs (out of %d), auto-applying active graphs...\n",
+            valid_graphs, ac->graph_count);
+
+        // Try to apply HP active graph first
+        if (ac->active_graph_hp >= 0 && ac->active_graph_hp < ac->graph_count) {
+            EffectGraph_t *hp_graph = &ac->graphs[ac->active_graph_hp];
+            if (hp_graph->node_count <= MAX_GRAPH_NODES &&
+                hp_graph->edge_count <= MAX_GRAPH_EDGES) {
+                DBG("[ChainGraph] Applying active HP graph (idx=%d)\n", ac->active_graph_hp);
+                result = ChainGraph_ApplyToEffectGraph(ac->active_graph_hp);
+                if (result == 0) {
+                    DBG("[ChainGraph] Successfully applied saved HP graph\n");
+                    return 0;
+                } else {
+                    DBG("[ChainGraph] Failed to apply HP graph, trying SPK graph\n");
+                }
+            }
+        }
+
+        // If HP failed or not set, try SPK active graph
+        if (ac->active_graph_spk >= 0 && ac->active_graph_spk < ac->graph_count) {
+            EffectGraph_t *spk_graph = &ac->graphs[ac->active_graph_spk];
+            if (spk_graph->node_count <= MAX_GRAPH_NODES &&
+                spk_graph->edge_count <= MAX_GRAPH_EDGES) {
+                DBG("[ChainGraph] Applying active SPK graph (idx=%d)\n", ac->active_graph_spk);
+                result = ChainGraph_ApplyToEffectGraph(ac->active_graph_spk);
+                if (result == 0) {
+                    DBG("[ChainGraph] Successfully applied saved SPK graph\n");
+                    return 0;
+                } else {
+                    DBG("[ChainGraph] Failed to apply SPK graph\n");
+                }
+            }
+        }
+
+        // If both failed, fall back to first valid graph
+        for (i = 0; i < ac->graph_count; i++) {
+            EffectGraph_t *graph = &ac->graphs[i];
+            if (graph->node_count <= MAX_GRAPH_NODES &&
+                graph->edge_count <= MAX_GRAPH_EDGES) {
+                DBG("[ChainGraph] Applying first valid graph (idx=%d)\n", i);
+                result = ChainGraph_ApplyToEffectGraph(i);
+                if (result == 0) {
+                    DBG("[ChainGraph] Successfully applied first valid graph\n");
+                    return 0;
+                }
+            }
+        }
+
+        if (result != 0) {
+            DBG("[ChainGraph] All saved graphs failed to apply, keeping default preset\n");
+        }
+    } else {
+        DBG("[ChainGraph] No saved graphs found or invalid data, keeping default preset\n");
+        result = 0;  // Not an error, just no saved graphs
+    }
+
+    return result;
+}
+
+/**
+ * @brief Save the current EffectGraph state to a chain graph
+ * @param graph_idx Index of the chain graph to save to
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_SaveFromEffectGraph(int graph_idx)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    EffectGraphRuntime_t *effect_graph;
+    EffectGraph_t *chain_graph;
+    int i, j;
+
+    if (!ac || graph_idx < 0 || graph_idx >= MAX_EFFECT_GRAPHS) {
+        DBG("[ChainGraph] Invalid graph index: %d\n", graph_idx);
+        return -1;
+    }
+
+    effect_graph = EffectGraph_GetInstance();
+    if (!effect_graph) {
+        DBG("[ChainGraph] EffectGraph not initialized\n");
+        return -1;
+    }
+
+    chain_graph = &ac->graphs[graph_idx];
+
+    // Free existing node IDs before clearing the graph
+    for (i = 0; i < chain_graph->node_count && i < MAX_GRAPH_NODES; i++) {
+        uint8_t node_id = chain_graph->node_ids[i];
+        if (node_id < MAX_GRAPH_NODES) {
+            free_node_id(node_id);
+        }
+    }
+
+    // Clear existing graph
+    memset(chain_graph, 0, sizeof(EffectGraph_t));
+    memset(chain_graph->node_ids, 0xFF, MAX_GRAPH_NODES);
+
+    // Set basic info
+    snprintf(chain_graph->name, sizeof(chain_graph->name), "Saved_%d", graph_idx);
+    chain_graph->node_count = effect_graph->node_count;
+
+    DBG("[ChainGraph] Saving EffectGraph to chain graph %d (%d nodes)\n",
+        graph_idx, effect_graph->node_count);
+
+    // Save nodes
+    for (i = 0; i < effect_graph->node_count && i < MAX_GRAPH_NODES; i++) {
+        EffectNode_t *effect_node = &effect_graph->nodes[i];
+        int node_id = alloc_node_id();
+
+        if (node_id < 0) {
+            DBG("[ChainGraph] No free node IDs available\n");
+            return -1;
+        }
+
+        GraphNode_t *chain_node = &ac->node_pool[node_id];
+
+        // Initialize chain node
+        memset(chain_node, 0, sizeof(GraphNode_t));
+
+        DBG("[ChainGraph] Saving node %d (type=%d, id=%d) to chain node %d\n",
+            i, effect_node->type, effect_node->id, node_id);
+
+        // Convert EffectGraph node type to chain node type
+        switch (effect_node->type) {
+            case EFFECT_NODE_TYPE_SOURCE_ADC0:
+                chain_node->node_type = NODE_TYPE_SOURCE;
+                chain_node->subtype = SOURCE_TYPE_GUITAR;
+                break;
+            case EFFECT_NODE_TYPE_SOURCE_ADC1:
+                chain_node->node_type = NODE_TYPE_SOURCE;
+                chain_node->subtype = SOURCE_TYPE_MIC;
+                break;
+            case EFFECT_NODE_TYPE_SOURCE_BT_IN:
+                chain_node->node_type = NODE_TYPE_SOURCE;
+                chain_node->subtype = SOURCE_TYPE_BT;
+                break;
+            case EFFECT_NODE_TYPE_SOURCE_USB_IN:
+                chain_node->node_type = NODE_TYPE_SOURCE;
+                chain_node->subtype = SOURCE_TYPE_USB;
+                break;
+            case EFFECT_NODE_TYPE_EFFECT_EQ:
+                chain_node->node_type = NODE_TYPE_EFFECT;
+                chain_node->subtype = EFFECT_TYPE_EQ;
+                break;
+            case EFFECT_NODE_TYPE_EFFECT_DRC:
+                chain_node->node_type = NODE_TYPE_EFFECT;
+                chain_node->subtype = EFFECT_TYPE_COMPRESSOR;
+                break;
+            case EFFECT_NODE_TYPE_EFFECT_REVERB:
+                chain_node->node_type = NODE_TYPE_EFFECT;
+                chain_node->subtype = EFFECT_TYPE_REVERB;
+                break;
+            case EFFECT_NODE_TYPE_EFFECT_DELAY:
+                chain_node->node_type = NODE_TYPE_EFFECT;
+                chain_node->subtype = EFFECT_TYPE_DELAY;
+                break;
+            case EFFECT_NODE_TYPE_MIXER:
+                chain_node->node_type = NODE_TYPE_MIXER;
+                chain_node->subtype = 0;
+                break;
+            case EFFECT_NODE_TYPE_SINK_DAC0:
+                chain_node->node_type = NODE_TYPE_OUTPUT;
+                chain_node->subtype = OUTPUT_TYPE_HEADPHONE;
+                break;
+            case EFFECT_NODE_TYPE_SINK_USB_OUT:
+                chain_node->node_type = NODE_TYPE_OUTPUT;
+                chain_node->subtype = 2; // USB output
+                break;
+            default:
+                chain_node->node_type = NODE_TYPE_EFFECT;
+                chain_node->subtype = 0;
+                break;
+        }
+
+        // Copy node properties
+        chain_node->enabled = effect_node->enabled;
+        chain_node->volume = 100; // Default volume
+
+        // Copy parameters - this is the key part!
+        memcpy(&chain_node->params, &effect_node->params, sizeof(EffectParams_t));
+
+        // Add to graph
+        chain_graph->node_ids[i] = node_id;
+    }
+
+    // Save edges (connections) - copy from EffectGraph topology
+    chain_graph->edge_count = effect_graph->edge_count;
+    for (i = 0; i < effect_graph->edge_count && i < MAX_GRAPH_EDGES; i++) {
+        EffectEdge_t *effect_edge = &effect_graph->edges[i];
+        GraphEdge_t *chain_edge = &chain_graph->edges[i];
+
+        // Convert node pointers to node IDs
+        int src_idx = -1, dst_idx = -1;
+        int j;
+
+        // Find source node ID in our saved node list
+        for (j = 0; j < effect_graph->node_count; j++) {
+            if (&effect_graph->nodes[j] == effect_edge->src_node) {
+                src_idx = j;
+                break;
+            }
+        }
+
+        // Find destination node ID in our saved node list
+        for (j = 0; j < effect_graph->node_count; j++) {
+            if (&effect_graph->nodes[j] == effect_edge->dst_node) {
+                dst_idx = j;
+                break;
+            }
+        }
+
+        if (src_idx >= 0 && dst_idx >= 0) {
+            chain_edge->from_node = chain_graph->node_ids[src_idx];
+            chain_edge->to_node = chain_graph->node_ids[dst_idx];
+        } else {
+            DBG("[ChainGraph] Failed to find node IDs for edge %d\n", i);
+            // Skip this edge
+            chain_graph->edge_count--;
+            i--;
+        }
+    }
+
+    // Update graph count if this is a new graph
+    if (graph_idx >= ac->graph_count) {
+        ac->graph_count = graph_idx + 1;
+    }
+
+    // Mark parameters as modified
+    SysParam_MarkModified();
+
+    DBG("[ChainGraph] Successfully saved EffectGraph to chain graph %d\n", graph_idx);
+    return 0;
+}
+
+/**
+ * @brief Save the current EffectGraph state to a named chain graph
+ * @param name Name of the chain graph to save to (creates if doesn't exist)
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_SaveByName(const char *name)
+{
+    SysParam_AudioChain_t *ac = SYSPARAM_AUDIOCHAIN();
+    int i;
+
+    if (!name || !ac) {
+        return -1;
+    }
+
+    // Find existing graph by name
+    for (i = 0; i < ac->graph_count; i++) {
+        if (strcmp(ac->graphs[i].name, name) == 0) {
+            return ChainGraph_SaveFromEffectGraph(i);
+        }
+    }
+
+    // Create new graph if not found
+    if (ac->graph_count >= MAX_EFFECT_GRAPHS) {
+        DBG("[ChainGraph] Maximum graphs reached, cannot create new graph\n");
+        return -1;
+    }
+
+    // Save to new graph
+    int result = ChainGraph_SaveFromEffectGraph(ac->graph_count);
+    if (result == 0) {
+        // Set the name
+        strncpy(ac->graphs[ac->graph_count - 1].name, name, GRAPH_NAME_LEN - 1);
+        SysParam_MarkModified();
+    }
+
+    return result;
+}
+
+/**
+ * @brief Sync EffectGraph node parameters to global audio effect units
+ * This ensures that loaded parameters are applied to the actual audio processing units
+ * @return 0 on success, -1 on failure
+ */
+int ChainGraph_SyncParamsToGlobalUnits(void)
+{
+    EffectGraphRuntime_t *effect_graph;
+    int i;
+
+    effect_graph = EffectGraph_GetInstance();
+    if (!effect_graph) {
+        DBG("[ChainGraph] EffectGraph not initialized\n");
+        return -1;
+    }
+
+    // Declare extern variable at function scope
+    extern ControlVariablesContext gCtrlVars;
+
+    // Sync parameters for each node
+    for (i = 0; i < effect_graph->node_count; i++) {
+        EffectNode_t *node = &effect_graph->nodes[i];
+
+        switch (node->type) {
+            case EFFECT_NODE_TYPE_EFFECT_REVERB:
+                /* Sync to global reverb unit */
+                gCtrlVars.reverb_unit.roomsize_scale = (int32_t)node->params.reverb.room_size;
+                gCtrlVars.reverb_unit.damping_scale = (int32_t)node->params.reverb.damping;
+                gCtrlVars.reverb_unit.wet_scale = (int32_t)node->params.reverb.wet_dry;
+                #if CFG_AUDIO_EFFECT_REVERB_EN
+                AudioEffectReverbConfig(&gCtrlVars.reverb_unit);
+                #endif
+                break;
+
+            case EFFECT_NODE_TYPE_EFFECT_DRC:
+                /* Sync to global DRC unit */
+                gCtrlVars.mic_drc_unit.threshold[0] = (int32_t)node->params.drc.threshold;
+                gCtrlVars.mic_drc_unit.ratio[0] = (int32_t)node->params.drc.ratio;
+                gCtrlVars.mic_drc_unit.attack_tc[0] = (int32_t)node->params.drc.attack;
+                gCtrlVars.mic_drc_unit.release_tc[0] = (int32_t)node->params.drc.release;
+                #if CFG_AUDIO_EFFECT_MIC_DRC_EN
+                AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
+                #endif
+                break;
+
+            // Add other effect types as needed
+            default:
+                // No sync needed for other node types
+                break;
+        }
+    }
+
+    DBG("[ChainGraph] Synced parameters to global audio effect units\n");
+    return 0;
+}

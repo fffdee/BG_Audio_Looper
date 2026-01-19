@@ -132,10 +132,7 @@ uint32_t result[100];
 
 
 int16_t CRC[100] = { 0 };
-static int16_t WriteBufer[96] = { 0 };
 
-static int16_t CRC2[96] = { 0 };
-static int16_t ReadBuf[96] = { 0 };
 uint32_t sectorAddress = 0;
 
 uint32_t record_time;

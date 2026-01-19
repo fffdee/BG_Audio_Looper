@@ -4,7 +4,7 @@
  * This file implements the functions declared in sys_param.h for managing
  * system parameters in internal Flash, including initialization, save, load,
  * default restore, and shell command support.
- * 
+ *
  * Flash API (SDK provided):
  *   - SpiFlashRead(addr, buf, len, timeout) - Read from flash
  *   - SpiFlashWrite(addr, buf, len, timeout) - Write to flash
@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "audio_setting.h"
+#include "shell_cmd_effect.h"  /* Effect parameter access */
 /* Debug output */
 #ifdef CFG_APP_CONFIG
 #include "debug.h"
@@ -52,170 +53,170 @@ static uint8_t g_param_initialized = 0;
 static void LoadDefaultGraphConfig(void)
 {
     int i;
-    
+
     /* Clear audio chain */
     memset(&g_sys_param.audio_chain, 0, sizeof(SysParam_AudioChain_t));
     g_sys_param.audio_chain.output_mode = 0;
     g_sys_param.audio_chain.graph_count = 1;
     g_sys_param.audio_chain.active_graph_hp = 0;
     g_sys_param.audio_chain.active_graph_spk = 0;
-    
+
     /* Initialize node pool */
     memset(g_sys_param.audio_chain.node_pool, 0, sizeof(GraphNode_t) * MAX_GRAPH_NODES);
-    
+
     /* Set graph name */
     strcpy(g_sys_param.audio_chain.graphs[0].name, "Default");
     g_sys_param.audio_chain.graphs[0].node_count = 14;
     g_sys_param.audio_chain.graphs[0].edge_count = 13;
     memset(g_sys_param.audio_chain.graphs[0].node_ids, 0xFF, MAX_GRAPH_NODES);
-    
+
     /* Create 14 nodes */
     /* N0: ADC0 (Guitar) */
     g_sys_param.audio_chain.node_pool[0].node_type = NODE_TYPE_SOURCE;
     g_sys_param.audio_chain.node_pool[0].subtype = SOURCE_TYPE_GUITAR;
     g_sys_param.audio_chain.node_pool[0].enabled = 1;
     g_sys_param.audio_chain.node_pool[0].volume = 100;
-    
+
     /* N1: ADC1 (Mic) */
     g_sys_param.audio_chain.node_pool[1].node_type = NODE_TYPE_SOURCE;
     g_sys_param.audio_chain.node_pool[1].subtype = SOURCE_TYPE_MIC;
     g_sys_param.audio_chain.node_pool[1].enabled = 1;
     g_sys_param.audio_chain.node_pool[1].volume = 100;
-    
+
     /* N2: USB_In */
     g_sys_param.audio_chain.node_pool[2].node_type = NODE_TYPE_SOURCE;
     g_sys_param.audio_chain.node_pool[2].subtype = SOURCE_TYPE_USB;
     g_sys_param.audio_chain.node_pool[2].enabled = 1;
     g_sys_param.audio_chain.node_pool[2].volume = 100;
-    
+
     /* N3: BT_In */
     g_sys_param.audio_chain.node_pool[3].node_type = NODE_TYPE_SOURCE;
     g_sys_param.audio_chain.node_pool[3].subtype = SOURCE_TYPE_BT;
     g_sys_param.audio_chain.node_pool[3].enabled = 1;
     g_sys_param.audio_chain.node_pool[3].volume = 100;
-    
+
     /* N4: ADC_Mixer */
     g_sys_param.audio_chain.node_pool[4].node_type = NODE_TYPE_MIXER;
     g_sys_param.audio_chain.node_pool[4].subtype = 0;
     g_sys_param.audio_chain.node_pool[4].enabled = 1;
     g_sys_param.audio_chain.node_pool[4].volume = 100;
-    
+
     /* N5: Expander */
     g_sys_param.audio_chain.node_pool[5].node_type = NODE_TYPE_EFFECT;
     g_sys_param.audio_chain.node_pool[5].subtype = 11; /* Expander type */
     g_sys_param.audio_chain.node_pool[5].enabled = 1;
     g_sys_param.audio_chain.node_pool[5].volume = 100;
-    
+
     /* N6: DRC */
     g_sys_param.audio_chain.node_pool[6].node_type = NODE_TYPE_EFFECT;
     g_sys_param.audio_chain.node_pool[6].subtype = EFFECT_TYPE_COMPRESSOR;
     g_sys_param.audio_chain.node_pool[6].enabled = 1;
     g_sys_param.audio_chain.node_pool[6].volume = 100;
-    
+
     /* N7: EQ */
     g_sys_param.audio_chain.node_pool[7].node_type = NODE_TYPE_EFFECT;
     g_sys_param.audio_chain.node_pool[7].subtype = EFFECT_TYPE_EQ;
     g_sys_param.audio_chain.node_pool[7].enabled = 1;
     g_sys_param.audio_chain.node_pool[7].volume = 100;
-    
+
     /* N8: Reverb */
     g_sys_param.audio_chain.node_pool[8].node_type = NODE_TYPE_EFFECT;
     g_sys_param.audio_chain.node_pool[8].subtype = EFFECT_TYPE_REVERB;
     g_sys_param.audio_chain.node_pool[8].enabled = 1;
     g_sys_param.audio_chain.node_pool[8].volume = 100;
     g_sys_param.audio_chain.node_pool[8].preset = 1;
-    
+
     /* N9: USB_BT_Mixer */
     g_sys_param.audio_chain.node_pool[9].node_type = NODE_TYPE_MIXER;
     g_sys_param.audio_chain.node_pool[9].subtype = 0;
     g_sys_param.audio_chain.node_pool[9].enabled = 1;
     g_sys_param.audio_chain.node_pool[9].volume = 100;
-    
+
     /* N10: USB_BT_EQ */
     g_sys_param.audio_chain.node_pool[10].node_type = NODE_TYPE_EFFECT;
     g_sys_param.audio_chain.node_pool[10].subtype = EFFECT_TYPE_EQ;
     g_sys_param.audio_chain.node_pool[10].enabled = 1;
     g_sys_param.audio_chain.node_pool[10].volume = 100;
-    
+
     /* N11: Final_Mixer */
     g_sys_param.audio_chain.node_pool[11].node_type = NODE_TYPE_MIXER;
     g_sys_param.audio_chain.node_pool[11].subtype = 0;
     g_sys_param.audio_chain.node_pool[11].enabled = 1;
     g_sys_param.audio_chain.node_pool[11].volume = 100;
-    
+
     /* N12: DAC0_Out */
     g_sys_param.audio_chain.node_pool[12].node_type = NODE_TYPE_OUTPUT;
     g_sys_param.audio_chain.node_pool[12].subtype = OUTPUT_TYPE_HEADPHONE;
     g_sys_param.audio_chain.node_pool[12].enabled = 1;
     g_sys_param.audio_chain.node_pool[12].volume = 100;
-    
+
     /* N13: USB_Out */
     g_sys_param.audio_chain.node_pool[13].node_type = NODE_TYPE_OUTPUT;
     g_sys_param.audio_chain.node_pool[13].subtype = 2; /* USB output type */
     g_sys_param.audio_chain.node_pool[13].enabled = 1;
     g_sys_param.audio_chain.node_pool[13].volume = 100;
-    
+
     /* Mark nodes 0-13 as used */
     g_sys_param.audio_chain.node_used_mask = 0x3FFF; /* 0b0011111111111111 = nodes 0-13 used */
-    
+
     /* Add nodes to graph */
     for (i = 0; i < 14; i++) {
         g_sys_param.audio_chain.graphs[0].node_ids[i] = i;
     }
-    
+
     /* Create 13 edges */
     /* ADC0 -> ADC_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[0].from_node = 0;
     g_sys_param.audio_chain.graphs[0].edges[0].to_node = 4;
-    
+
     /* ADC1 -> ADC_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[1].from_node = 1;
     g_sys_param.audio_chain.graphs[0].edges[1].to_node = 4;
-    
+
     /* ADC_Mixer -> Expander */
     g_sys_param.audio_chain.graphs[0].edges[2].from_node = 4;
     g_sys_param.audio_chain.graphs[0].edges[2].to_node = 5;
-    
+
     /* Expander -> DRC */
     g_sys_param.audio_chain.graphs[0].edges[3].from_node = 5;
     g_sys_param.audio_chain.graphs[0].edges[3].to_node = 6;
-    
+
     /* DRC -> EQ */
     g_sys_param.audio_chain.graphs[0].edges[4].from_node = 6;
     g_sys_param.audio_chain.graphs[0].edges[4].to_node = 7;
-    
+
     /* EQ -> Reverb */
     g_sys_param.audio_chain.graphs[0].edges[5].from_node = 7;
     g_sys_param.audio_chain.graphs[0].edges[5].to_node = 8;
-    
+
     /* USB_In -> USB_BT_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[6].from_node = 2;
     g_sys_param.audio_chain.graphs[0].edges[6].to_node = 9;
-    
+
     /* BT_In -> USB_BT_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[7].from_node = 3;
     g_sys_param.audio_chain.graphs[0].edges[7].to_node = 9;
-    
+
     /* USB_BT_Mixer -> USB_BT_EQ */
     g_sys_param.audio_chain.graphs[0].edges[8].from_node = 9;
     g_sys_param.audio_chain.graphs[0].edges[8].to_node = 10;
-    
+
     /* Reverb -> Final_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[9].from_node = 8;
     g_sys_param.audio_chain.graphs[0].edges[9].to_node = 11;
-    
+
     /* USB_BT_EQ -> Final_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[10].from_node = 10;
     g_sys_param.audio_chain.graphs[0].edges[10].to_node = 11;
-    
+
     /* Final_Mixer -> DAC0_Out */
     g_sys_param.audio_chain.graphs[0].edges[11].from_node = 11;
     g_sys_param.audio_chain.graphs[0].edges[11].to_node = 12;
-    
+
     /* Final_Mixer -> USB_Out */
     g_sys_param.audio_chain.graphs[0].edges[12].from_node = 11;
     g_sys_param.audio_chain.graphs[0].edges[12].to_node = 13;
-    
+
     /* Clear other graphs */
     for (i = 1; i < MAX_EFFECT_GRAPHS; i++) {
         memset(&g_sys_param.audio_chain.graphs[i], 0, sizeof(EffectGraph_t));
@@ -256,35 +257,35 @@ static void flash_unprotect(void) {
 static int flash_load(SysParam_t *param) {
     int ret;
     uint32_t stored_crc, calc_crc_val;
-    
+
     PARAM_DBG("[PARAM] Loading from flash addr 0x%08lX...\n", (unsigned long)FLASH_ADDR);
-    
+
     /* Read entire parameter block from flash */
     ret = SpiFlashRead(FLASH_ADDR, (uint8_t*)param, sizeof(SysParam_t), FLASH_TIMEOUT);
     if (ret != FLASH_NONE_ERR) {
         PARAM_DBG("[PARAM] Flash read error: %d\n", ret);
         return -1;
     }
-    
+
     /* Check magic number */
     if (param->magic != SYS_PARAM_MAGIC) {
-        PARAM_DBG("[PARAM] Invalid magic: 0x%08lX (expected 0x%08lX)\n", 
+        PARAM_DBG("[PARAM] Invalid magic: 0x%08lX (expected 0x%08lX)\n",
                   (unsigned long)param->magic, (unsigned long)SYS_PARAM_MAGIC);
         return -1;
     }
-    
+
     /* Verify CRC (calculate on data after crc32 field) */
     stored_crc = param->crc32;
     param->crc32 = 0;  /* Zero out for calculation */
     calc_crc_val = calc_crc32(param, sizeof(SysParam_t));
     param->crc32 = stored_crc;  /* Restore */
-    
+
     if (stored_crc != calc_crc_val) {
-        PARAM_DBG("[PARAM] CRC mismatch: stored=0x%08lX calc=0x%08lX\n", 
+        PARAM_DBG("[PARAM] CRC mismatch: stored=0x%08lX calc=0x%08lX\n",
                   (unsigned long)stored_crc, (unsigned long)calc_crc_val);
         return -1;
     }
-    
+
     PARAM_DBG("[PARAM] Load success, write_count=%lu\n", (unsigned long)param->write_count);
     return 0;
 }
@@ -296,26 +297,26 @@ static int flash_load(SysParam_t *param) {
  */
 static int flash_save(SysParam_t *param) {
     int ret;
-    
+
     PARAM_DBG("[PARAM] Saving to flash addr 0x%08lX...\n", (unsigned long)FLASH_ADDR);
-    
+
     /* Update header fields */
     param->magic = SYS_PARAM_MAGIC;
     param->version = SYS_PARAM_VERSION;
     param->size = sizeof(SysParam_t);
     param->write_count++;
-    
+
     /* Calculate CRC (with crc32 field zeroed) */
     param->crc32 = 0;
     param->crc32 = calc_crc32(param, sizeof(SysParam_t));
-    
+
     /* Unlock flash */
     flash_unprotect();
-    
+
     /* Erase sector */
     PARAM_DBG("[PARAM] Erasing sector %d...\n", FLASH_SECTOR);
     SpiFlashErase(SECTOR_ERASE, FLASH_SECTOR, 1);
-    
+
     /* Write data */
     PARAM_DBG("[PARAM] Writing %d bytes...\n", (int)sizeof(SysParam_t));
     ret = SpiFlashWrite(FLASH_ADDR, (uint8_t*)param, sizeof(SysParam_t), FLASH_TIMEOUT);
@@ -323,34 +324,46 @@ static int flash_save(SysParam_t *param) {
         PARAM_DBG("[PARAM] Flash write error: %d\n", ret);
         return -1;
     }
-    
-    PARAM_DBG("[PARAM] Save success, write_count=%lu, CRC=0x%08lX\n", 
+
+    PARAM_DBG("[PARAM] Save success, write_count=%lu, CRC=0x%08lX\n",
               (unsigned long)param->write_count, (unsigned long)param->crc32);
     return 0;
 }
 
 SysParam_Status_t SysParam_Init(void) {
     PARAM_DBG("[PARAM] Initializing system parameters...\n");
-    
+
     if (flash_load(&g_sys_param) != 0 || g_sys_param.magic != SYS_PARAM_MAGIC) {
         PARAM_DBG("[PARAM] Load failed or invalid, loading defaults\n");
         SysParam_LoadDefault();
+        // 保存默认参数到flash作为出厂参数
+        if (SysParam_Save() == SYSPARAM_OK) {
+            PARAM_DBG("[PARAM] Default parameters saved to flash as factory settings\n");
+        } else {
+            PARAM_DBG("[PARAM] Failed to save default parameters to flash\n");
+        }
         g_param_modified = 1;
         g_param_initialized = 1;
         return SYSPARAM_ERR_MAGIC;
     }
-    
+
     /* Check version compatibility */
     if (g_sys_param.version != SYS_PARAM_VERSION) {
         PARAM_DBG("[PARAM] Version mismatch: stored=0x%04X expected=0x%04X\n",
                   g_sys_param.version, SYS_PARAM_VERSION);
         /* Could implement migration here, for now just reload defaults */
         SysParam_LoadDefault();
+        // 保存默认参数到flash作为出厂参数
+        if (SysParam_Save() == SYSPARAM_OK) {
+            PARAM_DBG("[PARAM] Default parameters saved to flash as factory settings\n");
+        } else {
+            PARAM_DBG("[PARAM] Failed to save default parameters to flash\n");
+        }
         g_param_modified = 1;
         g_param_initialized = 1;
         return SYSPARAM_ERR_VERSION;
     }
-    
+
     g_param_modified = 0;
     g_param_initialized = 1;
     PARAM_DBG("[PARAM] Init complete, loaded %lu bytes\n", (unsigned long)sizeof(SysParam_t));
@@ -376,7 +389,7 @@ SysParam_Status_t SysParam_Save(void) {
         PARAM_DBG("[PARAM] Error: not initialized\n");
         return SYSPARAM_ERR_NOT_INIT;
     }
-    
+
     if (flash_save(&g_sys_param) == 0) {
         g_param_modified = 0;
         PARAM_DBG("[PARAM] Parameters saved successfully\n");
@@ -393,24 +406,24 @@ SysParam_t* SysParam_Get(void) {
 SysParam_Status_t SysParam_LoadDefault(void) {
     PARAM_DBG("[PARAM] Loading default parameters...\n");
     memset(&g_sys_param, 0, sizeof(SysParam_t));
-    
+
     /* Header */
     g_sys_param.magic = SYS_PARAM_MAGIC;
     g_sys_param.version = SYS_PARAM_VERSION;
     g_sys_param.size = sizeof(SysParam_t);
     g_sys_param.write_count = 0;
-    
+
     /* System defaults */
     g_sys_param.system.current_boot_status = NORMAL_BOOT;
     g_sys_param.system.boot_count = 0;
-    
+
     /* Volume defaults */
     g_sys_param.volume.guitar1_volume = 80;
     g_sys_param.volume.guitar2_volume = 80;
     g_sys_param.volume.mic1_volume = 80;
     g_sys_param.volume.mic2_volume = 80;
     g_sys_param.volume.output_volume = 80;
-    
+
     /* Looper defaults */
     g_sys_param.looper.loop_count = 4;
     g_sys_param.looper.overdub_mode = 0;
@@ -420,7 +433,7 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.looper.time_signature = 0;  /* 4/4 */
     g_sys_param.looper.fade_time = 10;      /* 100ms */
     g_sys_param.looper.max_loop_time = 60000; /* 60 seconds */
-    
+
     /* Bluetooth defaults */
     g_sys_param.bluetooth.enabled = 1;
     g_sys_param.bluetooth.discoverable = 1;
@@ -428,22 +441,22 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.bluetooth.a2dp_volume = 80;
     strcpy(g_sys_param.bluetooth.device_name, "BanBox");
     memset(g_sys_param.bluetooth.paired_addr, 0, 6);
-    
+
     /* LCD defaults */
     g_sys_param.lcd.contrast = 50;
     g_sys_param.lcd.color_scheme = 0;
     g_sys_param.lcd.screen_saver = 0;
     g_sys_param.lcd.bg_color = 0x0000;  /* Black */
-    
+
     /* Chain manager defaults */
     memset(&g_sys_param.chain_manager, 0, sizeof(BG_ParamChainManager_t));
     strcpy(g_sys_param.chain_manager.chains[0].name, "ChainA");
     strcpy(g_sys_param.chain_manager.chains[1].name, "ChainB");
     g_sys_param.chain_manager.active_chain = 0;
-    
+
     /* Audio chain defaults - load from effect_graph_config.h */
     LoadDefaultGraphConfig();
-    
+
     g_param_modified = 1;
     PARAM_DBG("[PARAM] Defaults loaded\n");
     return SYSPARAM_OK;
@@ -468,6 +481,49 @@ SysParam_Status_t SysParam_SaveModule(const char *module) {
     (void)module;
     PARAM_DBG("[PARAM] Saving module: %s\n", module ? module : "all");
     return SysParam_Save();
+}
+
+/**
+ * @brief Print detailed effect parameters for a node
+ * @param node Pointer to the graph node
+ */
+static void SysParam_PrintEffectParams(GraphNode_t *node) {
+    switch (node->subtype) {
+        case EFFECT_TYPE_COMPRESSOR:  /* DRC */
+            Shell_Printf(" [threshold=%d(0-96) ratio=%d(1-20) attack=%d(0-100) release=%d(0-100)]",
+                        node->params[0], node->params[1], node->params[2], node->params[3]);
+            break;
+
+        case EFFECT_TYPE_REVERB:
+            Shell_Printf(" [room=%d(0-100) damp=%d(0-100) wet=%d(0-100)]",
+                        node->params[0], node->params[1], node->params[2]);
+            break;
+
+        case EFFECT_TYPE_EQ:
+            Shell_Printf(" [");
+            {
+                int band;
+                for (band = 0; band < 10 && band < 11; band++) {
+                    if (band > 0) Shell_Printf(" ");
+                    Shell_Printf("b%d=%d", band, (int8_t)node->params[band]);
+                }
+            }
+            Shell_Printf("]");
+            break;
+
+        default:
+            /* For other effects, show hex values */
+            Shell_Printf(" [");
+            {
+                int p;
+                for (p = 0; p < 11 && node->params[p] != 0; p++) {
+                    if (p > 0) Shell_Printf(" ");
+                    Shell_Printf("%02X", node->params[p]);
+                }
+            }
+            Shell_Printf("]");
+            break;
+    }
 }
 
 void SysParam_Print(void) {
@@ -509,6 +565,59 @@ void SysParam_Print(void) {
     Shell_Printf("  NodePool:   %d/%d used\n",
                 __builtin_popcount(g_sys_param.audio_chain.node_used_mask),
                 MAX_GRAPH_NODES);
+
+    /* Print effect node pool details */
+    Shell_Printf("\n--- Effect Node Pool ---\n");
+    {
+        int i, p;
+        for (i = 0; i < MAX_GRAPH_NODES; i++) {
+            GraphNode_t *node = &g_sys_param.audio_chain.node_pool[i];
+            if (node->node_type != 0) {  /* Check if node is used */
+                const char *type_str = "UNK";
+                const char *subtype_str = "UNK";
+
+                switch (node->node_type) {
+                    case NODE_TYPE_SOURCE: type_str = "SRC"; break;
+                    case NODE_TYPE_EFFECT: type_str = "FX"; break;
+                    case NODE_TYPE_MIXER: type_str = "MIX"; break;
+                    case NODE_TYPE_OUTPUT: type_str = "OUT"; break;
+                }
+
+                if (node->node_type == NODE_TYPE_SOURCE) {
+                    switch (node->subtype) {
+                        case SOURCE_TYPE_GUITAR: subtype_str = "GUITAR"; break;
+                        case SOURCE_TYPE_MIC: subtype_str = "MIC"; break;
+                        case SOURCE_TYPE_USB: subtype_str = "USB"; break;
+                        case SOURCE_TYPE_BT: subtype_str = "BT"; break;
+                    }
+                } else if (node->node_type == NODE_TYPE_EFFECT) {
+                    switch (node->subtype) {
+                        case EFFECT_TYPE_COMPRESSOR: subtype_str = "COMP"; break;
+                        case EFFECT_TYPE_EQ: subtype_str = "EQ"; break;
+                        case EFFECT_TYPE_REVERB: subtype_str = "REV"; break;
+                        case EFFECT_TYPE_DELAY: subtype_str = "DLY"; break;
+                        default: subtype_str = "FX"; break;
+                    }
+                } else if (node->node_type == NODE_TYPE_OUTPUT) {
+                    switch (node->subtype) {
+                        case OUTPUT_TYPE_HEADPHONE: subtype_str = "HP"; break;
+                        case OUTPUT_TYPE_SPEAKER: subtype_str = "SPK"; break;
+                        case OUTPUT_TYPE_LINE_OUT: subtype_str = "LINE"; break;
+                    }
+                }
+
+                Shell_Printf("  [%2d] %s-%s %s Vol:%d",
+                            i, type_str, subtype_str,
+                            node->enabled ? "ON" : "OFF", node->volume);
+
+                if (node->node_type == NODE_TYPE_EFFECT) {
+                    Shell_Printf(" P:%d", node->preset);
+                    SysParam_PrintEffectParams(node);
+                }
+                Shell_Printf("\n");
+            }
+        }
+    }
 }
 
 void SysParam_PrintModule(const char *module) {
@@ -559,29 +668,29 @@ void SysParam_PrintModule(const char *module) {
         Shell_Printf("  NodePool:   %d/%d used\n",
                     __builtin_popcount(g_sys_param.audio_chain.node_used_mask),
                     MAX_GRAPH_NODES);
-        
+
         /* List all graphs */
         int g, i, j;
         for (g = 0; g < g_sys_param.audio_chain.graph_count; g++) {
             EffectGraph_t *graph = &g_sys_param.audio_chain.graphs[g];
             Shell_Printf("  [Graph %d: %s]\n", g, graph->name);
             Shell_Printf("    Nodes: %d, Edges: %d\n", graph->node_count, graph->edge_count);
-            
+
             /* List nodes */
             for (i = 0; i < graph->node_count; i++) {
                 uint8_t nid = graph->node_ids[i];
                 GraphNode_t *node = &g_sys_param.audio_chain.node_pool[nid];
                 const char *type_str[] = {"SRC", "FX", "MIX", "OUT"};
-                Shell_Printf("      N%d: %s subtype=%d vol=%d %s\n", 
-                            nid, type_str[node->node_type], node->subtype, 
+                Shell_Printf("      N%d: %s subtype=%d vol=%d %s\n",
+                            nid, type_str[node->node_type], node->subtype,
                             node->volume, node->enabled ? "ON" : "OFF");
             }
-            
+
             /* List edges */
             if (graph->edge_count > 0) {
                 Shell_Printf("    Edges:\n");
                 for (j = 0; j < graph->edge_count; j++) {
-                    Shell_Printf("      N%d -> N%d\n", 
+                    Shell_Printf("      N%d -> N%d\n",
                                 graph->edges[j].from_node, graph->edges[j].to_node);
                 }
             }
@@ -601,6 +710,12 @@ void SysParam_RegisterShellCommands(void) {
     /* Shell commands are registered via REGISTER_MODULE macro */
     PARAM_DBG("[PARAM] Shell commands ready\n");
 }
+
+/**
+ * @brief Print detailed effect parameters for a node
+ * @param node Pointer to the graph node
+ */
+
 
 int SysParam_ShellCmd(int argc, char *argv[]) {
     /* This is called by shell framework */

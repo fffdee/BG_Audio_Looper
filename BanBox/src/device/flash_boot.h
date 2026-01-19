@@ -1,146 +1,68 @@
 #ifndef __FLASH_BOOT_H__
 #define __FLASH_BOOT_H__
 
-#include "app_config.h"
 #include "flash_config.h"
-
 /*
- * Flash Boot å¤´æ–‡ä»¶ - ç”¨äºBG_card_minié¡¹ç›®
- * ç‰ˆæœ¬ï¼šV2.2.0
- * ç§»æ¤è‡ªBT_Audio_APP
- */
+°æ±¾ËµÃ÷£ºµ±Ç°ÎªV2.1.8°æ±¾
+ÈÕÆÚ£º2020Äê11ÔÂ26ÈÕ
+*/
+//#define FLASH_BOOT_EN      1
 
-//========================================
-// ä½¿èƒ½å¼€å…³ - 1:å¯ç”¨USBå‡çº§åŠŸèƒ½, 0:ç¦ç”¨
-//========================================
-#define FLASH_BOOT_EN      1
+//TX PIN
+#define BOOT_UART_TX_OFF	0//¹Ø±Õ´®¿Ú
+#define BOOT_UART_TX_A0		1
+#define BOOT_UART_TX_A1		2
+#define BOOT_UART_TX_A6		3
+#define BOOT_UART_TX_A10	4
+#define BOOT_UART_TX_A19	5
+#define BOOT_UART_TX_A25	6
+#define BOOT_UART_TX_PIN	BOOT_UART_TX_A25
 
-//========================================
-// UART TXå¼•è„šé…ç½® (è°ƒè¯•ç”¨)
-//========================================
-#define BOOT_UART_TX_OFF    0   //å…³é—­ä¸²å£
-#define BOOT_UART_TX_A0     1
-#define BOOT_UART_TX_A1     2
-#define BOOT_UART_TX_A6     3
-#define BOOT_UART_TX_A10    4
-#define BOOT_UART_TX_A19    5
-#define BOOT_UART_TX_A25    6
-#define BOOT_UART_TX_PIN    BOOT_UART_TX_OFF
+//²¨ÌØÂÊÅäÖÃ
+#define BOOT_UART_BAUD_RATE_9600	0
+#define BOOT_UART_BAUD_RATE_11520	1
+#define BOOT_UART_BAUD_RATE_256000	2
+#define BOOT_UART_BAUD_RATE_512000	3
+#define BOOT_UART_BAUD_RATE_1000000	4
+#define BOOT_UART_BAUD_RATE_1500000	5
+#define BOOT_UART_BAUD_RATE_2000000	6
+#define BOOT_UART_BAUD_RATE		BOOT_UART_BAUD_RATE_512000
 
-//========================================
-// UARTæ³¢ç‰¹ç‡é…ç½®
-//========================================
-#define BOOT_UART_BAUD_RATE_9600    0
-#define BOOT_UART_BAUD_RATE_11520   1
-#define BOOT_UART_BAUD_RATE_256000  2
-#define BOOT_UART_BAUD_RATE_512000  3
-#define BOOT_UART_BAUD_RATE_1000000 4
-#define BOOT_UART_BAUD_RATE_1500000 5
-#define BOOT_UART_BAUD_RATE_2000000 6
-#define BOOT_UART_BAUD_RATE         BOOT_UART_BAUD_RATE_512000
+#define BOOT_UART_CONFIG	((BOOT_UART_BAUD_RATE<<4)+BOOT_UART_TX_PIN)
 
-#define BOOT_UART_CONFIG    ((BOOT_UART_BAUD_RATE<<4)+BOOT_UART_TX_PIN)
 
-//========================================
-// åˆ¤æ–­æ ‡å‡†é…ç½®
-// é«˜4bit: 0xF=æŒ‰codeç‰ˆæœ¬å‡çº§, 0x5=æŒ‰CRCåˆ¤æ–­
-// ä½4bit: ä¿ç•™
-//========================================
-#define JUDGEMENT_STANDARD      0x55
+#define JUDGEMENT_STANDARD		0x55//´Ë´¦ÊıÖµ·Ö¸ß4bitÓëµÍ4bit£º¸ß4bitÎªFÔòcode°´°æ±¾ºÅÉı¼¶£»Îª5Ôò°´codeµÄCRC½øĞĞÉı¼¶£»
+									//µÍ4bitÎªFÔòÔÚÉı¼¶codeĞèÒªÓÃµ½¶à´ó¿Õ¼ä¼´²Á³ı¶à´ó¿Õ¼ä£»Îª5Ê±Ôò±êÊ¶Éı¼¶codeÇ°È«²¿²Á³ıĞ¾Æ¬Êı¾İ£¬¼´²Á³ı¡°È«Æ¬¡±£¨¼´³ı¿ªflash¿ªÊ¼64KÒÔ¼°×îºó4K£©
 
-//========================================
-// å‡çº§æ¥å£å®šä¹‰
-//========================================
-// SDå¡æ¥å£
-#define SD_OFF              0x00
-#define SD_A15A16A17        0x1
-#define SD_A20A21A22        0x2
-
-// æ ¹æ®å®é™…ç¡¬ä»¶é…ç½®é€‰æ‹©SDå¡æ¥å£
-#ifndef CFG_RES_CARD_GPIO
-#define CFG_RES_CARD_GPIO   0  // é»˜è®¤ä¸ä½¿ç”¨SDå¡å‡çº§
-#endif
-
-#if CFG_RES_CARD_GPIO == 1
-#define SD_PORT             SD_A15A16A17
+///Éı¼¶½Ó¿Ú¶¨Òå
+#define	SD_OFF				0x00
+#define SD_A15A16A17		0x1
+#define SD_A20A21A22		0x2
+#if CFG_RES_CARD_GPIO == SDIO_A15_A16_A17
+#define SD_PORT				SD_A15A16A17
 #else
-#define SD_PORT             SD_A20A21A22
+#define SD_PORT				SD_A20A21A22
 #endif
 
-// Uç›˜å‡çº§
-#define UDisk_OFF           0x00
-#define UDisk_ON            0x4
+#define UDisk_OFF			0x00
+#define UDisk_ON			0x4
 
-// PC Toolå‡çº§ (USB HIDæ–¹å¼)
-#define PCTOOL_OFF          0x00
-#define PCTOOL_ON           0x08
+#define PCTOOL_OFF			0x00
+#define PCTOOL_ON			0x08
 
-// è“ç‰™å‡çº§
-#define BTTOOL_OFF          0X00
-#define BTTOOL_ON           0X10
+#define	BTTOOL_OFF			0X00
+#define BTTOOL_ON			0X10
 
-// ç»„åˆå‡çº§ç«¯å£é…ç½®
-// é»˜è®¤å¯ç”¨: PC Tool + Uç›˜
-#define UP_PORT             (BTTOOL_OFF + PCTOOL_ON + UDisk_ON + SD_OFF)
+#define UP_PORT				(BTTOOL_OFF + PCTOOL_ON + UDisk_OFF + SD_OFF)//¸ù¾İÓ¦ÓÃÇé¿ö¾ö¶¨´ò¿ªÄÇĞ©Éı¼¶½Ó¿Ú
 
-//========================================
-// Flash Bootæ•°æ®å£°æ˜
-//========================================
+
 #if FLASH_BOOT_EN
 extern const unsigned char flash_data[];
 #endif
 
-//========================================
-// å‡çº§è¿”å›çŠ¶æ€ç 
-//========================================
-#define USER_CODE_RUN_START     0   // æ­£å¸¸è¿è¡Œï¼Œç›´æ¥è¿è¡Œå®¢æˆ·ä»£ç 
-#define UPDAT_OK                1   // å‡çº§æ£€æµ‹ï¼Œå‡çº§æˆåŠŸ
-#define NEEDLESS_UPDAT          2   // å‡çº§æ£€æµ‹åï¼Œæ— éœ€å‡çº§
+#define USER_CODE_RUN_START		0 	//ÎŞÉı¼¶ÇëÇóÖ±½ÓÔËĞĞ¿Í»§´úÂë
+#define UPDAT_OK				1 	//ÓĞÉı¼¶ÇëÇó£¬Éı¼¶³É¹¦
+#define NEEDLESS_UPDAT			2	//ÓĞÉı¼¶ÇëÇó£¬µ«ÎŞĞèÉı¼¶
 
-//========================================
-// èµ„æºç±»å‹å®šä¹‰ (ç”¨äºstart_up_grate)
-//========================================
-#ifndef AppResourceCard
-#define AppResourceCard         1   // SDå¡å‡çº§
-#endif
-#ifndef AppResourceUDisk
-#define AppResourceUDisk        2   // Uç›˜å‡çº§
-#endif
-#ifndef AppResourceUsbDevice
-#define AppResourceUsbDevice    3   // PC USBå‡çº§
 #endif
 
-//========================================
-// å‡½æ•°å£°æ˜
-//========================================
-#if FLASH_BOOT_EN
-/**
- * @brief æŠ¥å‘Šå‡çº§ç»“æœ
- */
-void report_up_grate(void);
-
-/**
- * @brief è·å–å‡çº§é”™è¯¯ç 
- * @return é”™è¯¯ç 
- */
-uint8_t Report_Error_Code(void);
-
-/**
- * @brief æ¸…é™¤é”™è¯¯ç 
- */
-void Clear_Error_Code(void);
-
-/**
- * @brief è·å–å¤ä½æ ‡å¿—
- * @return å¤ä½æ ‡å¿—
- */
-uint8_t Reset_FlagGet_Flash_Boot(void);
-
-/**
- * @brief å¯åŠ¨å‡çº§
- * @param UpdateResource å‡çº§èµ„æºç±»å‹ (AppResourceCard/AppResourceUDisk/AppResourceUsbDevice)
- */
-void start_up_grate(uint32_t UpdateResource);
-#endif
-
-#endif /* __FLASH_BOOT_H__ */

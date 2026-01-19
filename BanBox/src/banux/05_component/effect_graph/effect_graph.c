@@ -17,7 +17,7 @@
 /*******************************************************************************
  * 静态变量
  ******************************************************************************/
-static EffectGraph_t g_EffectGraph;
+static EffectGraphRuntime_t g_EffectGraph;
 static bool g_Initialized = false;
 
 /*******************************************************************************
@@ -36,19 +36,19 @@ static GraphError_t TopologicalSort(void);
 /* 判断是否为源节点 */
 static bool IsSourceNode(EffectNodeType_t type)
 {
-    return (type >= NODE_TYPE_SOURCE_ADC0 && type <= NODE_TYPE_SOURCE_BT_IN);
+    return (type >= EFFECT_NODE_TYPE_SOURCE_ADC0 && type <= EFFECT_NODE_TYPE_SOURCE_BT_IN);
 }
 
 /* 判断是否为输出节点 */
 static bool IsSinkNode(EffectNodeType_t type)
 {
-    return (type >= NODE_TYPE_SINK_DAC0 && type <= NODE_TYPE_SINK_USB_OUT);
+    return (type >= EFFECT_NODE_TYPE_SINK_DAC0 && type <= EFFECT_NODE_TYPE_SINK_USB_OUT);
 }
 
 /* 判断是否为处理节点 (未使用，保留供将来扩展)
 static bool IsProcessNode(EffectNodeType_t type)
 {
-    return (type >= NODE_TYPE_MIXER && type < NODE_TYPE_MAX);
+    return (type >= EFFECT_NODE_TYPE_MIXER && type < EFFECT_NODE_TYPE_MAX);
 }
 */
 
@@ -75,7 +75,7 @@ static void InitNodeDefaults(EffectNode_t *node, EffectNodeType_t type)
     
     /* 根据类型设置默认参数 */
     switch (type) {
-        case NODE_TYPE_MIXER:
+        case EFFECT_NODE_TYPE_MIXER:
             {
                 int i;
                 node->params.mixer.input_count = 0;
@@ -84,25 +84,25 @@ static void InitNodeDefaults(EffectNode_t *node, EffectNodeType_t type)
                 }
             }
             break;
-        case NODE_TYPE_EFFECT_GAIN:
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
             node->params.gain.gain_db = 0;
             break;
-        case NODE_TYPE_EFFECT_REVERB:
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
             node->params.reverb.room_size = 50;
             node->params.reverb.damping = 50;
             node->params.reverb.wet_dry = 30;
             break;
-        case NODE_TYPE_EFFECT_DRC:
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
             node->params.drc.threshold = -20;
             node->params.drc.ratio = 4;
             node->params.drc.attack = 10;
             node->params.drc.release = 100;
             break;
-        case NODE_TYPE_EFFECT_EQ:
+        case EFFECT_NODE_TYPE_EFFECT_EQ:
             node->params.eq.band_count = 5;
             memset(node->params.eq.band_gains, 0, sizeof(node->params.eq.band_gains));
             break;
-        case NODE_TYPE_EFFECT_DELAY:
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
             node->params.delay.delay_ms = 250;
             node->params.delay.feedback = 30;
             node->params.delay.wet_dry = 30;
@@ -115,7 +115,7 @@ static void InitNodeDefaults(EffectNode_t *node, EffectNodeType_t type)
 /* 拓扑排序 - 确定处理顺序 */
 static GraphError_t TopologicalSort(void)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint8_t in_degree[EFFECT_GRAPH_MAX_NODES];
     uint8_t queue[EFFECT_GRAPH_MAX_NODES];
     uint8_t front = 0, rear = 0;
@@ -206,7 +206,7 @@ GraphError_t EffectGraph_Init(void)
 }
 
 // 获取图实例
-EffectGraph_t* EffectGraph_GetInstance(void)
+EffectGraphRuntime_t* EffectGraph_GetInstance(void)
 {
     if (!g_Initialized) {
         return NULL;
@@ -272,7 +272,7 @@ GraphError_t EffectGraph_CreateFromConfig(const GraphConfig_t *config)
 // 添加节点
 EffectNode_t* EffectGraph_AddNode(EffectNodeType_t type, const char *name, bool enabled)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     EffectNode_t *node;
     
     if (!g_Initialized || !name) {
@@ -315,7 +315,7 @@ EffectNode_t* EffectGraph_AddNode(EffectNodeType_t type, const char *name, bool 
 // 连接两个节点
 GraphError_t EffectGraph_Connect(EffectNode_t *src_node, EffectNode_t *dst_node, uint8_t src_port, uint8_t dst_port)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     EffectEdge_t *edge;
     
     if (!src_node || !dst_node) {
@@ -359,7 +359,7 @@ GraphError_t EffectGraph_Connect(EffectNode_t *src_node, EffectNode_t *dst_node,
 // 断开两个节点的连接
 GraphError_t EffectGraph_Disconnect(EffectNode_t *src_node, EffectNode_t *dst_node)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint8_t i, j;
     
     if (!src_node || !dst_node) {
@@ -421,7 +421,7 @@ GraphError_t EffectGraph_Build(void)
 // 处理一帧音频
 uint16_t EffectGraph_Process(uint16_t frame_size)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint8_t i, j;
     uint16_t actual_len = 0;
     uint32_t *in_bufs[EFFECT_GRAPH_MAX_INPUTS];  /* 使用 uint32_t 与硬件接口统一 */
@@ -498,7 +498,7 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
                     node->func.process(node, in_bufs, in_count, node->buffer, max_len);
                     node->buffer_len = max_len;
                 }
-                else if (node->type == NODE_TYPE_MIXER) {
+                else if (node->type == EFFECT_NODE_TYPE_MIXER) {
                     /* 默认混音器处理: 简单相加 */
                     memset(node->buffer, 0, max_len * sizeof(uint32_t));
                     for (j = 0; j < in_count; j++) {
@@ -543,7 +543,7 @@ void EffectGraph_SetNodeBypass(EffectNode_t *node, bool bypass)
 // 根据名称查找节点
 EffectNode_t* EffectGraph_FindNodeByName(const char *name)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint8_t i;
     
     if (!name || !g_Initialized) {
@@ -562,7 +562,7 @@ EffectNode_t* EffectGraph_FindNodeByName(const char *name)
 // 根据ID查找节点
 EffectNode_t* EffectGraph_FindNodeById(uint8_t id)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     
     if (!g_Initialized || id >= g->node_count) {
         return NULL;
@@ -587,7 +587,7 @@ GraphError_t EffectGraph_SetNodeParams(EffectNode_t *node, const EffectParams_t 
 // 重置图(清除所有节点和边)
 void EffectGraph_Reset(void)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint8_t i;
     
     if (!g_Initialized) {
@@ -620,7 +620,7 @@ void EffectGraph_Reset(void)
 // 打印图信息(调试用)
 void EffectGraph_PrintInfo(void)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint8_t i, j;
     
     if (!g_Initialized) {
@@ -687,7 +687,7 @@ GraphError_t EffectGraph_CreateDefault(uint16_t sample_rate)
 // 设置驱动模式
 GraphError_t EffectGraph_SetDriveMode(GraphDriveMode_t mode, EffectNode_t *primary_source)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint8_t i;
     static GraphDriveMode_t last_mode = 0xFF;  /* 上次的模式（初始为非法值） */
     bool mode_changed = (last_mode != mode);
@@ -721,12 +721,12 @@ GraphError_t EffectGraph_SetDriveMode(GraphDriveMode_t mode, EffectNode_t *prima
             
             switch (mode) {
                 case DRIVE_MODE_BT:
-                    if (src->type == NODE_TYPE_SOURCE_BT_IN) {
+                    if (src->type == EFFECT_NODE_TYPE_SOURCE_BT_IN) {
                         g->primary_source = src;
                     }
                     break;
                 case DRIVE_MODE_USB:
-                    if (src->type == NODE_TYPE_SOURCE_USB_IN) {
+                    if (src->type == EFFECT_NODE_TYPE_SOURCE_USB_IN) {
                         g->primary_source = src;
                     }
                     break;
@@ -754,7 +754,7 @@ GraphError_t EffectGraph_SetDriveMode(GraphDriveMode_t mode, EffectNode_t *prima
 // 查询所有源节点的可用数据量
 uint16_t EffectGraph_GetAvailableFrameSize(void)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint16_t min_avail = 0xFFFF;
     uint16_t avail;
     uint8_t i;
@@ -785,8 +785,8 @@ uint16_t EffectGraph_GetAvailableFrameSize(void)
         
         /* ADC 驱动模式下只查询 ADC 类型的源节点 */
         if (g->drive_mode == DRIVE_MODE_ADC) {
-            if (src->type != NODE_TYPE_SOURCE_ADC0 && 
-                src->type != NODE_TYPE_SOURCE_ADC1) {
+            if (src->type != EFFECT_NODE_TYPE_SOURCE_ADC0 && 
+                src->type != EFFECT_NODE_TYPE_SOURCE_ADC1) {
                 continue;
             }
         }
@@ -816,7 +816,7 @@ uint16_t EffectGraph_GetAvailableFrameSize(void)
 // 自适应帧长处理 - 根据主驱动源的可用数据量决定帧长
 uint16_t EffectGraph_ProcessAdaptive(void)
 {
-    EffectGraph_t *g = &g_EffectGraph;
+    EffectGraphRuntime_t *g = &g_EffectGraph;
     uint16_t frame_size;
     uint16_t actual_len;
     uint8_t i, j;
@@ -903,7 +903,7 @@ uint16_t EffectGraph_ProcessAdaptive(void)
                     node->func.process(node, in_bufs, in_count, node->buffer, max_len);
                     node->buffer_len = max_len;
                 }
-                else if (node->type == NODE_TYPE_MIXER) {
+                else if (node->type == EFFECT_NODE_TYPE_MIXER) {
                     /* 默认混音器处理: 简单相加 */
                     memset(node->buffer, 0, max_len * sizeof(uint32_t));
                     for (j = 0; j < in_count; j++) {
