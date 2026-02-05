@@ -344,19 +344,19 @@ extern "C" {
 
 #define CFG_MUSIC_EQ_COUNT							    (    4)
 #define CFG_MUSIC_EQ_PREGAIN						    (	  0)
-#define CFG_MUSIC_EQ_1_TYPE						        EQ_FILTER_TYPE_BAND_PASS
+#define CFG_MUSIC_EQ_1_TYPE						        EQ_FILTER_TYPE_PEAKING   /* 改用PEAKING类型，BAND_PASS会衰减信号 */
 #define CFG_MUSIC_EQ_1_F0							    (  100)
 #define CFG_MUSIC_EQ_1_Q							    (	 724)
 #define CFG_MUSIC_EQ_1_GAIN						        (  0 )
-#define CFG_MUSIC_EQ_2_TYPE						        EQ_FILTER_TYPE_BAND_PASS
+#define CFG_MUSIC_EQ_2_TYPE						        EQ_FILTER_TYPE_PEAKING   /* 改用PEAKING类型 */
 #define CFG_MUSIC_EQ_2_F0							    (  1000)
 #define CFG_MUSIC_EQ_2_Q							    (	 724)
 #define CFG_MUSIC_EQ_2_GAIN						        (  0)
-#define CFG_MUSIC_EQ_3_TYPE						        EQ_FILTER_TYPE_BAND_PASS
+#define CFG_MUSIC_EQ_3_TYPE						        EQ_FILTER_TYPE_PEAKING   /* 改用PEAKING类型 */
 #define CFG_MUSIC_EQ_3_F0							    (  5000)
 #define CFG_MUSIC_EQ_3_Q							    (	 724)
 #define CFG_MUSIC_EQ_3_GAIN						        (  0)
-#define CFG_MUSIC_EQ_4_TYPE						        EQ_FILTER_TYPE_BAND_PASS
+#define CFG_MUSIC_EQ_4_TYPE						        EQ_FILTER_TYPE_PEAKING   /* 改用PEAKING类型 */
 #define CFG_MUSIC_EQ_4_F0							    (  10000)
 #define CFG_MUSIC_EQ_4_Q							    (	 724)
 #define CFG_MUSIC_EQ_4_GAIN						        (  0)

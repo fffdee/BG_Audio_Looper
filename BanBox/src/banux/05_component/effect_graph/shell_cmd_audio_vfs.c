@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include "debug.h"
 
+#if USE_EFFECT_GRAPH_VFS
+
 /*******************************************************************************
  * 内部函数
  ******************************************************************************/
@@ -388,3 +390,5 @@ void ShellCmdAudioVfs_CheckAutoMount(void)
         }
     }
 }
+
+#endif /* USE_EFFECT_GRAPH_VFS */

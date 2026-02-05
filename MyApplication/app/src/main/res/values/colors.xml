@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基础颜色 -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- 主题色 - 炫酷科技风 -->
+    <color name="primary_dark">#0A0E27</color>
+    <color name="primary_darker">#1A1A2E</color>
+    <color name="primary_accent">#00D9FF</color>
+    <color name="primary_accent_glow">#00FFA3</color>
+    
+    <!-- 背景色 -->
+    <color name="bg_dark">#0F1419</color>
+    <color name="bg_card">#16213E</color>
+    <color name="bg_card_light">#1F2937</color>
+    
+    <!-- 文字颜色 -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="text_tertiary">#808080</color>
+    <color name="text_accent">#00D9FF</color>
+    <color name="text_success">#00FFA3</color>
+    <color name="text_warning">#FFB800</color>
+    <color name="text_error">#FF4444</color>
+    
+    <!-- 按钮颜色 -->
+    <color name="button_primary">#00D9FF</color>
+    <color name="button_primary_pressed">#0099BB</color>
+    <color name="button_secondary">#16213E</color>
+    <color name="button_success">#00FFA3</color>
+    
+    <!-- 节点颜色 - 音频链路图 -->
+    <color name="node_source">#4CAF50</color>
+    <color name="node_effect">#2196F3</color>
+    <color name="node_mixer">#FF9800</color>
+    <color name="node_sink">#F44336</color>
+    
+    <!-- 状态颜色 -->
+    <color name="status_connected">#4CAF50</color>
+    <color name="status_disconnected">#FF4444</color>
+    <color name="status_connecting">#FFB800</color>
+    
+    <!-- 半透明遮罩 -->
+    <color name="overlay_dark">#80000000</color>
+    <color name="overlay_light">#40FFFFFF</color>
+</resources>

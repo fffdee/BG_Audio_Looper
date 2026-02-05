@@ -1625,3 +1625,1117 @@ java.lang.NullPointerException
 	at org.eclipse.core.internal.resources.Workspace.run(Workspace.java:2250)
 	at org.eclipse.core.internal.events.NotificationManager$NotifyJob.run(NotificationManager.java:43)
 	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+!SESSION 2026-01-19 13:38:07.066 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=1.7.0_76
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=zh
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.739
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.cdt.managedbuilder.ui.target.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.739
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.cdt.managedbuilder.ui.views.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.741
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.debug.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.741
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.deploy.nl_zh_1.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.741
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.console.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.743
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.cpuregisters.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.743
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdb.launch.cross.platform.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.743
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdb.launch.monitor.target.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.743
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdb.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.743
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/com.andestech.ide.dsf.gdbjtag.device.sid_2.0.0.201703291045.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.743
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.gdbjtag.launch.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.744
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.memory.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.744
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.profile.targetboard.core.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.745
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/com.andestech.ide.dsf.profile.ui_2.0.0.201703291045.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.745
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.profile.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.745
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.profile.ui.perspective.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.745
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.rtos.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.745
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.socregisters.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.dsf.variables.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/com.andestech.ide.flash.simulator.ui_3.0.0.201703291045.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.flash.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ldsag.edit.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ldsag.editor.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ldsag.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.license.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.746
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tm.diagnosis.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tm.rse.local.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tm.rse.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tracer.tracepoints.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.tracer.ui.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.ui.nl.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.ide.util.tcf.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/com.andestech.vep.frontend.nl_zh_3.0.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.747
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ant.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.device.extension.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.device.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.engine.extension.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.engine.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.chart.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.birt.core.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.749
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.core.native.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.750
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.750
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.core.win32.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.750
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.750
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.gdbjtag.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.750
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.gdbjtag.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.750
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.gdbjtag.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.750
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.mi.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.752
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.mi.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.752
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.floatingpoint.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.752
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.memorybrowser.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.752
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.search.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.traditional.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.memory.transport.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.debug.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.doc.user.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.gdb.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.gdb.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.753
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.dsf.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.755
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.gdb.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.755
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.gdb.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.755
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.launch.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.755
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.make.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.756
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.make.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.756
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.managedbuilder.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.756
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.managedbuilder.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.756
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.756
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.cdt.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.756
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.compare.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.758
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.compare.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.758
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.compare.win32.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.758
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.commands.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.758
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.beans.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.758
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.758
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.observable.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.760
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.databinding.property.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.760
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.externaltools.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.760
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filebuffers.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.760
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filesystem.java7.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.760
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filesystem.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.760
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.filesystem.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.760
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.net.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.761
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.net.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.761
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.resources.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.761
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.core.variables.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.761
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.debug.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.762
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.debug.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.762
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.draw2d.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.763
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.core.commands.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.763
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.emf.xpath.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.763
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.bindings.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.763
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.css.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.763
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.css.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.763
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.css.swt.theme.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.764
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.di.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.764
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.dialogs.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.764
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.model.workbench.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.764
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.services.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.764
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.widgets.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.764
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.addons.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.764
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.766
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.renderers.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.766
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.766
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.e4.ui.workbench3.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.766
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.766
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit.core_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.766
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.766
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit.doc_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.767
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.doc.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.767
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.767
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.egit.ui_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.767
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.egit.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.767
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.codegen.ecore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.767
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.codegen.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.769
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.common.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.769
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.common.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.769
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.change.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.769
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.edit.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.769
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.editor.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.769
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.771
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.ecore.xmi.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.771
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.edit.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.771
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.emf.edit.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.771
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.frameworkadmin.equinox.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.771
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.frameworkadmin.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.771
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.launcher.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.771
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.launcher.win32.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.772
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.artifact.repository.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.772
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.console.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.772
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.772
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.director.app.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.772
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.director.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.directorywatcher.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.engine.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.extensionlocation.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.garbagecollector.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.jarprocessor.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.metadata.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.metadata.repository.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.operations.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.773
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.publisher.eclipse.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.775
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.publisher.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.775
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.reconciler.dropins.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.775
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.repository.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.775
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.repository.tools.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.775
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.touchpoint.eclipse.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.775
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.touchpoint.natives.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.775
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.transport.ecf.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.importexport.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.sdk.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.ui.sdk.scheduler.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.updatechecker.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.p2.updatesite.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.simpleconfigurator.manipulator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.777
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.equinox.simpleconfigurator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.gef.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.base.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.help.webapp.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.core.manipulation.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.debug.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.778
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.launching.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.780
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jdt.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.780
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jface.databinding.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.780
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jface.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.780
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jface.text.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.780
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/plugins/org.eclipse.jgit_1.3.0.201202151440-r.jar@4 not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.780
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jsch.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.781
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.jsch.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.781
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ltk.core.refactoring.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.781
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ltk.ui.refactoring.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.781
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.platform.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.781
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.connectorservice.ssh.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.781
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.781
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.dstore.security.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.783
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.files.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.783
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.importexport.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.783
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.processes.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.783
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.services.dstore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.783
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.services.files.ftp.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.783
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.services.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.784
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.shells.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.784
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.subsystems.files.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.784
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.subsystems.files.dstore.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.784
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.subsystems.files.ftp.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.784
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.rse.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.784
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.search.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.786
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.swt.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.786
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.swt.win32.win32.x86_64.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.786
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.team.core.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.786
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.team.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.786
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.text.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.786
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.tm.terminal.view.ui.nl_zh_4.5.0.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.786
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.browser.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.cheatsheets.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.console.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.editors.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.externaltools.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.forms.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.ide.application.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.ide.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.788
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.intro.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.intro.universal.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.monitoring.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.navigator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.navigator.resources.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.net.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.themes.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.789
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.trace.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.791
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.views.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.791
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.views.properties.tabbed.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.791
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.win32.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.791
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.workbench.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.791
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.ui.workbench.texteditor.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.osgi 4 0 2026-01-19 13:38:07.791
+!MESSAGE Bundle reference:file:/D:/app/AndeSight_V300_RDS/ide/languages/zh/eclipse/plugins/org.eclipse.update.configurator.nl_zh_4.5.0.v20161126080556.jar not found.
+
+!ENTRY org.eclipse.equinox.p2.console 4 0 2026-01-19 13:38:07.856
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.console [249]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.provisional.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.console,  org.eclipse.equinox.p2.director.app,  org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.ui.admin,  org.eclipse.equinox.p2.installer"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.director 4 0 2026-01-19 13:38:07.858
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.director [251]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.director.app 4 0 2026-01-19 13:38:07.862
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.director.app [252]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.directorywatcher 4 0 2026-01-19 13:38:07.865
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.directorywatcher [253]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.update
+    -> Export-Package: org.eclipse.equinox.internal.p2.update; bundle-version="2.1.300.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.touchpoint.eclipse"; version="2.0.0"; x-friends:="org.eclipse.equinox.p2.reconciler.dropins,org.eclipse.equinox.p2.extensionlocation,org.eclipse.equinox.p2.directorywatcher"
+       org.eclipse.equinox.p2.touchpoint.eclipse [266]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator
+           -> Export-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.touchpoint.eclipse"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.extensionlocation 4 0 2026-01-19 13:38:07.870
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.extensionlocation [255]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.publisher.eclipse
+    -> Export-Package: org.eclipse.equinox.internal.p2.publisher.eclipse; bundle-version="1.2.0.v20150601-1708"; bundle-symbolic-name="org.eclipse.equinox.p2.publisher.eclipse"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.directorywatcher,  org.eclipse.equinox.p2.extensionlocation,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.equinox.p2.updatesite,  org.eclipse.pde.build"
+       org.eclipse.equinox.p2.publisher.eclipse [262]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.simpleconfigurator.manipulator; version="[2.0.0,3.0.0)"
+           -> Export-Package: org.eclipse.equinox.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="2.0.0"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.operations 4 0 2026-01-19 13:38:07.873
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.operations [260]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.publisher.eclipse 4 0 2026-01-19 13:38:07.876
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.publisher.eclipse [262]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.simpleconfigurator.manipulator; version="[2.0.0,3.0.0)"
+    -> Export-Package: org.eclipse.equinox.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="2.0.0"
+       org.eclipse.equinox.simpleconfigurator.manipulator [280]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.repository.tools 4 0 2026-01-19 13:38:07.877
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.repository.tools [265]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.touchpoint.eclipse 4 0 2026-01-19 13:38:07.881
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.touchpoint.eclipse [266]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator
+    -> Export-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.touchpoint.eclipse"
+       org.eclipse.equinox.simpleconfigurator.manipulator [280]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui 4 0 2026-01-19 13:38:07.883
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui [269]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui.importexport 4 0 2026-01-19 13:38:07.885
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui.importexport [270]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.ui
+    -> Export-Package: org.eclipse.equinox.internal.p2.ui; bundle-version="2.4.0.v20150425-0422"; bundle-symbolic-name="org.eclipse.equinox.p2.ui"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.ui.admin,  org.eclipse.pde.ui,  org.eclipse.equinox.p2.ui.sdk,  org.eclipse.equinox.p2.ui.rcp,  org.eclipse.equinox.p2.ui.importexport,  org.eclipse.equinox.p2.ui.sdk.scheduler,  org.eclipse.equinox.p2.discovery,  org.eclipse.equinox.p2.ui.discovery"
+       org.eclipse.equinox.p2.ui [269]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+           -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+              org.eclipse.equinox.p2.director [251]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui.sdk 4 0 2026-01-19 13:38:07.887
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui.sdk [271]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.p2.operations; version="[2.0.0,3.0.0)"
+    -> Export-Package: org.eclipse.equinox.p2.operations; bundle-version="2.4.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.operations"; version="2.0.0"
+       org.eclipse.equinox.p2.operations [260]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+           -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+              org.eclipse.equinox.p2.director [251]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.ui.sdk.scheduler 4 0 2026-01-19 13:38:07.888
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.ui.sdk.scheduler [272]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.touchpoint.eclipse; version="2.0.0"
+    -> Export-Package: org.eclipse.equinox.internal.p2.touchpoint.eclipse; bundle-version="2.1.300.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.touchpoint.eclipse"; version="2.0.0"; x-friends:="org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.extensionlocation,  org.eclipse.equinox.p2.ui.importexport,  org.eclipse.equinox.p2.ui.sdk.scheduler"
+       org.eclipse.equinox.p2.touchpoint.eclipse [266]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator
+           -> Export-Package: org.eclipse.equinox.internal.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.touchpoint.eclipse"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.updatechecker 4 0 2026-01-19 13:38:07.892
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.updatechecker [273]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.p2.planner; version="[2.0.0,3.0.0)"
+    -> Export-Package: org.eclipse.equinox.p2.planner; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="2.0.0"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.updatesite 4 0 2026-01-19 13:38:07.895
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.updatesite [274]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.publisher.eclipse
+    -> Export-Package: org.eclipse.equinox.internal.p2.publisher.eclipse; bundle-version="1.2.0.v20150601-1708"; bundle-symbolic-name="org.eclipse.equinox.p2.publisher.eclipse"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.directorywatcher,  org.eclipse.equinox.p2.extensionlocation,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.equinox.p2.updatesite,  org.eclipse.pde.build"
+       org.eclipse.equinox.p2.publisher.eclipse [262]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.simpleconfigurator.manipulator; version="[2.0.0,3.0.0)"
+           -> Export-Package: org.eclipse.equinox.simpleconfigurator.manipulator; bundle-version="2.0.100.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.simpleconfigurator.manipulator"; version="2.0.0"
+              org.eclipse.equinox.simpleconfigurator.manipulator [280]
+                Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.simpleconfigurator.manipulator 4 0 2026-01-19 13:38:07.896
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.simpleconfigurator.manipulator [280]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.simpleconfigurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1561)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.equinox.p2.reconciler.dropins 4 0 2026-01-19 13:38:08.105
+!MESSAGE FrameworkEvent ERROR
+!STACK 0
+org.osgi.framework.BundleException: Could not resolve module: org.eclipse.equinox.p2.reconciler.dropins [263]
+  Unresolved requirement: Import-Package: org.eclipse.equinox.internal.p2.director
+    -> Export-Package: org.eclipse.equinox.internal.p2.director; bundle-version="2.3.200.v20150423-1455"; bundle-symbolic-name="org.eclipse.equinox.p2.director"; version="0.0.0"; x-friends:="org.eclipse.equinox.p2.operations,  org.eclipse.equinox.p2.repository.tools,  org.eclipse.pde.core,  org.eclipse.equinox.p2.reconciler.dropins,  org.eclipse.equinox.p2.ui,  org.eclipse.equinox.p2.director.app"
+       org.eclipse.equinox.p2.director [251]
+         Unresolved requirement: Import-Package: org.eclipse.equinox.internal.provisional.configurator
+
+	at org.eclipse.osgi.container.Module.start(Module.java:434)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1582)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.incStartLevel(ModuleContainer.java:1562)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.doContainerStartLevel(ModuleContainer.java:1533)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1476)
+	at org.eclipse.osgi.container.ModuleContainer$ContainerStartLevel.dispatchEvent(ModuleContainer.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.EventManager$EventThread.run(EventManager.java:340)
+
+!ENTRY org.eclipse.emf.ecore 2 0 2026-01-19 13:38:14.505
+!MESSAGE Both 'com.andestech.ide.ldsag' and 'com.andestech.ide.ldsag.xtext' register a package for 'http:///ide.andestech.com.ldsag/ldsag.ecore'
+
+!ENTRY org.eclipse.ui 2 2 2026-01-19 13:38:15.666
+!MESSAGE Invalid preference category path: org.eclipse.linuxtools.profiling.provider.MainPreferencePage (bundle: org.eclipse.linuxtools.binutils, page: org.eclipse.linuxtools.binutils.preferences)
+
+!ENTRY org.eclipse.ui 2 2 2026-01-19 13:38:15.672
+!MESSAGE Invalid preference category path: org.eclipse.linuxtools.profiling.provider.MainPreferencePage (bundle: org.eclipse.linuxtools.gcov.core, page: org.eclipse.linuxtools.gcov.core.preferences.colors)
+
+!ENTRY org.eclipse.equinox.event 4 0 2026-01-21 17:19:11.371
+!MESSAGE Exception while dispatching event org.osgi.service.event.Event [topic=org/eclipse/e4/ui/model/ui/UIElement/widget/SET] {ChangedElement=org.eclipse.e4.ui.model.application.ui.basic.impl.PartImpl@3a00af3a (elementId: org.eclipse.e4.ui.compatibility.editor, tags: [Editor, org.eclipse.cdt.ui.editor.CEditor, removeOnHide], contributorURI: platform:/plugin/com.andestech.ide.deploy) (widget: null, renderer: org.eclipse.e4.ui.workbench.renderers.swt.ContributedPartRenderer@75100b68, toBeRendered: true, onTop: false, visible: true, containerData: null, accessibilityPhrase: null) (contributionURI: bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityEditor, object: org.eclipse.ui.internal.e4.compatibility.CompatibilityEditor@5442d2f7, context: PartImpl (org.eclipse.e4.ui.compatibility.editor) Context, variables: [], label: auto_tune.h, iconURI: platform:/plugin/org.eclipse.cdt.ui/icons/obj16/c_file_obj.gif, tooltip: null, dirty: false, closeable: true, description: null), EventType=SET, AttName=widget, OldValue=ContributedPartRenderer$2 {}, Widget=null} to handler org.eclipse.e4.ui.services.internal.events.UIEventHandler@6f7a43f7
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.ui.internal.NavigationHistory.getDisplay(NavigationHistory.java:176)
+	at org.eclipse.ui.internal.NavigationHistory.markEditor(NavigationHistory.java:193)
+	at org.eclipse.ui.internal.WorkbenchPage.updateActiveEditorSources(WorkbenchPage.java:404)
+	at org.eclipse.ui.internal.WorkbenchPage.firePartClosed(WorkbenchPage.java:5046)
+	at org.eclipse.ui.internal.e4.compatibility.CompatibilityPart$1.handleEvent(CompatibilityPart.java:103)
+	at org.eclipse.e4.ui.services.internal.events.UIEventHandler$1.run(UIEventHandler.java:40)
+	at org.eclipse.swt.widgets.Synchronizer.syncExec(Synchronizer.java:186)
+	at org.eclipse.ui.internal.UISynchronizer.syncExec(UISynchronizer.java:145)
+	at org.eclipse.swt.widgets.Display.syncExec(Display.java:4761)
+	at org.eclipse.e4.ui.internal.workbench.swt.E4Application$1.syncExec(E4Application.java:211)
+	at org.eclipse.e4.ui.services.internal.events.UIEventHandler.handleEvent(UIEventHandler.java:36)
+	at org.eclipse.equinox.internal.event.EventHandlerWrapper.handleEvent(EventHandlerWrapper.java:197)
+	at org.eclipse.equinox.internal.event.EventHandlerTracker.dispatchEvent(EventHandlerTracker.java:197)
+	at org.eclipse.equinox.internal.event.EventHandlerTracker.dispatchEvent(EventHandlerTracker.java:1)
+	at org.eclipse.osgi.framework.eventmgr.EventManager.dispatchEvent(EventManager.java:230)
+	at org.eclipse.osgi.framework.eventmgr.ListenerQueue.dispatchEventSynchronous(ListenerQueue.java:148)
+	at org.eclipse.equinox.internal.event.EventAdminImpl.dispatchEvent(EventAdminImpl.java:135)
+	at org.eclipse.equinox.internal.event.EventAdminImpl.sendEvent(EventAdminImpl.java:78)
+	at org.eclipse.equinox.internal.event.EventComponent.sendEvent(EventComponent.java:39)
+	at org.eclipse.e4.ui.services.internal.events.EventBroker.send(EventBroker.java:85)
+	at org.eclipse.e4.ui.internal.workbench.UIEventPublisher.notifyChanged(UIEventPublisher.java:59)
+	at org.eclipse.emf.common.notify.impl.BasicNotifierImpl.eNotify(BasicNotifierImpl.java:374)
+	at org.eclipse.e4.ui.model.application.ui.impl.UIElementImpl.setWidget(UIElementImpl.java:261)
+	at org.eclipse.e4.ui.workbench.renderers.swt.SWTPartRenderer.unbindWidget(SWTPartRenderer.java:152)
+	at org.eclipse.e4.ui.workbench.renderers.swt.SWTPartRenderer$1.widgetDisposed(SWTPartRenderer.java:140)
+	at org.eclipse.swt.widgets.TypedListener.handleEvent(TypedListener.java:123)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(EventTable.java:84)
+	at org.eclipse.swt.widgets.Display.sendEvent(Display.java:4362)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:1113)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:1137)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Widget.java:1118)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:822)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Composite.releaseChildren(Composite.java:891)
+	at org.eclipse.swt.widgets.Canvas.releaseChildren(Canvas.java:165)
+	at org.eclipse.swt.widgets.Decorations.releaseChildren(Decorations.java:789)
+	at org.eclipse.swt.widgets.Shell.releaseChildren(Shell.java:1318)
+	at org.eclipse.swt.widgets.Widget.release(Widget.java:825)
+	at org.eclipse.swt.widgets.Widget.dispose(Widget.java:460)
+	at org.eclipse.swt.widgets.Decorations.dispose(Decorations.java:447)
+	at org.eclipse.swt.widgets.Shell.dispose(Shell.java:725)
+	at org.eclipse.swt.widgets.Display.release(Display.java:3819)
+	at org.eclipse.swt.graphics.Device.dispose(Device.java:295)
+	at org.eclipse.swt.widgets.Display.messageProc(Display.java:3300)
+	at org.eclipse.swt.internal.win32.OS.DefWindowProcW(Native Method)
+	at org.eclipse.swt.internal.win32.OS.DefWindowProc(OS.java:2544)
+	at org.eclipse.swt.widgets.Shell.callWindowProc(Shell.java:498)
+	at org.eclipse.swt.widgets.Control.windowProc(Control.java:4774)
+	at org.eclipse.swt.widgets.Canvas.windowProc(Canvas.java:339)
+	at org.eclipse.swt.widgets.Decorations.windowProc(Decorations.java:1633)
+	at org.eclipse.swt.widgets.Shell.windowProc(Shell.java:2117)
+	at org.eclipse.swt.widgets.Display.windowProc(Display.java:5050)
+	at org.eclipse.swt.internal.win32.OS.PeekMessageW(Native Method)
+	at org.eclipse.swt.internal.win32.OS.PeekMessage(OS.java:3141)
+	at org.eclipse.swt.widgets.Shell.open(Shell.java:1274)
+	at org.eclipse.jface.window.Window.open(Window.java:799)
+	at org.eclipse.jface.dialogs.MessageDialog.open(MessageDialog.java:330)
+	at org.eclipse.jface.dialogs.MessageDialogWithToggle.open(MessageDialogWithToggle.java:114)
+	at org.eclipse.jface.dialogs.MessageDialogWithToggle.openOkCancelConfirm(MessageDialogWithToggle.java:209)
+	at org.eclipse.ui.internal.ide.application.IDEWorkbenchWindowAdvisor.promptOnExit(IDEWorkbenchWindowAdvisor.java:213)
+	at org.eclipse.ui.internal.ide.application.IDEWorkbenchAdvisor$1.handleEvent(IDEWorkbenchAdvisor.java:163)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(EventTable.java:84)
+	at org.eclipse.swt.widgets.Display.sendEvent(Display.java:4362)
+	at org.eclipse.swt.widgets.Display.sendEvent(Display.java:4354)
+	at org.eclipse.swt.widgets.Display.messageProc(Display.java:3313)
+	at org.eclipse.swt.internal.win32.OS.DefWindowProcW(Native Method)
+	at org.eclipse.swt.internal.win32.OS.DefWindowProc(OS.java:2544)
+	at org.eclipse.swt.widgets.Shell.callWindowProc(Shell.java:498)
+	at org.eclipse.swt.widgets.Control.windowProc(Control.java:4774)
+	at org.eclipse.swt.widgets.Canvas.windowProc(Canvas.java:339)
+	at org.eclipse.swt.widgets.Decorations.windowProc(Decorations.java:1633)
+	at org.eclipse.swt.widgets.Shell.windowProc(Shell.java:2117)
+	at org.eclipse.swt.widgets.Display.windowProc(Display.java:5063)
+	at org.eclipse.swt.internal.win32.OS.PeekMessageW(Native Method)
+	at org.eclipse.swt.internal.win32.OS.PeekMessage(OS.java:3141)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Display.java:3764)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine$4.run(PartRenderingEngine.java:1127)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:337)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine.run(PartRenderingEngine.java:1018)
+	at org.eclipse.e4.ui.internal.workbench.E4Workbench.createAndRunUI(E4Workbench.java:156)
+	at org.eclipse.ui.internal.Workbench$5.run(Workbench.java:694)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:337)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Workbench.java:606)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(PlatformUI.java:150)
+	at com.andestech.ide.deploy.AndesApplication.start(AndesApplication.java:84)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(EclipseAppHandle.java:196)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(EclipseAppLauncher.java:134)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(EclipseAppLauncher.java:104)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:380)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:235)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:669)
+	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:608)
+	at org.eclipse.equinox.launcher.Main.run(Main.java:1515)
+	at org.eclipse.equinox.launcher.Main.main(Main.java:1488)

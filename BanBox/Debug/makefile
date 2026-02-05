@@ -1,9 +1,9 @@
 ################################################################################
-# Automatically-generated file. Do not edit!
+# 自动生成的文件。不要编辑！
 ################################################################################
 
 ifndef ANDESIGHT_ROOT
-ANDESIGHT_ROOT=/cygdrive/D/app/Andestech/AndeSight300RDS
+ANDESIGHT_ROOT=/cygdrive/D/ADS
 endif
 
 ifndef CROSS_COMPILE
@@ -46,6 +46,7 @@ RM := rm -rf
 -include src/banux/05_component/BanGUI/ui/views/subdir.mk
 -include src/banux/05_component/audio_looper/subdir.mk
 -include src/banux/05_component/effect_graph/subdir.mk
+-include src/banux/05_component/metronome/subdir.mk
 -include src/banux/05_component/sys_param/subdir.mk
 -include src/banux/06_app/BG_AudioIO_Manager/subdir.mk
 -include src/banux/06_app/audio/subdir.mk
@@ -94,51 +95,51 @@ SIZE_OUTPUTS += \
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size \
 
 
-# All Target
+# 所有目标
 all: BanBox.adx secondary-outputs
 
-# Tool invocations
+# 工具调用
 BanBox.adx: $(OBJS) $(USER_OBJS)
-	@echo 'Building target: $@'
-	@echo 'Invoking: Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -L"/cygdrive/C/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/bluetooth" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BanBox.adx" $(OBJS) $(USER_OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
+	@echo '正在构建目标： $@'
+	@echo '正在调用： Andes C Linker'
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/bluetooth" -L"/cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BanBox.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo '已结束构建目标： $@'
 	@echo ' '
 
 $(foreach subdir,$(SUBDIRS),$(wildcard $(subdir)/*.gcda) $(wildcard $(subdir)/*.gcno)): BanBox.adx $(OBJS) $(USER_OBJS)
 ../gmon.sum ../gmon.out: BanBox.adx $(OBJS) $(USER_OBJS)
 
 $(SECONDARY_OUTPUT_PATH)/symbol.txt: $(LINKER_OUTPUTS)
-	@echo 'Invoking: NM (symbol listing)'
+	@echo '正在调用： NM (symbol listing)'
 	$(CROSS_COMPILE)nm -n -l -C "BanBox.adx" > $(SECONDARY_OUTPUT_PATH)/symbol.txt
-	@echo 'Finished building: $@'
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/readelf.txt: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Readelf (ELF info listing)'
+	@echo '正在调用： Readelf (ELF info listing)'
 	$(CROSS_COMPILE)readelf -a "BanBox.adx" > $(SECONDARY_OUTPUT_PATH)/readelf.txt
-	@echo 'Finished building: $@'
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/objdump.txt: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Objdump (disassembly)'
+	@echo '正在调用： Objdump (disassembly)'
 	$(CROSS_COMPILE)objdump -x -d -C "BanBox.adx" > $(SECONDARY_OUTPUT_PATH)/objdump.txt
-	@echo 'Finished building: $@'
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Objcopy (object content copy)'
+	@echo '正在调用： Objcopy (object content copy)'
 	$(CROSS_COMPILE)objcopy -S -O binary "BanBox.adx" $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin
-	@echo 'Finished building: $@'
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Size (section size listing)'
+	@echo '正在调用： Size (section size listing)'
 	$(CROSS_COMPILE)size  "BanBox.adx" | tee $(SECONDARY_OUTPUT_PATH)/.PHONY.size
-	@echo 'Finished building: $@'
+	@echo '已结束构建： $@'
 	@echo ' '
 
-# Other Targets
+# 其他目标
 clean:
 	-$(RM) $(OBJCOPY_OUTPUTS)$(OBJS)$(C_DEPS)$(GCOV_OUT)$(SYMBOL_OUTPUTS)$(OBJDUMP_OUTPUTS)$(READELF_OUTPUTS)$(GPROF_OUT)$(SIZE_OUTPUTS)$(EXECUTABLES)$(S_UPPER_DEPS) BanBox.adx
 	-@echo ' '

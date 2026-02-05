@@ -21,6 +21,8 @@
 #include "effect_graph.h"
 #include "effect_graph_vfs.h"
 #include "shell_cmd_audio_vfs.h"
+#include "bg_flash_manager.h"
+#include "BG_FlashMgr.h"
 #include "debug.h"
 
 /*******************************************************************************
@@ -81,6 +83,18 @@ int DrvFramework_RegisterAll(void)
     int failed = 0;
     
     DBG("[DrvInit] Starting driver registration...\n");
+    
+    /* 初始化Flash管理器（先于其他需要Flash的驱动） */
+    DBG("[DrvInit] Initializing Flash Manager...\n");
+    BG_flash_manager.Init();
+    total++;
+    DBG("[DrvInit] Flash Manager initialized OK\n");
+    
+    /* 初始化BG_FlashMgr（Looper使用的应用层接口） */
+    DBG("[DrvInit] Initializing BG_FlashMgr...\n");
+    BG_FlashMgr.Init();
+    total++;
+    DBG("[DrvInit] BG_FlashMgr initialized OK\n");
     
     /* 注册ST7735 LCD驱动 */
     DBG("[DrvInit] Registering ST7735 LCD driver...\n");
@@ -188,7 +202,9 @@ int DrvFramework_RegisterAll(void)
     }
     
     /* 注册audio VFS Shell命令 */
+#if USE_EFFECT_GRAPH_VFS
     ShellCmdAudioVfs_Register();
+#endif
 
     /* 初始化蓝牙VFS（创建/bluetooth目录） */
     DBG("[DrvInit] Initializing Bluetooth VFS...\n");
@@ -219,12 +235,21 @@ int DrvFramework_FullInit(void)
     
     ret = DrvFramework_Init();
     if (ret != 0) {
-        return ret;
+        DBG("[DrvInit] WARNING: VFS init failed, but continuing with Flash initialization...\n");
     }
     
-    ret = DrvFramework_RegisterAll();
-    if (ret != 0) {
-        return ret;
+    /* 即使VFS失败，也要初始化Flash管理器（Flash不依赖VFS）*/
+    DBG("[DrvInit] Initializing Flash Managers (critical for audio looper)...\n");
+    BG_flash_manager.Init();
+    BG_FlashMgr.Init();
+    DBG("[DrvInit] Flash Managers initialized OK\n");
+    
+    /* 如果VFS已就绪，继续注册其他驱动 */
+    if (ret == 0) {
+        ret = DrvFramework_RegisterAll();
+        if (ret != 0) {
+            return ret;
+        }
     }
     
     return 0;

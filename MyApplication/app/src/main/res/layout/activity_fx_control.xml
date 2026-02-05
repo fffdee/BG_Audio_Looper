@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:fitsSystemWindows="true">
+
+    <!-- 顶部标题栏 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/toolbar_height"
+        android:background="@color/primary_darker"
+        android:elevation="@dimen/card_elevation"
+        android:paddingStart="@dimen/toolbar_padding"
+        android:paddingEnd="@dimen/toolbar_padding">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="@dimen/icon_size_large"
+            android:layout_height="@dimen/icon_size_large"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            android:tint="@color/text_primary"
+            android:contentDescription="返回" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="音效控制"
+            android:textSize="@dimen/text_size_xlarge"
+            android:textColor="@color/primary_accent_glow"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_save_fx"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/button_height_small"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="保存"
+            android:textColor="@color/primary_darker"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold"
+            android:background="@drawable/button_glow"
+            android:paddingStart="@dimen/button_padding_horizontal"
+            android:paddingEnd="@dimen/button_padding_horizontal"
+            android:elevation="@dimen/card_elevation" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/toolbar_padding">
+
+            <!-- DRC 控制区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_card"
+                android:padding="@dimen/toolbar_padding"
+                android:layout_marginBottom="@dimen/spacing_medium"
+                android:elevation="@dimen/card_elevation">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎚️ DRC 动态压缩"
+                    android:textSize="@dimen/text_size_xlarge"
+                    android:textColor="@color/primary_accent_glow"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/toolbar_padding" />
+
+                <LinearLayout
+                    android:id="@+id/drc_sliders_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="280dp"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:weightSum="4">
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 混响控制区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_card"
+                android:padding="@dimen/toolbar_padding"
+                android:elevation="@dimen/card_elevation">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎵 混响效果"
+                    android:textSize="@dimen/text_size_xlarge"
+                    android:textColor="@color/primary_accent_glow"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/toolbar_padding" />
+
+                <LinearLayout
+                    android:id="@+id/reverb_sliders_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="280dp"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:weightSum="3">
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

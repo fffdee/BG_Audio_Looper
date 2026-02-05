@@ -318,9 +318,14 @@ void EffectTask() {
 	{
 		SysParam_Status_t param_status = SysParam_Init();
 		if (param_status == SYSPARAM_OK) {
-			DBG("[Task] Parameters loaded successfully\n");
+			DBG("[Task] Parameters loaded successfully from flash\n");
+			/* Apply saved parameters to audio system (override CtrlVarsInit defaults) */
+			SysParam_ApplyToAudio();
 		} else {
 			DBG("[Task] Using default parameters (status=%d)\n", param_status);
+			/* First boot or flash corruption - defaults already loaded and saved */
+			/* Call ApplyToAudio to ensure defaults are synced to gCtrlVars */
+			SysParam_ApplyToAudio();
 		}
 	}
 

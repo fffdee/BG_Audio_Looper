@@ -22,6 +22,7 @@ static int Opt_MemInfo(int argc, char *argv[]);
 static int Opt_CpuStats(int argc, char *argv[]);
 static int Opt_TaskInfo(int argc, char *argv[]);
 static int Opt_SysInfo(int argc, char *argv[]);
+static int Opt_QueryJSON(int argc, char *argv[]);
 
 /*******************************************************************************
  * Static buffers for formatting output (to avoid dynamic allocation)
@@ -36,6 +37,7 @@ static const ShellOpt_t g_SysmonOpts[] = {
     OPT("c", "cpu",     NULL, "Show CPU usage statistics",  Opt_CpuStats),
     OPT("t", "tasks",   NULL, "Show task information",      Opt_TaskInfo),
     OPT("s", "sysinfo", NULL, "Show system information",    Opt_SysInfo),
+    OPT("q", "query",   NULL, "Query system info (JSON)",   Opt_QueryJSON),
     OPT_END()
 };
 
@@ -47,7 +49,7 @@ static const ShellModule_t g_SysmonModule = {
     "System Monitor - CPU/Memory/Task statistics",
     MOD_CAT_DEBUG,
     g_SysmonOpts,
-    4
+    5
 };
 
 /*******************************************************************************
@@ -228,6 +230,39 @@ static int Opt_SysInfo(int argc, char *argv[])
     #endif
     
     Shell_Printf("\n");
+    
+    return 0;
+}
+
+/**
+ * @brief Query system information in JSON format
+ * @param argc Argument count
+ * @param argv Argument values
+ * @return 0 on success
+ */
+static int Opt_QueryJSON(int argc, char *argv[])
+{
+    size_t free_heap;
+    size_t min_ever_free;
+    
+    (void)argc;
+    (void)argv;
+    
+    free_heap = xPortGetFreeHeapSize();
+    min_ever_free = xPortGetMinimumEverFreeHeapSize();
+    
+    Shell_Printf("{\"status\":\"ok\",\"system\":{");
+    Shell_Printf("\"memory\":{");
+    Shell_Printf("\"free\":%u,", (unsigned int)free_heap);
+    Shell_Printf("\"min_free\":%u,", (unsigned int)min_ever_free);
+    Shell_Printf("\"total\":%u,", (unsigned int)configTOTAL_HEAP_SIZE);
+    Shell_Printf("\"used\":%u", (unsigned int)(configTOTAL_HEAP_SIZE - free_heap));
+    Shell_Printf("},");
+    Shell_Printf("\"tasks\":{");
+    Shell_Printf("\"count\":%lu,", (unsigned long)uxTaskGetNumberOfTasks());
+    Shell_Printf("\"tick_rate\":%lu", (unsigned long)configTICK_RATE_HZ);
+    Shell_Printf("}");
+    Shell_Printf("}}\n");
     
     return 0;
 }

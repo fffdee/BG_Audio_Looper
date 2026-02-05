@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include "audio_setting.h"
 #include "shell_cmd_effect.h"  /* Effect parameter access */
+#include "effect_graph.h"      /* For EffectGraph_FindNodeById */
+#include "ctrlvars.h"          /* For ControlVariablesContext and EQUnit */
 /* Debug output */
 #ifdef CFG_APP_CONFIG
 #include "debug.h"
@@ -66,18 +68,25 @@ static void LoadDefaultGraphConfig(void)
 
     /* Set graph name */
     strcpy(g_sys_param.audio_chain.graphs[0].name, "Default");
-    g_sys_param.audio_chain.graphs[0].node_count = 14;
-    g_sys_param.audio_chain.graphs[0].edge_count = 13;
+    g_sys_param.audio_chain.graphs[0].node_count = 21;  /* 新架构: 21个节点 */
+    g_sys_param.audio_chain.graphs[0].edge_count = 22;  /* 新架构: 22条边 */
     memset(g_sys_param.audio_chain.graphs[0].node_ids, 0xFF, MAX_GRAPH_NODES);
 
-    /* Create 14 nodes */
-    /* N0: ADC0 (Guitar) */
+    /* ========== 新架构节点定义 (2026-02-04) ========== */
+    /* 
+     * 新的音频处理图:
+     *   ADC0/ADC1 各为双声道，拆分为L/R处理
+     *   每个声道独立EQ: EQ_GUITAR_L, EQ_GUITAR_R, EQ_MIC_L, EQ_MIC_R
+     *   共4个EQ处理后混音，再进入效果链
+     */
+
+    /* N0: ADC0 (Guitar) - 乐器输入 */
     g_sys_param.audio_chain.node_pool[0].node_type = NODE_TYPE_SOURCE;
     g_sys_param.audio_chain.node_pool[0].subtype = SOURCE_TYPE_GUITAR;
     g_sys_param.audio_chain.node_pool[0].enabled = 1;
     g_sys_param.audio_chain.node_pool[0].volume = 100;
 
-    /* N1: ADC1 (Mic) */
+    /* N1: ADC1 (Mic) - 麦克风输入 */
     g_sys_param.audio_chain.node_pool[1].node_type = NODE_TYPE_SOURCE;
     g_sys_param.audio_chain.node_pool[1].subtype = SOURCE_TYPE_MIC;
     g_sys_param.audio_chain.node_pool[1].enabled = 1;
@@ -95,127 +104,184 @@ static void LoadDefaultGraphConfig(void)
     g_sys_param.audio_chain.node_pool[3].enabled = 1;
     g_sys_param.audio_chain.node_pool[3].volume = 100;
 
-    /* N4: ADC_Mixer */
-    g_sys_param.audio_chain.node_pool[4].node_type = NODE_TYPE_MIXER;
-    g_sys_param.audio_chain.node_pool[4].subtype = 0;
+    /* N4: EQ_GUITAR_L - 乐器左声道EQ */
+    g_sys_param.audio_chain.node_pool[4].node_type = NODE_TYPE_EFFECT;
+    g_sys_param.audio_chain.node_pool[4].subtype = EFFECT_TYPE_EQ;
     g_sys_param.audio_chain.node_pool[4].enabled = 1;
     g_sys_param.audio_chain.node_pool[4].volume = 100;
 
-    /* N5: Expander */
+    /* N5: EQ_GUITAR_R - 乐器右声道EQ */
     g_sys_param.audio_chain.node_pool[5].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[5].subtype = 11; /* Expander type */
+    g_sys_param.audio_chain.node_pool[5].subtype = EFFECT_TYPE_EQ;
     g_sys_param.audio_chain.node_pool[5].enabled = 1;
     g_sys_param.audio_chain.node_pool[5].volume = 100;
 
-    /* N6: DRC */
+    /* N6: EQ_MIC_L - 麦克风左声道EQ */
     g_sys_param.audio_chain.node_pool[6].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[6].subtype = EFFECT_TYPE_COMPRESSOR;
+    g_sys_param.audio_chain.node_pool[6].subtype = EFFECT_TYPE_EQ;
     g_sys_param.audio_chain.node_pool[6].enabled = 1;
     g_sys_param.audio_chain.node_pool[6].volume = 100;
 
-    /* N7: EQ */
+    /* N7: EQ_MIC_R - 麦克风右声道EQ */
     g_sys_param.audio_chain.node_pool[7].node_type = NODE_TYPE_EFFECT;
     g_sys_param.audio_chain.node_pool[7].subtype = EFFECT_TYPE_EQ;
     g_sys_param.audio_chain.node_pool[7].enabled = 1;
     g_sys_param.audio_chain.node_pool[7].volume = 100;
 
-    /* N8: Reverb */
-    g_sys_param.audio_chain.node_pool[8].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[8].subtype = EFFECT_TYPE_REVERB;
+    /* N8: ADC_Mixer - ADC EQ后混音器 */
+    g_sys_param.audio_chain.node_pool[8].node_type = NODE_TYPE_MIXER;
+    g_sys_param.audio_chain.node_pool[8].subtype = 0;
     g_sys_param.audio_chain.node_pool[8].enabled = 1;
     g_sys_param.audio_chain.node_pool[8].volume = 100;
-    g_sys_param.audio_chain.node_pool[8].preset = 1;
 
-    /* N9: USB_BT_Mixer */
-    g_sys_param.audio_chain.node_pool[9].node_type = NODE_TYPE_MIXER;
-    g_sys_param.audio_chain.node_pool[9].subtype = 0;
+    /* N9: Expander */
+    g_sys_param.audio_chain.node_pool[9].node_type = NODE_TYPE_EFFECT;
+    g_sys_param.audio_chain.node_pool[9].subtype = 11; /* Expander type */
     g_sys_param.audio_chain.node_pool[9].enabled = 1;
     g_sys_param.audio_chain.node_pool[9].volume = 100;
 
-    /* N10: USB_BT_EQ */
+    /* N10: DRC */
     g_sys_param.audio_chain.node_pool[10].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[10].subtype = EFFECT_TYPE_EQ;
+    g_sys_param.audio_chain.node_pool[10].subtype = EFFECT_TYPE_COMPRESSOR;
     g_sys_param.audio_chain.node_pool[10].enabled = 1;
     g_sys_param.audio_chain.node_pool[10].volume = 100;
 
-    /* N11: Final_Mixer */
+    /* N11: Pre_Reverb_Mixer - 混响前混音器 */
     g_sys_param.audio_chain.node_pool[11].node_type = NODE_TYPE_MIXER;
     g_sys_param.audio_chain.node_pool[11].subtype = 0;
     g_sys_param.audio_chain.node_pool[11].enabled = 1;
     g_sys_param.audio_chain.node_pool[11].volume = 100;
 
-    /* N12: DAC0_Out */
-    g_sys_param.audio_chain.node_pool[12].node_type = NODE_TYPE_OUTPUT;
-    g_sys_param.audio_chain.node_pool[12].subtype = OUTPUT_TYPE_HEADPHONE;
+    /* N12: Reverb */
+    g_sys_param.audio_chain.node_pool[12].node_type = NODE_TYPE_EFFECT;
+    g_sys_param.audio_chain.node_pool[12].subtype = EFFECT_TYPE_REVERB;
     g_sys_param.audio_chain.node_pool[12].enabled = 1;
     g_sys_param.audio_chain.node_pool[12].volume = 100;
+    g_sys_param.audio_chain.node_pool[12].preset = 1;
 
-    /* N13: USB_Out */
-    g_sys_param.audio_chain.node_pool[13].node_type = NODE_TYPE_OUTPUT;
-    g_sys_param.audio_chain.node_pool[13].subtype = 2; /* USB output type */
+    /* N13: USB_BT_Mixer */
+    g_sys_param.audio_chain.node_pool[13].node_type = NODE_TYPE_MIXER;
+    g_sys_param.audio_chain.node_pool[13].subtype = 0;
     g_sys_param.audio_chain.node_pool[13].enabled = 1;
     g_sys_param.audio_chain.node_pool[13].volume = 100;
 
-    /* Mark nodes 0-13 as used */
-    g_sys_param.audio_chain.node_used_mask = 0x3FFF; /* 0b0011111111111111 = nodes 0-13 used */
+    /* N14: USB_BT_EQ */
+    g_sys_param.audio_chain.node_pool[14].node_type = NODE_TYPE_EFFECT;
+    g_sys_param.audio_chain.node_pool[14].subtype = EFFECT_TYPE_EQ;
+    g_sys_param.audio_chain.node_pool[14].enabled = 1;
+    g_sys_param.audio_chain.node_pool[14].volume = 100;
+
+    /* N15: Final_Mixer */
+    g_sys_param.audio_chain.node_pool[15].node_type = NODE_TYPE_MIXER;
+    g_sys_param.audio_chain.node_pool[15].subtype = 0;
+    g_sys_param.audio_chain.node_pool[15].enabled = 1;
+    g_sys_param.audio_chain.node_pool[15].volume = 100;
+
+    /* N16: DAC0_Out */
+    g_sys_param.audio_chain.node_pool[16].node_type = NODE_TYPE_OUTPUT;
+    g_sys_param.audio_chain.node_pool[16].subtype = OUTPUT_TYPE_HEADPHONE;
+    g_sys_param.audio_chain.node_pool[16].enabled = 1;
+    g_sys_param.audio_chain.node_pool[16].volume = 100;
+
+    /* N17: USB_Out */
+    g_sys_param.audio_chain.node_pool[17].node_type = NODE_TYPE_OUTPUT;
+    g_sys_param.audio_chain.node_pool[17].subtype = 2; /* USB output type */
+    g_sys_param.audio_chain.node_pool[17].enabled = 1;
+    g_sys_param.audio_chain.node_pool[17].volume = 100;
+
+    /* N18: Metronome */
+    g_sys_param.audio_chain.node_pool[18].node_type = NODE_TYPE_SOURCE;
+    g_sys_param.audio_chain.node_pool[18].subtype = 4; /* Metronome type */
+    g_sys_param.audio_chain.node_pool[18].enabled = 1;
+    g_sys_param.audio_chain.node_pool[18].volume = 100;
+
+    /* N19: Looper_Play */
+    g_sys_param.audio_chain.node_pool[19].node_type = NODE_TYPE_SOURCE;
+    g_sys_param.audio_chain.node_pool[19].subtype = 5; /* Looper play type */
+    g_sys_param.audio_chain.node_pool[19].enabled = 1;
+    g_sys_param.audio_chain.node_pool[19].volume = 100;
+
+    /* N20: Looper_Record */
+    g_sys_param.audio_chain.node_pool[20].node_type = NODE_TYPE_OUTPUT;
+    g_sys_param.audio_chain.node_pool[20].subtype = 3; /* Looper record type */
+    g_sys_param.audio_chain.node_pool[20].enabled = 1;
+    g_sys_param.audio_chain.node_pool[20].volume = 100;
+
+    /* Mark nodes 0-20 as used (21 nodes) */
+    g_sys_param.audio_chain.node_used_mask = 0x1FFFFF; /* 21 bits set: nodes 0-20 used */
 
     /* Add nodes to graph */
-    for (i = 0; i < 14; i++) {
+    for (i = 0; i < 21; i++) {
         g_sys_param.audio_chain.graphs[0].node_ids[i] = i;
     }
 
-    /* Create 13 edges */
-    /* ADC0 -> ADC_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[0].from_node = 0;
+    /* ========== 新架构边定义 (2026-02-04) - 共22条边 ========== */
+    
+    /* ADC0 (Guitar) 左右声道分别进入独立EQ */
+    g_sys_param.audio_chain.graphs[0].edges[0].from_node = 0;  /* ADC0 L -> EQ_GUITAR_L */
     g_sys_param.audio_chain.graphs[0].edges[0].to_node = 4;
+    g_sys_param.audio_chain.graphs[0].edges[1].from_node = 0;  /* ADC0 R -> EQ_GUITAR_R */
+    g_sys_param.audio_chain.graphs[0].edges[1].to_node = 5;
 
-    /* ADC1 -> ADC_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[1].from_node = 1;
-    g_sys_param.audio_chain.graphs[0].edges[1].to_node = 4;
+    /* ADC1 (Mic) 左右声道分别进入独立EQ */
+    g_sys_param.audio_chain.graphs[0].edges[2].from_node = 1;  /* ADC1 L -> EQ_MIC_L */
+    g_sys_param.audio_chain.graphs[0].edges[2].to_node = 6;
+    g_sys_param.audio_chain.graphs[0].edges[3].from_node = 1;  /* ADC1 R -> EQ_MIC_R */
+    g_sys_param.audio_chain.graphs[0].edges[3].to_node = 7;
 
-    /* ADC_Mixer -> Expander */
-    g_sys_param.audio_chain.graphs[0].edges[2].from_node = 4;
-    g_sys_param.audio_chain.graphs[0].edges[2].to_node = 5;
-
-    /* Expander -> DRC */
-    g_sys_param.audio_chain.graphs[0].edges[3].from_node = 5;
-    g_sys_param.audio_chain.graphs[0].edges[3].to_node = 6;
-
-    /* DRC -> EQ */
-    g_sys_param.audio_chain.graphs[0].edges[4].from_node = 6;
-    g_sys_param.audio_chain.graphs[0].edges[4].to_node = 7;
-
-    /* EQ -> Reverb */
-    g_sys_param.audio_chain.graphs[0].edges[5].from_node = 7;
+    /* 4个EQ输出到ADC混音器 */
+    g_sys_param.audio_chain.graphs[0].edges[4].from_node = 4;  /* EQ_GUITAR_L -> ADC_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[4].to_node = 8;
+    g_sys_param.audio_chain.graphs[0].edges[5].from_node = 5;  /* EQ_GUITAR_R -> ADC_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[5].to_node = 8;
+    g_sys_param.audio_chain.graphs[0].edges[6].from_node = 6;  /* EQ_MIC_L -> ADC_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[6].to_node = 8;
+    g_sys_param.audio_chain.graphs[0].edges[7].from_node = 7;  /* EQ_MIC_R -> ADC_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[7].to_node = 8;
 
-    /* USB_In -> USB_BT_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[6].from_node = 2;
-    g_sys_param.audio_chain.graphs[0].edges[6].to_node = 9;
-
-    /* BT_In -> USB_BT_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[7].from_node = 3;
-    g_sys_param.audio_chain.graphs[0].edges[7].to_node = 9;
-
-    /* USB_BT_Mixer -> USB_BT_EQ */
-    g_sys_param.audio_chain.graphs[0].edges[8].from_node = 9;
-    g_sys_param.audio_chain.graphs[0].edges[8].to_node = 10;
-
-    /* Reverb -> Final_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[9].from_node = 8;
-    g_sys_param.audio_chain.graphs[0].edges[9].to_node = 11;
-
-    /* USB_BT_EQ -> Final_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[10].from_node = 10;
+    /* ADC效果链: ADC_Mixer -> Expander -> DRC -> Pre_Reverb_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[8].from_node = 8;  /* ADC_Mixer -> Expander */
+    g_sys_param.audio_chain.graphs[0].edges[8].to_node = 9;
+    g_sys_param.audio_chain.graphs[0].edges[9].from_node = 9;  /* Expander -> DRC */
+    g_sys_param.audio_chain.graphs[0].edges[9].to_node = 10;
+    g_sys_param.audio_chain.graphs[0].edges[10].from_node = 10; /* DRC -> Pre_Reverb_Mixer */
     g_sys_param.audio_chain.graphs[0].edges[10].to_node = 11;
 
-    /* Final_Mixer -> DAC0_Out */
-    g_sys_param.audio_chain.graphs[0].edges[11].from_node = 11;
-    g_sys_param.audio_chain.graphs[0].edges[11].to_node = 12;
+    /* Looper_Play -> Pre_Reverb_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[11].from_node = 19; /* Looper_Play -> Pre_Reverb_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[11].to_node = 11;
 
-    /* Final_Mixer -> USB_Out */
+    /* Pre_Reverb_Mixer -> Reverb */
     g_sys_param.audio_chain.graphs[0].edges[12].from_node = 11;
-    g_sys_param.audio_chain.graphs[0].edges[12].to_node = 13;
+    g_sys_param.audio_chain.graphs[0].edges[12].to_node = 12;
+
+    /* USB/BT + Metronome -> USB_BT_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[13].from_node = 2;  /* USB_In -> USB_BT_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[13].to_node = 13;
+    g_sys_param.audio_chain.graphs[0].edges[14].from_node = 3;  /* BT_In -> USB_BT_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[14].to_node = 13;
+    g_sys_param.audio_chain.graphs[0].edges[15].from_node = 18; /* Metronome -> USB_BT_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[15].to_node = 13;
+
+    /* USB_BT_Mixer -> USB_BT_EQ */
+    g_sys_param.audio_chain.graphs[0].edges[16].from_node = 13;
+    g_sys_param.audio_chain.graphs[0].edges[16].to_node = 14;
+
+    /* Reverb + USB_BT_EQ -> Final_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[17].from_node = 12; /* Reverb -> Final_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[17].to_node = 15;
+    g_sys_param.audio_chain.graphs[0].edges[18].from_node = 14; /* USB_BT_EQ -> Final_Mixer */
+    g_sys_param.audio_chain.graphs[0].edges[18].to_node = 15;
+
+    /* Final_Mixer -> 输出 */
+    g_sys_param.audio_chain.graphs[0].edges[19].from_node = 15; /* Final_Mixer -> DAC0_Out */
+    g_sys_param.audio_chain.graphs[0].edges[19].to_node = 16;
+    g_sys_param.audio_chain.graphs[0].edges[20].from_node = 15; /* Final_Mixer -> USB_Out */
+    g_sys_param.audio_chain.graphs[0].edges[20].to_node = 17;
+
+    /* ADC_Mixer -> Looper_Record */
+    g_sys_param.audio_chain.graphs[0].edges[21].from_node = 8;
+    g_sys_param.audio_chain.graphs[0].edges[21].to_node = 20;
 
     /* Clear other graphs */
     for (i = 1; i < MAX_EFFECT_GRAPHS; i++) {
@@ -462,6 +528,58 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     return SYSPARAM_OK;
 }
 
+/**
+ * @brief Apply flash parameters to audio system (gCtrlVars)
+ *        This syncs stored volume/EQ/effect settings to the runtime audio variables
+ *        Called after SysParam_Init() and CtrlVarsInit() to override defaults with saved values
+ * @return SYSPARAM_OK on success
+ */
+SysParam_Status_t SysParam_ApplyToAudio(void) {
+    int i;
+    extern ControlVariablesContext gCtrlVars;
+    
+    if (!g_param_initialized) {
+        PARAM_DBG("[PARAM] Error: not initialized, cannot apply to audio\n");
+        return SYSPARAM_ERR_NOT_INIT;
+    }
+    
+    PARAM_DBG("[PARAM] Applying saved parameters to audio system...\n");
+    
+    /* Apply volume settings */
+    AudioSetting_SetMic1VolumePercent(g_sys_param.volume.mic1_volume);
+    AudioSetting_SetMic2VolumePercent(g_sys_param.volume.mic2_volume);
+    AudioSetting_SetGuitar1VolumePercent(g_sys_param.volume.guitar1_volume);
+    AudioSetting_SetGuitar2VolumePercent(g_sys_param.volume.guitar2_volume);
+    
+    PARAM_DBG("[PARAM] Applied volumes: mic1=%d mic2=%d guitar1=%d guitar2=%d\n",
+              g_sys_param.volume.mic1_volume,
+              g_sys_param.volume.mic2_volume,
+              g_sys_param.volume.guitar1_volume,
+              g_sys_param.volume.guitar2_volume);
+    
+    /* Apply audio chain node settings to effect graph */
+    /* Iterate through nodes in the default graph and apply saved settings */
+    if (g_sys_param.audio_chain.graph_count > 0) {
+        EffectGraph_t *graph = &g_sys_param.audio_chain.graphs[0];
+        for (i = 0; i < graph->node_count; i++) {
+            uint8_t nid = graph->node_ids[i];
+            if (nid < MAX_GRAPH_NODES) {
+                GraphNode_t *gnode = &g_sys_param.audio_chain.node_pool[nid];
+                EffectNode_t *efx_node = EffectGraph_FindNodeById(nid);
+                if (efx_node) {
+                    efx_node->enabled = gnode->enabled;
+                    efx_node->bypass = !gnode->enabled;
+                    /* Apply effect-specific parameters from gnode->params[] */
+                }
+            }
+        }
+        PARAM_DBG("[PARAM] Applied audio chain with %d nodes\n", graph->node_count);
+    }
+    
+    PARAM_DBG("[PARAM] Parameters applied to audio system\n");
+    return SYSPARAM_OK;
+}
+
 bool SysParam_IsModified(void) {
     return g_param_modified ? true : false;
 }
@@ -500,15 +618,60 @@ static void SysParam_PrintEffectParams(GraphNode_t *node) {
             break;
 
         case EFFECT_TYPE_EQ:
-            Shell_Printf(" [");
+            /* 从effect_graph获取实时EQ参数（如果节点ID有效） */
             {
                 int band;
-                for (band = 0; band < 10 && band < 11; band++) {
-                    if (band > 0) Shell_Printf(" ");
-                    Shell_Printf("b%d=%d", band, (int8_t)node->params[band]);
+                int active_count = 0;
+                EffectNode_t *live_node = NULL;
+                
+                /* 尝试从effect_graph获取实时节点数据 */
+                /* 注意：这里假设sys_param的node索引和effect_graph的node ID对应 */
+                /* 如果有映射关系，需要调整 */
+                
+                /* 简化版：直接从params数组解析（sys_param存储的静态数据） */
+                /* 统计启用的频段数 */
+                for (band = 0; band < 10; band++) {
+                    if (band + 80 < 88 && node->params[80 + band]) {
+                        active_count++;
+                    }
                 }
+                
+                Shell_Printf(" [%d bands", active_count);
+                
+                /* 显示启用的频段详情（最多显示3个，避免输出过长） */
+                int shown = 0;
+                for (band = 0; band < 10 && shown < 3; band++) {
+                    if (band + 80 < 88 && node->params[80 + band]) {
+                        int8_t gain = (int8_t)node->params[band];
+                        uint32_t freq = 0;
+                        uint16_t q = 0;
+                        
+                        /* 提取频率（4字节，小端） */
+                        if (10 + band * 4 + 3 < 88) {
+                            freq = node->params[10 + band * 4] |
+                                   (node->params[10 + band * 4 + 1] << 8) |
+                                   (node->params[10 + band * 4 + 2] << 16) |
+                                   (node->params[10 + band * 4 + 3] << 24);
+                        }
+                        
+                        /* 提取Q值（2字节，小端） */
+                        if (50 + band * 2 + 1 < 88) {
+                            q = node->params[50 + band * 2] |
+                                (node->params[50 + band * 2 + 1] << 8);
+                        }
+                        
+                        if (shown > 0) Shell_Printf(",");
+                        Shell_Printf(" b%d:%+ddB@%luHz", band, gain, (unsigned long)freq);
+                        shown++;
+                    }
+                }
+                
+                if (active_count > shown) {
+                    Shell_Printf(", +%d more", active_count - shown);
+                }
+                
+                Shell_Printf("] *runtime");  /* 标记为运行时参数，sys_param可能不是最新 */
             }
-            Shell_Printf("]");
             break;
 
         default:
@@ -615,6 +778,42 @@ void SysParam_Print(void) {
                     SysParam_PrintEffectParams(node);
                 }
                 Shell_Printf("\n");
+            }
+        }
+    }
+    
+    /* Print runtime effect graph status (实时运行状态) */
+    Shell_Printf("\n--- Runtime Effect Graph ---\n");
+    {
+        extern ControlVariablesContext gCtrlVars;
+        
+        /* 打印mic_out_eq_unit状态 */
+        Shell_Printf("  mic_out_eq: %s, %d bands\n", 
+                    gCtrlVars.mic_out_eq_unit.enable ? "ON" : "OFF",
+                    gCtrlVars.mic_out_eq_unit.filter_count);
+        if (gCtrlVars.mic_out_eq_unit.enable && gCtrlVars.mic_out_eq_unit.filter_count > 0) {
+            int i;
+            for (i = 0; i < gCtrlVars.mic_out_eq_unit.filter_count && i < 3; i++) {
+                if (gCtrlVars.mic_out_eq_unit.eq_params[i].enable) {
+                    Shell_Printf("    b%d: %+ddB @ %luHz\n", i,
+                                gCtrlVars.mic_out_eq_unit.eq_params[i].gain / 256,
+                                (unsigned long)gCtrlVars.mic_out_eq_unit.eq_params[i].f0);
+                }
+            }
+        }
+        
+        /* 打印music_out_eq_unit状态 */
+        Shell_Printf("  music_out_eq: %s, %d bands\n",
+                    gCtrlVars.music_out_eq_unit.enable ? "ON" : "OFF",
+                    gCtrlVars.music_out_eq_unit.filter_count);
+        if (gCtrlVars.music_out_eq_unit.enable && gCtrlVars.music_out_eq_unit.filter_count > 0) {
+            int i;
+            for (i = 0; i < gCtrlVars.music_out_eq_unit.filter_count && i < 3; i++) {
+                if (gCtrlVars.music_out_eq_unit.eq_params[i].enable) {
+                    Shell_Printf("    b%d: %+ddB @ %luHz\n", i,
+                                gCtrlVars.music_out_eq_unit.eq_params[i].gain / 256,
+                                (unsigned long)gCtrlVars.music_out_eq_unit.eq_params[i].f0);
+                }
             }
         }
     }

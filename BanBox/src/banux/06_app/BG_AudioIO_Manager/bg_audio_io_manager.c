@@ -34,6 +34,7 @@
 #include "shell_io_ble.h"
 #include "shell_io_manager.h"
 #include "audio_looper.h"
+#include "metronome.h"
 #include "sra.h"
 #include "spi_flash.h"
 #include "resampler.h"
@@ -50,6 +51,7 @@
 
 // System Monitor 模块
 #include "shell_cmd_sysmon.h"
+#include "shell_cmd_metronome.h"
 
 #include "bt_manager.h"
 
@@ -97,6 +99,8 @@ BG_Audio_Io_Manager BG_AudioManager = {
 #define BT_SBC_LEVEL_LOW (BT_SBC_PACKET_SIZE * 6)
 #define BT_SBC_LEVEL_START (BT_SBC_LEVEL_HIGH - BT_SBC_PACKET_SIZE * 3)
 #define SBC_DECODER_FIFO_MIN (119 * 2)
+/* 蓝牙解码最大帧长：SBC单帧最大128样本，双声道=256样本，640预留充足 */
+#define BT_DECODED_BUFFER_SIZE 256   /* 优化：与 EFFECT_GRAPH_BUFFER_SIZE 对齐 */
 
 uint8_t a2dp_sbcBuf[BT_SBC_DECODER_INPUT_LEN];
 static uint8_t decoder_buf[1024 * 4] = {0};
@@ -106,7 +110,7 @@ MemHandle SBC_MemHandle;
 ResamplerContext bt_resmaper;
 
 // ==================== 蓝牙预解码缓冲区（全局，供AudioLoopWithGraph和BT回调共享）====================
-static uint32_t bt_decoded_buffer[640];  /* 预解码缓冲区，支持 SBC 最大帧长 ~595，使用 uint32_t 统一格式 */
+static uint32_t bt_decoded_buffer[BT_DECODED_BUFFER_SIZE];  /* 优化：从640降到256，节省 1536 bytes */
 static uint16_t bt_decoded_len = 0;     /* 预解码数据长度 */
 static bool bt_has_decoded_data = false; /* 是否有预解码数据 */
 static uint32_t bt_current_sample_rate = 0; /* 当前蓝牙音频采样率 */
@@ -120,6 +124,15 @@ static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint1
 static uint16_t ADC1_ReadMicData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
 static uint16_t USB_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
 static uint16_t BT_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
+
+// Metronome 和 Looper 源节点回调
+static uint16_t Metronome_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
+static uint16_t Metronome_GetAvailCallback(EffectNode_t *node);
+static uint16_t LooperPlay_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
+static uint16_t LooperPlay_GetAvailCallback(EffectNode_t *node);
+
+// Looper 录制 Sink 节点回调
+static void LooperRecord_SinkCallback(EffectNode_t *node, uint32_t *in_buf, uint16_t len);
 
 // Effect Graph 源节点可用数据量查询回调 (用于自适应帧长)
 static uint16_t ADC0_GetAvailableData(EffectNode_t *node);
@@ -136,6 +149,7 @@ static void Expander_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_
 static void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
 static void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
 static void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
+static void ADC_Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
 static void Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
 static void Passthrough_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
 
@@ -210,20 +224,89 @@ static void InitADCDigital(uint16_t SampleRate)
 // 初始化音频效果（混响等）
 static void InitAudioEffects(uint16_t SampleRate)
 {
+	extern int osPortRemainMem(void);  /* 获取剩余内存 */
+	int mem_before, mem_after;
+	
 	gCtrlVars.audio_effect_init_flag = 1;
 	
+	APP_DBG("[AudioInit] Memory available at start: %d bytes\n", osPortRemainMem());
+	
 	// 混响效果（Reverb）
+	mem_before = osPortRemainMem();
 	gCtrlVars.reverb_unit.enable = 1;
 	gCtrlVars.plate_reverb_unit.enable = 0;
 	AudioEffectReverbInit(&gCtrlVars.reverb_unit, 2, SampleRate);
+	mem_after = osPortRemainMem();
+	APP_DBG("[AudioInit] Reverb allocated: %d bytes (remain: %d)\n", mem_before - mem_after, mem_after);
 
 	// 动态范围压缩（DRC）- ADC输入通道
+	mem_before = osPortRemainMem();
 	gCtrlVars.mic_drc_unit.enable = 1;
 	AudioEffectDRCInit(&gCtrlVars.mic_drc_unit, 2, SampleRate);
+	mem_after = osPortRemainMem();
+	APP_DBG("[AudioInit] DRC allocated: %d bytes (remain: %d)\n", mem_before - mem_after, mem_after);
 
-	// 均衡器（EQ）- ADC输出EQ
-	gCtrlVars.mic_out_eq_unit.enable = 1;
-	AudioEffectEQInit(&gCtrlVars.mic_out_eq_unit, 2, SampleRate);
+	/* ========== 仅初始化效果图实际使用的5个EQ单元 ========== */
+	/* 节点4-7: ADC通道独立EQ (单声道, 10段) */
+	APP_DBG("[AudioInit] Initializing 4x ADC EQ (mono, 10-band)...\n");
+	mem_before = osPortRemainMem();
+	
+	gCtrlVars.eq_guitar_l_unit.enable = 1;
+	gCtrlVars.eq_guitar_l_unit.channel = 1;
+	AudioEffectEQInit(&gCtrlVars.eq_guitar_l_unit, 1, SampleRate);
+	mem_after = osPortRemainMem();
+	APP_DBG("[AudioInit] EQ_guitar_l: en=%d ct=%p allocated=%d (remain: %d)\n", 
+		gCtrlVars.eq_guitar_l_unit.enable, gCtrlVars.eq_guitar_l_unit.ct, mem_before - mem_after, mem_after);
+	
+	mem_before = osPortRemainMem();
+	gCtrlVars.eq_guitar_r_unit.enable = 1;
+	gCtrlVars.eq_guitar_r_unit.channel = 1;
+	AudioEffectEQInit(&gCtrlVars.eq_guitar_r_unit, 1, SampleRate);
+	mem_after = osPortRemainMem();
+	APP_DBG("[AudioInit] EQ_guitar_r: en=%d ct=%p allocated=%d (remain: %d)\n", 
+		gCtrlVars.eq_guitar_r_unit.enable, gCtrlVars.eq_guitar_r_unit.ct, mem_before - mem_after, mem_after);
+	
+	mem_before = osPortRemainMem();
+	gCtrlVars.eq_mic_l_unit.enable = 1;
+	gCtrlVars.eq_mic_l_unit.channel = 1;
+	AudioEffectEQInit(&gCtrlVars.eq_mic_l_unit, 1, SampleRate);
+	mem_after = osPortRemainMem();
+	APP_DBG("[AudioInit] EQ_mic_l: en=%d ct=%p allocated=%d (remain: %d)\n", 
+		gCtrlVars.eq_mic_l_unit.enable, gCtrlVars.eq_mic_l_unit.ct, mem_before - mem_after, mem_after);
+	
+	mem_before = osPortRemainMem();
+	gCtrlVars.eq_mic_r_unit.enable = 1;
+	gCtrlVars.eq_mic_r_unit.channel = 1;
+	AudioEffectEQInit(&gCtrlVars.eq_mic_r_unit, 1, SampleRate);
+	mem_after = osPortRemainMem();
+	APP_DBG("[AudioInit] EQ_mic_r: en=%d ct=%p allocated=%d (remain: %d)\n", 
+		gCtrlVars.eq_mic_r_unit.enable, gCtrlVars.eq_mic_r_unit.ct, mem_before - mem_after, mem_after);
+
+	/* 节点14: USB/BT路径EQ (双声道) */
+	APP_DBG("[AudioInit] Initializing USB/BT EQ (stereo)...\n");
+	mem_before = osPortRemainMem();
+	gCtrlVars.music_out_eq_unit.enable = 1;
+	gCtrlVars.music_out_eq_unit.channel = 2;
+	/* 修正类型：BAND_PASS会导致音量衰减严重 */
+	{
+		int i;
+		for (i = 0; i < 10; i++) {
+			if (gCtrlVars.music_out_eq_unit.eq_params[i].type == 5) {
+				gCtrlVars.music_out_eq_unit.eq_params[i].type = 0;  /* PEAKING */
+			}
+			if (gCtrlVars.music_out_eq_unit.filter_params && i < gCtrlVars.music_out_eq_unit.filter_count) {
+				if (gCtrlVars.music_out_eq_unit.filter_params[i].type == 5) {
+					gCtrlVars.music_out_eq_unit.filter_params[i].type = 0;
+				}
+			}
+		}
+	}
+	AudioEffectEQInit(&gCtrlVars.music_out_eq_unit, 2, SampleRate);
+	mem_after = osPortRemainMem();
+	APP_DBG("[AudioInit] USB/BT_EQ: en=%d ct=%p allocated=%d (remain: %d)\n", 
+		gCtrlVars.music_out_eq_unit.enable, gCtrlVars.music_out_eq_unit.ct, mem_before - mem_after, mem_after);
+	
+	APP_DBG("[AudioInit] All EQ initialization completed, final memory: %d bytes\n", osPortRemainMem());
 
 	// 啸叫抑制（Howling Detector）
 	#if CFG_AUDIO_EFFECT_MIC_HOWLING_DECTOR_EN
@@ -314,35 +397,44 @@ void BG_audio_Init(uint16_t SampleRate)
 	// 1. 初始化 Effect Graph 核心模块
 	if (EffectGraph_Init() != 0) {
 		DBG("[Audio] ERROR: Effect Graph Init failed!\n");
-		return;
+		// 不要直接return，继续初始化其他组件
+	} else {
+		// 2. 加载默认预设（可根据需求选择其他预设）
+		if (EffectGraphConfig_LoadPreset(GRAPH_PRESET_DEFAULT) != 0) {
+			DBG("[Audio] ERROR: Effect Graph Load Preset failed!\n");
+			DBG("[Audio] Attempting fallback initialization...\n");
+			// 尝试继续，因为回调设置可能仍然可以工作
+		}
+
+		// 3. 自动应用保存的chain graphs（如果有的话）
+		// NOTE: 临时禁用自动应用，避免覆盖包含metronome和looper的17节点配置
+		// TODO: 更新sys_param默认配置为17节点后再启用
+		// ChainGraph_AutoApplyOnStartup();
+
+		// 4. 自动挂载效果图到VFS（供命令行和文件系统访问）
+		EffectGraphVfs_TryAutoMount();
+
+		// 5. 挂接实际音频设备回调
+		SetupEffectGraphCallbacks();
 	}
-
-	// 2. 加载默认预设（可根据需求选择其他预设）
-	if (EffectGraphConfig_LoadPreset(GRAPH_PRESET_DEFAULT) != 0) {
-		DBG("[Audio] ERROR: Effect Graph Load Preset failed!\n");
-		return;
-	}
-
-	// 3. 自动应用保存的chain graphs（如果有的话）
-	ChainGraph_AutoApplyOnStartup();
-
-//	// 4. 自动挂载效果图到VFS（供命令行和文件系统访问）
-//	EffectGraphVfs_TryAutoMount();
-
-	// 5. 挂接实际音频设备回调
-	SetupEffectGraphCallbacks();
 
 	// 6. 注册 Shell 命令（支持 CDC/BLE 远程控制）
 	ShellCmdGraph_Register();
 
 	// 7. 注册系统监控命令（CPU/内存/任务统计）
 	ShellCmdSysmon_Register();
+	
+	// 8. 注册节拍器命令
+	ShellCmdMetronome_Register();
 
 	DBG("[Audio] Effect Graph initialized successfully\n");
 	// ==========================================
 
 	// 初始化Audio Looper（使用NOR Flash）
 	AudioLooper.InitWithFlashType(FLASH_TYPE_NOR);
+	
+	// 初始化节拍器模块
+	MetronomeModule.Init();
 
 //	AudioDAC_FadeDisable(DAC0);
 //
@@ -548,8 +640,7 @@ static void ApplyAudioEffects(uint16_t len)
 		memcpy(temp_buf2, temp_buf1, len * sizeof(uint32_t));
 	}
 	
-	// 3. 均衡器（EQ）- 调整频率响应
-	#if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
+
 	if (gCtrlVars.mic_out_eq_unit.enable)
 	{
 		AudioEffectEQApply(&gCtrlVars.mic_out_eq_unit,
@@ -559,7 +650,6 @@ static void ApplyAudioEffects(uint16_t len)
 		                   2);
 	}
 	else
-	#endif
 	{
 		memcpy(temp_buf1, temp_buf2, len * sizeof(uint32_t));
 	}
@@ -841,7 +931,7 @@ static void AudioLoopWithGraph(void)
 	bool bt_streaming;
 	EffectGraphRuntime_t *graph;
 	const uint16_t MIN_FRAME = 48;
-	const uint16_t MAX_FRAME = 640;  /* 支持 SBC 最大帧长 ~595 */
+	const uint16_t MAX_FRAME = BT_DECODED_BUFFER_SIZE;  /* 与缓冲区大小对齐 */
 	static bool last_bt_streaming = false;  /* 上一帧的蓝牙状态 */
 	
 	/* 获取图实例 */
@@ -1106,9 +1196,9 @@ static uint16_t BT_GetAvailableData(EffectNode_t *node)
 		AudioADC_SampleRateSet(ADC1_MODULE, bt_sample_rate);
 	}
 	
-	/* 限制帧长 */
-	if (pcm_len > 640) {
-		pcm_len = 640;
+	/* 限制帧长到 BT_DECODED_BUFFER_SIZE (与效果图缓冲区对齐) */
+	if (pcm_len > BT_DECODED_BUFFER_SIZE) {
+		pcm_len = BT_DECODED_BUFFER_SIZE;
 	}
 	
 	/* 缓存预解码数据（与老方案完全一致：直接复制 int32 到 uint32） */
@@ -1144,7 +1234,7 @@ static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint1
 		samples_to_read = 640;
 	}
 	
-	/* 直接读取请求的长度（调用方已保证数据充足） */
+	/* 读取ADC数据（32位=L/R两个16位声道打包） */
 	if (samples_to_read > 0) {
 		AudioADC_DataGet(ADC0_MODULE, out_buf, samples_to_read);
 	}
@@ -1170,7 +1260,7 @@ static uint16_t ADC1_ReadMicData(EffectNode_t *node, uint32_t *out_buf, uint16_t
 		samples_to_read = 640;
 	}
 	
-	/* 直接读取请求的长度（调用方已保证数据充足） */
+	/* 读取ADC数据（32位=L/R两个16位声道打包） */
 	if (samples_to_read > 0) {
 		AudioADC_DataGet(ADC1_MODULE, out_buf, samples_to_read);
 	}
@@ -1331,6 +1421,62 @@ static uint16_t BT_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t
 // ==================== Effect Graph 效果器处理回调 ====================
 
 /**
+ * ADC混音器处理回调 - 将4个单声道EQ输出合并成2个32位双声道
+ * 输入: in_bufs[0]=guitar_L, [1]=guitar_R, [2]=mic_L, [3]=mic_R (各16位单声道)
+ * 输出: out_buf = [guitar_L+mic_L | guitar_R+mic_R] (32位双声道)
+ */
+static void ADC_Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
+{
+	uint16_t i;
+	int16_t *out_16 = (int16_t *)out_buf;
+	
+	(void)node;
+	
+	/* 安全检查 */
+	if (!out_buf || len == 0 || in_count < 4) {
+		return;
+	}
+	
+	/* ADC Mixer需要4个输入: guitar_L, guitar_R, mic_L, mic_R */
+	if (in_count != 4) {
+		DBG("[ADC_Mixer] Warning: Expected 4 inputs, got %d\n", in_count);
+		return;
+	}
+	
+	/* 合并: 每个输出样本 = [L声道 | R声道] (32位打包) */
+	for (i = 0; i < len; i++) {
+		int32_t left_sum = 0;
+		int32_t right_sum = 0;
+		
+		/* 累加L声道: guitar_L + mic_L */
+		if (in_bufs[0]) {
+			left_sum += ((int16_t *)in_bufs[0])[i];
+		}
+		if (in_bufs[2]) {
+			left_sum += ((int16_t *)in_bufs[2])[i];
+		}
+		
+		/* 累加R声道: guitar_R + mic_R */
+		if (in_bufs[1]) {
+			right_sum += ((int16_t *)in_bufs[1])[i];
+		}
+		if (in_bufs[3]) {
+			right_sum += ((int16_t *)in_bufs[3])[i];
+		}
+		
+		/* 饱和限制到16位 */
+		if (left_sum > 32767) left_sum = 32767;
+		if (left_sum < -32768) left_sum = -32768;
+		if (right_sum > 32767) right_sum = 32767;
+		if (right_sum < -32768) right_sum = -32768;
+		
+		/* 打包成32位: [低16位=L | 高16位=R] */
+		out_16[i * 2] = (int16_t)left_sum;
+		out_16[i * 2 + 1] = (int16_t)right_sum;
+	}
+}
+
+/**
  * 混音器处理回调 - 将多路输入混合为一路输出
  */
 static void Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
@@ -1339,6 +1485,16 @@ static void Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_cou
 	uint8_t j;
 	
 	(void)node; /* 未使用，消除警告 */
+	
+	/* 安全检查 */
+	if (!out_buf || len == 0 || in_count == 0) {
+		return;
+	}
+	
+	/* 限制最大长度，避免缓冲区溢出 */
+	if (len > 640) {
+		len = 640;
+	}
 	
 	/* 清零输出缓冲区 */
 	for (i = 0; i < len; i++) {
@@ -1352,6 +1508,139 @@ static void Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_cou
 				out_buf[i] += in_bufs[j][i];
 			}
 		}
+	}
+}
+
+// ==================== Metronome 和 Looper 节点回调 ====================
+
+/**
+ * 节拍器源节点回调 - 生成节拍器音频数据
+ * 注意：这里只生成数据，不做混音（混音由Mixer节点完成）
+ */
+static uint16_t Metronome_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
+{
+	uint16_t i;
+	uint16_t generated = 0;
+	
+	(void)node;
+	
+	/* 限制最大长度 */
+	if (max_len > 640) {
+		max_len = 640;
+	}
+	
+	/* 先清零缓冲区 */
+	for (i = 0; i < max_len; i++) {
+		out_buf[i] = 0;
+	}
+	
+	/* 如果节拍器未启用，返回静音 */
+	if (!MetronomeModule.IsEnabled()) {
+		return max_len;
+	}
+	
+	/* 生成节拍器音频（直接写入，不混音） */
+	generated = MetronomeModule.GenerateAudio(out_buf, max_len);
+	
+	return (generated > 0) ? generated : max_len;
+}
+
+/**
+ * 节拍器可用数据量查询回调
+ */
+static uint16_t Metronome_GetAvailCallback(EffectNode_t *node)
+{
+	(void)node;
+	/* 节拍器始终可以生成数据 */
+	return 48;
+}
+
+/**
+ * Looper播放源节点回调 - 从Flash读取录制的音频
+ * 支持任意长度请求，通过循环读取多页来填充
+ */
+static uint16_t LooperPlay_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
+{
+	static uint32_t call_count = 0;
+	uint16_t i;
+	uint16_t samples_filled = 0;
+	uint16_t samples_per_page = 48;  /* 每页固定 48 个样本 */
+	
+	(void)node;
+	
+	call_count++;
+	
+	/* 限制最大长度 */
+	if (max_len > 256) {
+		max_len = 256;
+	}
+	
+	/* 先清零缓冲区 */
+	for (i = 0; i < max_len; i++) {
+		out_buf[i] = 0;
+	}
+	
+	/* 如果Looper正在播放，循环读取数据直到填满请求的长度 */
+	if (AudioLooper.IsPlaying()) {
+		while (samples_filled < max_len) {
+			uint16_t samples_to_read = max_len - samples_filled;
+			if (samples_to_read > samples_per_page) {
+				samples_to_read = samples_per_page;
+			}
+			
+			/* 读取一页数据 */
+			AudioLooper.ProcessPlayback32(&out_buf[samples_filled], looper_flash_buffer, samples_to_read);
+			samples_filled += samples_to_read;
+		}
+		
+		/* 每100次打印一次，确认回调被调用 */
+		if (call_count % 100 == 1) {
+			DBG("[LooperPlay] Called: count=%lu len=%d filled=%d isPlaying=%d\n", 
+				(unsigned long)call_count, max_len, samples_filled, AudioLooper.IsPlaying());
+		}
+	}
+	
+	return samples_filled;
+}
+
+/**
+ * Looper播放可用数据量查询回调
+ */
+static uint16_t LooperPlay_GetAvailCallback(EffectNode_t *node)
+{
+	(void)node;
+	/* Looper始终可以提供数据（播放或静音） */
+	return 48;
+}
+
+/**
+ * Looper录制输出节点回调 - 将音频写入Flash
+ */
+static void LooperRecord_SinkCallback(EffectNode_t *node, uint32_t *in_buf, uint16_t len)
+{
+	static uint32_t call_count = 0;
+	(void)node;
+	
+	/* 安全检查：确保输入缓冲区有效 */
+	if (!in_buf || len == 0) {
+		return;
+	}
+	
+	/* 限制最大长度，避免缓冲区溢出 */
+	if (len > 48) {
+		len = 48;
+	}
+	
+	call_count++;
+	
+	/* 如果Looper正在录制，写入数据 */
+	if (AudioLooper.IsRecording()) {
+		/* 每100次打印一次，确认回调被调用 */
+		if (call_count % 100 == 1) {
+			DBG("[LooperRec] Called: count=%lu len=%d isRec=%d\n", 
+				(unsigned long)call_count, len, AudioLooper.IsRecording());
+		}
+		AudioLooper.ProcessRecording32(in_buf, looper_flash_buffer, len);
 	}
 }
 
@@ -1423,56 +1712,116 @@ static void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 /**
  * EQ 处理回调 - 均衡器
  * 调用 SDK AudioEffectEQApply
+ * 
+ * ADC EQ节点(eq_guitar_l/r, eq_mic_l/r): 
+ *   - 输入: 32位双声道数据(高16位=R, 低16位=L)
+ *   - 根据edge的src_port提取对应声道: 0=L, 1=R  
+ *   - 处理: 单声道16位EQ
+ *   - 输出: 单声道16位数据(存储在32位buffer的低16位)
+ * 
+ * USB/BT EQ节点(usb_bt_eq):
+ *   - 输入/输出: 32位双声道数据
+ *   - 处理: 立体声16位EQ
  */
 static void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
 {
-	uint8_t i;
+	EQUnit *target_eq;
+	static uint32_t eq_debug_counter = 0;
+	uint16_t i;
+	int16_t *temp_buf_mono;
+	uint8_t src_port;
 	
 	if (in_count < 1 || !in_bufs[0]) {
 		return;
 	}
 
-	/* 同步EffectGraph参数到全局EQ单元 */
-	gCtrlVars.mic_out_eq_unit.filter_count = node->params.eq.band_count;
-	gCtrlVars.mic_out_eq_unit.pregain = 0;  /* 预增益设为0 */
-
-	/* 设置EQ频段参数 */
-	for (i = 0; i < node->params.eq.band_count && i < 10; i++) {
-		gCtrlVars.mic_out_eq_unit.eq_params[i].enable = 1;
-		gCtrlVars.mic_out_eq_unit.eq_params[i].type = EQ_FILTER_TYPE_PEAKING;
-		/* 根据频段索引设置中心频率 */
-		switch (i) {
-			case 0: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 100; break;   /* 低频 */
-			case 1: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 250; break;
-			case 2: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 630; break;
-			case 3: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 1600; break;
-			case 4: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 4000; break;
-			case 5: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 6300; break;
-			case 6: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 10000; break;
-			case 7: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 14000; break; /* 高频 */
-			default: gCtrlVars.mic_out_eq_unit.eq_params[i].f0 = 1000; break;
-		}
-		gCtrlVars.mic_out_eq_unit.eq_params[i].Q = 724;  /* Q=0.707 */
-		gCtrlVars.mic_out_eq_unit.eq_params[i].gain = node->params.eq.band_gains[i] * 256;  /* 转换为Q8.8格式 */
+	/* 根据节点ID选择对应的独立EQ单元 */
+	switch (node->id) {
+		case NODE_ID_EQ_GUITAR_L:
+			target_eq = &gCtrlVars.eq_guitar_l_unit;
+			src_port = 0;  /* L声道 */
+			break;
+		case NODE_ID_EQ_GUITAR_R:
+			target_eq = &gCtrlVars.eq_guitar_r_unit;
+			src_port = 1;  /* R声道 */
+			break;
+		case NODE_ID_EQ_MIC_L:
+			target_eq = &gCtrlVars.eq_mic_l_unit;
+			src_port = 0;  /* L声道 */
+			break;
+		case NODE_ID_EQ_MIC_R:
+			target_eq = &gCtrlVars.eq_mic_r_unit;
+			src_port = 1;  /* R声道 */
+			break;
+		case NODE_ID_USB_BT_EQ:
+			target_eq = &gCtrlVars.music_out_eq_unit;
+			src_port = 255;  /* 双声道标记 */
+			break;
+		default:
+			/* 未知节点，使用默认EQ避免崩溃 */
+			target_eq = &gCtrlVars.eq_guitar_l_unit;
+			src_port = 0;
+			DBG("[EQ_Process] WARNING: Unknown node ID %d, using default EQ\n", node->id);
+			break;
 	}
 
-	/* 应用参数配置到SDK */
-	#if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
-	AudioEffectEQFilterConfig(&gCtrlVars.mic_out_eq_unit, 48000);
-	#endif
+	/* 调试输出 */
+	eq_debug_counter++;
+	if ((eq_debug_counter & 0x1FFF) == 0) {
+		DBG("[EQ_Process] node_id=%d name=%s port=%d | target_eq: en=%d fc=%d ch=%d ct=%p\n", 
+		    node->id, node->name, src_port, target_eq->enable, target_eq->filter_count, 
+		    target_eq->channel, target_eq->ct);
+	}
 
+	/* 根据target_eq的enable标志决定是否应用EQ处理 */
 	#if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
-	if (gCtrlVars.mic_out_eq_unit.enable) {
-		AudioEffectEQApply(&gCtrlVars.mic_out_eq_unit,
-		                   (int16_t *)in_bufs[0],
-		                   (int16_t *)out_buf,
-		                   len,
-		                   2);  /* 2 = 立体声 */
+	if (target_eq->enable && target_eq->filter_count > 0 && target_eq->ct != NULL) {
+		if (src_port == 255) {
+			/* USB/BT EQ: 双声道处理 */
+			AudioEffectEQApply(target_eq,
+			                   (int16_t *)in_bufs[0],
+			                   (int16_t *)out_buf,
+			                   len,
+			                   2);  /* 2 = 立体声 */
+		} else {
+			/* ADC EQ: 单声道处理 
+			 * 从32位双声道数据中提取对应声道(L或R) */
+			temp_buf_mono = (int16_t *)in_bufs[0];  /* 重解释为16位数组 */
+			
+			/* 提取单声道数据到out_buf (每个32位样本提取一个16位样本) */
+			for (i = 0; i < len; i++) {
+				/* src_port=0: 提取低16位(L), src_port=1: 提取高16位(R) */
+				int16_t mono_sample = temp_buf_mono[i * 2 + src_port];
+				/* 暂存到out_buf的低16位 */
+				((int16_t *)out_buf)[i] = mono_sample;
+			}
+			
+			/* 单声道EQ处理 */
+			AudioEffectEQApply(target_eq,
+			                   (int16_t *)out_buf,
+			                   (int16_t *)out_buf,
+			                   len,
+			                   1);  /* 1 = 单声道 */
+			
+			/* 处理后的单声道数据已经在out_buf的低16位，保持不变 */
+		}
 	} else
 	#endif
 	{
 		/* 旁路：直接复制 */
 		uint16_t i;
+		
+		/* 额外的调试信息：打印旁路原因 */
+		if ((eq_debug_counter & 0x1FFF) == 0) {
+			if (!target_eq->enable) {
+				DBG("[EQ_Process] BYPASS: EQ disabled (enable=0)\n");
+			} else if (target_eq->filter_count == 0) {
+				DBG("[EQ_Process] BYPASS: No filters (filter_count=0)\n");
+			} else if (target_eq->ct == NULL) {
+				DBG("[EQ_Process] BYPASS: Context not initialized (ct=NULL)\n");
+			}
+		}
+		
 		for (i = 0; i < len; i++) {
 			out_buf[i] = in_bufs[0][i];
 		}
@@ -1605,18 +1954,25 @@ static void SetupEffectGraphCallbacks(void)
 	
 	/* ===== 混音器节点回调 ===== */
 	
-	/* ADC 混音器 */
+	/* ADC 混音器 (专用处理: 4个单声道EQ输出合并成2个32位双声道) */
 	node = EffectGraph_FindNodeByName("adc_mixer");
 	if (node) {
-		node->func.process = Mixer_Process;
+		node->func.process = ADC_Mixer_Process;
 		DBG("[Audio] ADC mixer callback registered\n");
 	}
 	
-	/* USB/BT 混音器 */
+	/* USB/BT 混音器 (包含节拍器输入) */
 	node = EffectGraph_FindNodeByName("usb_bt_mixer");
 	if (node) {
 		node->func.process = Mixer_Process;
 		DBG("[Audio] USB/BT mixer callback registered\n");
+	}
+	
+	/* Pre-Reverb 混音器 (EQ输出 + Looper播放) */
+	node = EffectGraph_FindNodeByName("pre_reverb_mixer");
+	if (node) {
+		node->func.process = Mixer_Process;
+		DBG("[Audio] Pre-Reverb mixer callback registered\n");
 	}
 	
 	/* 最终混音器 */
@@ -1642,18 +1998,19 @@ static void SetupEffectGraphCallbacks(void)
 		DBG("[Audio] DRC callback registered\n");
 	}
 	
-	/* EQ (ADC 路径) */
-	node = EffectGraph_FindNodeByName("eq");
-	if (node) {
-		node->func.process = EQ_Process;
-		DBG("[Audio] EQ callback registered\n");
-	}
-	
-	/* USB/BT EQ (快速路径) - 使用直通处理，与老方案一致（BT 音频不经过 EQ） */
-	node = EffectGraph_FindNodeByName("usb_bt_eq");
-	if (node) {
-		node->func.process = Passthrough_Process;
-		DBG("[Audio] USB/BT passthrough callback registered\n");
+	/* 为所有 EQ 节点注册回调 - 遍历整个节点池确保不遗漏 */
+	{
+		EffectGraphRuntime_t *graph = EffectGraph_GetInstance();
+		uint8_t i;
+		if (graph) {
+			for (i = 0; i < graph->node_count; i++) {
+				node = &graph->nodes[i];
+				if (node->type == EFFECT_NODE_TYPE_EFFECT_EQ) {
+					node->func.process = EQ_Process;
+					DBG("[Audio] EQ callback registered for node %d (%s)\n", node->id, node->name);
+				}
+			}
+		}
 	}
 	
 	/* 混响 */
@@ -1661,6 +2018,31 @@ static void SetupEffectGraphCallbacks(void)
 	if (node) {
 		node->func.process = Reverb_Process;
 		DBG("[Audio] Reverb callback registered\n");
+	}
+	
+	/* ===== 节拍器和Looper节点回调 ===== */
+	
+	/* 节拍器源节点 */
+	node = EffectGraph_FindNodeByName("metronome");
+	if (node) {
+		node->func.source = Metronome_SourceCallback;
+		node->avail_func = Metronome_GetAvailCallback;
+		DBG("[Audio] Metronome source callback registered\n");
+	}
+	
+	/* Looper播放源节点 */
+	node = EffectGraph_FindNodeByName("looper_play");
+	if (node) {
+		node->func.source = LooperPlay_SourceCallback;
+		node->avail_func = LooperPlay_GetAvailCallback;
+		DBG("[Audio] Looper play source callback registered\n");
+	}
+	
+	/* Looper录制输出节点 */
+	node = EffectGraph_FindNodeByName("looper_record");
+	if (node) {
+		node->func.sink = LooperRecord_SinkCallback;
+		DBG("[Audio] Looper record sink callback registered\n");
 	}
 	
 	DBG("[Audio] All Effect Graph callbacks setup completed\n");

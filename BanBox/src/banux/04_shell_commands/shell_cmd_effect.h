@@ -38,19 +38,29 @@ extern "C" {
 
 /*******************************************************************************
  * 效果器ID定义
+ * 
+ * 2026-02-04 更新: 新增4个独立EQ效果器ID
+ *   - EQ_GUITAR_L (4): 乐器左声道EQ
+ *   - EQ_GUITAR_R (5): 乐器右声道EQ
+ *   - EQ_MIC_L (6): 麦克风左声道EQ
+ *   - EQ_MIC_R (7): 麦克风右声道EQ
  ******************************************************************************/
 typedef enum {
     EFFECT_ID_REVERB = 0,       /* 混响 */
     EFFECT_ID_DRC,              /* 动态范围压缩 (麦克风通道) */
-    EFFECT_ID_EQ,               /* 均衡器 (麦克风输出EQ) */
+    EFFECT_ID_EQ,               /* 均衡器 (兼容旧版，映射到EQ_GUITAR_L) */
     EFFECT_ID_EXPANDER,         /* 扩展器 */
+    EFFECT_ID_EQ_GUITAR_L,      /* 乐器左声道EQ */
+    EFFECT_ID_EQ_GUITAR_R,      /* 乐器右声道EQ */
+    EFFECT_ID_EQ_MIC_L,         /* 麦克风左声道EQ */
+    EFFECT_ID_EQ_MIC_R,         /* 麦克风右声道EQ */
     EFFECT_ID_ECHO,             /* 回声 */
     EFFECT_ID_HOWLING,          /* 啸叫抑制 */
     EFFECT_ID_3D,               /* 3D音效 */
     EFFECT_ID_VIRTUAL_BASS,     /* 虚拟低音 */
     EFFECT_ID_PLATE_REVERB,     /* 板式混响 */
     EFFECT_ID_MUSIC_DRC,        /* 动态范围压缩 (音乐通道) */
-    EFFECT_ID_MUSIC_EQ,         /* 均衡器 (音乐输出EQ) */
+    EFFECT_ID_MUSIC_EQ,         /* 均衡器 (音乐输出EQ/USB_BT_EQ) */
     EFFECT_ID_MAX
 } EffectId_t;
 

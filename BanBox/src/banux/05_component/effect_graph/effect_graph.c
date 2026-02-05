@@ -15,8 +15,7 @@
 #include "debug.h"
 
 /*******************************************************************************
- * 静态变量
- ******************************************************************************/
+ * 静态变�? ******************************************************************************/
 static EffectGraphRuntime_t g_EffectGraph;
 static bool g_Initialized = false;
 
@@ -25,7 +24,7 @@ static bool g_Initialized = false;
  ******************************************************************************/
 static bool IsSourceNode(EffectNodeType_t type);
 static bool IsSinkNode(EffectNodeType_t type);
-/* static bool IsProcessNode(EffectNodeType_t type); */ /* 未使用 */
+/* static bool IsProcessNode(EffectNodeType_t type); */ /* 未使�?*/
 static void InitNodeDefaults(EffectNode_t *node, EffectNodeType_t type);
 static GraphError_t TopologicalSort(void);
 
@@ -33,26 +32,26 @@ static GraphError_t TopologicalSort(void);
  * 内部辅助函数实现
  ******************************************************************************/
 
-/* 判断是否为源节点 */
+/* 判断是否为源节点 (包括 ADC0, ADC1, USB_IN, BT_IN, METRONOME, LOOPER_PLAY) */
 static bool IsSourceNode(EffectNodeType_t type)
 {
-    return (type >= EFFECT_NODE_TYPE_SOURCE_ADC0 && type <= EFFECT_NODE_TYPE_SOURCE_BT_IN);
+    return (type >= EFFECT_NODE_TYPE_SOURCE_ADC0 && type <= EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY);
 }
 
-/* 判断是否为输出节点 */
+/* 判断是否为输出节点 (包括 DAC0, USB_OUT, LOOPER_RECORD) */
 static bool IsSinkNode(EffectNodeType_t type)
 {
-    return (type >= EFFECT_NODE_TYPE_SINK_DAC0 && type <= EFFECT_NODE_TYPE_SINK_USB_OUT);
+    return (type >= EFFECT_NODE_TYPE_SINK_DAC0 && type <= EFFECT_NODE_TYPE_SINK_LOOPER_RECORD);
 }
 
-/* 判断是否为处理节点 (未使用，保留供将来扩展)
+/* 判断是否为处理节�?(未使用，保留供将来扩�?
 static bool IsProcessNode(EffectNodeType_t type)
 {
     return (type >= EFFECT_NODE_TYPE_MIXER && type < EFFECT_NODE_TYPE_MAX);
 }
 */
 
-/* 初始化节点默认值 */
+/* 初始化节点默认�?*/
 static void InitNodeDefaults(EffectNode_t *node, EffectNodeType_t type)
 {
     if (!node) return;
@@ -132,7 +131,7 @@ static GraphError_t TopologicalSort(void)
         }
     }
     
-    /* 将入度为0的节点加入队列 */
+    /* 将入度为0的节点加入队�?*/
     for (i = 0; i < g->node_count; i++) {
         g->nodes[i].in_degree = in_degree[i];
         if (in_degree[i] == 0) {
@@ -148,7 +147,7 @@ static GraphError_t TopologicalSort(void)
         
         g->process_order[g->process_count++] = node;
         
-        /* 减少相邻节点的入度 */
+        /* 减少相邻节点的入�?*/
         for (i = 0; i < g->edge_count; i++) {
             if (g->edges[i].enabled && 
                 g->edges[i].src_node == node &&
@@ -162,7 +161,7 @@ static GraphError_t TopologicalSort(void)
         }
     }
     
-    /* 检查是否有环 */
+    /* 检查是否有�?*/
     if (g->process_count != g->node_count) {
         DBG("[EffectGraph] ERROR: Cycle detected in graph!\n");
         return GRAPH_ERR_CYCLE_DETECTED;
@@ -232,11 +231,11 @@ GraphError_t EffectGraph_CreateFromConfig(const GraphConfig_t *config)
         return GRAPH_ERR_NOT_INITIALIZED;
     }
     
-    /* 重置图 */
+    /* 重置�?*/
     EffectGraph_Reset();
     g_EffectGraph.sample_rate = config->sample_rate;
     
-    /* 创建所有节点 */
+    /* 创建所有节�?*/
     for (i = 0; i < config->node_count; i++) {
         nc = &config->nodes[i];
         node = EffectGraph_AddNode(nc->type, nc->name, nc->enabled);
@@ -290,7 +289,7 @@ EffectNode_t* EffectGraph_AddNode(EffectNodeType_t type, const char *name, bool 
     strncpy(node->name, name, EFFECT_GRAPH_NAME_LEN - 1);
     node->name[EFFECT_GRAPH_NAME_LEN - 1] = '\0';
     
-    /* 初始化默认值 */
+    /* 初始化默认�?*/
     InitNodeDefaults(node, type);
     node->enabled = enabled;
     
@@ -332,7 +331,7 @@ GraphError_t EffectGraph_Connect(EffectNode_t *src_node, EffectNode_t *dst_node,
         return GRAPH_ERR_INVALID_EDGE;
     }
     
-    /* 创建边 */
+    /* 创建�?*/
     edge = &g->edges[g->edge_count];
     edge->id = g->edge_count;
     edge->src_node = src_node;
@@ -366,12 +365,12 @@ GraphError_t EffectGraph_Disconnect(EffectNode_t *src_node, EffectNode_t *dst_no
         return GRAPH_ERR_NULL_PTR;
     }
     
-    /* 查找并禁用对应的边 */
+    /* 查找并禁用对应的�?*/
     for (i = 0; i < g->edge_count; i++) {
         if (g->edges[i].src_node == src_node && g->edges[i].dst_node == dst_node) {
             g->edges[i].enabled = false;
             
-            /* 从源节点的输出列表移除 */
+            /* 从源节点的输出列表移�?*/
             for (j = 0; j < src_node->output_count; j++) {
                 if (src_node->outputs[j] == &g->edges[i]) {
                     src_node->outputs[j] = NULL;
@@ -444,7 +443,7 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
         g->nodes[i].buffer_len = 0;
     }
     
-    /* 按拓扑顺序处理每个节点 */
+    /* 按拓扑顺序处理每个节�?*/
     for (i = 0; i < g->process_count; i++) {
         node = g->process_order[i];
         
@@ -455,7 +454,7 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
         
         /* 根据节点类型处理 */
         if (IsSourceNode(node->type)) {
-            /* 源节点: 产生数据 */
+            /* 源节�? 产生数据 */
             if (node->func.source) {
                 node->buffer_len = node->func.source(node, node->buffer, frame_size);
             }
@@ -465,7 +464,7 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
             /* 获取输入数据 */
             if (node->input_count > 0 && node->inputs[0] && node->inputs[0]->src_node) {
                 src = node->inputs[0]->src_node;
-                if (node->func.sink) {
+                if (node->func.sink && src->buffer_len > 0) {
                     node->func.sink(node, src->buffer, src->buffer_len);
                 }
                 actual_len = src->buffer_len;
@@ -476,7 +475,7 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
             in_count = 0;
             max_len = 0;
             
-            /* 收集所有输入 */
+            /* 收集所有输�?*/
             for (j = 0; j < node->input_count && j < EFFECT_GRAPH_MAX_INPUTS; j++) {
                 if (node->inputs[j] && node->inputs[j]->enabled && node->inputs[j]->src_node) {
                     src = node->inputs[j]->src_node;
@@ -499,7 +498,7 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
                     node->buffer_len = max_len;
                 }
                 else if (node->type == EFFECT_NODE_TYPE_MIXER) {
-                    /* 默认混音器处理: 简单相加 */
+                    /* 默认混音器处�? 简单相�?*/
                     memset(node->buffer, 0, max_len * sizeof(uint32_t));
                     for (j = 0; j < in_count; j++) {
                         for (k = 0; k < max_len; k++) {
@@ -509,7 +508,7 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
                     node->buffer_len = max_len;
                 }
                 else {
-                    /* 默认: 复制第一个输入 */
+                    /* 默认: 复制第一个输�?*/
                     memcpy(node->buffer, in_bufs[0], max_len * sizeof(uint32_t));
                     node->buffer_len = max_len;
                 }
@@ -584,7 +583,7 @@ GraphError_t EffectGraph_SetNodeParams(EffectNode_t *node, const EffectParams_t 
     return GRAPH_OK;
 }
 
-// 重置图(清除所有节点和边)
+// 重置�?清除所有节点和�?
 void EffectGraph_Reset(void)
 {
     EffectGraphRuntime_t *g = &g_EffectGraph;
@@ -597,13 +596,13 @@ void EffectGraph_Reset(void)
     /* 清除节点 */
     for (i = 0; i < g->node_count; i++) {
         memset(&g->nodes[i], 0, sizeof(EffectNode_t));
-        g->nodes[i].buffer = g->shared_buffer[i]; /* 保留缓冲区指针 */
+        g->nodes[i].buffer = g->shared_buffer[i]; /* 保留缓冲区指�?*/
     }
     
-    /* 清除边 */
+    /* 清除�?*/
     memset(g->edges, 0, sizeof(g->edges));
     
-    /* 重置计数器 */
+    /* 重置计数�?*/
     g->node_count = 0;
     g->edge_count = 0;
     g->process_count = 0;
@@ -617,7 +616,7 @@ void EffectGraph_Reset(void)
     DBG("[EffectGraph] Reset complete\n");
 }
 
-// 打印图信息(调试用)
+// 打印图信�?调试�?
 void EffectGraph_PrintInfo(void)
 {
     EffectGraphRuntime_t *g = &g_EffectGraph;
@@ -670,11 +669,11 @@ void EffectGraph_PrintInfo(void)
     DBG("========================================\n\n");
 }
 
-// 创建默认音频图(ADC0+ADC1 -> Mixer -> Effects -> DAC0)
+// 创建默认音频�?ADC0+ADC1 -> Mixer -> Effects -> DAC0)
 // 现在通过配置系统加载，方便修改参数而不需要改代码
 GraphError_t EffectGraph_CreateDefault(uint16_t sample_rate)
 {
-    (void)sample_rate; /* 使用配置文件中的采样率 */
+    (void)sample_rate; /* 使用配置文件中的采样�?*/
     
     /* 直接使用配置系统加载默认预设 */
     return EffectGraphConfig_LoadPreset(GRAPH_PRESET_DEFAULT);
@@ -698,7 +697,7 @@ GraphError_t EffectGraph_SetDriveMode(GraphDriveMode_t mode, EffectNode_t *prima
     
     g->drive_mode = mode;
     
-    /* 如果指定了主驱动源，使用它 */
+    /* 如果指定了主驱动源，使用�?*/
     if (primary_source) {
         g->primary_source = primary_source;
         if (mode_changed) {
@@ -712,8 +711,7 @@ GraphError_t EffectGraph_SetDriveMode(GraphDriveMode_t mode, EffectNode_t *prima
     /* 否则根据模式自动选择主驱动源 */
     g->primary_source = NULL;
     
-    /* 注意: ADC模式下不设置单一主驱动源，
-     * 而是让 GetAvailableFrameSize 去查询所有ADC源的最小可用量 */
+    /* 注意: ADC模式下不设置单一主驱动源�?     * 而是�?GetAvailableFrameSize 去查询所有ADC源的最小可用量 */
     if (mode != DRIVE_MODE_ADC) {
         for (i = 0; i < g->source_count; i++) {
             EffectNode_t *src = g->source_nodes[i];
@@ -737,7 +735,7 @@ GraphError_t EffectGraph_SetDriveMode(GraphDriveMode_t mode, EffectNode_t *prima
         }
     }
     
-    /* 只在模式切换时打印一次 */
+    /* 只在模式切换时打印一�?*/
     if (mode_changed) {
         if (g->primary_source) {
             DBG("[EffectGraph] Drive mode set to %d, auto selected: %s\n",
@@ -764,7 +762,7 @@ uint16_t EffectGraph_GetAvailableFrameSize(void)
         return 0;
     }
     
-    /* 如果有主驱动源，优先使用它的可用数据量 */
+    /* 如果有主驱动源，优先使用它的可用数据�?*/
     if (g->primary_source && g->primary_source->enabled && g->primary_source->avail_func) {
         avail = g->primary_source->avail_func(g->primary_source);
         
@@ -773,12 +771,12 @@ uint16_t EffectGraph_GetAvailableFrameSize(void)
             avail = g->max_frame_size;
         }
         if (avail < g->min_frame_size) {
-            return 0; /* 数据不足最小帧长 */
+            return 0; /* 数据不足最小帧�?*/
         }
         return avail;
     }
     
-    /* 没有主驱动源 (ADC 模式)，查询所有 ADC 类型的源节点 */
+    /* 没有主驱动源 (ADC 模式)，查询所�?ADC 类型的源节点 */
     for (i = 0; i < g->source_count; i++) {
         EffectNode_t *src = g->source_nodes[i];
         if (!src || !src->enabled || !src->avail_func) continue;
@@ -831,7 +829,7 @@ uint16_t EffectGraph_ProcessAdaptive(void)
         return 0;
     }
     
-    /* 第一步: 获取本帧应处理的帧长 */
+    /* 第一�? 获取本帧应处理的帧长 */
     frame_size = EffectGraph_GetAvailableFrameSize();
     if (frame_size == 0) {
         return 0; /* 数据不足 */
@@ -843,13 +841,13 @@ uint16_t EffectGraph_ProcessAdaptive(void)
     
     actual_len = 0;
     
-    /* 第二步: 重置所有节点的处理标志 */
+    /* 第二�? 重置所有节点的处理标志 */
     for (i = 0; i < g->node_count; i++) {
         g->nodes[i].processed = false;
         g->nodes[i].buffer_len = 0;
     }
     
-    /* 第三步: 按拓扑顺序处理每个节点 */
+    /* 第三�? 按拓扑顺序处理每个节�?*/
     for (i = 0; i < g->process_count; i++) {
         node = g->process_order[i];
         
@@ -860,8 +858,8 @@ uint16_t EffectGraph_ProcessAdaptive(void)
         
         /* 根据节点类型处理 */
         if (IsSourceNode(node->type)) {
-            /* 源节点: 产生数据 */
-            /* 关键: 源节点使用 frame_size 作为请求长度, 返回实际读取长度 */
+            /* 源节�? 产生数据 */
+            /* 关键: 源节点使�?frame_size 作为请求长度, 返回实际读取长度 */
             if (node->func.source) {
                 node->buffer_len = node->func.source(node, node->buffer, frame_size);
             }
@@ -881,7 +879,7 @@ uint16_t EffectGraph_ProcessAdaptive(void)
             in_count = 0;
             max_len = 0;
             
-            /* 收集所有输入，找最大有效长度 */
+            /* 收集所有输入，找最大有效长�?*/
             for (j = 0; j < node->input_count && j < EFFECT_GRAPH_MAX_INPUTS; j++) {
                 if (node->inputs[j] && node->inputs[j]->enabled && node->inputs[j]->src_node) {
                     src = node->inputs[j]->src_node;
@@ -904,7 +902,7 @@ uint16_t EffectGraph_ProcessAdaptive(void)
                     node->buffer_len = max_len;
                 }
                 else if (node->type == EFFECT_NODE_TYPE_MIXER) {
-                    /* 默认混音器处理: 简单相加 */
+                    /* 默认混音器处�? 简单相�?*/
                     memset(node->buffer, 0, max_len * sizeof(uint32_t));
                     for (j = 0; j < in_count; j++) {
                         for (k = 0; k < max_len; k++) {
@@ -914,7 +912,7 @@ uint16_t EffectGraph_ProcessAdaptive(void)
                     node->buffer_len = max_len;
                 }
                 else {
-                    /* 默认: 复制第一个输入 */
+                    /* 默认: 复制第一个输�?*/
                     memcpy(node->buffer, in_bufs[0], max_len * sizeof(uint32_t));
                     node->buffer_len = max_len;
                 }

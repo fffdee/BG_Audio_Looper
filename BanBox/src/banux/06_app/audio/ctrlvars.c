@@ -268,22 +268,30 @@ const int16_t BassTrebGainTable[16] =
 #endif
 };
 
-EQUnit *eq_unit_aggregate[8] 					=  {&gCtrlVars.music_pre_eq_unit, &gCtrlVars.music_out_eq_unit, &gCtrlVars.mic_pre_eq_unit,  &gCtrlVars.mic_bypass_eq_unit, &gCtrlVars.mic_echo_eq_unit,
-									   	   	   		&gCtrlVars.mic_reverb_eq_unit, &gCtrlVars.mic_out_eq_unit, &gCtrlVars.rec_eq_unit};
-DRCUnit *drc_unit_aggregate[3]					=  {&gCtrlVars.music_drc_unit, &gCtrlVars.mic_drc_unit,	&gCtrlVars.rec_drc_unit};
-ExpanderUnit *expander_unit_aggregate[2]  		=  {&gCtrlVars.music_expander_unit, &gCtrlVars.mic_expander_unit};
+/* å†…å­˜ä¼˜åŒ–ï¼šåªä¿ç•™æ•ˆæœå›¾å®é™…ä½¿ç”¨çš„5ä¸ªEQå•å…ƒ */
+/* const ä¼˜åŒ–ï¼šèšåˆæ•°ç»„å­˜å‚¨åœ¨ Flash ä¸­è€Œé RAMï¼ŒèŠ‚çœ 20+12+20+8+64=124 å­—èŠ‚ RAM */
+EQUnit * const eq_unit_aggregate[5] 			=  {
+	/* ç´¢å¼•0: USB/BTè·¯å¾„EQ (èŠ‚ç‚¹14) */
+	&gCtrlVars.music_out_eq_unit,
+	/* ç´¢å¼•1-4: ADCé€šé“ç‹¬ç«‹EQ (èŠ‚ç‚¹4-7) */
+	&gCtrlVars.eq_guitar_l_unit, &gCtrlVars.eq_guitar_r_unit,
+	&gCtrlVars.eq_mic_l_unit, &gCtrlVars.eq_mic_r_unit
+};
+DRCUnit * const drc_unit_aggregate[3]			=  {&gCtrlVars.music_drc_unit, &gCtrlVars.mic_drc_unit,	&gCtrlVars.rec_drc_unit};
+ExpanderUnit * const expander_unit_aggregate[2] =  {&gCtrlVars.music_expander_unit, &gCtrlVars.mic_expander_unit};
 
-EQFilterParams *eq_param_aggregate[8] 			=  {eq1_filter_buf, eq2_filter_buf, eq3_filter_buf,
-													eq4_filter_buf, eq5_filter_buf, eq6_filter_buf, eq7_filter_buf, eq8_filter_buf};
+/* å†…å­˜ä¼˜åŒ–ï¼šåªä¿ç•™5ä¸ªEQçš„å‚æ•°ç¼“å†²åŒº */
+EQFilterParams * const eq_param_aggregate[5] 	=  {eq1_filter_buf, eq2_filter_buf, eq3_filter_buf,
+												eq4_filter_buf, eq5_filter_buf};
 
-GainControlUnit *gain_unit_aggregate[16]		=  {&gCtrlVars.aux_gain_control_unit, &gCtrlVars.mic_bypass_gain_control_unit, &gCtrlVars.mic_echo_control_unit,
+GainControlUnit * const gain_unit_aggregate[16]	=  {&gCtrlVars.aux_gain_control_unit, &gCtrlVars.mic_bypass_gain_control_unit, &gCtrlVars.mic_echo_control_unit,
 												   &gCtrlVars.mic_reverb_gain_control_unit, &gCtrlVars.mic_out_gain_control_unit, &gCtrlVars.rec_bypass_gain_control_unit,
 												   &gCtrlVars.rec_effect_gain_control_unit,	&gCtrlVars.rec_aux_gain_control_unit, &gCtrlVars.rec_remind_gain_control_unit,
 												   &gCtrlVars.rec_out_gain_control_unit, &gCtrlVars.remind_key_gain_control_unit, &gCtrlVars.remind_effect_gain_control_unit,
 												   &gCtrlVars.i2s_gain_control_unit,&gCtrlVars.bt_gain_control_unit,&gCtrlVars.usb_gain_control_unit,&gCtrlVars.spdif_gain_control_unit};
 /*
 ****************************************************************
-* ÏµÍ³±äÁ¿³õÊ¼»¯
+* ÏµÍ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -536,26 +544,68 @@ void CtrlVarsInit(void)
 		drc_unit_aggregate[i]->threshold[2]	= DRC_DEFAULT_TABLE[15][i];
 	}
 
-	for(i = 0; i < sizeof(eq_unit_aggregate)/sizeof(eq_unit_aggregate[0]); i++)
+	/* ========== åˆå§‹åŒ–5ä¸ªå®é™…ä½¿ç”¨çš„EQå•å…ƒ ========== */
+	/* æ–°æ•°ç»„ç»“æ„: [0]=music_out_eq, [1-4]=ADCç‹¬ç«‹EQ */
+
+	/* ç´¢å¼•0: music_out_eq_unit (èŠ‚ç‚¹14: USB_BT_EQ) - ä½¿ç”¨EQ_DEFAULT_TABLE[1]çš„é…ç½® */
+	eq_unit_aggregate[0]->ct			= NULL;
+	eq_unit_aggregate[0]->enable		= EQ_DEFAULT_TABLE[0][1];  /* ä»æ—§ç´¢å¼•1è·å–é…ç½® */
+	eq_unit_aggregate[0]->filter_count  = EQ_DEFAULT_TABLE[1][1];
+	eq_unit_aggregate[0]->pregain		= EQ_DEFAULT_TABLE[2][1];
+	eq_unit_aggregate[0]->filter_params = eq_param_aggregate[0];
+
+	for(j = 0; j < eq_unit_aggregate[0]->filter_count; j++)
+	{
+		eq_unit_aggregate[0]->eq_params[j].enable	= 1;
+		eq_unit_aggregate[0]->eq_params[j].f0		= EQ_DEFAULT_TABLE[3 + j *4][1];
+		eq_unit_aggregate[0]->eq_params[j].Q		= EQ_DEFAULT_TABLE[4 + j *4][1];
+		eq_unit_aggregate[0]->eq_params[j].gain		= EQ_DEFAULT_TABLE[5 + j *4][1];
+		eq_unit_aggregate[0]->eq_params[j].type		= EQ_DEFAULT_TABLE[6 + j *4][1];
+		
+		/* ä¿®æ­£ç±»å‹ï¼šå¦‚æœæ˜¯BAND_PASS(5)ï¼Œæ”¹ä¸ºPEAKING(0) */
+		if (eq_unit_aggregate[0]->eq_params[j].type == 5) {
+			eq_unit_aggregate[0]->eq_params[j].type = 0;
+		}
+		
+		(eq_unit_aggregate[0]->filter_params + j)->f0		= eq_unit_aggregate[0]->eq_params[j].f0;
+		(eq_unit_aggregate[0]->filter_params + j)->Q		= eq_unit_aggregate[0]->eq_params[j].Q;
+		(eq_unit_aggregate[0]->filter_params + j)->gain		= eq_unit_aggregate[0]->eq_params[j].gain;
+		(eq_unit_aggregate[0]->filter_params + j)->type		= eq_unit_aggregate[0]->eq_params[j].type;
+	}
+	
+	/* ç´¢å¼•1-4: 4ä¸ªç‹¬ç«‹ADCé€šé“EQå•å…ƒ (èŠ‚ç‚¹4-7: Guitar L/R, Mic L/R) */
+	/* å†…å­˜ä¼˜åŒ–ï¼šä½¿ç”¨3æ®µEQä»¥é™ä½å†…å­˜å ç”¨ */
+	for(i = 1; i < 5; i++)
 	{
 		eq_unit_aggregate[i]->ct			= NULL;
-		eq_unit_aggregate[i]->enable		= EQ_DEFAULT_TABLE[0][i];
-		eq_unit_aggregate[i]->filter_count  = EQ_DEFAULT_TABLE[1][i];
-		eq_unit_aggregate[i]->pregain		= EQ_DEFAULT_TABLE[2][i];
-		eq_unit_aggregate[i]->filter_params = eq_param_aggregate[i];
-
-		for(j = 0; j < eq_unit_aggregate[i]->filter_count; j++)
+		eq_unit_aggregate[i]->enable		= 1;  /* é»˜è®¤å¯ç”¨ */
+		eq_unit_aggregate[i]->channel		= 1;  /* å•å£°é“ */
+		eq_unit_aggregate[i]->filter_count  = 3;  /* 3æ®µEQï¼ˆèŠ‚çœå†…å­˜ï¼‰ */
+		eq_unit_aggregate[i]->pregain		= 0;  /* æ— é¢„å¢ç›Š */
+		eq_unit_aggregate[i]->filter_params = eq_param_aggregate[i];  /* ä½¿ç”¨å¯¹åº”çš„å‚æ•°ç¼“å†²åŒº */
+		
+		/* åˆå§‹åŒ–ä¸ºå¹³å¦å“åº”ï¼ˆ0dBå¢ç›Šï¼‰ */
+		for(j = 0; j < 3; j++)
 		{
-			eq_unit_aggregate[i]->eq_params[j].enable			= 1;
-			eq_unit_aggregate[i]->eq_params[j].f0				= EQ_DEFAULT_TABLE[3 + j *4][i];
-			eq_unit_aggregate[i]->eq_params[j].Q				= EQ_DEFAULT_TABLE[4 + j *4][i];
-			eq_unit_aggregate[i]->eq_params[j].gain				= EQ_DEFAULT_TABLE[5 + j *4][i];
-			eq_unit_aggregate[i]->eq_params[j].type				= EQ_DEFAULT_TABLE[6 + j *4][i];
+			eq_unit_aggregate[i]->eq_params[j].enable	= 1;
+			eq_unit_aggregate[i]->eq_params[j].f0		= 1000;  /* é»˜è®¤ä¸­é¢‘ */
+			eq_unit_aggregate[i]->eq_params[j].Q		= 100;   /* Qå€¼1.0 */
+			eq_unit_aggregate[i]->eq_params[j].gain		= 0;     /* 0dB */
+			eq_unit_aggregate[i]->eq_params[j].type		= 0;     /* PEAKINGç±»å‹ */
 
-			(eq_unit_aggregate[i]->filter_params + j)->f0		= EQ_DEFAULT_TABLE[3 + j *4][i];
-			(eq_unit_aggregate[i]->filter_params + j)->Q		= EQ_DEFAULT_TABLE[4 + j *4][i];
-			(eq_unit_aggregate[i]->filter_params + j)->gain		= EQ_DEFAULT_TABLE[5 + j *4][i];
-			(eq_unit_aggregate[i]->filter_params + j)->type		= EQ_DEFAULT_TABLE[6 + j *4][i];
+			/* åŒæ­¥åˆ°filter_params */
+			(eq_unit_aggregate[i]->filter_params + j)->f0		= 1000;
+			(eq_unit_aggregate[i]->filter_params + j)->Q		= 100;
+			(eq_unit_aggregate[i]->filter_params + j)->gain		= 0;
+			(eq_unit_aggregate[i]->filter_params + j)->type		= 0;
+		}
+	}
+
+	/* é¢å¤–ç¡®ä¿ï¼šä¿®æ­£music_out_eq_unitæ‰€æœ‰é¢‘æ®µç±»å‹ */
+	for(j = eq_unit_aggregate[0]->filter_count; j < 10; j++)
+	{
+		if (gCtrlVars.music_out_eq_unit.eq_params[j].type == 5) {
+			gCtrlVars.music_out_eq_unit.eq_params[j].type = 0;
 		}
 	}
 
@@ -578,7 +628,7 @@ void CtrlVarsInit(void)
 
 /*
 ****************************************************************
-* ¸÷¸öÄ£¿é²ÉÑùÂÊÉèÖÃº¯Êı
+* ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -629,7 +679,7 @@ void GlobalSampeRateSet(void)
 }
 /*
 ****************************************************************
-* ¸÷¸öÄ£¿é²ÉÑùÂÊÉèÖÃº¯Êı
+* ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -679,7 +729,7 @@ void PrivateSampeRateSet(void)
 }
 /*
 ****************************************************************
-* ¸÷¸öÄ£¿éMCLKÉèÖÃº¯Êı
+* ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½MCLKï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -697,7 +747,7 @@ void GlobalMclkSet(void)
 	}
 	if((gCtrlVars.sample_rate == 16000) || (gCtrlVars.sample_rate == 32000) || (gCtrlVars.sample_rate == 48000))
 	{
-	    //ÈôClock_AudioPllClockSetÖĞÊ¹ÓÃÁËPLL_CLK_USER_DEF£¬´Ë´¦ĞèÒª¸ù¾İÅäÖÃµÄÊ±ÖÓÔ´À´Ñ¡ÔñPLL_CLOCK1»òÕßÊÇPLL_CLOCK2!!
+	    //ï¿½ï¿½Clock_AudioPllClockSetï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½PLL_CLK_USER_DEFï¿½ï¿½ï¿½Ë´ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Ê±ï¿½ï¿½Ô´ï¿½ï¿½Ñ¡ï¿½ï¿½PLL_CLOCK1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½PLL_CLOCK2!!
 
 	    if(gCtrlVars.adc0_mclk_src == PLL_CLOCK1)
     	{
@@ -725,7 +775,7 @@ void GlobalMclkSet(void)
 			gCtrlVars.i2s1_mclk_src = PLL_CLOCK2;
 		}		
 	}
-	//////Èç¹ûI2S²ÉÓÃÁË²ÉÑùÂÊÎ¢µ÷£¬×¢ÊÍµôÒÔÏÂ´úÂë///////////////////////////
+	//////ï¿½ï¿½ï¿½I2Sï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½Î¢ï¿½ï¿½ï¿½ï¿½×¢ï¿½Íµï¿½ï¿½ï¿½ï¿½Â´ï¿½ï¿½ï¿½///////////////////////////
 	if(gCtrlVars.i2s0_work_mode == 1)/////slave
 	{
 		//gCtrlVars.i2s0_mclk_src  = GPIO_IN0;
@@ -737,7 +787,7 @@ void GlobalMclkSet(void)
 }
 /*
 ****************************************************************
-* ¸÷¸öÄ£¿éMCLKÉèÖÃº¯Êı
+* ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½MCLKï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -752,7 +802,7 @@ void PrivateMclkSet(void)
 	gCtrlVars.i2s0_mclk_src      = CFG_I2S0_MCLK_SRC;
 	gCtrlVars.i2s1_mclk_src      = CFG_I2S1_MCLK_SRC;
 
-	//////Èç¹ûI2S²ÉÓÃÁË²ÉÑùÂÊÎ¢µ÷£¬×¢ÊÍµôÒÔÏÂ´úÂë///////////////////////////
+	//////ï¿½ï¿½ï¿½I2Sï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½Î¢ï¿½ï¿½ï¿½ï¿½×¢ï¿½Íµï¿½ï¿½ï¿½ï¿½Â´ï¿½ï¿½ï¿½///////////////////////////
 	if(gCtrlVars.i2s0_work_mode == 1)/////slave
 	{
 		gCtrlVars.i2s0_mclk_src  = GPIO_IN0;
@@ -764,7 +814,7 @@ void PrivateMclkSet(void)
 }
 /*
 ****************************************************************
-* ¸÷¸öÄ£¿éÄ¬ÈÏ²ÎÊıÉèÖÃº¯Êı
+* ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Ä¬ï¿½Ï²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -783,7 +833,7 @@ void DefaultParamgsInit(void)
 	//for System status 0x02
 	gCtrlVars.cpu_mips            = 0;
 	gCtrlVars.UsedRamSize         = 0;
-	gCtrlVars.AutoRefresh         = 0;//µ÷ÒôÊ±ÒôĞ§²ÎÊı·¢Éú¸Ä±ä£¬ÉÏÎ»»ú»á×Ô¶¯¶ÁÈ¡ÒôĞ§Êı¾İ£¬1=ÔÊĞíÉÏÎ»¶Á£¬0=²»ĞèÒªÉÏÎ»»ú¶ÁÈ¡
+	gCtrlVars.AutoRefresh         = 0;//ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ä£¬ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½È¡ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½İ£ï¿½1=ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½0=ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½È¡
 	gCtrlVars.CpuMaxFreq          = 300;
 	gCtrlVars.CpuMaxRamSize       = 320;//320k
 
@@ -995,8 +1045,8 @@ void DefaultParamgsInit(void)
 /*
 ****************************************************************
 *
-*Ö÷ÒªÓÃÓÚÔÚÉÏÎ»»úÉÏÏÔÊ¾MIC»òLINE3ÊäÈë
-*MIC»òLINE3ÊÇÒ»¸öÌØ±ğµÄLINE£¬ÓÃ»§¿ÉÔÚ´Ë×ÔĞĞ¼ÓÈëĞŞ¸Ä
+*ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾MICï¿½ï¿½LINE3ï¿½ï¿½ï¿½ï¿½
+*MICï¿½ï¿½LINE3ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ø±ï¿½ï¿½LINEï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½Ğ¼ï¿½ï¿½ï¿½ï¿½Ş¸ï¿½
 *mic_or_line3;
 *mic1_line3l_pin_en;
 *mic2_line3r_pin_en;
@@ -1054,7 +1104,7 @@ void CpuVerification(void)
 */
 void AudioLineSelSet(void)
 {
-	//Ä£ÄâÍ¨µÀÏÈÅäÖÃÎªNONE£¬·ÀÖ¹ÉÏ´ÎÅäÖÃÍ¨µÀ²ĞÁô£¬È»ºóÔÙÅäÖÃĞèÒªµÄÄ£ÄâÍ¨µÀ 
+	//Ä£ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªNONEï¿½ï¿½ï¿½ï¿½Ö¹ï¿½Ï´ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Ä£ï¿½ï¿½Í¨ï¿½ï¿½
 
 	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT,  LINEIN_NONE);
 	AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN_NONE);
@@ -1169,7 +1219,7 @@ void AudioAnaChannelSet(int8_t ana_input_ch)
 	gCtrlVars.pga0_line1_r_en = 0;
 	gCtrlVars.pga0_line2_l_en = 0;
 	gCtrlVars.pga0_line2_r_en = 0;
-	#if (CFG_RES_MIC_SELECT == 0)//×÷Îªlinein3Ó¦ÓÃ
+	#if (CFG_RES_MIC_SELECT == 0)//ï¿½ï¿½Îªlinein3Ó¦ï¿½ï¿½
 	gCtrlVars.line3_l_mic1_en = 0;
 	gCtrlVars.line3_r_mic2_en = 0;
 	#endif
@@ -1192,7 +1242,7 @@ void AudioAnaChannelSet(int8_t ana_input_ch)
 		AudioLineSelSet();
 	}
 	
-    #if (CFG_RES_MIC_SELECT == 0)//×÷Îªlinein3Ó¦ÓÃ
+    #if (CFG_RES_MIC_SELECT == 0)//ï¿½ï¿½Îªlinein3Ó¦ï¿½ï¿½
 	if(ANA_INPUT_CH_LINEIN3 == ana_input_ch)
 	{
 		gCtrlVars.line3_l_mic1_en = 1;
@@ -1218,7 +1268,7 @@ void AudioAnaChannelSet(int8_t ana_input_ch)
 
 /*
 ****************************************************************
-* ÒôĞ§ÄÚ´æÊÍ·Åº¯Êı
+* ï¿½ï¿½Ğ§ï¿½Ú´ï¿½ï¿½Í·Åºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************

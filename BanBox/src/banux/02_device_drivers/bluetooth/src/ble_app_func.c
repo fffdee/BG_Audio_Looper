@@ -54,7 +54,9 @@ static const uint8_t profile_data_template[] =
     0x08, 0x00, 0x00, 0xf1, 0x08, 0x00, 0x02, 0xab,
     // 0x0009 CLIENT_CHARACTERISTIC_CONFIGURATION
     // READ_ANYBODY, WRITE_ANYBODY
-    0x0a, 0x00, 0x0e, 0xf1, 0x09, 0x00, 0x02, 0x29, 0x00, 0x00,
+    // CRITICAL FIX: Changed from 0xf1 to 0xf0 to let ATT stack handle CCCD internally
+    // 0xf0 = ATT stack auto-handles without callback, 0xf1 = requires callback
+    0x0a, 0x00, 0x0e, 0xf0, 0x09, 0x00, 0x02, 0x29, 0x00, 0x00,
     // 0x000a CHARACTERISTIC-AB03-NOTIFY | DYNAMIC
     0x0d, 0x00, 0x02, 0xf0, 0x0a, 0x00, 0x03, 0x28, 0x10, 0x0b, 0x00, 0x03, 0xab,
     // 0x000b VALUE-AB03-NOTIFY | DYNAMIC-''
@@ -62,7 +64,8 @@ static const uint8_t profile_data_template[] =
     0x08, 0x00, 0x00, 0xf1, 0x0b, 0x00, 0x03, 0xab,
     // 0x000c CLIENT_CHARACTERISTIC_CONFIGURATION
     // READ_ANYBODY, WRITE_ANYBODY
-    0x0a, 0x00, 0x0e, 0xf1, 0x0c, 0x00, 0x02, 0x29, 0x00, 0x00,
+    // CRITICAL FIX: Changed from 0xf1 to 0xf0 for auto-handling
+    0x0a, 0x00, 0x0e, 0xf0, 0x0c, 0x00, 0x02, 0x29, 0x00, 0x00,
 
     // END
     0x00, 0x00,
@@ -138,8 +141,8 @@ static void init_ble_dynamic_data(void)
 	profile_data_len = sizeof(profile_data_template);
 	
 	// Allocate memory
-	g_advertisement_data = osPortMalloc(g_advertisement_data_len);
-	g_profile_data = osPortMalloc(profile_data_len);
+	g_advertisement_data = (uint8_t *)osPortMalloc(g_advertisement_data_len);
+	g_profile_data = (uint8_t *)osPortMalloc(profile_data_len);
 	
 	if (!g_advertisement_data || !g_profile_data) {
 		DBG("BLE: Failed to allocate memory!\n");
@@ -270,8 +273,16 @@ int8_t InitBlePlaycontrolProfile(void)
 {
 	// Always initialize dynamic BLE data with chip ID
 	init_ble_dynamic_data();
-	
+	uint64_t chip_id = 0;
+	Chip_IDGet(&chip_id);
+	uint16_t id_suffix = (uint16_t)((chip_id >> 48) & 0xFFFF);
 	memcpy(g_playcontrol_app_context.ble_device_addr, btStackConfigParams->ble_LocalDeviceAddr, 6);
+	g_playcontrol_app_context.ble_device_addr[0] = 0x42;
+	g_playcontrol_app_context.ble_device_addr[1] = 0x47;
+	g_playcontrol_app_context.ble_device_addr[2] = 0x00;
+	g_playcontrol_app_context.ble_device_addr[3] = (uint8_t)( id_suffix & 0xFF);
+	g_playcontrol_app_context.ble_device_addr[4] = (uint8_t)(( id_suffix >> 8) & 0xFF);   // Use bits 8-15
+	g_playcontrol_app_context.ble_device_addr[5] = (uint8_t)( id_suffix & 0xFF);
 	g_playcontrol_app_context.ble_device_role = PERIPHERAL_DEVICE;
 
 	// Always use dynamic profile data
@@ -361,6 +372,17 @@ int16_t att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t trans
 	}
     else if( (attribute_handle >= ATT_SERVICE_AB00_START_HANDLE) && (attribute_handle <= ATT_SERVICE_AB00_END_HANDLE))
 	{
+		/* With CCCD flags changed to 0xf0, ATT stack should handle CCCD internally */
+		/* This function should not receive CCCD writes anymore */
+		/* But keep safety check just in case */
+		if (attribute_handle == ATT_CHARACTERISTIC_AB02_01_CLIENT_CONFIGURATION_HANDLE ||
+		    attribute_handle == ATT_CHARACTERISTIC_AB03_01_CLIENT_CONFIGURATION_HANDLE) {
+			BT_DBG("[ATT_WRITE] ERROR: CCCD handle 0x%02x reached att_write (should be handled by ATT stack!)\n", 
+			       attribute_handle);
+			/* This should not happen with 0xf0 flag, but return success anyway */
+			return buffer_size;
+		}
+		/* Route non-CCCD handles to app_att_write */
     	return app_att_write(con_handle, attribute_handle, transaction_mode, offset, buffer, buffer_size);
 	}
 	else
@@ -430,6 +452,7 @@ int16_t app_att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t t
 			ShellIO_BLE_OnDataReceived(buffer, buffer_size);
 			/* 同时保留原有的BLE协议解析 */
 
+			BT_DBG("ATT_CHARACTERISTIC_AB01_01_VALUE_HANDLE:\n");
 			break;
 
 		case ATT_CHARACTERISTIC_AB02_01_VALUE_HANDLE:
@@ -440,12 +463,24 @@ int16_t app_att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t t
 			BT_DBG("ATT_CHARACTERISTIC_AB03_01_VALUE_HANDLE:\n");
 			break;
 
+		/* 
+		 * 重要：不要在这里处理CCCD handles！
+		 * ATT栈会自动处理CCCD写入，更新内部状态，使att_server_can_send()返回1
+		 * 如果我们拦截CCCD写入，会阻止ATT栈更新状态
+		 *
+		 * ATT_CHARACTERISTIC_AB02_01_CLIENT_CONFIGURATION_HANDLE (0x0009)
+		 * ATT_CHARACTERISTIC_AB03_01_CLIENT_CONFIGURATION_HANDLE (0x000c)
+		 * 这些由ATT栈自动处理
+		 */
+
 		default:
+			/* 对于未处理的handle（包括CCCD），返回0表示成功 */
+			/* ATT栈会自己处理CCCD并更新内部状态 */
+			BT_DBG("app_att_write: unhandled handle 0x%02x, letting ATT stack handle\n", attribute_handle);
 			return 0;
 	}
 	return 0;
 }
-
 
 
 #ifdef CFG_FUNC_AI

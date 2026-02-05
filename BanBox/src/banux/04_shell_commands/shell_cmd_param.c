@@ -184,6 +184,98 @@ static int param_test(int argc, char *argv[])
     return 0;
 }
 
+/**
+ * @brief Query parameters in JSON format for APP
+ */
+static int param_query(int argc, char *argv[])
+{
+    extern SysParam_t g_sys_param;
+    const char *target = (argc >= 1) ? argv[0] : "all";
+    
+    if (strcmp(target, "all") == 0 || strcmp(target, "system") == 0) {
+        Shell_Printf("{\"status\":\"ok\",\"system\":{" 
+                    "\"boot_count\":%d," 
+                    "\"current_boot_status\":%d" 
+                    "}}", 
+                    g_sys_param.system.boot_count,
+                    g_sys_param.system.current_boot_status);
+        Shell_Printf("\n");
+    }
+    else if (strcmp(target, "volume") == 0) {
+        Shell_Printf("{\"status\":\"ok\",\"volume\":{" 
+                    "\"mic1\":%d," 
+                    "\"mic2\":%d," 
+                    "\"guitar1\":%d," 
+                    "\"guitar2\":%d," 
+                    "\"output\":%d" 
+                    "}}",
+                    g_sys_param.volume.mic1_volume,
+                    g_sys_param.volume.mic2_volume,
+                    g_sys_param.volume.guitar1_volume,
+                    g_sys_param.volume.guitar2_volume,
+                    g_sys_param.volume.output_volume);
+        Shell_Printf("\n");
+    }
+    else if (strcmp(target, "looper") == 0) {
+        Shell_Printf("{\"status\":\"ok\",\"looper\":{" 
+                    "\"loop_count\":%d," 
+                    "\"overdub_mode\":%d," 
+                    "\"quantize\":%d," 
+                    "\"click_volume\":%d," 
+                    "\"tempo\":%d," 
+                    "\"time_signature\":%d," 
+                    "\"fade_time\":%d," 
+                    "\"max_loop_time\":%lu" 
+                    "}}",
+                    g_sys_param.looper.loop_count,
+                    g_sys_param.looper.overdub_mode,
+                    g_sys_param.looper.quantize,
+                    g_sys_param.looper.click_volume,
+                    g_sys_param.looper.tempo,
+                    g_sys_param.looper.time_signature,
+                    g_sys_param.looper.fade_time,
+                    (unsigned long)g_sys_param.looper.max_loop_time);
+        Shell_Printf("\n");
+    }
+    else if (strcmp(target, "bluetooth") == 0) {
+        Shell_Printf("{\"status\":\"ok\",\"bluetooth\":{" 
+                    "\"enabled\":%d," 
+                    "\"discoverable\":%d," 
+                    "\"auto_connect\":%d," 
+                    "\"a2dp_volume\":%d," 
+                    "\"device_name\":\"%s\"" 
+                    "}}",
+                    g_sys_param.bluetooth.enabled,
+                    g_sys_param.bluetooth.discoverable,
+                    g_sys_param.bluetooth.auto_connect,
+                    g_sys_param.bluetooth.a2dp_volume,
+                    g_sys_param.bluetooth.device_name);
+        Shell_Printf("\n");
+    }
+    else if (strcmp(target, "lcd") == 0) {
+        Shell_Printf("{\"status\":\"ok\",\"lcd\":{" 
+                    "\"contrast\":%d," 
+                    "\"color_scheme\":%d," 
+                    "\"screen_saver\":%d," 
+                    "\"bg_color\":%d" 
+                    "}}",
+                    g_sys_param.lcd.contrast,
+                    g_sys_param.lcd.color_scheme,
+                    g_sys_param.lcd.screen_saver,
+                    g_sys_param.lcd.bg_color);
+        Shell_Printf("\n");
+    }
+    else {
+        Shell_Printf("{\"error\":\"Unknown target: %s\"}", target);
+        Shell_Printf("\n");
+        Shell_Printf("{\"hint\":\"Available: all, system, volume, looper, bluetooth, lcd\"}");
+        Shell_Printf("\n");
+        return -1;
+    }
+    
+    return 0;
+}
+
 /*============================================================================
  * Module Definition
  *===========================================================================*/
@@ -194,6 +286,7 @@ static const ShellOpt_t param_opts[] = {
     OPT("d", "default", NULL,       "Reset to default params",      param_default),
     OPT("p", "print",   "[module]", "Print params (sys/audio/looper/bt/lcd)", param_print),
     OPT("i", "info",    NULL,       "Show param system info",       param_info),
+    OPT("q", "query",   "<target>", "Query params in JSON (system/volume/looper/bluetooth/lcd)", param_query),
     OPT("e", "erase",   NULL,       "Erase param sector (danger!)", param_erase),
     OPT("t", "test",    NULL,       "Test flash save/load",         param_test),
     OPT_END()

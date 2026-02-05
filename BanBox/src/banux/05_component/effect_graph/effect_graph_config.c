@@ -28,6 +28,15 @@ static const NodeConfig_t g_DefaultNodes[] = DEFAULT_NODES_CONFIG;
 /* 默认边配置 */
 static const EdgeConfig_t g_DefaultEdges[] = DEFAULT_EDGES_CONFIG;
 
+/* 编译时断言：确保数组大小与宏定义一致 */
+#define COMPILE_TIME_ASSERT(cond) typedef char assertion_failed_##__LINE__[(cond) ? 1 : -1]
+COMPILE_TIME_ASSERT(sizeof(g_DefaultNodes)/sizeof(g_DefaultNodes[0]) == DEFAULT_NODE_COUNT);
+COMPILE_TIME_ASSERT(sizeof(g_DefaultEdges)/sizeof(g_DefaultEdges[0]) == DEFAULT_EDGE_COUNT);
+
+/* 运行时检查用的大小常量 */
+static const uint8_t g_DefaultNodesArraySize = sizeof(g_DefaultNodes)/sizeof(g_DefaultNodes[0]);
+static const uint8_t g_DefaultEdgesArraySize = sizeof(g_DefaultEdges)/sizeof(g_DefaultEdges[0]);
+
 /* 简单配置节点 */
 static const NodeConfig_t g_SimpleNodes[] = SIMPLE_NODES_CONFIG;
 
@@ -131,9 +140,11 @@ GraphError_t EffectGraphConfig_GetPreset(GraphPreset_t preset, GraphConfig_t *co
     switch (preset) {
         case GRAPH_PRESET_DEFAULT:
             config->nodes = (NodeConfig_t*)g_DefaultNodes;
-            config->node_count = DEFAULT_NODE_COUNT;
+            config->node_count = g_DefaultNodesArraySize;  /* 使用实际数组大小 */
             config->edges = (EdgeConfig_t*)g_DefaultEdges;
-            config->edge_count = DEFAULT_EDGE_COUNT;
+            config->edge_count = g_DefaultEdgesArraySize;  /* 使用实际数组大小，避免宏值不匹配 */
+            DBG("[GraphConfig] DEFAULT preset: node_count=%d, edge_count=%d, array_sizes: nodes=%d, edges=%d\n",
+                DEFAULT_NODE_COUNT, DEFAULT_EDGE_COUNT, g_DefaultNodesArraySize, g_DefaultEdgesArraySize);
             break;
             
         case GRAPH_PRESET_SIMPLE:
@@ -156,9 +167,9 @@ GraphError_t EffectGraphConfig_GetPreset(GraphPreset_t preset, GraphConfig_t *co
             /* TODO: 实现这些预设 */
             DBG("[GraphConfig] Preset %d not implemented, using default\n", preset);
             config->nodes = (NodeConfig_t*)g_DefaultNodes;
-            config->node_count = DEFAULT_NODE_COUNT;
+            config->node_count = g_DefaultNodesArraySize;  /* 使用实际数组大小 */
             config->edges = (EdgeConfig_t*)g_DefaultEdges;
-            config->edge_count = DEFAULT_EDGE_COUNT;
+            config->edge_count = g_DefaultEdgesArraySize;  /* 使用实际数组大小 */
             break;
             
         default:
@@ -194,6 +205,11 @@ GraphError_t EffectGraphConfig_LoadPreset(GraphPreset_t preset)
         return err;
     }
     
+    /* 运行时验证: 打印实际配置值 */
+    DBG("[GraphConfig] Config: nodes=%d (expect %d), edges=%d (expect %d)\n",
+        config.node_count, DEFAULT_NODE_COUNT, 
+        config.edge_count, DEFAULT_EDGE_COUNT);
+    
     /* 重置图 */
     EffectGraph_Reset();
     
@@ -217,10 +233,25 @@ GraphError_t EffectGraphConfig_LoadPreset(GraphPreset_t preset)
     }
     
     /* 创建所有边(连接) */
+    DBG("[GraphConfig] Creating %d edges (array size=%d)...\n", config.edge_count, g_DefaultEdgesArraySize);
+    
+    /* 安全检查：防止数组越界 */
+    if (config.edge_count > g_DefaultEdgesArraySize) {
+        DBG("[GraphConfig] ERROR: edge_count (%d) > array_size (%d)! Limiting to array size.\n",
+            config.edge_count, g_DefaultEdgesArraySize);
+        config.edge_count = g_DefaultEdgesArraySize;
+    }
+    
     for (i = 0; i < config.edge_count; i++) {
         const EdgeConfig_t *ec = &config.edges[i];
         EffectNode_t *src = EffectGraph_FindNodeById(ec->src_node_id);
         EffectNode_t *dst = EffectGraph_FindNodeById(ec->dst_node_id);
+        
+        /* 在连接前打印边信息，帮助调试 */
+        if (i >= 15 || !src || !dst) {
+            DBG("[GraphConfig] Edge[%d]: src_id=%d, dst_id=%d, src=%p, dst=%p\n",
+                i, ec->src_node_id, ec->dst_node_id, (void*)src, (void*)dst);
+        }
         
         if (!src || !dst) {
             DBG("[GraphConfig] Invalid edge: %d -> %d\n", ec->src_node_id, ec->dst_node_id);

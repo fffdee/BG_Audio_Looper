@@ -16,6 +16,73 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug.h"
+#include "effect_graph.h"
+#include "effect_graph_config.h"
+#include "sys_param.h"
+
+/* 声明shell_cmd_graph.c中的辅助函数 */
+extern void RebuildAndApplyEQFilter(EQUnit *target_eq, EffectNode_t *node);
+extern void SyncEQNodeToSysParam(EffectNode_t *node);
+
+/*******************************************************************************
+ * 辅助函数：获取EQ效果器ID对应的节点ID和EQ单元
+ * 
+ * 2026-02-04 新架构:
+ *   - EFFECT_ID_EQ_GUITAR_L (4) -> NODE_ID_EQ_GUITAR_L (4) -> guitar_eq_unit
+ *   - EFFECT_ID_EQ_GUITAR_R (5) -> NODE_ID_EQ_GUITAR_R (5) -> music_pre_eq_unit (复用)
+ *   - EFFECT_ID_EQ_MIC_L    (6) -> NODE_ID_EQ_MIC_L    (6) -> mic_out_eq_unit
+ *   - EFFECT_ID_EQ_MIC_R    (7) -> NODE_ID_EQ_MIC_R    (7) -> mic_pre_eq_unit (复用)
+ *   - EFFECT_ID_MUSIC_EQ   (14) -> NODE_ID_USB_BT_EQ  (14) -> music_out_eq_unit
+ ******************************************************************************/
+static DefaultNodeId_t GetEQNodeIdFromEffectId(EffectId_t effect_id)
+{
+    switch (effect_id) {
+        case EFFECT_ID_EQ:           return NODE_ID_EQ_GUITAR_L;  /* 兼容旧版 */
+        case EFFECT_ID_EQ_GUITAR_L:  return NODE_ID_EQ_GUITAR_L;
+        case EFFECT_ID_EQ_GUITAR_R:  return NODE_ID_EQ_GUITAR_R;
+        case EFFECT_ID_EQ_MIC_L:     return NODE_ID_EQ_MIC_L;
+        case EFFECT_ID_EQ_MIC_R:     return NODE_ID_EQ_MIC_R;
+        case EFFECT_ID_MUSIC_EQ:     return NODE_ID_USB_BT_EQ;
+        default:                     return NODE_ID_EQ_GUITAR_L;
+    }
+}
+
+static EQUnit* GetEQUnitFromEffectId(EffectId_t effect_id)
+{
+    switch (effect_id) {
+        case EFFECT_ID_EQ:           return &gCtrlVars.eq_guitar_l_unit;  /* 兼容旧版 */
+        case EFFECT_ID_EQ_GUITAR_L:  return &gCtrlVars.eq_guitar_l_unit;  /* 独立的Guitar L EQ */
+        case EFFECT_ID_EQ_GUITAR_R:  return &gCtrlVars.eq_guitar_r_unit;  /* 独立的Guitar R EQ */
+        case EFFECT_ID_EQ_MIC_L:     return &gCtrlVars.eq_mic_l_unit;     /* 独立的Mic L EQ */
+        case EFFECT_ID_EQ_MIC_R:     return &gCtrlVars.eq_mic_r_unit;     /* 独立的Mic R EQ */
+        case EFFECT_ID_MUSIC_EQ:     return &gCtrlVars.music_out_eq_unit; /* USB/BT EQ */
+        default:                     return &gCtrlVars.eq_guitar_l_unit;
+    }
+}
+
+static const char* GetEQNameFromEffectId(EffectId_t effect_id)
+{
+    switch (effect_id) {
+        case EFFECT_ID_EQ:           return "EQ_GUITAR_L";
+        case EFFECT_ID_EQ_GUITAR_L:  return "EQ_GUITAR_L";
+        case EFFECT_ID_EQ_GUITAR_R:  return "EQ_GUITAR_R";
+        case EFFECT_ID_EQ_MIC_L:     return "EQ_MIC_L";
+        case EFFECT_ID_EQ_MIC_R:     return "EQ_MIC_R";
+        case EFFECT_ID_MUSIC_EQ:     return "USB_BT_EQ";
+        default:                     return "UNKNOWN_EQ";
+    }
+}
+
+/* 检查是否是有效的EQ效果器ID */
+static bool IsEQEffectId(EffectId_t id)
+{
+    return (id == EFFECT_ID_EQ || 
+            id == EFFECT_ID_EQ_GUITAR_L || 
+            id == EFFECT_ID_EQ_GUITAR_R || 
+            id == EFFECT_ID_EQ_MIC_L || 
+            id == EFFECT_ID_EQ_MIC_R || 
+            id == EFFECT_ID_MUSIC_EQ);
+}
 
 /*******************************************************************************
  * 效果器信息表
@@ -29,15 +96,19 @@ typedef struct {
 static const EffectInfo_t g_EffectInfoTable[] = {
     { EFFECT_ID_REVERB,         "reverb",       "混响效果" },
     { EFFECT_ID_DRC,            "drc",          "动态范围压缩 (麦克风)" },
-    { EFFECT_ID_EQ,             "eq",           "均衡器 (麦克风输出)" },
+    { EFFECT_ID_EQ,             "eq",           "均衡器 (兼容旧版)" },
     { EFFECT_ID_EXPANDER,       "expander",     "扩展器" },
+    { EFFECT_ID_EQ_GUITAR_L,    "eq_guitar_l",  "乐器左声道EQ" },
+    { EFFECT_ID_EQ_GUITAR_R,    "eq_guitar_r",  "乐器右声道EQ" },
+    { EFFECT_ID_EQ_MIC_L,       "eq_mic_l",     "麦克风左声道EQ" },
+    { EFFECT_ID_EQ_MIC_R,       "eq_mic_r",     "麦克风右声道EQ" },
     { EFFECT_ID_ECHO,           "echo",         "回声效果" },
     { EFFECT_ID_HOWLING,        "howling",      "啸叫抑制" },
     { EFFECT_ID_3D,             "3d",           "3D音效" },
     { EFFECT_ID_VIRTUAL_BASS,   "vbass",        "虚拟低音" },
     { EFFECT_ID_PLATE_REVERB,   "plate_reverb", "板式混响" },
     { EFFECT_ID_MUSIC_DRC,      "music_drc",    "动态范围压缩 (音乐)" },
-    { EFFECT_ID_MUSIC_EQ,       "music_eq",     "均衡器 (音乐输出)" },
+    { EFFECT_ID_MUSIC_EQ,       "music_eq",     "均衡器 (USB/BT输出)" },
 };
 
 #define EFFECT_TABLE_SIZE (sizeof(g_EffectInfoTable) / sizeof(g_EffectInfoTable[0]))
@@ -104,6 +175,7 @@ static void PrintHelp(void)
     Shell_Printf("effect set <id> <param> <val>- Set effect parameter\n");
     Shell_Printf("effect get <id> <param>      - Get effect parameter\n");
     Shell_Printf("effect enable <id> [on|off]  - Enable/disable effect\n");
+    Shell_Printf("effect query <id>            - Query effect params (JSON)\n");
     Shell_Printf("effect help                  - Show this help\n");
     Shell_Printf("==================================\n\n");
 }
@@ -302,7 +374,6 @@ static int CmdSet(int argc, char *argv[])
                 return -1;
             }
             break;
-            
         case EFFECT_ID_DRC:
             if (strcmp(param, "threshold") == 0) {
                 gCtrlVars.mic_drc_unit.threshold[0] = value;
@@ -321,7 +392,6 @@ static int CmdSet(int argc, char *argv[])
                 return -1;
             }
             break;
-            
         case EFFECT_ID_EXPANDER:
             if (strcmp(param, "threshold") == 0) {
                 gCtrlVars.mic_expander_unit.threshold = value;
@@ -334,7 +404,6 @@ static int CmdSet(int argc, char *argv[])
                 return -1;
             }
             break;
-            
         case EFFECT_ID_ECHO:
             if (strcmp(param, "delay") == 0) {
                 gCtrlVars.echo_unit.delay = value;
@@ -347,12 +416,95 @@ static int CmdSet(int argc, char *argv[])
                 return -1;
             }
             break;
+        case EFFECT_ID_EQ:
+        case EFFECT_ID_EQ_GUITAR_L:
+        case EFFECT_ID_EQ_GUITAR_R:
+        case EFFECT_ID_EQ_MIC_L:
+        case EFFECT_ID_EQ_MIC_R:
+        case EFFECT_ID_MUSIC_EQ: {
+            /* 获取对应的EQ节点和单元 */
+            DefaultNodeId_t node_id = GetEQNodeIdFromEffectId(id);
+            EQUnit *eq_unit = GetEQUnitFromEffectId(id);
+            const char *eq_name = GetEQNameFromEffectId(id);
+            EffectNode_t *node = EffectGraph_FindNodeById(node_id);
             
+            if (!node || node->type != EFFECT_NODE_TYPE_EFFECT_EQ) {
+                Shell_Printf("ERROR: EQ node %d not found\n", node_id);
+                return -1;
+            }
+            
+            // 支持 band<n>、band<n>_type、band<n>_f0、band<n>_Q、band<n>_enable、pregain、filter_count、channel
+            if (strncmp(param, "band", 4) == 0) {
+                const char *p = param + 4;
+                char *endptr = NULL;
+                long band = strtol(p, &endptr, 10);
+                if (band < 0 || band >= 10) {
+                    Shell_Printf("ERROR: band index out of range [0-9]\n");
+                    return -1;
+                }
+                if (*endptr == '\0') {
+                    // band<n>，设置增益 (输入已经是 dB 值，直接使用)
+                    int8_t gain = (int8_t)value;
+                    eq_unit->eq_params[band].gain = (gain << 8);  /* SDK格式: dB×256 (Q8.8) */
+                    node->params.eq.band_gains[band] = gain;      /* 节点参数: 直接存储 dB 值 */
+                    Shell_Printf("[%s] band%ld gain set to %d dB\n", eq_name, band, gain);
+                    RebuildAndApplyEQFilter(eq_unit, node);
+                    SyncEQNodeToSysParam(node);
+                } else if (strcmp(endptr, "_type") == 0) {
+                    eq_unit->eq_params[band].type = value;
+                    node->params.eq.band_types[band] = (uint8_t)value;
+                    Shell_Printf("[%s] band%ld type set to %ld\n", eq_name, band, value);
+                    RebuildAndApplyEQFilter(eq_unit, node);
+                    SyncEQNodeToSysParam(node);
+                } else if (strcmp(endptr, "_f0") == 0) {
+                    eq_unit->eq_params[band].f0 = value;
+                    node->params.eq.band_f0[band] = (uint32_t)value;
+                    Shell_Printf("[%s] band%ld f0 set to %ld\n", eq_name, band, value);
+                    RebuildAndApplyEQFilter(eq_unit, node);
+                    SyncEQNodeToSysParam(node);
+                } else if (strcmp(endptr, "_Q") == 0) {
+                    eq_unit->eq_params[band].Q = value;
+                    node->params.eq.band_Q[band] = (uint32_t)value;
+                    Shell_Printf("[%s] band%ld Q set to %ld\n", eq_name, band, value);
+                    RebuildAndApplyEQFilter(eq_unit, node);
+                    SyncEQNodeToSysParam(node);
+                } else if (strcmp(endptr, "_enable") == 0) {
+                    eq_unit->eq_params[band].enable = value ? 1 : 0;
+                    node->params.eq.band_enables[band] = value ? 1 : 0;
+                    Shell_Printf("[%s] band%ld enable set to %d\n", eq_name, band, value ? 1 : 0);
+                    RebuildAndApplyEQFilter(eq_unit, node);
+                    SyncEQNodeToSysParam(node);
+                } else {
+                    Shell_Printf("ERROR: Unknown band parameter '%s'\n", param);
+                    return -1;
+                }
+            } else if (strcmp(param, "pregain") == 0) {
+                eq_unit->pregain = value;
+                node->params.eq.pregain = (int16_t)value;
+                Shell_Printf("[%s] pregain set to %ld\n", eq_name, value);
+                extern void AudioEffectEQPregainConfig(EQUnit *eq);
+                AudioEffectEQPregainConfig(eq_unit);
+                SyncEQNodeToSysParam(node);
+            } else if (strcmp(param, "filter_count") == 0) {
+                eq_unit->filter_count = value;
+                node->params.eq.band_count = (uint8_t)value;
+                Shell_Printf("[%s] filter_count set to %ld\n", eq_name, value);
+                RebuildAndApplyEQFilter(eq_unit, node);
+                SyncEQNodeToSysParam(node);
+            } else if (strcmp(param, "channel") == 0) {
+                eq_unit->channel = value;
+                Shell_Printf("[%s] channel set to %ld\n", eq_name, value);
+                SyncEQNodeToSysParam(node);
+            } else {
+                Shell_Printf("ERROR: Unknown EQ parameter '%s'\n", param);
+                return -1;
+            }
+            break;
+        }
         default:
             Shell_Printf("Effect %d does not support parameter setting\n", id);
             return -1;
     }
-    
     return 0;
 }
 
@@ -479,6 +631,86 @@ const char* Effect_GetName(EffectId_t id)
  * @param argv 参数列表
  * @return 0成功，其他失败
  */
+/**
+ * @brief Query effect parameters in JSON format for APP
+ */
+static int CmdQuery(int argc, char *argv[])
+{
+    extern ControlVariablesContext gCtrlVars;
+    
+    if (argc < 3) {
+        Shell_Printf("{\"error\":\"Missing effect ID\"}\n");
+        return -1;
+    }
+    
+    int id = atoi(argv[2]);
+    
+    Shell_Printf("{\"status\":\"ok\",\"effect_id\":%d,\"params\":{", id);
+    
+    switch (id) {
+        case EFFECT_ID_REVERB:
+            Shell_Printf("\"enable\":%d,\"room\":%ld,\"damp\":%ld,\"wet\":%ld",
+                        gCtrlVars.reverb_unit.enable,
+                        (long)gCtrlVars.reverb_unit.roomsize_scale,
+                        (long)gCtrlVars.reverb_unit.damping_scale,
+                        (long)gCtrlVars.reverb_unit.wet_scale);
+            break;
+            
+        case EFFECT_ID_DRC:
+            Shell_Printf("\"enable\":%d,\"threshold\":%ld,\"ratio\":%ld,\"attack\":%ld,\"release\":%ld",
+                        gCtrlVars.mic_drc_unit.enable,
+                        (long)gCtrlVars.mic_drc_unit.threshold[0],
+                        (long)gCtrlVars.mic_drc_unit.ratio[0],
+                        (long)gCtrlVars.mic_drc_unit.attack_tc[0],
+                        (long)gCtrlVars.mic_drc_unit.release_tc[0]);
+            break;
+            
+        case EFFECT_ID_EXPANDER:
+            Shell_Printf("\"enable\":%d,\"threshold\":%ld,\"ratio\":%ld",
+                        gCtrlVars.mic_expander_unit.enable,
+                        (long)gCtrlVars.mic_expander_unit.threshold,
+                        (long)gCtrlVars.mic_expander_unit.ratio);
+            break;
+            
+        case EFFECT_ID_ECHO:
+            Shell_Printf("\"enable\":%d,\"delay\":%ld,\"feedback\":%ld",
+                        gCtrlVars.echo_unit.enable,
+                        (long)gCtrlVars.echo_unit.delay,
+                        (long)gCtrlVars.echo_unit.attenuation);
+            break;
+            
+        case EFFECT_ID_EQ:
+            Shell_Printf("\"enable\":%d,\"filter_count\":%d",
+                        gCtrlVars.mic_out_eq_unit.enable,
+                        gCtrlVars.mic_out_eq_unit.filter_count);
+            break;
+            
+        case EFFECT_ID_MUSIC_EQ:
+            Shell_Printf("\"enable\":%d,\"filter_count\":%d",
+                        gCtrlVars.music_out_eq_unit.enable,
+                        gCtrlVars.music_out_eq_unit.filter_count);
+            break;
+            
+        case EFFECT_ID_PLATE_REVERB:
+            Shell_Printf("\"enable\":%d,\"predelay\":%ld,\"diffusion\":%ld,\"decay\":%ld,\"damping\":%ld,\"wetdrymix\":%ld",
+                        gCtrlVars.plate_reverb_unit.enable,
+                        (long)gCtrlVars.plate_reverb_unit.predelay,
+                        (long)gCtrlVars.plate_reverb_unit.diffusion,
+                        (long)gCtrlVars.plate_reverb_unit.decay,
+                        (long)gCtrlVars.plate_reverb_unit.damping,
+                        (long)gCtrlVars.plate_reverb_unit.wetdrymix);
+            break;
+            
+        default:
+            Shell_Printf("\"error\":\"Unknown effect ID\"}}");
+            Shell_Printf("\n");
+            return -1;
+    }
+    
+    Shell_Printf("}}\n");
+    return 0;
+}
+
 int ShellCmdEffect_Execute(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -506,6 +738,9 @@ int ShellCmdEffect_Execute(int argc, char *argv[])
     }
     else if (strcmp(subcmd, "enable") == 0) {
         return CmdEnable(argc, argv);
+    }
+    else if (strcmp(subcmd, "query") == 0) {
+        return CmdQuery(argc, argv);
     }
     else {
         Shell_Printf("ERROR: Unknown command '%s'\n", subcmd);

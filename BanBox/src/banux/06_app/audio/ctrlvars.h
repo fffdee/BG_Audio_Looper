@@ -590,7 +590,7 @@ typedef struct _ControlVariablesContext
 	//for System status 0x02
     uint16_t 			cpu_mips;
 	uint16_t 			UsedRamSize;
-	uint16_t 			AutoRefresh;//µ÷ÒôÊ±ÒôĞ§²ÎÊı·¢Éú¸Ä±ä£¬ÉÏÎ»»ú»á×Ô¶¯¶ÁÈ¡ÒôĞ§Êı¾İ£¬1=ÔÊĞíÉÏÎ»¶Á£¬0=²»ĞèÒªÉÏÎ»»ú¶ÁÈ¡
+	uint16_t 			AutoRefresh;//ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ä£¬ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½È¡ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½İ£ï¿½1=ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½0=ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½È¡
 	uint16_t            CpuMaxFreq;
 	uint16_t            CpuMaxRamSize;
     
@@ -819,7 +819,11 @@ typedef struct _ControlVariablesContext
     EQUnit	   			mic_reverb_eq_unit;
     EQUnit	   			mic_out_eq_unit;
     EQUnit	   			rec_eq_unit;
-    EQUnit	   			guitar_eq_unit;
+    /* 4ä¸ªç‹¬ç«‹çš„ADCé€šé“EQå•å…ƒ - è§£å†³å¤±çœŸé—®é¢˜ */
+    EQUnit	   			eq_guitar_l_unit;      /* Guitar L (ADC0 L) */
+    EQUnit	   			eq_guitar_r_unit;      /* Guitar R (ADC0 R) */
+    EQUnit	   			eq_mic_l_unit;         /* Mic L (ADC1 L) */
+    EQUnit	   			eq_mic_r_unit;         /* Mic R (ADC1 R) */
 	PhaseControlUnit    phase_control_unit;
 	StereoWindenUnit    stereo_winden_unit;
 	PingPongUnit        ping_pong_unit;
@@ -877,7 +881,7 @@ typedef struct _ControlVariablesContext
 	uint16_t            UsbAudioVolume;
 	uint16_t            UsbMicVolume;
 	uint16_t            UsbMicMute;
-    //------ÒôĞ§²ÎÊıµÄ×î´óÖµ À´×Ôµ÷Òô²ÎÊıÊı¾İ-------------------------------//	
+    //------ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-------------------------------//	
     uint32_t            max_chorus_wet;
     uint32_t            max_plate_reverb_roomsize;
     uint32_t            max_plate_reverb_wetdrymix;
@@ -934,11 +938,12 @@ extern const unsigned char AECBuf[572];
 extern const unsigned char UsbAecBuf[572];
 
 //-----system function--------------------------//
-extern EQUnit *eq_unit_aggregate[8];
-extern DRCUnit *drc_unit_aggregate[3];
-extern EQFilterParams *eq_param_aggregate[8];
-extern ExpanderUnit *expander_unit_aggregate[2];
-extern GainControlUnit *gain_unit_aggregate[16];
+/* const ä¼˜åŒ–ï¼šå°†èšåˆæ•°ç»„å­˜å‚¨åœ¨ Flash ä¸­è€Œé RAMï¼ŒèŠ‚çœå†…å­˜ */
+extern EQUnit * const eq_unit_aggregate[5];  /* å†…å­˜ä¼˜åŒ–ï¼šåªä¿ç•™æ•ˆæœå›¾å®é™…ä½¿ç”¨çš„5ä¸ªEQå•å…ƒ */
+extern DRCUnit * const drc_unit_aggregate[3];
+extern EQFilterParams * const eq_param_aggregate[5];  /* å†…å­˜ä¼˜åŒ–ï¼šåªä¿ç•™5ä¸ªEQçš„å‚æ•°ç¼“å†²åŒº */
+extern ExpanderUnit * const expander_unit_aggregate[2];
+extern GainControlUnit * const gain_unit_aggregate[16];
 
 void CtrlVarsInit(void);
 void DefaultParamgsInit(void);

@@ -22,17 +22,17 @@
 static VfsNode_t *g_BtNode = NULL;
 static VfsNode_t *g_BleNode = NULL;
 
-/* 外部蓝牙全局变量声明 */
+/* 澶栭儴钃濈墮鍏ㄥ眬鍙橀噺澹版槑 */
 extern BT_CONFIGURATION_PARAMS *btStackConfigParams;
 extern BT_MANAGER_ST btManager;
 
-/* BT参数节点 */
+/* BT鍙傛暟鑺傜偣 */
 static VfsNode_t *g_BtParams[BT_PARAM_MAX] = {NULL};
 
-/* BLE参数节点 */
+/* BLE鍙傛暟鑺傜偣 */
 static VfsNode_t *g_BleParams[BLE_PARAM_MAX] = {NULL};
 
-/* 参数名称表 */
+/* 鍙傛暟鍚嶇О琛�*/
 static const char *g_BtParamNames[BT_PARAM_MAX] = {
     "status",
     "name",
@@ -64,13 +64,13 @@ static int BtParam_Read(char *buf, uint16_t maxLen, void *userData)
     
     if (!buf) return -1;
     
-    /* 从userData中获取参数ID */
+    /* 浠巙serData涓幏鍙栧弬鏁癐D */
     param_id = (BtParamId_t)(uintptr_t)userData;
     
     switch (param_id) {
         case BT_PARAM_STATUS: {
-            /* BT状态: 0=None, 1=Connecting, 2=Connected, 3=Streaming */
-            int status = 0;  /* TODO: 从GetA2dpState()获取实际状态 */
+            /* BT鐘舵�: 0=None, 1=Connecting, 2=Connected, 3=Streaming */
+            int status = 0;  /* TODO: 浠嶨etA2dpState()鑾峰彇瀹為檯鐘舵� */
             const char *status_str[] = {"None", "Connecting", "Connected", "Streaming"};
             if (status >= 0 && status < 4) {
                 ret = snprintf(buf, maxLen, "%s", status_str[status]);
@@ -81,7 +81,7 @@ static int BtParam_Read(char *buf, uint16_t maxLen, void *userData)
         }
         
         case BT_PARAM_NAME: {
-            /* 蓝牙名称 */
+            /* 钃濈墮鍚嶇О */
             if (btStackConfigParams != NULL) {
                 ret = snprintf(buf, maxLen, "%s", (char*)btStackConfigParams->bt_LocalDeviceName);
             } else {
@@ -91,7 +91,7 @@ static int BtParam_Read(char *buf, uint16_t maxLen, void *userData)
         }
         
         case BT_PARAM_MAC: {
-            /* MAC地址 */
+            /* MAC鍦板潃 */
             ret = snprintf(buf, maxLen, "%02X:%02X:%02X:%02X:%02X:%02X",
                           btManager.btDevAddr[0],
                           btManager.btDevAddr[1],
@@ -103,27 +103,27 @@ static int BtParam_Read(char *buf, uint16_t maxLen, void *userData)
         }
         
         case BT_PARAM_VOLUME: {
-            /* 当前音量 */
+            /* 褰撳墠闊抽噺 */
             ret = snprintf(buf, maxLen, "%d", btManager.volGain);
             break;
         }
         
         case BT_PARAM_CONNECTED_DEV: {
-            /* 已连接设备名称 */
-            /* TODO: 从GetA2dpState()和btManager获取实际状态和设备名 */
+            /* 宸茶繛鎺ヨ澶囧悕绉�*/
+            /* TODO: 浠嶨etA2dpState()鍜宐tManager鑾峰彇瀹為檯鐘舵�鍜岃澶囧悕 */
             ret = snprintf(buf, maxLen, "None");
             break;
         }
         
         case BT_PARAM_RSSI: {
-            /* 信号强度 (RSSI) */
-            /* TODO: 实现RSSI读取 */
+            /* 淇″彿寮哄害 (RSSI) */
+            /* TODO: 瀹炵幇RSSI璇诲彇 */
             ret = snprintf(buf, maxLen, "-50");
             break;
         }
         
         case BT_PARAM_CODEC: {
-            /* 编解码器类型 */
+            /* 缂栬В鐮佸櫒绫诲瀷 */
             ret = snprintf(buf, maxLen, "SBC");
             break;
         }
@@ -145,32 +145,32 @@ static int BtParam_Write(const char *buf, void *userData)
     
     switch (param_id) {
         case BT_PARAM_NAME: {
-            /* 设置蓝牙名称 */
+            /* 璁剧疆钃濈墮鍚嶇О */
             if (btStackConfigParams != NULL) {
                 strncpy((char*)btStackConfigParams->bt_LocalDeviceName, buf, BT_NAME_SIZE - 1);
                 btStackConfigParams->bt_LocalDeviceName[BT_NAME_SIZE - 1] = '\0';
             }
-            /* TODO: 调用BT API更新名称 */
+            /* TODO: 璋冪敤BT API鏇存柊鍚嶇О */
             return 0;
         }
         
         case BT_PARAM_VOLUME: {
-            /* 设置音量 */
+            /* 璁剧疆闊抽噺 */
             int vol = atoi(buf);
             if (vol < 0) vol = 0;
-            if (vol > 15) vol = 15;  /* HFP volGain范围是0-15 */
+            if (vol > 15) vol = 15;  /* HFP volGain鑼冨洿鏄�-15 */
             btManager.volGain = (uint8_t)vol;
-            /* TODO: 调用BT API更新音量 */
+            /* TODO: 璋冪敤BT API鏇存柊闊抽噺 */
             return 0;
         }
         
-        /* 其他参数只读 */
+        /* 鍏朵粬鍙傛暟鍙 */
         case BT_PARAM_STATUS:
         case BT_PARAM_MAC:
         case BT_PARAM_CONNECTED_DEV:
         case BT_PARAM_RSSI:
         case BT_PARAM_CODEC:
-            return -2;  /* 只读参数 */
+            return -2;  /* 鍙鍙傛暟 */
         
         default:
             return -1;
@@ -192,47 +192,47 @@ static int BleParam_Read(char *buf, uint16_t maxLen, void *userData)
     
     switch (param_id) {
         case BLE_PARAM_STATUS: {
-            /* BLE连接状态 */
-            /* TODO: 从BLE管理器获取状态 */
+            /* BLE杩炴帴鐘舵� */
+            /* TODO: 浠嶣LE绠＄悊鍣ㄨ幏鍙栫姸鎬�*/
             ret = snprintf(buf, maxLen, "Idle");
             break;
         }
         
         case BLE_PARAM_NAME: {
-            /* BLE广播名称 */
-            /* TODO: 从BLE管理器获取名称 */
+            /* BLE骞挎挱鍚嶇О */
+            /* TODO: 浠嶣LE绠＄悊鍣ㄨ幏鍙栧悕绉�*/
             ret = snprintf(buf, maxLen, "BG_BLE");
             break;
         }
         
         case BLE_PARAM_MAC: {
-            /* BLE MAC地址 */
-            /* TODO: 从BLE管理器获取MAC */
+            /* BLE MAC鍦板潃 */
+            /* TODO: 浠嶣LE绠＄悊鍣ㄨ幏鍙朚AC */
             ret = snprintf(buf, maxLen, "00:00:00:00:00:00");
             break;
         }
         
         case BLE_PARAM_ADVERTISING: {
-            /* 广播状态 */
-            /* TODO: 从BLE管理器获取广播状态 */
+            /* 骞挎挱鐘舵� */
+            /* TODO: 浠嶣LE绠＄悊鍣ㄨ幏鍙栧箍鎾姸鎬�*/
             ret = snprintf(buf, maxLen, "Off");
             break;
         }
         
         case BLE_PARAM_TX_POWER: {
-            /* 发射功率 */
+            /* 鍙戝皠鍔熺巼 */
             ret = snprintf(buf, maxLen, "0");
             break;
         }
         
         case BLE_PARAM_INTERVAL: {
-            /* 连接间隔 */
+            /* 杩炴帴闂撮殧 */
             ret = snprintf(buf, maxLen, "7.5");
             break;
         }
         
         case BLE_PARAM_MTU: {
-            /* MTU大小 */
+            /* MTU澶у皬 */
             ret = snprintf(buf, maxLen, "23");
             break;
         }
@@ -254,36 +254,36 @@ static int BleParam_Write(const char *buf, void *userData)
     
     switch (param_id) {
         case BLE_PARAM_NAME: {
-            /* 设置BLE名称 */
-            /* TODO: 调用BLE API更新名称 */
+            /* 璁剧疆BLE鍚嶇О */
+            /* TODO: 璋冪敤BLE API鏇存柊鍚嶇О */
             return 0;
         }
         
         case BLE_PARAM_ADVERTISING: {
-            /* 控制广播 */
+            /* 鎺у埗骞挎挱 */
             if (strncmp(buf, "On", 2) == 0 || strncmp(buf, "1", 1) == 0) {
-                /* 开启广播 */
-                /* TODO: 调用BLE API开启广播 */
+                /* 寮�惎骞挎挱 */
+                /* TODO: 璋冪敤BLE API寮�惎骞挎挱 */
             } else {
-                /* 关闭广播 */
-                /* TODO: 调用BLE API关闭广播 */
+                /* 鍏抽棴骞挎挱 */
+                /* TODO: 璋冪敤BLE API鍏抽棴骞挎挱 */
             }
             return 0;
         }
         
         case BLE_PARAM_TX_POWER: {
-            /* 设置发射功率 */
-            /* int power = atoi(buf); */ /* TODO: 获取功率值后调用BLE API */
-            /* TODO: 调用BLE API设置功率 */
+            /* 璁剧疆鍙戝皠鍔熺巼 */
+            /* int power = atoi(buf); */ /* TODO: 鑾峰彇鍔熺巼鍊煎悗璋冪敤BLE API */
+            /* TODO: 璋冪敤BLE API璁剧疆鍔熺巼 */
             return 0;
         }
         
-        /* 其他参数只读 */
+        /* 鍏朵粬鍙傛暟鍙 */
         case BLE_PARAM_STATUS:
         case BLE_PARAM_MAC:
         case BLE_PARAM_INTERVAL:
         case BLE_PARAM_MTU:
-            return -2;  /* 只读参数 */
+            return -2;  /* 鍙鍙傛暟 */
         
         default:
             return -1;
@@ -317,18 +317,18 @@ VfsNode_t* BtVfs_Mount(VfsNode_t *parent)
     
     DBG("[BtVfs] Mounting BT device to VFS...\n");
     
-    /* 创建bt设备节点 */
+    /* 鍒涘缓bt璁惧鑺傜偣 */
     g_BtNode = Vfs_CreateDir(parent, "bt");
     if (!g_BtNode) {
         DBG("[BtVfs] ERROR: Failed to create bt node\n");
         return NULL;
     }
     
-    /* 创建参数节点 */
+    /* 鍒涘缓鍙傛暟鑺傜偣 */
     for (i = 0; i < BT_PARAM_MAX; i++) {
         VfsParamSet_t setFunc = NULL;
         
-        /* 只有name和volume可写 */
+        /* 鍙湁name鍜寁olume鍙啓 */
         if (i == BT_PARAM_NAME || i == BT_PARAM_VOLUME) {
             setFunc = BtParam_Write;
         }
@@ -359,18 +359,18 @@ VfsNode_t* BleVfs_Mount(VfsNode_t *parent)
     
     DBG("[BleVfs] Mounting BLE device to VFS...\n");
     
-    /* 创建ble设备节点 */
+    /* 鍒涘缓ble璁惧鑺傜偣 */
     g_BleNode = Vfs_CreateDir(parent, "ble");
     if (!g_BleNode) {
         DBG("[BleVfs] ERROR: Failed to create ble node\n");
         return NULL;
     }
     
-    /* 创建参数节点 */
+    /* 鍒涘缓鍙傛暟鑺傜偣 */
     for (i = 0; i < BLE_PARAM_MAX; i++) {
         VfsParamSet_t setFunc = NULL;
         
-        /* name, advertising, tx_power可写 */
+        /* name, advertising, tx_power鍙啓 */
         if (i == BLE_PARAM_NAME || i == BLE_PARAM_ADVERTISING || i == BLE_PARAM_TX_POWER) {
             setFunc = BleParam_Write;
         }
@@ -398,7 +398,7 @@ int BtVfs_Unmount(void)
     
     DBG("[BtVfs] Unmounting BT device...\n");
     
-    /* 删除参数节点 */
+    /* 鍒犻櫎鍙傛暟鑺傜偣 */
     for (i = 0; i < BT_PARAM_MAX; i++) {
         if (g_BtParams[i]) {
             Vfs_RemoveNode(g_BtParams[i]);
@@ -406,7 +406,7 @@ int BtVfs_Unmount(void)
         }
     }
     
-    /* 删除设备节点 */
+    /* 鍒犻櫎璁惧鑺傜偣 */
     Vfs_RemoveNode(g_BtNode);
     g_BtNode = NULL;
     
@@ -422,7 +422,7 @@ int BleVfs_Unmount(void)
     
     DBG("[BleVfs] Unmounting BLE device...\n");
     
-    /* 删除参数节点 */
+    /* 鍒犻櫎鍙傛暟鑺傜偣 */
     for (i = 0; i < BLE_PARAM_MAX; i++) {
         if (g_BleParams[i]) {
             Vfs_RemoveNode(g_BleParams[i]);
@@ -430,7 +430,7 @@ int BleVfs_Unmount(void)
         }
     }
     
-    /* 删除设备节点 */
+    /* 鍒犻櫎璁惧鑺傜偣 */
     Vfs_RemoveNode(g_BleNode);
     g_BleNode = NULL;
     
@@ -439,9 +439,9 @@ int BleVfs_Unmount(void)
 }
 
 /**
- * @brief  默认挂载BT/BLE到/driver目录
- * @detail 该函数由驱动框架调用，在BT/BLE初始化后将设备挂载到VFS
- * @return BT_VFS_OK 成功, BT_VFS_ERROR 失败
+ * @brief  榛樿鎸傝浇BT/BLE鍒�driver鐩綍
+ * @detail 璇ュ嚱鏁扮敱椹卞姩妗嗘灦璋冪敤锛屽湪BT/BLE鍒濆鍖栧悗灏嗚澶囨寕杞藉埌VFS
+ * @return BT_VFS_OK 鎴愬姛, BT_VFS_ERROR 澶辫触
  */
 int BtVfsDriver_MountDefault(void)
 {
@@ -450,7 +450,7 @@ int BtVfsDriver_MountDefault(void)
     
     DBG("[BtVfsDriver] Mounting BT/BLE to /driver...\n");
     
-    /* 查找或创建/driver目录 */
+    /* 鏌ユ壘鎴栧垱寤�driver鐩綍 */
     driver_node = Vfs_FindNode("/driver");
     if (!driver_node) {
         driver_node = Vfs_CreateDir(Vfs_GetRoot(), "driver");
@@ -461,18 +461,18 @@ int BtVfsDriver_MountDefault(void)
         DBG("[BtVfsDriver] Created /driver directory\n");
     }
     
-    /* 初始化BT和BLE驱动 */
+    /* 鍒濆鍖朆T鍜孊LE椹卞姩 */
     if (BtVfs_Init() != 0) {
         DBG("[BtVfsDriver] WARNING: BT VFS init failed\n");
-        /* 不返回错误，继续尝试挂载 */
+        /* 涓嶈繑鍥為敊璇紝缁х画灏濊瘯鎸傝浇 */
     }
     
     if (BleVfs_Init() != 0) {
         DBG("[BtVfsDriver] WARNING: BLE VFS init failed\n");
-        /* 不返回错误，继续尝试挂载 */
+        /* 涓嶈繑鍥為敊璇紝缁х画灏濊瘯鎸傝浇 */
     }
     
-    /* 挂载BT设备 */
+    /* 鎸傝浇BT璁惧 */
     if (BtVfs_Mount(driver_node) == NULL) {
         DBG("[BtVfsDriver] WARNING: Failed to mount BT device\n");
         ret = BT_VFS_ERROR;
@@ -480,7 +480,7 @@ int BtVfsDriver_MountDefault(void)
         DBG("[BtVfsDriver] BT device mounted to /driver/bt\n");
     }
     
-    /* 挂载BLE设备 */
+    /* 鎸傝浇BLE璁惧 */
     if (BleVfs_Mount(driver_node) == NULL) {
         DBG("[BtVfsDriver] WARNING: Failed to mount BLE device\n");
         ret = BT_VFS_ERROR;

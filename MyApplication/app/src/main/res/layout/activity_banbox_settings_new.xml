@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:fitsSystemWindows="true">
+
+    <!-- 顶部状态栏 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/primary_darker"
+        android:elevation="@dimen/card_elevation"
+        android:padding="@dimen/toolbar_padding">
+
+        <TextView
+            android:id="@+id/tv_connection_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="● 未连接"
+            android:textSize="@dimen/text_size_body"
+            android:textColor="@color/status_disconnected"
+            android:drawableStart="@android:drawable/presence_invisible"
+            android:drawableTint="@color/status_disconnected"
+            android:drawablePadding="@dimen/spacing_small" />
+
+        <TextView
+            android:id="@+id/tv_device_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_connection_status"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            android:text="BanBox 音频处理器"
+            android:textSize="@dimen/text_size_large"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_connect"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/button_height_small"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="连接"
+            android:textColor="@color/primary_darker"
+            android:textStyle="bold"
+            android:textSize="@dimen/text_size_body"
+            android:background="@drawable/button_connect"
+            android:paddingStart="@dimen/button_padding_horizontal"
+            android:paddingEnd="@dimen/button_padding_horizontal"
+            android:elevation="@dimen/card_elevation" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/toolbar_padding">
+
+            <!-- 功能卡片容器 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_card"
+                android:padding="@dimen/toolbar_padding"
+                android:elevation="@dimen/card_elevation"
+                android:layout_marginBottom="@dimen/spacing_medium">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎛️ 音效控制"
+                    android:textSize="@dimen/text_size_xlarge"
+                    android:textColor="@color/primary_accent_glow"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/spacing_medium" />
+
+                <!-- 2x2 网格布局 -->
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:rowCount="2"
+                    android:alignmentMode="alignBounds"
+                    android:columnOrderPreserved="false">
+
+                    <!-- 第1行第1列 -->
+                    <Button
+                        android:id="@+id/btn_fx_control"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_large"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="@dimen/spacing_small"
+                        android:text="效果调节\n(DRC + 混响)"
+                        android:textSize="@dimen/text_size_body"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_function"
+                        android:elevation="@dimen/card_elevation" />
+
+                    <!-- 第1行第2列 -->
+                    <Button
+                        android:id="@+id/btn_eq_control"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_large"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="@dimen/spacing_small"
+                        android:text="均衡器\n设置"
+                        android:textSize="@dimen/text_size_body"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_function"
+                        android:elevation="@dimen/card_elevation" />
+
+                    <!-- 第2行第1列 -->
+                    <Button
+                        android:id="@+id/btn_volume_control"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_large"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="@dimen/spacing_small"
+                        android:text="硬件音量\n控制"
+                        android:textSize="@dimen/text_size_body"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_function"
+                        android:elevation="@dimen/card_elevation" />
+
+                    <!-- 第2行第2列 -->
+                    <Button
+                        android:id="@+id/btn_audio_chain"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_large"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="@dimen/spacing_small"
+                        android:text="🎵 音频\n链路图"
+                        android:textSize="@dimen/text_size_body"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_function"
+                        android:elevation="@dimen/card_elevation" />
+
+                </GridLayout>
+            </LinearLayout>
+
+            <!-- 调试工具卡片 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_card"
+                android:padding="@dimen/toolbar_padding"
+                android:elevation="@dimen/card_elevation">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔧 调试工具"
+                    android:textSize="@dimen/text_size_xlarge"
+                    android:textColor="@color/text_error"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/spacing_medium" />
+
+                <Button
+                    android:id="@+id/btn_terminal"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/button_height_medium"
+                    android:text="BLE 终端"
+                    android:textSize="@dimen/text_size_large"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/button_debug"
+                    android:elevation="@dimen/card_elevation" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

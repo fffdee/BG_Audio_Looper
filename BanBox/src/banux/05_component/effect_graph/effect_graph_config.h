@@ -28,35 +28,52 @@ extern "C" {
 
 /*******************************************************************************
  * 节点ID定义 - 方便配置边时引用
+ * 
+ * 新架构说明 (2026-02-04):
+ *   ADC0/ADC1 各为单声道输入，每个声道独立配置EQ
+ *   - ADC0_L/R: 乐器左右声道 → EQ_GUITAR_L/R
+ *   - ADC1_L/R: 麦克风左右声道 → EQ_MIC_L/R
+ *   4个EQ处理后混音，再进入效果链（Expander→DRC→Reverb）
  ******************************************************************************/
 typedef enum {
     /* 输入源节点 ID: 0-3 */
-    NODE_ID_ADC0_GUITAR = 0,
-    NODE_ID_ADC1_MIC,
+    NODE_ID_ADC0_GUITAR = 0,    /* 乐器输入（双声道，拆分为L/R处理） */
+    NODE_ID_ADC1_MIC,            /* 麦克风输入（双声道，拆分为L/R处理） */
     NODE_ID_USB_IN,
     NODE_ID_BT_IN,
     
-    /* ADC 混音器节点 ID: 4 */
+    /* 4个独立EQ节点 ID: 4-7 (每个声道独立EQ) */
+    NODE_ID_EQ_GUITAR_L,         /* 乐器左声道EQ */
+    NODE_ID_EQ_GUITAR_R,         /* 乐器右声道EQ */
+    NODE_ID_EQ_MIC_L,            /* 麦克风左声道EQ */
+    NODE_ID_EQ_MIC_R,            /* 麦克风右声道EQ */
+    
+    /* ADC EQ后混音器节点 ID: 8 */
     NODE_ID_ADC_MIXER,
     
-    /* ADC 效果器链节点 ID: 5-8 */
+    /* ADC 效果器链节点 ID: 9-11 (去掉了原来的EQ，由上游4个EQ替代) */
     NODE_ID_EXPANDER,
     NODE_ID_DRC,
-    NODE_ID_EQ,
+    NODE_ID_PRE_REVERB_MIXER,   /* 混响前混音器（ADC链 + Looper播放） */
     NODE_ID_REVERB,
     
-    /* USB/BT 混音器节点 ID: 9 */
+    /* USB/BT 混音器节点 ID: 13 */
     NODE_ID_USB_BT_MIXER,
     
-    /* USB/BT EQ节点 ID: 10 */
+    /* USB/BT EQ节点 ID: 14 */
     NODE_ID_USB_BT_EQ,
     
-    /* 最终混音器节点 ID: 11 */
+    /* 最终混音器节点 ID: 15 */
     NODE_ID_FINAL_MIXER,
     
-    /* 输出节点 ID: 12-13 */
+    /* 输出节点 ID: 16-17 */
     NODE_ID_DAC0_OUT,
     NODE_ID_USB_OUT,
+    
+    /* 新增节点 ID: 18-20 */
+    NODE_ID_METRONOME,       /* 节拍器源节点 */
+    NODE_ID_LOOPER_PLAY,     /* Looper播放源节点 */
+    NODE_ID_LOOPER_RECORD,   /* Looper录制输出节点 */
     
     /* 节点总数 */
     DEFAULT_NODE_COUNT
@@ -65,84 +82,126 @@ typedef enum {
 /*******************************************************************************
  * 默认节点配置表
  * 格式: { node_id, type, name, enabled, params }
+ * 
+ * 新架构 (2026-02-04):
+ *   ADC0/ADC1 双声道各拆分为L/R，每个声道有独立EQ
+ *   共4个EQ：EQ_GUITAR_L, EQ_GUITAR_R, EQ_MIC_L, EQ_MIC_R
  ******************************************************************************/
 #define DEFAULT_NODES_CONFIG { \
     /* ===== 输入源节点 ===== */ \
-    { NODE_ID_ADC0_GUITAR, EFFECT_NODE_TYPE_SOURCE_ADC0,   "guitar_in", true,  {0} }, \
-    { NODE_ID_ADC1_MIC,    EFFECT_NODE_TYPE_SOURCE_ADC1,   "mic_in",    true,  {0} }, \
-    { NODE_ID_USB_IN,      EFFECT_NODE_TYPE_SOURCE_USB_IN, "usb_in",    true,  {0} }, \
-    { NODE_ID_BT_IN,       EFFECT_NODE_TYPE_SOURCE_BT_IN,  "bt_in",     true,  {0} }, \
+    { NODE_ID_ADC0_GUITAR, EFFECT_NODE_TYPE_SOURCE_ADC0,   "guitar_in", true,  {{0}} }, \
+    { NODE_ID_ADC1_MIC,    EFFECT_NODE_TYPE_SOURCE_ADC1,   "mic_in",    true,  {{0}} }, \
+    { NODE_ID_USB_IN,      EFFECT_NODE_TYPE_SOURCE_USB_IN, "usb_in",    true,  {{0}} }, \
+    { NODE_ID_BT_IN,       EFFECT_NODE_TYPE_SOURCE_BT_IN,  "bt_in",     true,  {{0}} }, \
     \
-    /* ===== ADC 混音器节点 ===== */ \
-    { NODE_ID_ADC_MIXER,   EFFECT_NODE_TYPE_MIXER,         "adc_mixer", true,  {0} }, \
+    /* ===== 4个独立EQ节点 (每个声道独立处理) ===== */ \
+    { NODE_ID_EQ_GUITAR_L, EFFECT_NODE_TYPE_EFFECT_EQ,     "eq_guitar_l", true, {{0}} }, \
+    { NODE_ID_EQ_GUITAR_R, EFFECT_NODE_TYPE_EFFECT_EQ,     "eq_guitar_r", true, {{0}} }, \
+    { NODE_ID_EQ_MIC_L,    EFFECT_NODE_TYPE_EFFECT_EQ,     "eq_mic_l",    true, {{0}} }, \
+    { NODE_ID_EQ_MIC_R,    EFFECT_NODE_TYPE_EFFECT_EQ,     "eq_mic_r",    true, {{0}} }, \
     \
-    /* ===== ADC 效果器链节点 ===== */ \
-    { NODE_ID_EXPANDER,    EFFECT_NODE_TYPE_EFFECT_EXPANDER, "expander",  true,  {0} }, \
-    { NODE_ID_DRC,         EFFECT_NODE_TYPE_EFFECT_DRC,      "drc",       true,  {0} }, \
-    { NODE_ID_EQ,          EFFECT_NODE_TYPE_EFFECT_EQ,       "eq",        true,  {0} }, \
-    { NODE_ID_REVERB,      EFFECT_NODE_TYPE_EFFECT_REVERB,   "reverb",    true,  {0} }, \
+    /* ===== ADC EQ后混音器节点 ===== */ \
+    { NODE_ID_ADC_MIXER,   EFFECT_NODE_TYPE_MIXER,         "adc_mixer", true,  {{0}} }, \
+    \
+    /* ===== ADC 效果器链节点 (无独立EQ，由上游4个EQ替代) ===== */ \
+    { NODE_ID_EXPANDER,    EFFECT_NODE_TYPE_EFFECT_EXPANDER, "expander",  true,  {{0}} }, \
+    { NODE_ID_DRC,         EFFECT_NODE_TYPE_EFFECT_DRC,      "drc",       true,  {{0}} }, \
+    { NODE_ID_PRE_REVERB_MIXER, EFFECT_NODE_TYPE_MIXER,      "pre_reverb_mixer", true, {{0}} }, \
+    { NODE_ID_REVERB,      EFFECT_NODE_TYPE_EFFECT_REVERB,   "reverb",    true,  {{0}} }, \
     \
     /* ===== USB/BT 混音器 ===== */ \
-    { NODE_ID_USB_BT_MIXER, EFFECT_NODE_TYPE_MIXER,         "usb_bt_mixer", true, {0} }, \
+    { NODE_ID_USB_BT_MIXER, EFFECT_NODE_TYPE_MIXER,         "usb_bt_mixer", true, {{0}} }, \
     \
     /* ===== USB/BT EQ ===== */ \
-    { NODE_ID_USB_BT_EQ,   EFFECT_NODE_TYPE_EFFECT_EQ,      "usb_bt_eq", true,  {0} }, \
+    { NODE_ID_USB_BT_EQ,   EFFECT_NODE_TYPE_EFFECT_EQ,      "usb_bt_eq", true,  {{0}} }, \
     \
     /* ===== 最终混音器 ===== */ \
-    { NODE_ID_FINAL_MIXER, EFFECT_NODE_TYPE_MIXER,          "final_mixer", true, {0} }, \
+    { NODE_ID_FINAL_MIXER, EFFECT_NODE_TYPE_MIXER,          "final_mixer", true, {{0}} }, \
     \
     /* ===== 输出节点 ===== */ \
-    { NODE_ID_DAC0_OUT,    EFFECT_NODE_TYPE_SINK_DAC0,      "dac_out",   true,  {0} }, \
-    { NODE_ID_USB_OUT,     EFFECT_NODE_TYPE_SINK_USB_OUT,   "usb_out",   true,  {0} }, \
+    { NODE_ID_DAC0_OUT,    EFFECT_NODE_TYPE_SINK_DAC0,      "dac_out",   true,  {{0}} }, \
+    { NODE_ID_USB_OUT,     EFFECT_NODE_TYPE_SINK_USB_OUT,   "usb_out",   true,  {{0}} }, \
+    \
+    /* ===== 节拍器和Looper节点 ===== */ \
+    { NODE_ID_METRONOME,     EFFECT_NODE_TYPE_SOURCE_METRONOME,    "metronome",     true,  {{0}} }, \
+    { NODE_ID_LOOPER_PLAY,   EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY,  "looper_play",   true,  {{0}} }, \
+    { NODE_ID_LOOPER_RECORD, EFFECT_NODE_TYPE_SINK_LOOPER_RECORD,  "looper_record", true,  {{0}} }, \
 }
 
 /*******************************************************************************
  * 默认边(连接)配置表
  * 格式: { src_node_id, dst_node_id, src_port, dst_port }
  * 
- * 音频流图:
- *   【ADC 效果链路径】
- *   ADC0 (Guitar) ──┐
- *   ADC1 (Mic)    ──┴──> ADC_Mixer -> Expander -> DRC -> EQ -> Reverb ──┐
- *                                                                        │
- *   【USB/BT 直通路径】                                                  │
- *   USB_In ──┐                                                          │
- *   BT_In  ──┴──> USB_BT_Mixer -> USB_BT_EQ ──────────────────────────┤
- *                                                                        │
- *   【最终混音输出】                                                     │
- *   Reverb ──┐                                                          │
- *   USB_BT_EQ ──┴──> Final_Mixer ──┬──> DAC0_Out
- *                                   └──> USB_Out
+ * 新架构音频流图 (2026-02-04):
+ *   【ADC 独立EQ处理后混音】
+ *   ADC0 (Guitar) ─┬─[L声道]─> EQ_GUITAR_L ──┐
+ *                  └─[R声道]─> EQ_GUITAR_R ──┤
+ *                                             ├──> ADC_Mixer ──> Expander ──> DRC ──┐
+ *   ADC1 (Mic)    ─┬─[L声道]─> EQ_MIC_L    ──┤                                      │
+ *                  └─[R声道]─> EQ_MIC_R    ──┘                                      │
+ *                                                                                    │
+ *                  Looper_Play ──────────────────────────────────────────────────────┤
+ *                                                                                    │
+ *                                        Pre_Reverb_Mixer -> Reverb ──┐              │
+ *                                                                      │              │
+ *   【USB/BT + 节拍器路径】                                           │              │
+ *   USB_In    ──┐                                                     │              │
+ *   BT_In     ──┼──> USB_BT_Mixer -> USB_BT_EQ ───────────────────────┤              │
+ *   Metronome ──┘                                                     │              │
+ *                                                                      │              │
+ *   【最终混音输出】                                                   │              │
+ *   Reverb ──────┐                                                    │              │
+ *   USB_BT_EQ ───┴──> Final_Mixer ──┬──> DAC0_Out                     │              │
+ *                                    └──> USB_Out                      │              │
  *  
  ******************************************************************************/
 #define DEFAULT_EDGES_CONFIG { \
-    /* ADC 输入到 ADC 混音器 */ \
-    { NODE_ID_ADC0_GUITAR, NODE_ID_ADC_MIXER, 0, 0 }, \
-    { NODE_ID_ADC1_MIC,    NODE_ID_ADC_MIXER, 0, 1 }, \
+    /* ADC0 (Guitar) 左右声道分别进入独立EQ */ \
+    { NODE_ID_ADC0_GUITAR, NODE_ID_EQ_GUITAR_L, 0, 0 }, /* ADC0 L -> EQ_GUITAR_L */ \
+    { NODE_ID_ADC0_GUITAR, NODE_ID_EQ_GUITAR_R, 1, 0 }, /* ADC0 R -> EQ_GUITAR_R */ \
     \
-    /* ADC 效果链 */ \
+    /* ADC1 (Mic) 左右声道分别进入独立EQ */ \
+    { NODE_ID_ADC1_MIC, NODE_ID_EQ_MIC_L, 0, 0 },       /* ADC1 L -> EQ_MIC_L */ \
+    { NODE_ID_ADC1_MIC, NODE_ID_EQ_MIC_R, 1, 0 },       /* ADC1 R -> EQ_MIC_R */ \
+    \
+    /* 4个EQ输出到ADC混音器 */ \
+    { NODE_ID_EQ_GUITAR_L, NODE_ID_ADC_MIXER, 0, 0 },   /* EQ_GUITAR_L -> ADC_Mixer:0 */ \
+    { NODE_ID_EQ_GUITAR_R, NODE_ID_ADC_MIXER, 0, 1 },   /* EQ_GUITAR_R -> ADC_Mixer:1 */ \
+    { NODE_ID_EQ_MIC_L,    NODE_ID_ADC_MIXER, 0, 2 },   /* EQ_MIC_L -> ADC_Mixer:2 */ \
+    { NODE_ID_EQ_MIC_R,    NODE_ID_ADC_MIXER, 0, 3 },   /* EQ_MIC_R -> ADC_Mixer:3 */ \
+    \
+    /* ADC 效果链 (混音后进入Expander->DRC->Pre_Reverb_Mixer) */ \
     { NODE_ID_ADC_MIXER, NODE_ID_EXPANDER, 0, 0 }, \
     { NODE_ID_EXPANDER,  NODE_ID_DRC,      0, 0 }, \
-    { NODE_ID_DRC,       NODE_ID_EQ,       0, 0 }, \
-    { NODE_ID_EQ,        NODE_ID_REVERB,   0, 0 }, \
+    { NODE_ID_DRC,       NODE_ID_PRE_REVERB_MIXER, 0, 0 }, \
     \
-    /* USB/BT 输入到 USB_BT 混音器 */ \
-    { NODE_ID_USB_IN, NODE_ID_USB_BT_MIXER, 0, 0 }, \
-    { NODE_ID_BT_IN,  NODE_ID_USB_BT_MIXER, 0, 1 }, \
+    /* Looper播放 → Pre_Reverb_Mixer (与DRC输出混音后一起进混响) */ \
+    { NODE_ID_LOOPER_PLAY, NODE_ID_PRE_REVERB_MIXER, 0, 1 }, \
     \
-    /* USB/BT 简单 EQ 处理 */ \
+    /* Pre_Reverb_Mixer → Reverb */ \
+    { NODE_ID_PRE_REVERB_MIXER, NODE_ID_REVERB, 0, 0 }, \
+    \
+    /* USB/BT + 节拍器 输入到 USB_BT 混音器 */ \
+    { NODE_ID_USB_IN,    NODE_ID_USB_BT_MIXER, 0, 0 }, \
+    { NODE_ID_BT_IN,     NODE_ID_USB_BT_MIXER, 0, 1 }, \
+    { NODE_ID_METRONOME, NODE_ID_USB_BT_MIXER, 0, 2 }, \
+    \
+    /* USB/BT 混音器 → EQ处理 */ \
     { NODE_ID_USB_BT_MIXER, NODE_ID_USB_BT_EQ, 0, 0 }, \
     \
-    /* 最终混音器 */ \
-    { NODE_ID_REVERB,     NODE_ID_FINAL_MIXER, 0, 0 }, \
-    { NODE_ID_USB_BT_EQ,  NODE_ID_FINAL_MIXER, 0, 1 }, \
+    /* 最终混音器 (Reverb + USB_BT_EQ) */ \
+    { NODE_ID_REVERB,    NODE_ID_FINAL_MIXER, 0, 0 }, \
+    { NODE_ID_USB_BT_EQ, NODE_ID_FINAL_MIXER, 0, 1 }, \
     \
     /* 输出 */ \
     { NODE_ID_FINAL_MIXER, NODE_ID_DAC0_OUT, 0, 0 }, \
     { NODE_ID_FINAL_MIXER, NODE_ID_USB_OUT,  0, 0 }, \
+    \
+    /* ADC混音器 → Looper录制 */ \
+    { NODE_ID_ADC_MIXER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
 }
 
-#define DEFAULT_EDGE_COUNT  13
+#define DEFAULT_EDGE_COUNT  22
 
 /*******************************************************************************
  * 效果器默认参数配置
@@ -197,11 +256,11 @@ typedef enum {
 #define SIMPLE_NODE_COUNT   5
 
 #define SIMPLE_NODES_CONFIG { \
-    { 0, EFFECT_NODE_TYPE_SOURCE_ADC0,   "ADC0",    true, {0} }, \
-    { 1, EFFECT_NODE_TYPE_SOURCE_ADC1,   "ADC1",    true, {0} }, \
-    { 2, EFFECT_NODE_TYPE_MIXER,         "Mixer",   true, {0} }, \
-    { 3, EFFECT_NODE_TYPE_SINK_DAC0,     "DAC0",    true, {0} }, \
-    { 4, EFFECT_NODE_TYPE_SINK_USB_OUT,  "USB_Out", true, {0} }, \
+    { 0, EFFECT_NODE_TYPE_SOURCE_ADC0,   "ADC0",    true, {{0}} }, \
+    { 1, EFFECT_NODE_TYPE_SOURCE_ADC1,   "ADC1",    true, {{0}} }, \
+    { 2, EFFECT_NODE_TYPE_MIXER,         "Mixer",   true, {{0}} }, \
+    { 3, EFFECT_NODE_TYPE_SINK_DAC0,     "DAC0",    true, {{0}} }, \
+    { 4, EFFECT_NODE_TYPE_SINK_USB_OUT,  "USB_Out", true, {{0}} }, \
 }
 
 #define SIMPLE_EDGES_CONFIG { \
@@ -220,9 +279,9 @@ typedef enum {
 #define BT_SPEAKER_NODE_COUNT   3
 
 #define BT_SPEAKER_NODES_CONFIG { \
-    { 0, EFFECT_NODE_TYPE_SOURCE_BT_IN,  "BT_In",   true, {0} }, \
-    { 1, EFFECT_NODE_TYPE_EFFECT_EQ,     "EQ",      true, {0} }, \
-    { 2, EFFECT_NODE_TYPE_SINK_DAC0,     "DAC0",    true, {0} }, \
+    { 0, EFFECT_NODE_TYPE_SOURCE_BT_IN,  "BT_In",   true, {{0}} }, \
+    { 1, EFFECT_NODE_TYPE_EFFECT_EQ,     "EQ",      true, {{0}} }, \
+    { 2, EFFECT_NODE_TYPE_SINK_DAC0,     "DAC0",    true, {{0}} }, \
 }
 
 #define BT_SPEAKER_EDGES_CONFIG { \

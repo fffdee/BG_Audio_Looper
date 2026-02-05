@@ -11,6 +11,7 @@
 #include "shell_cmd_graph.h"
 #include "effect_graph.h"
 #include "effect_graph_config.h"
+#include "sys_param.h"     /* For g_sys_param */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,17 +46,62 @@ static const ParamRange_t g_DrcParamRange[] = {
 };
 
 static const ParamRange_t g_EqParamRange[] = {
-    { "band0", -12, 12, "dB" },
-    { "band1", -12, 12, "dB" },
-    { "band2", -12, 12, "dB" },
-    { "band3", -12, 12, "dB" },
-    { "band4", -12, 12, "dB" },
-    { "band5", -12, 12, "dB" },
-    { "band6", -12, 12, "dB" },
-    { "band7", -12, 12, "dB" },
-    { "band8", -12, 12, "dB" },
-    { "band9", -12, 12, "dB" },
-    { NULL, 0, 0, NULL }
+        // 每段10个参数（band0~band9）
+        { "band0", -12, 12, "dB" },
+        { "band0_type", 0, 6, "type" },
+        { "band0_f0", 20, 20000, "Hz" },
+        { "band0_Q", 10, 1000, "0.01" },
+        { "band0_enable", 0, 1, "bool" },
+        { "band1", -12, 12, "dB" },
+        { "band1_type", 0, 6, "type" },
+        { "band1_f0", 20, 20000, "Hz" },
+        { "band1_Q", 10, 1000, "0.01" },
+        { "band1_enable", 0, 1, "bool" },
+        { "band2", -12, 12, "dB" },
+        { "band2_type", 0, 6, "type" },
+        { "band2_f0", 20, 20000, "Hz" },
+        { "band2_Q", 10, 1000, "0.01" },
+        { "band2_enable", 0, 1, "bool" },
+        { "band3", -12, 12, "dB" },
+        { "band3_type", 0, 6, "type" },
+        { "band3_f0", 20, 20000, "Hz" },
+        { "band3_Q", 10, 1000, "0.01" },
+        { "band3_enable", 0, 1, "bool" },
+        { "band4", -12, 12, "dB" },
+        { "band4_type", 0, 6, "type" },
+        { "band4_f0", 20, 20000, "Hz" },
+        { "band4_Q", 10, 1000, "0.01" },
+        { "band4_enable", 0, 1, "bool" },
+        { "band5", -12, 12, "dB" },
+        { "band5_type", 0, 6, "type" },
+        { "band5_f0", 20, 20000, "Hz" },
+        { "band5_Q", 10, 1000, "0.01" },
+        { "band5_enable", 0, 1, "bool" },
+        { "band6", -12, 12, "dB" },
+        { "band6_type", 0, 6, "type" },
+        { "band6_f0", 20, 20000, "Hz" },
+        { "band6_Q", 10, 1000, "0.01" },
+        { "band6_enable", 0, 1, "bool" },
+        { "band7", -12, 12, "dB" },
+        { "band7_type", 0, 6, "type" },
+        { "band7_f0", 20, 20000, "Hz" },
+        { "band7_Q", 10, 1000, "0.01" },
+        { "band7_enable", 0, 1, "bool" },
+        { "band8", -12, 12, "dB" },
+        { "band8_type", 0, 6, "type" },
+        { "band8_f0", 20, 20000, "Hz" },
+        { "band8_Q", 10, 1000, "0.01" },
+        { "band8_enable", 0, 1, "bool" },
+        { "band9", -12, 12, "dB" },
+        { "band9_type", 0, 6, "type" },
+        { "band9_f0", 20, 20000, "Hz" },
+        { "band9_Q", 10, 1000, "0.01" },
+        { "band9_enable", 0, 1, "bool" },
+        // 全局参数
+        { "pregain", -24, 24, "dB" },
+        { "filter_count", 1, 10, "count" },
+        { "channel", 0, 1, "ch" },
+        { NULL, 0, 0, NULL }
 };
 
 static const ParamRange_t g_GainParamRange[] = {
@@ -204,6 +250,62 @@ static EffectNode_t* FindNode(const char *id_or_name)
 }
 
 /**
+ * @brief 将EQ运行时节点参数同步到sys_param
+ * @param node EQ运行时节点指针
+ * 
+ * EQ参数格式(88字节):
+ *   [0-9]:    10个频段的gain值 (int8_t, 1字节/段)
+ *   [10-49]:  10个频段的f0频率 (uint32_t, 4字节/段, 小端)
+ *   [50-69]:  10个频段的Q值 (uint16_t, 2字节/段, 小端)
+ *   [70-79]:  10个频段的type类型 (uint8_t, 1字节/段)
+ *   [80-89]:  10个频段的enable标志 (uint8_t, 1字节/段)
+ */
+void SyncEQNodeToSysParam(EffectNode_t *node)
+{
+    extern SysParam_t g_sys_param;
+    GraphNode_t *sys_node;
+    uint8_t band;
+    
+    if (!node || node->type != EFFECT_NODE_TYPE_EFFECT_EQ) {
+        return;
+    }
+    
+    /* 找到sys_param中对应的节点 */
+    if (node->id >= MAX_GRAPH_NODES) {
+        return;
+    }
+    
+    sys_node = &g_sys_param.audio_chain.node_pool[node->id];
+    
+    /* 清空params数组 */
+    memset(sys_node->params, 0, sizeof(sys_node->params));
+    
+    /* 按正确格式序列化EQ参数到params数组 */
+    for (band = 0; band < 10; band++) {
+        /* gain (1 byte) at [0-9] */
+        sys_node->params[band] = (uint8_t)node->params.eq.band_gains[band];
+        
+        /* f0 (4 bytes, little endian) at [10-49] */
+        uint32_t f0 = node->params.eq.band_f0[band];
+        sys_node->params[10 + band * 4 + 0] = (uint8_t)(f0 & 0xFF);
+        sys_node->params[10 + band * 4 + 1] = (uint8_t)((f0 >> 8) & 0xFF);
+        sys_node->params[10 + band * 4 + 2] = (uint8_t)((f0 >> 16) & 0xFF);
+        sys_node->params[10 + band * 4 + 3] = (uint8_t)((f0 >> 24) & 0xFF);
+        
+        /* Q (2 bytes, little endian) at [50-69] */
+        uint32_t q = node->params.eq.band_Q[band];
+        sys_node->params[50 + band * 2 + 0] = (uint8_t)(q & 0xFF);
+        sys_node->params[50 + band * 2 + 1] = (uint8_t)((q >> 8) & 0xFF);
+        
+        /* type (1 byte) at [70-79] */
+        sys_node->params[70 + band] = node->params.eq.band_types[band];
+        
+        /* enable (1 byte) at [80-89] */
+        sys_node->params[80 + band] = node->params.eq.band_enables[band];
+    }
+}
+
+/**
  * @brief 打印节点的所有参数
  * @param node 节点指针
  */
@@ -233,11 +335,24 @@ static void PrintNodeParams(EffectNode_t *node)
             break;
             
         case EFFECT_NODE_TYPE_EFFECT_EQ:
-            Shell_Printf("Type: EQ (%d bands)\n", node->params.eq.band_count);
+            Shell_Printf("Type: EQ (configured: %d bands, max: 10)\n", node->params.eq.band_count);
+            Shell_Printf("  pregain = %d dB\n", node->params.eq.pregain);
             {
                 uint8_t i;
-                for (i = 0; i < node->params.eq.band_count && i < 10; i++) {
-                    Shell_Printf("  band%d = %d dB\n", i, node->params.eq.band_gains[i]);
+                /* 显示所有 10 个 band 的完整参数 */
+                for (i = 0; i < 10; i++) {
+                    /* 如果 band 被启用，显示完整参数；否则只显示状态 */
+                    if (node->params.eq.band_enables[i]) {
+                        Shell_Printf("  band%d: %s | gain=%d dB, f0=%lu Hz, Q=%.2f, type=%d\n", 
+                                    i,
+                                    "ON ",
+                                    node->params.eq.band_gains[i],
+                                    (unsigned long)node->params.eq.band_f0[i],
+                                    (float)node->params.eq.band_Q[i] / 100.0f,
+                                    node->params.eq.band_types[i]);
+                    } else {
+                        Shell_Printf("  band%d: OFF\n", i);
+                    }
                 }
             }
             break;
@@ -277,9 +392,21 @@ static void PrintNodeParams(EffectNode_t *node)
             Shell_Printf("Type: SOURCE (no params)\n");
             break;
             
+        case EFFECT_NODE_TYPE_SOURCE_METRONOME:
+            Shell_Printf("Type: METRONOME SOURCE (no params)\n");
+            break;
+            
+        case EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY:
+            Shell_Printf("Type: LOOPER PLAYBACK SOURCE (no params)\n");
+            break;
+            
         case EFFECT_NODE_TYPE_SINK_DAC0:
         case EFFECT_NODE_TYPE_SINK_USB_OUT:
             Shell_Printf("Type: SINK (no params)\n");
+            break;
+            
+        case EFFECT_NODE_TYPE_SINK_LOOPER_RECORD:
+            Shell_Printf("Type: LOOPER RECORD SINK (no params)\n");
             break;
             
         default:
@@ -287,6 +414,100 @@ static void PrintNodeParams(EffectNode_t *node)
             break;
     }
     Shell_Printf("========================\n\n");
+}
+
+/**
+ * @brief 重建EQ的filter_params数组并应用滤波器配置
+ * 
+ * 关键！filter_params是压缩数组，只包含enable=1的频段
+ * 参考 communication.c 的正确实现
+ * 
+ * @param target_eq 目标EQ单元
+ * @param node 对应的效果节点（用于同步node参数）
+ */
+void RebuildAndApplyEQFilter(EQUnit *target_eq, EffectNode_t *node)
+{
+    int i;
+    extern ControlVariablesContext gCtrlVars;
+    
+    if (!target_eq) return;
+    
+    /* 关键步骤1: 重置filter_count为0 */
+    target_eq->filter_count = 0;
+    
+    /* 关键步骤2: 遍历所有频段，重建压缩的filter_params数组 */
+    for (i = 0; i < 10; i++) {
+        if (target_eq->eq_params[i].enable) {
+            /* 参数有效性检查 - 防止f0=0或Q=0导致除零错误 */
+            uint16_t f0 = target_eq->eq_params[i].f0;
+            int16_t Q = target_eq->eq_params[i].Q;
+            int16_t type = target_eq->eq_params[i].type;
+            
+            /* 检查f0有效性：必须大于0 */
+            if (f0 == 0) {
+                f0 = 1000;  /* 默认1000Hz */
+                target_eq->eq_params[i].f0 = f0;
+                Shell_Printf("[EQ] WARN: band%d f0=0 invalid, set to 1000Hz\n", i);
+            }
+            
+            /* 检查Q有效性：Q6.10格式，必须大于0 */
+            if (Q <= 0) {
+                Q = 724;  /* 默认Q=0.707，Q6.10格式=724 */
+                target_eq->eq_params[i].Q = Q;
+                Shell_Printf("[EQ] WARN: band%d Q<=0 invalid, set to 724 (Q=0.707)\n", i);
+            }
+            
+            /* 检查type有效性：类型必须在合理范围内 */
+            if (type < 0 || type > 6) {
+                type = 0;  /* 默认PEAKING */
+                target_eq->eq_params[i].type = type;
+                Shell_Printf("[EQ] WARN: band%d type=%d invalid, set to PEAKING(0)\n", i, type);
+            }
+            
+            if (target_eq->filter_params) {
+                target_eq->filter_params[target_eq->filter_count].Q    = Q;
+                target_eq->filter_params[target_eq->filter_count].f0   = f0;
+                target_eq->filter_params[target_eq->filter_count].gain = target_eq->eq_params[i].gain;
+                target_eq->filter_params[target_eq->filter_count].type = type;
+            }
+            target_eq->filter_count++;
+        }
+    }
+    
+    /* 同步filter_count到节点参数 */
+    if (node) {
+        node->params.eq.band_count = target_eq->filter_count;
+    }
+    
+    /* 关键步骤3: 调用AudioEffectEQFilterClearBufConfig（清除delay buffer + 重新配置） */
+    if (target_eq->filter_count > 0) {
+        target_eq->enable = 1;
+        /* 确保channel正确 */
+        if (target_eq->channel == 0) {
+            target_eq->channel = 2;
+        }
+        /* 确保EQ已初始化 */
+        if (target_eq->ct == NULL) {
+            Shell_Printf("[EQ] Initializing EQ context (ch=%d)...\n", target_eq->channel);
+            AudioEffectEQInit(target_eq, target_eq->channel, gCtrlVars.sample_rate);
+        }
+        if (target_eq->ct != NULL) {
+            if (target_eq == &gCtrlVars.music_out_eq_unit) {
+                #if CFG_AUDIO_EFFECT_MUSIC_OUT_EQ_EN
+                AudioEffectEQFilterClearBufConfig(target_eq, gCtrlVars.sample_rate);
+                #endif
+            } else {
+                #if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
+                AudioEffectEQFilterClearBufConfig(target_eq, gCtrlVars.sample_rate);
+                #endif
+            }
+        } else {
+            Shell_Printf("[EQ] WARN: ct is NULL after init attempt!\n");
+        }
+    } else {
+        target_eq->enable = 0;
+        Shell_Printf("[EQ] No enabled bands, EQ disabled\n");
+    }
 }
 
 /**
@@ -376,20 +597,138 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
             break;
             
         case EFFECT_NODE_TYPE_EFFECT_EQ:
-            /* 支持 band0, band1, ..., band9 */
+            /* 支持 band<n>、band<n>_type、band<n>_f0、band<n>_Q、band<n>_enable、pregain、filter_count、channel */
             if (strncmp(param_name, "band", 4) == 0 && param_name[4] >= '0' && param_name[4] <= '9') {
                 uint8_t band = param_name[4] - '0';
-                if (band < 10) {
-                    node->params.eq.band_gains[band] = (int8_t)value;
-                    /* 同步到全局EQ单元 */
-                    extern ControlVariablesContext gCtrlVars;
-                    gCtrlVars.mic_out_eq_unit.eq_params[band].gain = (int32_t)value * 256;  /* 转换为Q8.8格式 */
-                    #if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
-                    AudioEffectEQFilterConfig(&gCtrlVars.mic_out_eq_unit, 48000);
-                    #endif
+                const char *suffix = param_name + 5;
+                extern ControlVariablesContext gCtrlVars;
+                /* 根据节点ID选择对应的独立EQ单元 */
+                EQUnit *target_eq;
+                switch (node->id) {
+                    case NODE_ID_EQ_GUITAR_L: target_eq = &gCtrlVars.eq_guitar_l_unit; break;
+                    case NODE_ID_EQ_GUITAR_R: target_eq = &gCtrlVars.eq_guitar_r_unit; break;
+                    case NODE_ID_EQ_MIC_L:    target_eq = &gCtrlVars.eq_mic_l_unit; break;
+                    case NODE_ID_EQ_MIC_R:    target_eq = &gCtrlVars.eq_mic_r_unit; break;
+                    case NODE_ID_USB_BT_EQ:   target_eq = &gCtrlVars.music_out_eq_unit; break;
+                    default:
+                        Shell_Printf("ERROR: Unknown EQ node ID %d\n", node->id);
+                        return -1;
+                }
+                if (band >= 10) return -1;
+                
+                if (*suffix == '\0') {
+                    /* 增益：接收的是×10的整数（例如40表示4.0dB），需要先除以10 */
+                    int32_t gain_db = (int32_t)value / 10;  /* 将40转换为4 */
+                    node->params.eq.band_gains[band] = (int8_t)gain_db;
+                    target_eq->eq_params[band].gain = gain_db * 256;  /* SDK格式：dB×256 */
+                    Shell_Printf("[EQ:%s] band%d gain = %d (%.1fdB)\n", node->name, band, 
+                                (int8_t)gain_db, (float)value / 10.0f);
+                } else if (strcmp(suffix, "_type") == 0) {
+                    /* 类型：同时更新节点参数、eq_params */
+                    node->params.eq.band_types[band] = (uint8_t)value;
+                    target_eq->eq_params[band].type = value;
+                    Shell_Printf("[EQ:%s] band%d type = %ld\n", node->name, band, value);
+                } else if (strcmp(suffix, "_f0") == 0) {
+                    /* 中心频率：同时更新节点参数、eq_params */
+                    node->params.eq.band_f0[band] = (uint32_t)value;
+                    target_eq->eq_params[band].f0 = value;
+                    Shell_Printf("[EQ:%s] band%d f0 = %ld\n", node->name, band, value);
+                } else if (strcmp(suffix, "_Q") == 0) {
+                    /* Q值：接收的是×100的整数（例如100表示Q=1.00），直接存储 */
+                    node->params.eq.band_Q[band] = (uint32_t)value;
+                    target_eq->eq_params[band].Q = value;
+                    Shell_Printf("[EQ:%s] band%d Q = %ld (%.2f)\n", node->name, band, value, (float)value / 100.0f);
+                } else if (strcmp(suffix, "_enable") == 0) {
+                    /* 使能：同时更新节点参数和全局EQ单元 */
+                    node->params.eq.band_enables[band] = value ? 1 : 0;
+                    target_eq->eq_params[band].enable = value ? 1 : 0;
+                    Shell_Printf("[EQ:%s] band%d enable = %d\n", node->name, band, value ? 1 : 0);
+                    
+                    /* 如果启用该频段但参数无效，初始化为默认值 */
+                    if (value && target_eq->eq_params[band].f0 == 0) {
+                        /* 根据频段索引设置默认频率 */
+                        uint16_t default_f0[10] = {100, 300, 1000, 3000, 8000, 100, 300, 1000, 3000, 8000};
+                        target_eq->eq_params[band].f0 = default_f0[band];
+                        node->params.eq.band_f0[band] = default_f0[band];
+                        Shell_Printf("[EQ] Init band%d f0 = %d\n", band, default_f0[band]);
+                    }
+                    if (value && target_eq->eq_params[band].Q <= 0) {
+                        target_eq->eq_params[band].Q = 724;  /* Q=0.707, Q6.10格式 */
+                        node->params.eq.band_Q[band] = 724;
+                        Shell_Printf("[EQ] Init band%d Q = 724\n", band);
+                    }
+                    if (value && target_eq->eq_params[band].type < 0) {
+                        target_eq->eq_params[band].type = 0;  /* PEAKING */
+                        node->params.eq.band_types[band] = 0;
+                        Shell_Printf("[EQ] Init band%d type = PEAKING\n", band);
+                    }
                 } else {
                     return -1;
                 }
+                
+                /* 使用统一的辅助函数重建filter_params并应用 */
+                RebuildAndApplyEQFilter(target_eq, node);
+                /* 同步EQ参数到sys_param（仅内存，不写Flash） */
+                SyncEQNodeToSysParam(node);
+                /* 注意：参数仅保存在内存中，重启后会丢失 */
+                /* 使用 'param save chain' 命令手动保存到Flash */
+            } else if (strcmp(param_name, "pregain") == 0) {
+                extern ControlVariablesContext gCtrlVars;
+                EQUnit *target_eq;
+                switch (node->id) {
+                    case NODE_ID_EQ_GUITAR_L: target_eq = &gCtrlVars.eq_guitar_l_unit; break;
+                    case NODE_ID_EQ_GUITAR_R: target_eq = &gCtrlVars.eq_guitar_r_unit; break;
+                    case NODE_ID_EQ_MIC_L:    target_eq = &gCtrlVars.eq_mic_l_unit; break;
+                    case NODE_ID_EQ_MIC_R:    target_eq = &gCtrlVars.eq_mic_r_unit; break;
+                    case NODE_ID_USB_BT_EQ:   target_eq = &gCtrlVars.music_out_eq_unit; break;
+                    default:
+                        Shell_Printf("ERROR: Unknown EQ node ID %d\n", node->id);
+                        return -1;
+                }
+                /* 预增益：同时更新节点参数和全局EQ单元 */
+                node->params.eq.pregain = (int16_t)value;
+                target_eq->pregain = value;
+                Shell_Printf("[EQ:%s] pregain = %ld\n", node->name, value);
+                AudioEffectEQPregainConfig(target_eq);
+                /* 同步到sys_param（仅内存） */
+                SyncEQNodeToSysParam(node);
+            } else if (strcmp(param_name, "filter_count") == 0) {
+                extern ControlVariablesContext gCtrlVars;
+                EQUnit *target_eq;
+                switch (node->id) {
+                    case NODE_ID_EQ_GUITAR_L: target_eq = &gCtrlVars.eq_guitar_l_unit; break;
+                    case NODE_ID_EQ_GUITAR_R: target_eq = &gCtrlVars.eq_guitar_r_unit; break;
+                    case NODE_ID_EQ_MIC_L:    target_eq = &gCtrlVars.eq_mic_l_unit; break;
+                    case NODE_ID_EQ_MIC_R:    target_eq = &gCtrlVars.eq_mic_r_unit; break;
+                    case NODE_ID_USB_BT_EQ:   target_eq = &gCtrlVars.music_out_eq_unit; break;
+                    default:
+                        Shell_Printf("ERROR: Unknown EQ node ID %d\n", node->id);
+                        return -1;
+                }
+                /* 频段数量：只更新节点参数，实际filter_count由enable状态决定 */
+                node->params.eq.band_count = (uint8_t)value;
+                Shell_Printf("[EQ:%s] Requested filter_count = %ld\n", node->name, value);
+                /* 使用统一的辅助函数重建（会自动计算实际filter_count） */
+                RebuildAndApplyEQFilter(target_eq, node);
+                /* 同步到sys_param（仅内存） */
+                SyncEQNodeToSysParam(node);
+            } else if (strcmp(param_name, "channel") == 0) {
+                extern ControlVariablesContext gCtrlVars;
+                EQUnit *target_eq;
+                switch (node->id) {
+                    case NODE_ID_EQ_GUITAR_L: target_eq = &gCtrlVars.eq_guitar_l_unit; break;
+                    case NODE_ID_EQ_GUITAR_R: target_eq = &gCtrlVars.eq_guitar_r_unit; break;
+                    case NODE_ID_EQ_MIC_L:    target_eq = &gCtrlVars.eq_mic_l_unit; break;
+                    case NODE_ID_EQ_MIC_R:    target_eq = &gCtrlVars.eq_mic_r_unit; break;
+                    case NODE_ID_USB_BT_EQ:   target_eq = &gCtrlVars.music_out_eq_unit; break;
+                    default:
+                        Shell_Printf("ERROR: Unknown EQ node ID %d\n", node->id);
+                        return -1;
+                }
+                target_eq->channel = value;
+                Shell_Printf("[EQ:%s] channel = %ld\n", node->name, value);
+                /* 同步到sys_param（仅内存） */
+                SyncEQNodeToSysParam(node);
             } else {
                 return -1;
             }
@@ -444,6 +783,18 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
     }
     
     Shell_Printf("[Node %d] %s = %ld\n", node->id, param_name, (long)value);
+    
+    /* 对于非EQ参数（Reverb, DRC, Delay, Expander, Mixer等），保存到Flash */
+    /* EQ参数已经在各自的分支中单独调用了保存 */
+    if (node->type != EFFECT_NODE_TYPE_EFFECT_EQ) {
+        extern SysParam_Status_t SysParam_SaveModule(const char *module);
+        if (SysParam_SaveModule("chain") == SYSPARAM_OK) {
+            Shell_Printf("[PARAM] Parameters saved to Flash\n");
+        } else {
+            Shell_Printf("[PARAM] ERROR: Failed to save parameters to Flash\n");
+        }
+    }
+    
     return 0;
 }
 
@@ -568,6 +919,12 @@ static void PrintHelp(void)
     Shell_Printf("graph snapshot save <slot> [name] - Save state\n");
     Shell_Printf("graph snapshot load <slot>  - Load state\n");
     Shell_Printf("graph snapshot list         - List snapshots\n");
+    Shell_Printf("\n--- APP Communication (JSON) ---\n");
+    Shell_Printf("graph query all             - Query all nodes (JSON)\n");
+    Shell_Printf("graph query node <id>       - Query single node (JSON)\n");
+    Shell_Printf("graph query volume          - Query volume params (JSON)\n");
+    Shell_Printf("graph query system          - Query system params (JSON)\n");
+    Shell_Printf("graph query eq              - Query EQ params (JSON)\n");
     Shell_Printf("\n--- ID-based quick commands (fx) ---\n");
     Shell_Printf("fx <id> <key> [val]         - Quick get/set by ID\n");
     Shell_Printf("fx <id>                     - Show node info by ID\n");
@@ -599,8 +956,11 @@ static int CmdList(void)
             case EFFECT_NODE_TYPE_SOURCE_ADC1: type_str = "ADC1"; break;
             case EFFECT_NODE_TYPE_SOURCE_USB_IN: type_str = "USB_IN"; break;
             case EFFECT_NODE_TYPE_SOURCE_BT_IN: type_str = "BT_IN"; break;
+            case EFFECT_NODE_TYPE_SOURCE_METRONOME: type_str = "METRONOME"; break;
+            case EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY: type_str = "LOOPER_PLAY"; break;
             case EFFECT_NODE_TYPE_SINK_DAC0: type_str = "DAC0"; break;
             case EFFECT_NODE_TYPE_SINK_USB_OUT: type_str = "USB_OUT"; break;
+            case EFFECT_NODE_TYPE_SINK_LOOPER_RECORD: type_str = "LOOPER_REC"; break;
             case EFFECT_NODE_TYPE_MIXER: type_str = "MIXER"; break;
             case EFFECT_NODE_TYPE_EFFECT_REVERB: type_str = "REVERB"; break;
             case EFFECT_NODE_TYPE_EFFECT_DRC: type_str = "DRC"; break;
@@ -679,6 +1039,14 @@ static int CmdNode(int argc, char *argv[])
         bool enabled = (strcmp(argv[3], "on") == 0);
         EffectGraph_SetNodeEnabled(node, enabled);
         Shell_Printf("Node[%d] '%s' %s\n", node->id, node->name, enabled ? "enabled" : "disabled");
+        
+        /* 保存到Flash */
+        extern SysParam_Status_t SysParam_SaveModule(const char *module);
+        if (SysParam_SaveModule("chain") == SYSPARAM_OK) {
+            Shell_Printf("[PARAM] Node state saved to Flash\n");
+        } else {
+            Shell_Printf("[PARAM] ERROR: Failed to save node state to Flash\n");
+        }
     } else {
         Shell_Printf("Node[%d] '%s' is %s\n", node->id, node->name, node->enabled ? "enabled" : "disabled");
     }
@@ -704,6 +1072,14 @@ static int CmdBypass(int argc, char *argv[])
         bool bypass = (strcmp(argv[3], "on") == 0);
         EffectGraph_SetNodeBypass(node, bypass);
         Shell_Printf("Node[%d] '%s' bypass %s\n", node->id, node->name, bypass ? "ON" : "OFF");
+        
+        /* 保存到Flash */
+        extern SysParam_Status_t SysParam_SaveModule(const char *module);
+        if (SysParam_SaveModule("chain") == SYSPARAM_OK) {
+            Shell_Printf("[PARAM] Bypass state saved to Flash\n");
+        } else {
+            Shell_Printf("[PARAM] ERROR: Failed to save bypass state to Flash\n");
+        }
     } else {
         Shell_Printf("Node[%d] '%s' bypass is %s\n", node->id, node->name, node->bypass ? "ON" : "OFF");
     }
@@ -1114,6 +1490,207 @@ static int CmdAllBypass(int argc, char *argv[])
     return 0;
 }
 
+/*******************************************************************************
+ * APP通信查询命令 - JSON格式输出
+ ******************************************************************************/
+
+/**
+ * @brief 输出单个节点的JSON格式参数
+ */
+static void PrintNodeJSON(EffectNode_t *node, int is_last)
+{
+    int i;
+    
+    Shell_Printf("    {\"id\":%d,\"name\":\"%s\",\"type\":%d,\"enabled\":%d,\"bypass\":%d,\"params\":{",
+                 node->id, node->name, node->type, node->enabled ? 1 : 0, node->bypass ? 1 : 0);
+    
+    switch (node->type) {
+        case EFFECT_NODE_TYPE_EFFECT_REVERB:
+            Shell_Printf("\"room\":%d,\"damp\":%d,\"wet\":%d",
+                        node->params.reverb.room_size,
+                        node->params.reverb.damping,
+                        node->params.reverb.wet_dry);
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_DRC:
+            Shell_Printf("\"threshold\":%d,\"ratio\":%d,\"attack\":%d,\"release\":%d",
+                        node->params.drc.threshold,
+                        node->params.drc.ratio,
+                        node->params.drc.attack,
+                        node->params.drc.release);
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_EQ:
+            Shell_Printf("\"band_count\":%d,\"pregain\":%d,\"bands\":[",
+                        node->params.eq.band_count, node->params.eq.pregain);
+            for (i = 0; i < node->params.eq.band_count && i < 10; i++) {
+                Shell_Printf("{\"gain\":%d,\"type\":%d,\"f0\":%lu,\"Q\":%lu,\"en\":%d}%s",
+                            node->params.eq.band_gains[i],
+                            node->params.eq.band_types[i],
+                            (unsigned long)node->params.eq.band_f0[i],
+                            (unsigned long)node->params.eq.band_Q[i],
+                            node->params.eq.band_enables[i],
+                            (i < node->params.eq.band_count - 1) ? "," : "");
+            }
+            Shell_Printf("]");
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_GAIN:
+            Shell_Printf("\"gain\":%d", node->params.gain.gain_db);
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_DELAY:
+            Shell_Printf("\"time\":%d,\"feedback\":%d,\"wet\":%d",
+                        node->params.delay.delay_ms,
+                        node->params.delay.feedback,
+                        node->params.delay.wet_dry);
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
+            Shell_Printf("\"threshold\":%d,\"ratio\":%d",
+                        node->params.expander.threshold,
+                        node->params.expander.ratio);
+            break;
+            
+        case EFFECT_NODE_TYPE_MIXER:
+            Shell_Printf("\"input_count\":%d,\"gains\":[",
+                        node->params.mixer.input_count);
+            for (i = 0; i < node->params.mixer.input_count && i < EFFECT_GRAPH_MAX_INPUTS; i++) {
+                Shell_Printf("%d%s", node->params.mixer.input_gains[i],
+                            (i < node->params.mixer.input_count - 1) ? "," : "");
+            }
+            Shell_Printf("]");
+            break;
+            
+        default:
+            /* 源/输出节点无参数 */
+            break;
+    }
+    
+    Shell_Printf("}}%s\n", is_last ? "" : ",");
+}
+
+/**
+ * @brief APP通信查询命令 - 返回JSON格式的完整效果参数
+ * 
+ * 用法:
+ *   graph query all      - 查询所有节点参数(JSON)
+ *   graph query node <id>- 查询单个节点参数(JSON)
+ *   graph query volume   - 查询音量参数(JSON)
+ *   graph query system   - 查询系统参数(JSON)
+ */
+static int CmdQuery(int argc, char *argv[])
+{
+    EffectGraphRuntime_t *graph;
+    extern ControlVariablesContext gCtrlVars;
+    extern SysParam_t g_sys_param;
+    uint8_t i;
+    
+    if (argc < 3) {
+        Shell_Printf("{\"error\":\"Usage: graph query <all|node|volume|system>\"}\n");
+        return -1;
+    }
+    
+    const char *target = argv[2];
+    
+    if (strcmp(target, "all") == 0) {
+        /* 查询所有节点 */
+        graph = EffectGraph_GetInstance();
+        if (!graph) {
+            Shell_Printf("{\"error\":\"Graph not initialized\"}\n");
+            return -1;
+        }
+        
+        Shell_Printf("{\"status\":\"ok\",\"node_count\":%d,\"nodes\":[\n", graph->node_count);
+        for (i = 0; i < graph->node_count; i++) {
+            PrintNodeJSON(&graph->nodes[i], (i == graph->node_count - 1));
+        }
+        Shell_Printf("]}\n");
+        return 0;
+    }
+    else if (strcmp(target, "node") == 0) {
+        /* 查询单个节点 */
+        if (argc < 4) {
+            Shell_Printf("{\"error\":\"Missing node ID\"}\n");
+            return -1;
+        }
+        EffectNode_t *node = FindNode(argv[3]);
+        if (!node) {
+            Shell_Printf("{\"error\":\"Node not found\"}\n");
+            return -1;
+        }
+        Shell_Printf("{\"status\":\"ok\",\"node\":");
+        PrintNodeJSON(node, 1);
+        Shell_Printf("}\n");
+        return 0;
+    }
+    else if (strcmp(target, "volume") == 0) {
+        /* 查询音量参数 */
+        Shell_Printf("{\"status\":\"ok\",\"volume\":{");
+        Shell_Printf("\"mic1\":%d,\"mic2\":%d,\"guitar1\":%d,\"guitar2\":%d,\"output\":%d",
+                    g_sys_param.volume.mic1_volume,
+                    g_sys_param.volume.mic2_volume,
+                    g_sys_param.volume.guitar1_volume,
+                    g_sys_param.volume.guitar2_volume,
+                    g_sys_param.volume.output_volume);
+        Shell_Printf("}}\n");
+        return 0;
+    }
+    else if (strcmp(target, "system") == 0) {
+        /* 查询系统参数 */
+        Shell_Printf("{\"status\":\"ok\",\"system\":{");
+        Shell_Printf("\"version\":%d,\"boot_count\":%d,\"bt_enabled\":%d,\"bt_name\":\"%s\"",
+                    g_sys_param.version,
+                    g_sys_param.system.boot_count,
+                    g_sys_param.bluetooth.enabled,
+                    g_sys_param.bluetooth.device_name);
+        Shell_Printf("}}\n");
+        return 0;
+    }
+    else if (strcmp(target, "eq") == 0) {
+        /* 查询EQ详细参数 - 用于APP同步 */
+        Shell_Printf("{\"status\":\"ok\",\"eq\":{");
+        
+        /* ADC EQ (mic_out_eq_unit) */
+        Shell_Printf("\"adc\":{\"enable\":%d,\"filter_count\":%d,\"bands\":[",
+                    gCtrlVars.mic_out_eq_unit.enable,
+                    gCtrlVars.mic_out_eq_unit.filter_count);
+        for (i = 0; i < 10; i++) {
+            Shell_Printf("{\"en\":%d,\"gain\":%ld,\"f0\":%u,\"Q\":%d,\"type\":%d}%s",
+                        gCtrlVars.mic_out_eq_unit.eq_params[i].enable,
+                        (long)gCtrlVars.mic_out_eq_unit.eq_params[i].gain,
+                        gCtrlVars.mic_out_eq_unit.eq_params[i].f0,
+                        gCtrlVars.mic_out_eq_unit.eq_params[i].Q,
+                        gCtrlVars.mic_out_eq_unit.eq_params[i].type,
+                        (i < 9) ? "," : "");
+        }
+        Shell_Printf("]},");
+        
+        /* Music EQ (music_out_eq_unit) */
+        Shell_Printf("\"music\":{\"enable\":%d,\"filter_count\":%d,\"bands\":[",
+                    gCtrlVars.music_out_eq_unit.enable,
+                    gCtrlVars.music_out_eq_unit.filter_count);
+        for (i = 0; i < 10; i++) {
+            Shell_Printf("{\"en\":%d,\"gain\":%ld,\"f0\":%u,\"Q\":%d,\"type\":%d}%s",
+                        gCtrlVars.music_out_eq_unit.eq_params[i].enable,
+                        (long)gCtrlVars.music_out_eq_unit.eq_params[i].gain,
+                        gCtrlVars.music_out_eq_unit.eq_params[i].f0,
+                        gCtrlVars.music_out_eq_unit.eq_params[i].Q,
+                        gCtrlVars.music_out_eq_unit.eq_params[i].type,
+                        (i < 9) ? "," : "");
+        }
+        Shell_Printf("]}");
+        
+        Shell_Printf("}}\n");
+        return 0;
+    }
+    else {
+        Shell_Printf("{\"error\":\"Unknown query target: %s\"}\n", target);
+        Shell_Printf("{\"hint\":\"Available: all, node, volume, system, eq\"}\n");
+        return -1;
+    }
+}
+
 /**
  * @brief 显示节点可用参数
  */
@@ -1137,6 +1714,12 @@ static int CmdParams(int argc, char *argv[])
     Shell_Printf("========================\n\n");
     return 0;
 }
+
+/*******************************************************************************
+ * 函数前向声明
+ ******************************************************************************/
+int ShellCmdFx_Execute(int argc, char *argv[]);
+int ShellCmdEqTest_Execute(int argc, char *argv[]);
 
 /*******************************************************************************
  * 公共API实现
@@ -1180,6 +1763,23 @@ static int FxModuleHandler(int argc, char *argv[])
 }
 
 /**
+ * @brief eq_test命令默认处理 - 用于模块系统
+ */
+static int EqTestModuleHandler(int argc, char *argv[])
+{
+    char *fullArgv[SHELL_CMD_MAX_ARGS];
+    int fullArgc = argc + 1;
+    int i;
+    
+    fullArgv[0] = "eq_test";
+    for (i = 0; i < argc && i < SHELL_CMD_MAX_ARGS - 1; i++) {
+        fullArgv[i + 1] = argv[i];
+    }
+    
+    return ShellCmdEqTest_Execute(fullArgc, fullArgv);
+}
+
+/**
  * @brief Graph命令选项（使用默认选项模式）
  */
 static const ShellOpt_t g_GraphOpts[] = {
@@ -1192,6 +1792,14 @@ static const ShellOpt_t g_GraphOpts[] = {
  */
 static const ShellOpt_t g_FxOpts[] = {
     { "", NULL, "<id> [param] [val]", "Quick effect parameter access", FxModuleHandler },
+    OPT_END()
+};
+
+/**
+ * @brief eq_test命令选项
+ */
+static const ShellOpt_t g_EqTestOpts[] = {
+    { "", NULL, "<node_id> <preset>", "Apply EQ test presets (bass/treble/vocal/flat)", EqTestModuleHandler },
     OPT_END()
 };
 
@@ -1217,12 +1825,24 @@ static const ShellModule_t g_FxModule = {
     1
 };
 
+/**
+ * @brief eq_test命令模块定义
+ */
+static const ShellModule_t g_EqTestModule = {
+    "eq_test",
+    "EQ Test Presets (bass/treble/vocal/flat)",
+    MOD_CAT_AUDIO,
+    g_EqTestOpts,
+    1
+};
+
 void ShellCmdGraph_Register(void)
 {
     /* 注册到Shell系统 */
     Shell_RegisterModule(&g_GraphModule);
     Shell_RegisterModule(&g_FxModule);
-    DBG("[ShellCmdGraph] Registered\n");
+    Shell_RegisterModule(&g_EqTestModule);
+    DBG("[ShellCmdGraph] Registered (graph, fx, eq_test)\n");
 }
 
 int ShellCmdGraph_Execute(int argc, char *argv[])
@@ -1277,6 +1897,9 @@ int ShellCmdGraph_Execute(int argc, char *argv[])
     }
     else if (strcmp(subcmd, "allbypass") == 0) {
         return CmdAllBypass(argc, argv);
+    }
+    else if (strcmp(subcmd, "query") == 0) {
+        return CmdQuery(argc, argv);
     }
     else {
         Shell_Printf("ERROR: Unknown command '%s'\n", subcmd);
@@ -1335,5 +1958,195 @@ int ShellCmdFx_Execute(int argc, char *argv[])
         }
     }
     
+    return 0;
+}
+
+/**
+ * @brief EQ测试命令 - 一键应用测试配置
+ * 
+ * 用法:
+ *   eq_test <node_id> bass     - 低音增强 (+12dB@60Hz, +8dB@150Hz, +4dB@300Hz)
+ *   eq_test <node_id> treble   - 高音增强 (+8dB@5kHz, +10dB@10kHz)
+ *   eq_test <node_id> vocal    - 人声增强 (+6dB@1kHz, +4dB@2kHz)
+ *   eq_test <node_id> flat     - 平坦响应 (所有增益归零)
+ * 
+ * 示例:
+ *   eq_test 10 bass    - 在USB/BT音乐路径上应用低音增强 (NODE_ID_USB_BT_EQ=10)
+ *   eq_test 7 vocal     - 在ADC路径上应用人声增强 (NODE_ID_EQ=7)
+ *   eq_test eq bass     - 也可以使用节点名称
+ */
+int ShellCmdEqTest_Execute(int argc, char *argv[])
+{
+    EffectNode_t *node;
+    const char *preset;
+    
+    if (argc < 3) {
+        Shell_Printf("Usage: eq_test <node_id|name> <preset>\n");
+        Shell_Printf("Presets:\n");
+        Shell_Printf("  bass   - Bass Boost (+12dB@60Hz, +8dB@150Hz, +4dB@300Hz)\n");
+        Shell_Printf("  treble - Treble Boost (+8dB@5kHz, +10dB@10kHz)\n");
+        Shell_Printf("  vocal  - Vocal Enhance (+6dB@1kHz, +4dB@2kHz)\n");
+        Shell_Printf("  flat   - Flat Response (all gains to 0dB)\n");
+        Shell_Printf("  debug  - Show EQ unit status and parameters\n");
+        Shell_Printf("\nEQ Nodes:\n");
+        Shell_Printf("  7 (eq)        - ADC mic/guitar EQ\n");
+        Shell_Printf("  10 (usb_bt_eq) - USB/BT playback EQ\n");
+        Shell_Printf("\nExample:\n");
+        Shell_Printf("  eq_test 10 bass     - Bass boost on USB/BT\n");
+        Shell_Printf("  eq_test usb_bt_eq treble - Treble boost on USB/BT\n");
+        Shell_Printf("  eq_test 7 vocal     - Vocal enhance on ADC\n");
+        Shell_Printf("  eq_test 10 debug    - Show USB/BT EQ status\n");
+        return 0;
+    }
+    
+    /* 查找节点 */
+    node = FindNode(argv[1]);
+    if (!node) {
+        Shell_Printf("ERROR: Node '%s' not found\n", argv[1]);
+        return -1;
+    }
+    
+    /* 检查节点类型是否为EQ */
+    if (node->type != EFFECT_NODE_TYPE_EFFECT_EQ) {
+        Shell_Printf("ERROR: Node %d (%s) is not an EQ node\n", node->id, node->name);
+        return -1;
+    }
+    
+    preset = argv[2];
+    Shell_Printf("Applying EQ preset '%s' to node %d (%s)...\n", preset, node->id, node->name);
+    
+    /* EQ启用和初始化由最后的 SetNodeParam(filter_count) 处理 */
+    
+    if (strcmp(preset, "bass") == 0) {
+        /* Bass Boost: 60Hz/150Hz/300Hz */
+        SetNodeParam(node, "band0_f0", 60);         // Band 0 freq
+        SetNodeParam(node, "band0_type", 0);        // Band 0 type (Peaking)
+        SetNodeParam(node, "band0", 12);            // Band 0 gain (+12dB)
+        SetNodeParam(node, "band0_Q", 717);         // Band 0 Q (0.7)
+        SetNodeParam(node, "band0_enable", 1);      // Band 0 enable
+        
+        SetNodeParam(node, "band1_f0", 150);        // Band 1 freq
+        SetNodeParam(node, "band1_type", 0);        // Band 1 type
+        SetNodeParam(node, "band1", 8);             // Band 1 gain (+8dB)
+        SetNodeParam(node, "band1_Q", 717);         // Band 1 Q
+        SetNodeParam(node, "band1_enable", 1);      // Band 1 enable
+        
+        SetNodeParam(node, "band2_f0", 300);        // Band 2 freq
+        SetNodeParam(node, "band2_type", 0);        // Band 2 type
+        SetNodeParam(node, "band2", 4);             // Band 2 gain (+4dB)
+        SetNodeParam(node, "band2_Q", 100);         // Band 2 Q (1.0)
+        SetNodeParam(node, "band2_enable", 1);      // Band 2 enable
+        
+        SetNodeParam(node, "filter_count", 3);      // filter_count = 3
+        Shell_Printf("✓ Bass Boost applied: +12dB@60Hz, +8dB@150Hz, +4dB@300Hz\n");
+    }
+    else if (strcmp(preset, "treble") == 0) {
+        /* Treble Boost: 5kHz/10kHz */
+        SetNodeParam(node, "band0_f0", 5000);       // Band 0 freq
+        SetNodeParam(node, "band0_type", 0);        // Band 0 type
+        SetNodeParam(node, "band0", 8);             // Band 0 gain (+8dB)
+        SetNodeParam(node, "band0_Q", 100);         // Band 0 Q (1.0)
+        SetNodeParam(node, "band0_enable", 1);      // Band 0 enable
+        
+        SetNodeParam(node, "band1_f0", 10000);      // Band 1 freq
+        SetNodeParam(node, "band1_type", 0);        // Band 1 type
+        SetNodeParam(node, "band1", 10);            // Band 1 gain (+10dB)
+        SetNodeParam(node, "band1_Q", 717);         // Band 1 Q (0.7)
+        SetNodeParam(node, "band1_enable", 1);      // Band 1 enable
+        
+        SetNodeParam(node, "filter_count", 2);      // filter_count = 2
+        Shell_Printf("✓ Treble Boost applied: +8dB@5kHz, +10dB@10kHz\n");
+    }
+    else if (strcmp(preset, "vocal") == 0) {
+        /* Vocal Enhance: 1kHz/2kHz */
+        SetNodeParam(node, "band0_f0", 1000);       // Band 0 freq
+        SetNodeParam(node, "band0_type", 0);        // Band 0 type
+        SetNodeParam(node, "band0", 6);             // Band 0 gain (+6dB)
+        SetNodeParam(node, "band0_Q", 100);         // Band 0 Q (1.0)
+        SetNodeParam(node, "band0_enable", 1);      // Band 0 enable
+        
+        SetNodeParam(node, "band1_f0", 2000);       // Band 1 freq
+        SetNodeParam(node, "band1_type", 0);        // Band 1 type
+        SetNodeParam(node, "band1", 4);             // Band 1 gain (+4dB)
+        SetNodeParam(node, "band1_Q", 100);         // Band 1 Q (1.0)
+        SetNodeParam(node, "band1_enable", 1);      // Band 1 enable
+        
+        SetNodeParam(node, "filter_count", 2);      // filter_count = 2
+        Shell_Printf("✓ Vocal Enhance applied: +6dB@1kHz, +4dB@2kHz\n");
+    }
+    else if (strcmp(preset, "flat") == 0) {
+        /* Flat Response: All gains to 0 */
+        int i;
+        for (i = 0; i < 10; i++) {
+            char param_str[16];
+            sprintf(param_str, "band%d", i);
+            SetNodeParam(node, param_str, 0);       // All gains to 0
+        }
+        SetNodeParam(node, "filter_count", 0);      // filter_count = 0
+        Shell_Printf("✓ Flat Response applied: All bands disabled\n");
+    }
+    else if (strcmp(preset, "debug") == 0) {
+        /* Debug: 显示 EQ 单元状态 */
+        extern ControlVariablesContext gCtrlVars;
+        EQUnit *target_eq = (node->id == NODE_ID_USB_BT_EQ || strcmp(node->name, "usb_bt_eq") == 0) ? 
+                            &gCtrlVars.music_out_eq_unit : &gCtrlVars.mic_out_eq_unit;
+        int i;
+        
+        Shell_Printf("\n=== EQ Unit Debug Info ===\n");
+        Shell_Printf("Target: %s\n", (target_eq == &gCtrlVars.music_out_eq_unit) ? 
+                     "music_out_eq_unit" : "mic_out_eq_unit");
+        Shell_Printf("  enable: %d\n", target_eq->enable);
+        Shell_Printf("  filter_count: %d\n", target_eq->filter_count);
+        Shell_Printf("  pregain: %ld (%.2f dB)\n", (long)target_eq->pregain, 
+                     (float)target_eq->pregain / 256.0f);
+        Shell_Printf("  channel: %d\n", target_eq->channel);
+        Shell_Printf("  ct (EQContext): %s\n", target_eq->ct ? "allocated" : "NULL!");
+        Shell_Printf("  filter_params: %s\n", target_eq->filter_params ? "valid" : "NULL!");
+        
+        Shell_Printf("\n--- Band Parameters (eq_params) ---\n");
+        for (i = 0; i < 4 && i < target_eq->filter_count; i++) {
+            Shell_Printf("  band%d: en=%d type=%ld f0=%lu Q=%ld gain=%ld(%.1fdB)\n",
+                        i, target_eq->eq_params[i].enable,
+                        (long)target_eq->eq_params[i].type,
+                        (unsigned long)target_eq->eq_params[i].f0,
+                        (long)target_eq->eq_params[i].Q,
+                        (long)target_eq->eq_params[i].gain,
+                        (float)target_eq->eq_params[i].gain / 256.0f);
+        }
+        
+        if (target_eq->filter_params) {
+            Shell_Printf("\n--- SDK Parameters (filter_params) ---\n");
+            for (i = 0; i < 4 && i < target_eq->filter_count; i++) {
+                Shell_Printf("  band%d: type=%d f0=%u Q=%d gain=%d(%.1fdB)\n",
+                            i, target_eq->filter_params[i].type,
+                            target_eq->filter_params[i].f0,
+                            target_eq->filter_params[i].Q,
+                            target_eq->filter_params[i].gain,
+                            (float)target_eq->filter_params[i].gain / 256.0f);
+            }
+        }
+        
+        Shell_Printf("\n--- Node Parameters (node->params.eq) ---\n");
+        Shell_Printf("  band_count: %d, pregain: %d\n", 
+                    node->params.eq.band_count, node->params.eq.pregain);
+        for (i = 0; i < 4 && i < node->params.eq.band_count; i++) {
+            Shell_Printf("  band%d: gain=%d type=%d f0=%lu Q=%lu en=%d\n",
+                        i, node->params.eq.band_gains[i],
+                        node->params.eq.band_types[i],
+                        (unsigned long)node->params.eq.band_f0[i],
+                        (unsigned long)node->params.eq.band_Q[i],
+                        node->params.eq.band_enables[i]);
+        }
+        
+        Shell_Printf("=== End Debug ===\n");
+        return 0;
+    }
+    else {
+        Shell_Printf("ERROR: Unknown preset '%s'\n", preset);
+        Shell_Printf("Available presets: bass, treble, vocal, flat, debug\n");
+        return -1;
+    }
+    
+    Shell_Printf("TIP: Use 'chain -S' to save configuration to flash\n");
     return 0;
 }

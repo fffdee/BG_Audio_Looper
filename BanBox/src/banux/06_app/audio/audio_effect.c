@@ -77,7 +77,7 @@ void du_efft_fadeout_sw(int16_t* pcm_in, uint16_t pcm_length, uint16_t ch)
 
 /*
 ****************************************************************
-* ¹Ø±ÕËùÓĞÒôĞ§¹¦ÄÜ
+* ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -426,7 +426,7 @@ void AudioEffectsDeInit(void)
 
 /*
 ****************************************************************
-* ÒôĞ§Ä£¿é³õÊ¼»¯
+* ï¿½ï¿½Ğ§Ä£ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -472,7 +472,7 @@ void AudioEffectsInit(void)
 	#if 0//CFG_AUDIO_EFFECT_MIC_AEC_EN
 	gCtrlVars.mic_aec_unit.enable = 1;
 	//AudioEffectAecInit(&gCtrlVars.mic_aec_unit, 1, gCtrlVars.sample_rate);
-	AudioEffectAecInit(&gCtrlVars.mic_aec_unit, 1, 16000);//¹Ì¶¨Îª16K²ÉÑùÂÊ
+	AudioEffectAecInit(&gCtrlVars.mic_aec_unit, 1, 16000);//ï¿½Ì¶ï¿½Îª16Kï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	#endif
 	
     #if CFG_AUDIO_EFFECT_MIC_FREQ_SHIFTER_EN
@@ -577,7 +577,46 @@ void AudioEffectsInit(void)
 	#endif
 
 	#if CFG_AUDIO_EFFECT_MUSIC_OUT_EQ_EN
+	/* åœ¨åˆå§‹åŒ–å‰å…ˆä¿®æ­£ç±»å‹ - BAND_PASSä¼šå¯¼è‡´éŸ³é‡è¡°å‡ä¸¥é‡ */
+	{
+		int i;
+		for (i = 0; i < 10; i++) {
+			if (gCtrlVars.music_out_eq_unit.eq_params[i].type == 5) {  /* 5 = BAND_PASS */
+				gCtrlVars.music_out_eq_unit.eq_params[i].type = 0;  /* 0 = PEAKING */
+				APP_DBG("Music EQ band%d: Fixed type BAND_PASS -> PEAKING (before init)\n", i);
+			}
+		}
+	}
 	AudioEffectEQInit(&gCtrlVars.music_out_eq_unit, gCtrlVars.adc_line_channel_num, gCtrlVars.sample_rate);
+	/* é‡å»ºfilter_paramsç¡®ä¿ä½¿ç”¨æ­£ç¡®çš„æ»¤æ³¢å™¨ç±»å‹ */
+	if (gCtrlVars.music_out_eq_unit.ct != NULL) {
+		int i, filter_idx = 0;
+		/* é‡å»ºfilter_paramsæ•°ç»„ */
+		gCtrlVars.music_out_eq_unit.filter_count = 0;
+		for (i = 0; i < 10; i++) {
+			if (gCtrlVars.music_out_eq_unit.eq_params[i].enable) {
+				if (gCtrlVars.music_out_eq_unit.filter_params) {
+					/* ç¡®ä¿å‚æ•°æœ‰æ•ˆ */
+					uint16_t f0 = gCtrlVars.music_out_eq_unit.eq_params[i].f0;
+					int16_t Q = gCtrlVars.music_out_eq_unit.eq_params[i].Q;
+					if (f0 == 0) f0 = 1000;
+					if (Q <= 0) Q = 724;
+					gCtrlVars.music_out_eq_unit.filter_params[filter_idx].f0 = f0;
+					gCtrlVars.music_out_eq_unit.filter_params[filter_idx].Q = Q;
+					gCtrlVars.music_out_eq_unit.filter_params[filter_idx].gain = gCtrlVars.music_out_eq_unit.eq_params[i].gain;
+					gCtrlVars.music_out_eq_unit.filter_params[filter_idx].type = gCtrlVars.music_out_eq_unit.eq_params[i].type;
+				}
+				gCtrlVars.music_out_eq_unit.filter_count++;
+				filter_idx++;
+			}
+		}
+		/* é‡æ–°é…ç½®æ»¤æ³¢å™¨ */
+		eq_clear_delay_buffer(gCtrlVars.music_out_eq_unit.ct);
+		eq_configure_filters(gCtrlVars.music_out_eq_unit.ct, gCtrlVars.sample_rate, 
+		                     gCtrlVars.music_out_eq_unit.filter_params, 
+		                     gCtrlVars.music_out_eq_unit.filter_count);
+		APP_DBG("Music EQ: Rebuilt %d filters\n", gCtrlVars.music_out_eq_unit.filter_count);
+	}
 	#endif
 
 	#if CFG_AUDIO_EFFECT_MIC_PRE_EQ_EN
@@ -619,7 +658,7 @@ void AudioEffectsInit(void)
 #if CFG_AUDIO_EFFECT_MUSIC_DELAY_EN
 /*
 ****************************************************************
-* Pcm DelayÒôĞ§³õÊ¼»¯
+* Pcm Delayï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -677,7 +716,7 @@ void AudioEffectPcmDelayInit(PcmDelayUnit *unit, uint8_t channel, uint32_t sampl
 #if CFG_AUDIO_EFFECT_MUSIC_DELAY_EN
 /*
 ****************************************************************
-* Pcm DelayÒôĞ§ÅäÖÃ
+* Pcm Delayï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -698,7 +737,7 @@ void AudioEffectPcmDelayConfig(PcmDelayUnit *unit, uint8_t channel, uint32_t sam
 #endif	
 /*
 ****************************************************************
-* ExciterÒôĞ§³õÊ¼»¯
+* Exciterï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -741,7 +780,7 @@ void AudioEffectExciterInit(ExciterUnit *unit, uint8_t channel, uint32_t sample_
 }
 /*
 ****************************************************************
-* ExciterÒôĞ§ÅäÖÃ
+* Exciterï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -763,7 +802,7 @@ void AudioEffectExciterConfig(ExciterUnit *unit, uint8_t channel, uint32_t sampl
 
 /*
 ****************************************************************
-* AecÒôĞ§³õÊ¼»¯
+* Aecï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -806,7 +845,7 @@ void AudioEffectExciterConfig(ExciterUnit *unit, uint8_t channel, uint32_t sampl
 //}
 /*
 ****************************************************************
-* ExpanderÒôĞ§³õÊ¼»¯
+* Expanderï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -852,7 +891,7 @@ void AudioEffectExpanderInit(ExpanderUnit *unit, uint8_t channel, uint32_t sampl
 }
 /*
 ****************************************************************
-* ExpanderÒôĞ§INIT²ÎÊıÅäÖÃ
+* Expanderï¿½ï¿½Ğ§INITï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -877,8 +916,8 @@ void AudioEffectExpanderConfig(ExpanderUnit *unit, uint8_t channel, uint32_t sam
 }
 /*
 ****************************************************************
-* ExpanderÒôĞ§ÅäÖÃº¯Êı
-* 1£¬ÊÊÓÃÓÚÊµÊ±µ÷½ÚµÄ³¡ºÏ
+* Expanderï¿½ï¿½Ğ§ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
+* 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÊµÊ±ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
 *
 ****************************************************************
 */
@@ -899,7 +938,7 @@ void AudioEffectExpanderThresholdConfig(ExpanderUnit *unit)
 }
 /*
 ****************************************************************
-* FreqShifterÒôĞ§³õÊ¼»¯
+* FreqShifterï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -934,7 +973,7 @@ void AudioEffectFreqShifterInit(FreqShifterUnit *unit)
 }
 /*
 ****************************************************************
-* FreqShifterÒôĞ§ÅäÖÃ
+* FreqShifterï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -955,7 +994,7 @@ void AudioEffectFreqShifterConfig(FreqShifterUnit *unit)
 }
 /*
 ****************************************************************
-* HowlingDectorÒôĞ§³õÊ¼»¯
+* HowlingDectorï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -990,7 +1029,7 @@ void AudioEffectHowlingSuppressorInit(HowlingDectorUnit *unit)
 }
 /*
 ****************************************************************
-* HowlingDectorÒôĞ§ÅäÖÃ
+* HowlingDectorï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1012,7 +1051,7 @@ void AudioEffectHowlingSuppressorConfig(HowlingDectorUnit *unit)
 
 /*
 ****************************************************************
-* SilenceDectorÒôĞ§³õÊ¼»¯
+* SilenceDectorï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1055,7 +1094,7 @@ void AudioEffectSilenceDectorInit(SilenceDetectorUnit *unit,uint8_t channel, uin
 }
 /*
 ****************************************************************
-* PitchShifterÒôĞ§³õÊ¼»¯
+* PitchShifterï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1092,7 +1131,7 @@ void AudioEffectPitchShifterInit(PitchShifterUnit *unit, uint8_t channel, uint32
 		
 	if(unit->ct != NULL)
 	{
-		//unit->ct->w = 300;//////¸ÄÉÆÑÓÊ±!!!!!!!!!!!!!
+		//unit->ct->w = 300;//////ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±!!!!!!!!!!!!!
 		pitch_shifter_init(unit->ct, channel, sample_rate, unit->semitone_steps, CFG_MIC_PITCH_SHIFTER_FRAME_SIZE);//512
 		//gCtrlVars.SamplesPerFrame = CFG_MIC_PITCH_SHIFTER_FRAME_SIZE / 2;
 	}
@@ -1101,7 +1140,7 @@ void AudioEffectPitchShifterInit(PitchShifterUnit *unit, uint8_t channel, uint32
 #if CFG_AUDIO_EFFECT_MUSIC_PITCH_SHIFTER_PRO_EN
 /*
 ****************************************************************
-* PitchShifterProÒôĞ§³õÊ¼»¯
+* PitchShifterProï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1146,8 +1185,8 @@ void AudioEffectPitchShifterProInit(PitchShifterProUnit *unit, uint8_t channel, 
 #endif
 /*
 ****************************************************************
-* PitchShifterÒôĞ§²ÎÊıÅäÖÃ
-* 1£¬ÊÊÓÃÓÚÊµÊ±µ÷½ÚµÄ³¡ºÏ
+* PitchShifterï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÊµÊ±ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
 *
 ****************************************************************
 */
@@ -1173,8 +1212,8 @@ void AudioEffectPitchShifterConfig(PitchShifterUnit *unit)
 #if CFG_AUDIO_EFFECT_MUSIC_PITCH_SHIFTER_PRO_EN
 /*
 ****************************************************************
-* PitchShifterProÒôĞ§²ÎÊıÅäÖÃ
-* 1£¬ÊÊÓÃÓÚÊµÊ±µ÷½ÚµÄ³¡ºÏ
+* PitchShifterProï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÊµÊ±ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
 *
 ****************************************************************
 */
@@ -1200,7 +1239,7 @@ void AudioEffectPitchShifterProConfig(PitchShifterProUnit *unit, uint8_t channel
 #endif
 /*
 ****************************************************************
-* AutoTuneÒôĞ§³õÊ¼»¯
+* AutoTuneï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1244,7 +1283,7 @@ void AudioEffectPitchShifterProConfig(PitchShifterProUnit *unit, uint8_t channel
 
 /*
 ****************************************************************
-* AutoTuneÒôĞ§ÅäÖÃ
+* AutoTuneï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1265,7 +1304,7 @@ void AudioEffectPitchShifterProConfig(PitchShifterProUnit *unit, uint8_t channel
 
 /*
 ****************************************************************
-* VoiceChangerÒôĞ§³õÊ¼»¯
+* VoiceChangerï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1309,7 +1348,7 @@ void AudioEffectPitchShifterProConfig(PitchShifterProUnit *unit, uint8_t channel
 //}
 /*
 ****************************************************************
-* VoiceChangerÒôĞ§ÅäÖÃ
+* VoiceChangerï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1332,7 +1371,7 @@ void AudioEffectVoiceChangerConfig(VoiceChangerUnit *unit, uint8_t channel, uint
 #if CFG_AUDIO_EFFECT_MIC_VOICE_CHANGER_PRO_EN
 /*
 ****************************************************************
-* VoiceChangerProÒôĞ§³õÊ¼»¯
+* VoiceChangerProï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1378,7 +1417,7 @@ void AudioEffectVoiceChangerProInit(VoiceChangerProUnit *unit, uint8_t channel, 
 #if CFG_AUDIO_EFFECT_MIC_VOICE_CHANGER_PRO_EN
 /*
 ****************************************************************
-* VoiceChangerProÒôĞ§ÅäÖÃ
+* VoiceChangerProï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1400,7 +1439,7 @@ void AudioEffectVoiceChangerProConfig(VoiceChangerProUnit *unit, uint8_t channel
 #endif
 /*
 ****************************************************************
-* EchoÒôĞ§³õÊ¼»¯
+* Echoï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1451,7 +1490,7 @@ void AudioEffectEchoInit(EchoUnit *unit, uint8_t channel, uint32_t sample_rate)
 
 /*
 ****************************************************************
-* EchoÒôĞ§ÅäÖÃ
+* Echoï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1473,7 +1512,7 @@ void AudioEffectEchoConfig(EchoUnit *unit, uint8_t channel, uint32_t sample_rate
 }
 /*
 ****************************************************************
-* ReverbÒôĞ§³õÊ¼»¯
+* Reverbï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1523,7 +1562,7 @@ void AudioEffectReverbInit(ReverbUnit *unit, uint8_t channel, uint32_t sample_ra
 //void AudioEffectReverbInit(ReverbUnit *unit, uint8_t channel, uint32_t sample_rate)
 //{
 //#if CFG_AUDIO_EFFECT_MIC_REVERB_EN
-//    // Ç°ÖÃÅĞ¿Õ£¨±£Áô£©
+//    // Ç°ï¿½ï¿½ï¿½Ğ¿Õ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //    if(unit == NULL || !gCtrlVars.audio_effect_init_flag)
 //    {
 //        return;
@@ -1540,18 +1579,18 @@ void AudioEffectReverbInit(ReverbUnit *unit, uint8_t channel, uint32_t sample_ra
 //        return;
 //    }
 //
-//    // ºËĞÄĞŞ¸Ä£º²»ÔÙµ÷ÓÃpvPortMallocFromEnd£¬Ö±½ÓÓÃ¾²Ì¬ÄÚ´æ
+//    // ï¿½ï¿½ï¿½ï¿½ï¿½Ş¸Ä£ï¿½ï¿½ï¿½ï¿½Ùµï¿½ï¿½ï¿½pvPortMallocFromEndï¿½ï¿½Ö±ï¿½ï¿½ï¿½Ã¾ï¿½Ì¬ï¿½Ú´ï¿½
 //	if(unit->ct == NULL)
 //	{
-//        // ³õÊ¼»¯¾²Ì¬ÉÏÏÂÎÄÖ¸Õë£¨½öµÚÒ»´Îµ÷ÓÃÊ±¸³Öµ£©
+//        // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ë£¨ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Îµï¿½ï¿½ï¿½Ê±ï¿½ï¿½Öµï¿½ï¿½
 //        if(g_pReverbStaticCtx == NULL)
 //        {
 //            g_pReverbStaticCtx = (ReverbContext *)g_reverb_static_mem;
 //            APP_DBG("ReverbContext use static mem! Size: %ld\n", REVERB_SIZE);
 //        }
-//        // ¸³Öµ¸øunit->ct
+//        // ï¿½ï¿½Öµï¿½ï¿½unit->ct
 //        unit->ct = g_pReverbStaticCtx;
-//        // ÎŞĞèÅĞ¶ÏNULL£¨¾²Ì¬ÄÚ´æ±ØÈ»´æÔÚ£©£¬Ö±½ÓÌø¹ı´íÎó·ÖÖ§
+//        // ï¿½ï¿½ï¿½ï¿½ï¿½Ğ¶ï¿½NULLï¿½ï¿½ï¿½ï¿½Ì¬ï¿½Ú´ï¿½ï¿½È»ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§
 //	}
 //
 //	if(unit->ct != NULL)
@@ -1564,8 +1603,8 @@ void AudioEffectReverbInit(ReverbUnit *unit, uint8_t channel, uint32_t sample_ra
 //}
 /*
 ****************************************************************
-* ReverbÒôĞ§ÅäÖÃº¯Êı
-* 1£¬ÊÊÓÃÓÚÊµÊ±µ÷½ÚµÄ³¡ºÏ
+* Reverbï¿½ï¿½Ğ§ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
+* 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÊµÊ±ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
 *
 ****************************************************************
 */
@@ -1590,7 +1629,7 @@ void AudioEffectReverbConfig(ReverbUnit *unit)
 }
 /*
 ****************************************************************
-* PlateReverbÒôĞ§³õÊ¼»¯
+* PlateReverbï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1635,7 +1674,7 @@ void AudioEffectPlateReverbInit(PlateReverbUnit *unit, uint8_t channel, uint32_t
 }
 /*
 ****************************************************************
-* PlateReverbÒôĞ§modulatioÅäÖÃ
+* PlateReverbï¿½ï¿½Ğ§modulatioï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1677,7 +1716,7 @@ void AudioEffectPlateReverbConfig(PlateReverbUnit *unit)
 #if CFG_AUDIO_EFFECT_MIC_REVERB_PRO_EN
 /*
 ****************************************************************
-* ReverbProÒôĞ§³õÊ¼»¯
+* ReverbProï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1749,9 +1788,9 @@ void AudioEffectReverbProInit(ReverbProUnit *unit, uint8_t channel, uint32_t sam
 #if CFG_AUDIO_EFFECT_MIC_REVERB_PRO_EN
 /*
 ****************************************************************
-* ReverProbÒôĞ§ÅäÖÃº¯Êı
-* 1£¬ÊÊÓÃÓÚÊµÊ±µ÷½ÚµÄ³¡ºÏ
-* 2.ÔİÊ±Ö»µ÷½Ú¸ÉÉù»òÊªÉù
+* ReverProbï¿½ï¿½Ğ§ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
+* 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÊµÊ±ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+* 2.ï¿½ï¿½Ê±Ö»ï¿½ï¿½ï¿½Ú¸ï¿½ï¿½ï¿½ï¿½ï¿½Êªï¿½ï¿½
 ****************************************************************
 */
 void AudioEffectReverProbConfig(ReverbProUnit *unit,uint32_t sample_rate)
@@ -1775,7 +1814,7 @@ void AudioEffectReverProbConfig(ReverbProUnit *unit,uint32_t sample_rate)
 #endif
 /*
 ****************************************************************
-* VocalCutÒôĞ§³õÊ¼»¯
+* VocalCutï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1818,7 +1857,7 @@ void AudioEffectVocalCutInit(VocalCutUnit *unit, uint8_t channel, uint32_t sampl
 }
 /*
 ****************************************************************
-* VocalRemoveÒôĞ§³õÊ¼»¯
+* VocalRemoveï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1861,7 +1900,7 @@ void AudioEffectVocalRemoveInit(VocalRemoveUnit *unit,  uint8_t channel, uint32_
 }
 /*
 ****************************************************************
-* VocalRemoveÒôĞ§ÅäÖÃ
+* VocalRemoveï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1882,7 +1921,7 @@ void AudioEffectVocalRemoveConfig(VocalRemoveUnit *unit,  uint8_t channel, uint3
 }
 /*
 ****************************************************************
-* ChorusÒôĞ§³õÊ¼»¯
+* Chorusï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1925,7 +1964,7 @@ void AudioEffectChorusInit(ChorusUnit *unit,  uint8_t channel, uint32_t sample_r
 #if CFG_AUDIO_EFFECT_MUSIC_3D_EN
 /*
 ****************************************************************
-* ThreeDÒôĞ§³õÊ¼»¯
+* ThreeDï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -1968,7 +2007,7 @@ void AudioEffectThreeDInit(ThreeDUnit *unit, uint8_t channel, uint32_t sample_ra
 #if CFG_AUDIO_EFFECT_MUSIC_3D_PLUS_EN
 /*
 ****************************************************************
-* ThreeD PlusÒôĞ§³õÊ¼»¯
+* ThreeD Plusï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2013,7 +2052,7 @@ void AudioEffectThreeDPlusInit(ThreeDPlusUnit *unit, uint8_t channel, uint32_t s
 #if CFG_AUDIO_EFFECT_MUSIC_VIRTUAL_BASS_EN
 /*
 ****************************************************************
-* VBÒôĞ§³õÊ¼»¯
+* VBï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2056,7 +2095,7 @@ void AudioEffectVBInit(VBUnit *unit, uint8_t channel, uint32_t sample_rate)
 #if CFG_AUDIO_EFFECT_MUSIC_VIRTUAL_BASS_EN
 /*
 ****************************************************************
-* VBÒôĞ§ÅäÖÃ
+* VBï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2077,7 +2116,7 @@ void AudioEffectVBConfig(VBUnit *unit, uint8_t channel, uint32_t sample_rate)
 #if CFG_AUDIO_EFFECT_MUSIC_VIRTUAL_BASS_CLASSIC_EN
 /*
 ****************************************************************
-* VBClassicÒôĞ§³õÊ¼»¯
+* VBClassicï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2120,7 +2159,7 @@ void AudioEffectVBClassicInit(VBClassicUnit *unit, uint8_t channel, uint32_t sam
 #if CFG_AUDIO_EFFECT_MUSIC_VIRTUAL_BASS_CLASSIC_EN
 /*
 ****************************************************************
-* VBClassicÒôĞ§ÅäÖÃ
+* VBClassicï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2140,7 +2179,7 @@ void AudioEffectVBClassicConfig(VBClassicUnit *unit, uint8_t channel, uint32_t s
 #endif
 /*
 ****************************************************************
-* DRCÒôĞ§³õÊ¼»¯
+* DRCï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2188,7 +2227,7 @@ void AudioEffectDRCInit(DRCUnit *unit, uint8_t channel, uint32_t sample_rate)
 
 /*
 ****************************************************************
-* DRCÒôĞ§ÅäÖÃº¯Êı
+* DRCï¿½ï¿½Ğ§ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2213,7 +2252,7 @@ void AudioEffectDRCConfig(DRCUnit *unit, uint8_t channel, uint32_t sample_rate)
 }
 /*
 ****************************************************************
-* EQÒôĞ§³õÊ¼»¯
+* EQï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2223,6 +2262,16 @@ void AudioEffectEQInit(EQUnit *unit, uint8_t channel, uint32_t sample_rate)
 	if(!gCtrlVars.audio_effect_init_flag)
 	{
 		return;
+	}
+	
+	/* ä¿®æ­£éŸ³ä¹EQçš„BAND_PASSç±»å‹ - é˜²æ­¢éŸ³é‡è¡°å‡ */
+	if (unit == &gCtrlVars.music_out_eq_unit) {
+		int i;
+		for (i = 0; i < 10; i++) {
+			if (unit->eq_params[i].type == 5) {  /* 5 = BAND_PASS */
+				unit->eq_params[i].type = 0;  /* 0 = PEAKING */
+			}
+		}
 	}
 	
     if(unit->channel == 0)
@@ -2256,7 +2305,7 @@ void AudioEffectEQInit(EQUnit *unit, uint8_t channel, uint32_t sample_rate)
 }
 /*
 ****************************************************************
-* EQÔ¤ÔöÒæÅäÖÃº¯Êı
+* EQÔ¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2280,7 +2329,7 @@ void AudioEffectEQPregainConfig(EQUnit *unit)
 }
 /*
 ****************************************************************
-* EQÂË²¨Æ÷ÅäÖÃº¯Êı
+* EQï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2322,7 +2371,7 @@ void AudioEffectEQFilterClearBufConfig(EQUnit *unit, uint32_t sample_rate)
 }
 /*
 ****************************************************************
-* StereoWidenerÒôĞ§³õÊ¼»¯
+* StereoWidenerï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2358,7 +2407,7 @@ void AudioEffectStereoWidenerInit(StereoWindenUnit *unit, uint32_t sample_rate)
 }
 /*
 ****************************************************************
-* AutoWahÒôĞ§³õÊ¼»¯
+* AutoWahï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2396,7 +2445,7 @@ void AudioEffectAutoWahInit(AutoWahUnit *unit, uint32_t sample_rate)
 }
 /*
 ****************************************************************
-* PingPongÒôĞ§³õÊ¼»¯
+* PingPongï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2446,7 +2495,7 @@ void AudioEffectPingPongInit(PingPongUnit *unit, uint32_t sample_rate)
 
 /*
 ****************************************************************
-* Pcm DelayÖ÷Ñ­»·´¦Àíº¯Êı
+* Pcm Delayï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2463,7 +2512,7 @@ void AudioEffectPcmDelayApply(PcmDelayUnit *unit, int16_t *pcm_in, int16_t *pcm_
 //#if CFG_AUDIO_EFFECT_MIC_AEC_EN
 ///*
 //****************************************************************
-//* AecÖ÷Ñ­»·´¦Àíº¯Êı
+//* Aecï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //*
 //*
 //****************************************************************
@@ -2494,7 +2543,7 @@ void AudioEffectPcmDelayApply(PcmDelayUnit *unit, int16_t *pcm_in, int16_t *pcm_
 //#endif
 /*
 ****************************************************************
-* ExciterÖ÷Ñ­»·´¦Àíº¯Êı
+* Exciterï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2508,7 +2557,7 @@ void AudioEffectExciterApply(ExciterUnit *unit, int16_t *pcm_in, int16_t *pcm_ou
 }
 /*
 ****************************************************************
-* ExpanderÖ÷Ñ­»·´¦Àíº¯Êı
+* Expanderï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2522,7 +2571,7 @@ void AudioEffectExpanderApply(ExpanderUnit *unit, int16_t *pcm_in, int16_t *pcm_
 }
 /*
 ****************************************************************
-* FreqShifterÖ÷Ñ­»·´¦Àíº¯Êı
+* FreqShifterï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2536,7 +2585,7 @@ void AudioEffectFreqShifterApply(FreqShifterUnit *unit, int16_t *pcm_in, int16_t
 }
 /*
 ****************************************************************
-* HowlingDectorÖ÷Ñ­»·´¦Àíº¯Êı
+* HowlingDectorï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2550,7 +2599,7 @@ void AudioEffectHowlingSuppressorApply(HowlingDectorUnit *unit, int16_t *pcm_in,
 }
 /*
 ****************************************************************
-* SilenceDectorÖ÷Ñ­»·´¦Àíº¯Êı
+* SilenceDectorï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2571,7 +2620,7 @@ void AudioEffectSilenceDectorApply(SilenceDetectorUnit *unit, int16_t *pcm_in, i
 }
 /*
 ****************************************************************
-* PhaseÖ÷Ñ­»·´¦Àíº¯Êı
+* Phaseï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2599,7 +2648,7 @@ void AudioEffectPhaseApply(PhaseControlUnit *unit, int16_t *pcm_in, int16_t *pcm
 
 /*
 ****************************************************************
-* PregainÖ÷Ñ­»·´¦Àíº¯Êı
+* Pregainï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2636,7 +2685,7 @@ void AudioEffectPregainApply(GainControlUnit *unit, int16_t *pcm_in, int16_t *pc
 }
 /*
 ****************************************************************
-* PitchShifterÖ÷Ñ­»·´¦Àíº¯Êı
+* PitchShifterï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2662,7 +2711,7 @@ void AudioEffectPitchShifterApply(PitchShifterUnit *unit, int16_t *pcm_in, int16
 #if CFG_AUDIO_EFFECT_MUSIC_PITCH_SHIFTER_PRO_EN
 /*
 ****************************************************************
-* PitchShifterProÖ÷Ñ­»·´¦Àíº¯Êı
+* PitchShifterProï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2678,7 +2727,7 @@ void AudioEffectPitchShifterProApply(PitchShifterProUnit *unit, int16_t *pcm_in,
 #endif
 /*
 ****************************************************************
-* AutoTuneÖ÷Ñ­»·´¦Àíº¯Êı
+* AutoTuneï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2692,7 +2741,7 @@ void AudioEffectAutoTuneApply(AutoTuneUnit *unit, int16_t *pcm_in, int16_t *pcm_
 }
 /*
 ****************************************************************
-* VoiceChangerÖ÷Ñ­»·´¦Àíº¯Êı
+* VoiceChangerï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2707,7 +2756,7 @@ void AudioEffectVoiceChangerApply(VoiceChangerUnit *unit, int16_t *pcm_in, int16
 #if CFG_AUDIO_EFFECT_MIC_VOICE_CHANGER_PRO_EN
 /*
 ****************************************************************
-* VoiceChangerÖ÷Ñ­»·´¦Àíº¯Êı
+* VoiceChangerï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2722,7 +2771,7 @@ void AudioEffectVoiceChangerProApply(VoiceChangerProUnit *unit, int16_t *pcm_in,
 #endif
 /*
 ****************************************************************
-* EchoÖ÷Ñ­»·´¦Àíº¯Êı
+* Echoï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2786,7 +2835,7 @@ void AudioEffectEchoApply(EchoUnit *unit, int16_t *pcm_in, int16_t *pcm_out, uin
 }
 /*
 ****************************************************************
-* ReverbÖ÷Ñ­»·´¦Àíº¯Êı
+* Reverbï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2808,7 +2857,7 @@ uint32_t AudioEffectReverbApply2(ReverbUnit *unit, int16_t *pcm_in, int16_t *pcm
 }
 /*
 ****************************************************************
-* PlateReverbÖ÷Ñ­»·´¦Àíº¯Êı
+* PlateReverbï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2830,7 +2879,7 @@ uint32_t AudioEffectPlateReverbApply2(PlateReverbUnit *unit, int16_t *pcm_in, in
 }
 /*
 ****************************************************************
-* PinPongÖ÷Ñ­»·´¦Àíº¯Êı
+* PinPongï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2847,7 +2896,7 @@ void AudioEffectPinPongApply(PingPongUnit *unit, int16_t *pcm_in, int16_t *pcm_o
 #if CFG_AUDIO_EFFECT_MIC_REVERB_PRO_EN
 /*
 ****************************************************************
-* ReverbProÖ÷Ñ­»·´¦Àíº¯Êı
+* ReverbProï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2864,7 +2913,7 @@ void AudioEffectReverbProApply(ReverbProUnit *unit, int16_t *pcm_in, int16_t *pc
 #endif
 /*
 ****************************************************************
-* VocalCutÖ÷Ñ­»·´¦Àíº¯Êı
+* VocalCutï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2880,7 +2929,7 @@ void AudioEffectVocalCutApply(VocalCutUnit *unit, int16_t *pcm_in, int16_t *pcm_
 }
 /*
 ****************************************************************
-* VocalRemovetÖ÷Ñ­»·´¦Àíº¯Êı
+* VocalRemovetï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2896,7 +2945,7 @@ void AudioEffectVocalRemoveApply(VocalRemoveUnit *unit, int16_t *pcm_in, int16_t
 }
 /*
 ****************************************************************
-* ChorusÖ÷Ñ­»·´¦Àíº¯Êı
+* Chorusï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2911,7 +2960,7 @@ void AudioEffectChorusApply(ChorusUnit *unit, int16_t *pcm_in, int16_t *pcm_out,
 #if CFG_AUDIO_EFFECT_MUSIC_3D_EN
 /*
 ****************************************************************
-* ThreeDÖ÷Ñ­»·´¦Àíº¯Êı
+* ThreeDï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2928,7 +2977,7 @@ void AudioEffectThreeDApply(ThreeDUnit *unit, int16_t *pcm_in, int16_t *pcm_out,
 #if CFG_AUDIO_EFFECT_MUSIC_3D_PLUS_EN
 /*
 ****************************************************************
-* ThreeD PlusÖ÷Ñ­»·´¦Àíº¯Êı
+* ThreeD Plusï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -2948,7 +2997,7 @@ void AudioEffectThreeDPlusApply(ThreeDPlusUnit *unit, int16_t *pcm_in, int16_t *
 extern int16_t MusicVolBuf[512*2];
 /*
 ****************************************************************
-* VBÖ÷Ñ­»·´¦Àíº¯Êı
+* VBï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3012,7 +3061,7 @@ void AudioEffectVBApply(VBUnit *unit, int16_t *pcm_in, int16_t *pcm_out, uint32_
 #if CFG_AUDIO_EFFECT_MUSIC_VIRTUAL_BASS_CLASSIC_EN
 /*
 ****************************************************************
-* VBClassicÖ÷Ñ­»·´¦Àíº¯Êı
+* VBClassicï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3028,7 +3077,7 @@ void AudioEffectVBClassicApply(VBClassicUnit *unit, int16_t *pcm_in, int16_t *pc
 #endif
 /*
 ****************************************************************
-* DRCÖ÷Ñ­»·´¦Àíº¯Êı
+* DRCï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3042,7 +3091,7 @@ void AudioEffectDRCApply(DRCUnit *unit, int16_t *pcm_in, int16_t *pcm_out, uint3
 }
 /*
 ****************************************************************
-* StereoWidenerÖ÷Ñ­»·´¦Àíº¯Êı
+* StereoWidenerï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3058,7 +3107,7 @@ void AudioEffectStereoWidenerApply(StereoWindenUnit *unit, int16_t *pcm_in, int1
 }
 /*
 ****************************************************************
-* AutoWahAÖ÷Ñ­»·´¦Àíº¯Êı
+* AutoWahAï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3074,7 +3123,7 @@ void AudioEffectAutoWahApply(AutoWahUnit *unit, int16_t *pcm_in, int16_t *pcm_ou
 }
 /*
 ****************************************************************
-* EQÖ÷Ñ­»·´¦Àíº¯Êı
+* EQï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3107,7 +3156,7 @@ void AudioEffectEQApply(EQUnit *unit, int16_t *pcm_in, int16_t *pcm_out, uint32_
 				}
 
 				du_efft_fadeout_sw(pcm_out, n, channel);
-				//eq_clear_delay_buffer(unit->ct);//ÈôÇ°ºóEQÄ£Ê½²ÎÊıÖĞfilterÊıÄ¿²îÒì´ó£¬ĞèÒª´ò¿ªÕâĞĞ´úÂë
+				//eq_clear_delay_buffer(unit->ct);//ï¿½ï¿½Ç°ï¿½ï¿½EQÄ£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½filterï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½
 
 				memcpy(unit->ct, &EqBufferBak,sizeof(EQContext));
 				#ifdef FUNC_OS_EN
@@ -3155,9 +3204,9 @@ void AudioEffectEQApply(EQUnit *unit, int16_t *pcm_in, int16_t *pcm_out, uint32_
 }
 /*
 ****************************************************************
-* ÊµÊ±»ñÈ¡reverbÏà¹Ø²ÎÊı£¬ÒÔ´ËÎªµçÎ»Æ÷µ÷½ÚµÄ×î´óÖµ
-* Ö»ÊÇÔÚ×°ÔØ²ÎÊıÊ±£¬²Å¿ÉÒÔ»ñÈ¡×î´óÖµ£¬ÓÃÓÚµ÷½Ú²ÎÊı
-* ÓÃ»§¸ù¾İĞèÒª»ñÈ¡ÏàÓ¦µÄÖµ
+* ÊµÊ±ï¿½ï¿½È¡reverbï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½Îªï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½Öµ
+* Ö»ï¿½ï¿½ï¿½ï¿½×°ï¿½Ø²ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Å¿ï¿½ï¿½Ô»ï¿½È¡ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Ú²ï¿½ï¿½ï¿½
+* ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½Ó¦ï¿½ï¿½Öµ
 ****************************************************************
 */
 void GetAudioEffectMaxValue(void)
@@ -3194,7 +3243,7 @@ void GetAudioEffectMaxValue(void)
 }
 /*
 ****************************************************************
-* mic treb,bassµ÷½Úº¯Êı
+* mic treb,bassï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3209,7 +3258,7 @@ void MicBassTrebAjust(int16_t 	BassGain,	int16_t TrebGain)
 #endif
 /*
 ****************************************************************
-* music treb,bassµ÷½Úº¯Êı
+* music treb,bassï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3223,7 +3272,7 @@ void MusicBassTrebAjust(int16_t 	BassGain,	int16_t TrebGain)
 }
 #endif
 /*************************************************
- *  »ìÏì´óĞ¡µ÷½Úº¯Êı
+ *  ï¿½ï¿½ï¿½ï¿½ï¿½Ğ¡ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½
  *
  *
  ***************************************************/
@@ -3350,7 +3399,7 @@ void ReverbStepSet(uint8_t ReverbStep)
 #else
 /*
 ****************************************************************
-* AecÒôĞ§³õÊ¼»¯
+* Aecï¿½ï¿½Ğ§ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3361,7 +3410,7 @@ void AudioEffectAecInit(AecUnit *unit, uint8_t channel, uint32_t sample_rate)
 
 /*
 ****************************************************************
-* ÒôĞ§Ä£¿é·´³õÊ¼»¯
+* ï¿½ï¿½Ğ§Ä£ï¿½é·´ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************
@@ -3372,7 +3421,7 @@ void AudioEffectsDeInit(void)
 
 /*
 ****************************************************************
-* ÒôĞ§Ä£¿é³õÊ¼»¯
+* ï¿½ï¿½Ğ§Ä£ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 *
 *
 ****************************************************************

@@ -1,3 +1,14 @@
+#include "FreeRTOS.h"
+#include "task.h"
+/**
+ * @brief  启动BLE Notify测试（连接时调用）
+ */
+void BLE_StartNotifyTest(void);
+
+/**
+ * @brief  停止BLE Notify测试（断开时调用）
+ */
+void BLE_StopNotifyTest(void);
 /**
  *****************************************************************************
  * @file     shell_io_ble.h
@@ -21,6 +32,12 @@ extern "C" {
 #endif
 
 #include "bg_shell.h"
+
+// 声明 BLE_Send 以避免隐式声明和类型冲突
+uint16_t BLE_Send(uint8_t *data, uint16_t len);
+
+/* CCCD状态标志：App写入CCCD后设置为1，App清除CCCD后设置为0 */
+extern uint8_t g_BLE_CCCD_Enabled;
 
 /**
  * @brief  获取BLE IO接口

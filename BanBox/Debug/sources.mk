@@ -1,5 +1,5 @@
 ################################################################################
-# Automatically-generated file. Do not edit!
+# 自动生成的文件。不要编辑！
 ################################################################################
 
 O_SRCS := 
@@ -47,6 +47,7 @@ src/banux/05_component/BanGUI/ui/core \
 src/banux/05_component/BanGUI/ui/views \
 src/banux/05_component/audio_looper \
 src/banux/05_component/effect_graph \
+src/banux/05_component/metronome \
 src/banux/05_component/sys_param \
 src/banux/06_app/BG_AudioIO_Manager \
 src/banux/06_app/audio \

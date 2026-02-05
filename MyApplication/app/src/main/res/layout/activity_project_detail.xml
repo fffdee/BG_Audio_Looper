@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- 图片滚动区域 -->
+    <ScrollView
+        android:id="@+id/scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/control_panel"
+        android:scrollbars="none">
+
+        <ImageView
+            android:id="@+id/iv_merged_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitStart"
+            android:contentDescription="拼接图片" />
+    </ScrollView>
+
+    <!-- 控制区：播放按钮 + 调速拉条（并列） -->
+    <LinearLayout
+        android:id="@+id/control_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- 播放/暂停按钮 -->
+        <Button
+            android:id="@+id/btn_play_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:backgroundTint="@android:color/white"
+            android:text="播放"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp" />
+
+        <!-- 调速拉条（SeekBar） -->
+        <SeekBar
+            android:id="@+id/sb_speed"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="50"
+            android:thumbTint="@android:color/white"
+            android:progressTint="@android:color/white" />
+    </LinearLayout>
+
+</RelativeLayout>

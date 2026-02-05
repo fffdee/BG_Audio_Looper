@@ -12,7 +12,7 @@
  *   2. Get parameter: SysParam_Get()->audio.volume
  *   3. Set parameter: SysParam_Get()->audio.volume = 80;
  *   4. Save parameters: SysParam_Save() or shell command "param -s"
- * 
+ *
  * Flash API (SDK Provided):
  *   - SpiFlashRead(addr, buf, len, timeout)
  *   - SpiFlashWrite(addr, buf, len, timeout)
@@ -107,7 +107,7 @@ typedef struct {
     char name[BG_PARAM_CHAIN_NAME_LEN]; // 鏁堟灉鑺傜偣鍚嶇О
     uint8_t enabled;
     uint16_t id;
-    
+
 }BG_EffectNode_t;
 
 typedef struct {
@@ -165,8 +165,8 @@ typedef enum {
     OUTPUT_TYPE_MAX
 } OutputType_t;
 
-#define MAX_GRAPH_NODES        64  /* Maximum nodes in pool */
-#define MAX_GRAPH_EDGES        48  /* Maximum edges per graph */
+#define MAX_GRAPH_NODES        24  /* Maximum nodes in pool (当前使用21个) - 内存优化 */
+#define MAX_GRAPH_EDGES        24  /* Maximum edges per graph (当前使用22条) - 内存优化 */
 #define MAX_EFFECT_GRAPHS      4   /* Maximum effect graphs */
 #define GRAPH_NAME_LEN         12  /* Graph name length */
 
@@ -177,7 +177,7 @@ typedef struct __attribute__((packed)) {
     uint8_t  subtype;         /* SourceType_t/EffectType_t/OutputType_t */
     uint8_t  preset;          /* Preset for effect nodes */
     uint8_t  volume;          /* Volume for source/output nodes (0-100) */
-    uint8_t  params[11];      /* Type-specific parameters */
+    uint8_t  params[88];      /* Type-specific parameters (扩展: 支持EQ 10段*7字节+全局参数) */
 } GraphNode_t;
 
 /* Graph edge (connection between nodes) - 2 bytes per edge */
@@ -207,7 +207,7 @@ typedef struct __attribute__((packed)) {
 } SysParam_AudioChain_t;  /* Total: 4 + 512 + 4 + 568 = 1088 bytes */
 
 typedef struct __attribute__((packed)) {
-    
+
     uint8_t  contrast;          /* Contrast 0-100 */
     uint8_t  color_scheme;      /* Color scheme 0:Default 1:Inverted 2:Grayscale */
     uint8_t  screen_saver;      /* Screen saver timeout (0 = Off) */
@@ -216,7 +216,7 @@ typedef struct __attribute__((packed)) {
 } SysParam_Reverb_t;
 
 typedef struct __attribute__((packed)) {
-    
+
     uint8_t  contrast;          /* Contrast 0-100 */
     uint8_t  color_scheme;      /* Color scheme 0:Default 1:Inverted 2:Grayscale */
     uint8_t  screen_saver;      /* Screen saver timeout (0 = Off) */
@@ -332,6 +332,13 @@ SysParam_Status_t SysParam_SaveModule(const char *module);
  * @brief Mark parameters as modified (needs save)
  */
 void SysParam_MarkModified(void);
+
+/**
+ * @brief Apply loaded parameters to audio system (gCtrlVars)
+ *        Call this after SysParam_Init() to sync flash values to runtime
+ * @return SYSPARAM_OK on success
+ */
+SysParam_Status_t SysParam_ApplyToAudio(void);
 
 /*===========================================================================
  * Quick access to module parameters

@@ -11,7 +11,7 @@
 #include "type.h"
 #include "delay.h"
 #include "debug.h"
-#include <stdbool.h>
+
 //#include "app_config.h"
 #include "chip_info.h"
 
@@ -30,7 +30,7 @@
 
 #include "bt_config.h"
 #include "bb_api.h"
-#include "sys_param.h"
+
 #ifdef CFG_FUNC_AI
 #include "ai.h"
 #endif
@@ -211,12 +211,18 @@ void LoadBtConfigurationParams(void)
 		}
 	}
 	
-	btStackConfigParams->bt_LocalDeviceAddr[0]=0x12;
-	btStackConfigParams->bt_LocalDeviceAddr[1]=0x78;
-	btStackConfigParams->bt_LocalDeviceAddr[2]=0x5A;
-	btStackConfigParams->bt_LocalDeviceAddr[3]=0x43;
-	btStackConfigParams->bt_LocalDeviceAddr[4]=0x9A;
-	btStackConfigParams->bt_LocalDeviceAddr[5]=0x65;
+	uint64_t chip_id = 0;
+	Chip_IDGet(&chip_id);
+	uint16_t id_suffix = (uint16_t)((chip_id >> 48) & 0xFFFF);
+	// Use different parts of chip ID for different address bytes
+	// Format: 12:78:5A:XX:YY:ZZ where XX,YY,ZZ come from chip ID
+	btStackConfigParams->bt_LocalDeviceAddr[0] = 0x12;
+	btStackConfigParams->bt_LocalDeviceAddr[1] = 0x78;
+	btStackConfigParams->bt_LocalDeviceAddr[2] = 0x5A;
+	btStackConfigParams->bt_LocalDeviceAddr[3] = (uint8_t)((chip_id >> 16) & 0xFF);  // Use bits 16-23
+	btStackConfigParams->bt_LocalDeviceAddr[4] = (uint8_t)(( id_suffix >> 8) & 0xFF);   // Use bits 8-15
+	btStackConfigParams->bt_LocalDeviceAddr[5] = (uint8_t)( id_suffix & 0xFF);          // Use bits 0-7
+
 	//BT
 	ret = CheckBtAddr(btStackConfigParams->bt_LocalDeviceAddr);
 	if(ret != 0)
@@ -234,8 +240,9 @@ void LoadBtConfigurationParams(void)
 		//ble address
 		//ble name:ͨ������BLE�㲥��Ϣ������(ble_app_func.c)
 		memcpy(btStackConfigParams->ble_LocalDeviceAddr, btStackConfigParams->bt_LocalDeviceAddr,6);
-		btStackConfigParams->ble_LocalDeviceAddr[0] = btStackConfigParams->ble_LocalDeviceAddr[0]|0xc0;
-		btStackConfigParams->ble_LocalDeviceAddr[4] += 0x60;
+		btStackConfigParams->ble_LocalDeviceAddr[0] = (uint8_t)( id_suffix & 0xFF);
+		btStackConfigParams->ble_LocalDeviceAddr[4] = (uint8_t)(( id_suffix >> 8) & 0xFF);   // Use bits 8-15
+		btStackConfigParams->ble_LocalDeviceAddr[5] = (uint8_t)( id_suffix & 0xFF);          // Use bits 0-7
 	}
 
 	//BT name �������ƻ��ǰ���bt_config.h����
@@ -247,10 +254,8 @@ void LoadBtConfigurationParams(void)
 	}*/
 	// Get chip unique ID and add to BT name as suffix
 	// Use bits 48-63 (highest 16 bits) for ID suffix
-	uint64_t chip_id = 0;
-	Chip_IDGet(&chip_id);
-	uint16_t id_suffix = (uint16_t)((chip_id >> 48) & 0xFFFF);
-	sprintf((char *)btStackConfigParams->bt_LocalDeviceName, "%s-%04X", g_sys_param.bluetooth.device_name, id_suffix);
+
+	sprintf((char *)btStackConfigParams->bt_LocalDeviceName, "%s-%04X", BT_NAME, id_suffix);
 
 	//BT PARAMS
 	ret = CheckBtParamHeader(btStackConfigParams->bt_ConfigHeader);
@@ -423,7 +428,7 @@ void ConfigBtStackParams(BtStackParams *stackParams)
 /***********************************************************************************
  * ��ʼ������HOST
  **********************************************************************************/
-uint8_t BtStackInit(void)
+bool BtStackInit(void)
 {
 //	bool ret;
 	int32_t retInit=0;
@@ -440,10 +445,10 @@ uint8_t BtStackInit(void)
 	if(retInit != 0)
 	{
 		BT_DBG("Bt Stack Init ErrCode [%x]\n", (int)retInit);
-		return 0;
+		return FALSE;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 /***********************************************************************************
@@ -454,7 +459,7 @@ void UninitBt(void)
 	BTStackRunUninit();
 }
 
-uint8_t BtStackUninit(void)
+bool BtStackUninit(void)
 {
 	int32_t ret=0;
 	UninitBt();
@@ -462,9 +467,9 @@ uint8_t BtStackUninit(void)
 	ret = BTStackMemFree();
 	if(ret == -1)
 	{
-		return 0;
+		return FALSE;
 	}
-	return 1;
+	return TRUE;
 }
 
 /***********************************************************************************

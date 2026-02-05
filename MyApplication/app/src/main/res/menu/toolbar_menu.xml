@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_create"
+        android:icon="@drawable/ic_create"
+        android:title="创建项目"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_import"
+        android:icon="@drawable/ic_import"
+        android:title="导入项目"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_export"
+        android:icon="@drawable/ic_export"
+        android:title="导出项目"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_export_downloads"
+        android:title="导出到Downloads"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_export_settings"
+        android:title="导出设置"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_bluetooth"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="蓝牙连接"
+        app:showAsAction="always" />
+</menu>

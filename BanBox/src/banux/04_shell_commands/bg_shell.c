@@ -114,7 +114,7 @@ static const ShellModule_t g_HelpModule = {
 };
 
 /*******************************************************************************
- * Common functions
+ * Common functionsMTU
  ******************************************************************************/
 
 bool Shell_Init(void)
@@ -232,11 +232,17 @@ void Shell_InputData(uint8_t *data, uint16_t len)
 }
 
 /* Send to CDC only (for echo, prompt, etc.) - no LCD output */
+extern void BLE_ShellEcho(const char *str);
 static void Shell_SendRaw(const char *str)
 {
     if(str && g_IO && g_IO->send)
     {
         g_IO->send((uint8_t*)str, strlen(str));
+//        // 濡傛灉褰撳墠 IO 鏄�BLE锛屽垯閫氳繃 notify 鍥炴樉
+//        if(g_IO-00>name && strstr(g_IO->name, "BLE"))
+//        {
+//            BLE_Send(str);
+//        }
     }
 }
 

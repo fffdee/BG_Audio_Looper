@@ -30,14 +30,40 @@ extern "C" {
 #endif
 
 /*******************************************************************************
- * 配置定义
+ * 图构建模式配置 (2026-02-05 新增)
+ * 
+ * USE_STATIC_EFFECT_GRAPH=1: 静态图模式（默认）
+ *   - 节点/边/处理顺序在编译时确定，使用 const 数组定义
+ *   - 不支持运行时增删节点/边
+ *   - 内存占用最小，适合当前产品（21节点+22边固定配置）
+ *   - 节省约 2KB+ RAM（节点池、边池、处理顺序数组全部改为 const）
+ * 
+ * USE_STATIC_EFFECT_GRAPH=0: 动态图模式
+ *   - 支持运行时动态增删节点/边
+ *   - 需要更多 RAM 存储可变数据
+ *   - 适用于需要灵活配置的场景
  ******************************************************************************/
-#define EFFECT_GRAPH_MAX_NODES      16    /* 最大节点数 */
-#define EFFECT_GRAPH_MAX_EDGES      32     /* 最大边数 */
-#define EFFECT_GRAPH_MAX_INPUTS     4       /* 最大输入端口数 */
-#define EFFECT_GRAPH_MAX_OUTPUTS    4       /* 最大输出端口数 */
-#define EFFECT_GRAPH_NAME_LEN       16      /* 节点名称长度 */
-#define EFFECT_GRAPH_BUFFER_SIZE    640     /* 处理缓冲区大小(samples)，需支持 SBC 最大帧长 ~595 */
+#ifndef USE_STATIC_EFFECT_GRAPH
+#define USE_STATIC_EFFECT_GRAPH  1  /* 默认启用静态图模式，节省内存 */
+#endif
+
+/*******************************************************************************
+ * 配置定义
+ * 
+ * 2026-02-05 内存优化更新:
+ *   - EFFECT_GRAPH_MAX_NODES: 21 (精确匹配当前使用节点数)
+ *   - EFFECT_GRAPH_MAX_EDGES: 24 (精确匹配当前使用22条边 + 2条预留)
+ *   - EFFECT_GRAPH_BUFFER_SIZE: 256 → 节省大量RAM (21*384*4=32256 bytes)
+ *   - 如需更大帧长可改为 512 (SBC最大帧595，但实际处理帧256)
+ ******************************************************************************/
+#define EFFECT_GRAPH_MAX_NODES      21   /* 精确节点数（不预留扩展，节省内存）*/
+#define EFFECT_GRAPH_MAX_EDGES      24   /* 精确边数（当前22条+2预留）节省 24*8=192 bytes */
+#define EFFECT_GRAPH_MAX_INPUTS     4    /* 最大输入端口数 */
+#define EFFECT_GRAPH_MAX_OUTPUTS    4    /* 最大输出端口数 */
+#define EFFECT_GRAPH_NAME_LEN       16   /* 节点名称长度 */
+#define EFFECT_GRAPH_BUFFER_SIZE    256  /* 优化后：256 samples (原640)
+                                          * 节省: 21*(640-256)*4 = 32,256 bytes RAM
+                                          * 注意: max_frame_size 必须 <= 256 */
 
 /*******************************************************************************
  * 节点类型定义
@@ -48,10 +74,13 @@ typedef enum {
     EFFECT_NODE_TYPE_SOURCE_ADC1,          /* ADC1输入源 (麦克风) */
     EFFECT_NODE_TYPE_SOURCE_USB_IN,        /* USB音频输入 */
     EFFECT_NODE_TYPE_SOURCE_BT_IN,         /* 蓝牙音频输入 */
+    EFFECT_NODE_TYPE_SOURCE_METRONOME,     /* 节拍器源节点 */
+    EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY,   /* Looper播放源节点 */
     
     /* 输出节点 - 消费数据 */
     EFFECT_NODE_TYPE_SINK_DAC0,            /* DAC0输出 */
     EFFECT_NODE_TYPE_SINK_USB_OUT,         /* USB音频输出 */
+    EFFECT_NODE_TYPE_SINK_LOOPER_RECORD,   /* Looper录制输出节点 */
     
     /* 处理节点 - 处理数据 */
     EFFECT_NODE_TYPE_MIXER,                /* 混音器 */
@@ -64,7 +93,7 @@ typedef enum {
     EFFECT_NODE_TYPE_EFFECT_GAIN,          /* 增益控制 */
     EFFECT_NODE_TYPE_EFFECT_DELAY,         /* 延迟效果 */
     EFFECT_NODE_TYPE_EFFECT_CHORUS,        /* 合唱效果 */
-    EFFECT_NODE_TYPE_LOOPER,               /* 循环录音器 */
+    EFFECT_NODE_TYPE_LOOPER,               /* 循环录音器(旧版兼容) */
     
     EFFECT_NODE_TYPE_MAX
 } EffectNodeType_t;
@@ -152,6 +181,11 @@ typedef union {
     struct {
         uint8_t band_count;         /* 频段数 */
         int8_t band_gains[10];      /* 各频段增益 dB */
+        uint8_t band_types[10];     /* 各频段类型 (0:lowpass, 1:highpass, 2:bandpass, 3:notch, 4:peaking, 5:lowshelf, 6:highshelf) */
+        uint32_t band_f0[10];       /* 各频段中心频率 Hz */
+        uint32_t band_Q[10];        /* 各频段Q值 */
+        uint8_t band_enables[10];   /* 各频段使能状态 */
+        int16_t pregain;            /* 预增益 dB */
     } eq;
     
     /* 扩展器参数 */
@@ -168,7 +202,7 @@ typedef union {
     } delay;
     
     /* 通用参数 */
-    uint8_t raw[32];
+    uint8_t raw[88];
 } EffectParams_t;
 
 /*******************************************************************************

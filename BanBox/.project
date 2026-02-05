@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>BG_card_mini</name>
+	<name>BanBox</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -134,7 +134,7 @@
 		<link>
 			<name>middleware/audio/audio_decoder_error_code_summary.txt</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/audio_decoder_error_code_summary.txt</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/audio_decoder_error_code_summary.txt</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc</name>
@@ -144,57 +144,57 @@
 		<link>
 			<name>middleware/audio/libAudioDecoderLibrary.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libAudioDecoderLibrary.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libAudioDecoderLibrary.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libAudioEffectLibrary.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libAudioEffectLibrary.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libAudioEffectLibrary.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libBlueAEC.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libBlueAEC.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libBlueAEC.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libVocalCut.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libVocalCut.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libVocalCut.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libadpcmenc.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libadpcmenc.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libadpcmenc.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libcvsd_plc.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libcvsd_plc.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libcvsd_plc.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libmp2enc.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libmp2enc.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libmp2enc.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libmp3enc.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libmp3enc.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libmp3enc.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libresampler.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libresampler.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libresampler.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libsbcenc.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libsbcenc.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libsbcenc.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/libsra.a</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/libsra.a</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/libsra.a</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/src</name>
@@ -304,7 +304,7 @@
 		<link>
 			<name>driver/driver_api/src/backup_interface.c</name>
 			<type>1</type>
-			<location>C:/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/backup_interface.c</location>
+			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/driver/driver_api/src/backup_interface.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/dac_interface.c</name>
@@ -314,7 +314,7 @@
 		<link>
 			<name>driver/driver_api/src/fft_api.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/driver/driver_api/src/fft_api.c</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/driver/driver_api/src/fft_api.c</locationURI>
 		</link>
 		<link>
 			<name>driver/driver_api/src/i2c_host.c</name>
@@ -349,262 +349,262 @@
 		<link>
 			<name>middleware/audio/inc/adpcm_encoder.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/adpcm_encoder.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/adpcm_encoder.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/audio_decoder_api.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/audio_decoder_api.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/audio_decoder_api.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/audio_effect_library.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/audio_effect_library.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/audio_effect_library.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/audio_utility.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/audio_utility.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/audio_utility.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/auto_tune.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/auto_tune.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/auto_tune.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/auto_wah.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/auto_wah.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/auto_wah.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/bits.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/bits.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/bits.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/blue_aec.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/blue_aec.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/blue_aec.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/blue_ns_core.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/blue_ns_core.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/blue_ns_core.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/chorus.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/chorus.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/chorus.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/cvsd_plc.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/cvsd_plc.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/cvsd_plc.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/dc_blocker.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/dc_blocker.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/dc_blocker.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/drc.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/drc.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/drc.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/echo.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/echo.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/echo.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/eq.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/eq.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/eq.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/exciter.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/exciter.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/exciter.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/expander.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/expander.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/expander.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/freqshifter.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/freqshifter.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/freqshifter.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/howling_suppressor.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/howling_suppressor.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/howling_suppressor.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp2.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/mp2.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/mp2.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp2dec.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/mp2dec.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/mp2dec.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp2dectab.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/mp2dectab.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/mp2dectab.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp2enc_api.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/mp2enc_api.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/mp2enc_api.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mp3enc_api.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/mp3enc_api.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/mp3enc_api.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mvintrinsics.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/mvintrinsics.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/mvintrinsics.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/mvstdio.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/mvstdio.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/mvstdio.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/noise_gate.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/noise_gate.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/noise_gate.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pcm_delay.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/pcm_delay.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/pcm_delay.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pingpong.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/pingpong.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/pingpong.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pitch_shifter.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/pitch_shifter_pro.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter_pro.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/pitch_shifter_pro.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/plate_reverb.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/plate_reverb.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/plate_reverb.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/resampler.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/resampler.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/resampler.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/resampler_polyphase.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/resampler_polyphase.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/resampler_polyphase.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/reverb.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/reverb.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/reverb.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/reverb_pro.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/reverb_pro.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/reverb_pro.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/sbcenc_api.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/sbcenc_api.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/sbcenc_api.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/silence_detector.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/silence_detector.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/silence_detector.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/sra.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/sra.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/sra.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/stereo_widener.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/stereo_widener.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/stereo_widener.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/three_d.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/three_d.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/three_d.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/three_d_plus.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/three_d_plus.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/three_d_plus.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/typedefine.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/typedefine.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/typedefine.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/virtual_bass.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/virtual_bass_classic.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass_classic.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/virtual_bass_classic.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/vocal_remover.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/vocal_remover.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/vocal_remover.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/vocalcut.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/vocalcut.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/vocalcut.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/voice_changer.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/voice_changer.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/voice_changer.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/inc/voice_changer_pro.h</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/inc/voice_changer_pro.h</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/inc/voice_changer_pro.h</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/src/bits.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/src/bits.c</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/src/bits.c</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/src/libmp2dec.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/src/libmp2dec.c</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/src/libmp2dec.c</locationURI>
 		</link>
 		<link>
 			<name>middleware/audio/src/mvstdio.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/MVsB1_Base_SDK/middleware/audio/src/mvstdio.c</locationURI>
+			<locationURI>copy_PARENT123456781/MVsB1_Base_SDK/middleware/audio/src/mvstdio.c</locationURI>
 		</link>
 		<link>
 			<name>middleware/mv_utils/inc/debug.h</name>
@@ -865,6 +865,22 @@
 		<variable>
 			<name>copy_PARENT123456</name>
 			<value>$%7Bcopy_PARENT12%7D/project_and_dataset/project/bp1048_sdk_v0.1.12-master/bp1048_sdk_v0.1.12-master</value>
+		</variable>
+		<variable>
+			<name>copy_PARENT1234567</name>
+			<value>$%7BPARENT-1-copy_PARENT12%7D/BG_Audio_Looper/MVsB1_Base_SDK</value>
+		</variable>
+		<variable>
+			<name>copy_PARENT12345678</name>
+			<value>$%7BPARENT-1-copy_PARENT1234567%7D</value>
+		</variable>
+		<variable>
+			<name>copy_PARENT123456781</name>
+			<value>$%7Bcopy_PARENT12%7D/BG_Audio_Looper</value>
+		</variable>
+		<variable>
+			<name>copy_PARENT123456789</name>
+			<value>$%7Bcopy_PARENT12%7D/BG_Audio_Looper/BG_Audio_Looper</value>
 		</variable>
 	</variableList>
 </projectDescription>

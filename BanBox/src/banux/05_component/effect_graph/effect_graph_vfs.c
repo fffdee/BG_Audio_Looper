@@ -6,34 +6,13 @@
  * @date     06-January-2026
  * @brief    效果图虚拟文件系统 - 将效果图参数映射到/audio目录
  *****************************************************************************
- * @attention
- *
- * 目录结构：
- *   /audio
- *       ├── graph0/              (默认效果图)
- *       │   ├── info             (只读：图信息)
- *       │   ├── preset           (读写：当前预设ID)
- *       │   ├── node_count       (只读：节点数量)
- *       │   └── nodes/
- *       │       ├── 0_adc0/
- *       │       │   ├── enabled  (读写：0/1)
- *       │       │   ├── bypass   (读写：0/1)
- *       │       │   └── type     (只读)
- *       │       ├── 3_drc/
- *       │       │   ├── enabled
- *       │       │   ├── bypass
- *       │       │   ├── type
- *       │       │   ├── threshold
- *       │       │   ├── ratio
- *       │       │   ├── attack
- *       │       │   └── release
- *       │       └── ...
- *       └── graph1/              (可动态创建)
- *
- *****************************************************************************
  */
 
 #include "effect_graph_vfs.h"
+
+/* 如果 VFS 功能被关闭，整个文件跳过编译 */
+#if USE_EFFECT_GRAPH_VFS
+
 #include "effect_graph.h"
 #include "effect_graph_config.h"
 #include "vfs.h"
@@ -45,7 +24,7 @@
 /*******************************************************************************
  * 配置定义
  ******************************************************************************/
-#define GRAPH_VFS_MAX_GRAPHS     4    /* 最大支持4个效果图实例 */
+#define GRAPH_VFS_MAX_GRAPHS     2    /* 最大支持4个效果图实例 */
 #define GRAPH_VFS_MAX_PARAMS    16    /* 每个节点最多16个参数 */
 
 /*******************************************************************************
@@ -831,3 +810,5 @@ GraphVfsError_t EffectGraphVfs_TryAutoMount(void)
     DBG("[GraphVfs] TryAutoMount: SUCCESS - graph0 mounted with %d nodes\n", graph->node_count);
     return GRAPH_VFS_OK;
 }
+
+#endif /* USE_EFFECT_GRAPH_VFS */

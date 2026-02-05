@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#define NOR_FLASH_TEST
 #ifdef NOR_FLASH_TEST
 /**
  * @brief Flash 椹卞姩鏋舵瀯瀹屾暣娴嬭瘯

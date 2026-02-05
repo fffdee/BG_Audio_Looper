@@ -194,7 +194,45 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
         node_config->enabled = chain_node->enabled;
 
         // Copy parameters from node pool
-        memcpy(&node_config->params, &chain_node->params, sizeof(EffectParams_t));
+        if (chain_node->node_type == NODE_TYPE_EFFECT && chain_node->subtype == EFFECT_TYPE_EQ) {
+            // Special handling for EQ parameters - load from params array
+            // Layout: [band0...band9][pregain][filter_count][channel]
+            // Each band: enable(1) type(1) f0(2) Q(2) gain(1) = 7 bytes, 10 bands = 70 bytes
+            int param_idx = 0;
+            int band;
+            
+            // Load bands: enable, type, f0, Q, gain for each band
+            for (band = 0; band < 10; band++) {
+                node_config->params.eq.band_enables[band] = (uint8_t)chain_node->params[param_idx++];
+                node_config->params.eq.band_types[band] = (uint8_t)chain_node->params[param_idx++];
+                
+                // Load f0 (2 bytes, little endian)
+                uint32_t f0 = chain_node->params[param_idx++];
+                f0 |= (uint32_t)chain_node->params[param_idx++] << 8;
+                node_config->params.eq.band_f0[band] = f0;
+                
+                // Load Q (2 bytes, little endian)
+                uint32_t q = chain_node->params[param_idx++];
+                q |= (uint32_t)chain_node->params[param_idx++] << 8;
+                node_config->params.eq.band_Q[band] = q;
+                
+                // Load gain (1 byte, signed)
+                node_config->params.eq.band_gains[band] = (int8_t)chain_node->params[param_idx++];
+            }
+            
+            // Load pregain (1 byte)
+            node_config->params.eq.pregain = (int16_t)(int8_t)chain_node->params[param_idx++];
+            
+            // Load filter_count (1 byte)
+            node_config->params.eq.band_count = (uint8_t)chain_node->params[param_idx++];
+            
+            // Skip channel (1 byte) - not used in EffectParams_t
+            param_idx++;
+            
+        } else {
+            // For other node types, use memcpy
+            memcpy(&node_config->params, &chain_node->params, sizeof(EffectParams_t));
+        }
     }
 
     // Copy edges (connections)
@@ -481,7 +519,45 @@ int ChainGraph_SaveFromEffectGraph(int graph_idx)
         chain_node->volume = 100; // Default volume
 
         // Copy parameters - this is the key part!
-        memcpy(&chain_node->params, &effect_node->params, sizeof(EffectParams_t));
+        if (effect_node->type == EFFECT_NODE_TYPE_EFFECT_EQ) {
+            // Special handling for EQ parameters - save to params array
+            // Layout: [band0...band9][pregain][filter_count][channel]
+            // Each band: enable(1) type(1) f0(2) Q(2) gain(1) = 7 bytes, 10 bands = 70 bytes
+            int param_idx = 0;
+            int band;
+            
+            // Save bands: enable, type, f0, Q, gain for each band
+            for (band = 0; band < 10; band++) {
+                chain_node->params[param_idx++] = (uint8_t)effect_node->params.eq.band_enables[band];
+                chain_node->params[param_idx++] = (uint8_t)effect_node->params.eq.band_types[band];
+                
+                // Save f0 (2 bytes, little endian)
+                uint32_t f0 = effect_node->params.eq.band_f0[band];
+                chain_node->params[param_idx++] = (uint8_t)(f0 & 0xFF);
+                chain_node->params[param_idx++] = (uint8_t)((f0 >> 8) & 0xFF);
+                
+                // Save Q (2 bytes, little endian)
+                uint32_t q = effect_node->params.eq.band_Q[band];
+                chain_node->params[param_idx++] = (uint8_t)(q & 0xFF);
+                chain_node->params[param_idx++] = (uint8_t)((q >> 8) & 0xFF);
+                
+                // Save gain (1 byte, signed)
+                chain_node->params[param_idx++] = (uint8_t)effect_node->params.eq.band_gains[band];
+            }
+            
+            // Save pregain (1 byte)
+            chain_node->params[param_idx++] = (uint8_t)effect_node->params.eq.pregain;
+            
+            // Save filter_count (1 byte)
+            chain_node->params[param_idx++] = (uint8_t)effect_node->params.eq.band_count;
+            
+            // Save channel (1 byte) - not used, set to 0
+            chain_node->params[param_idx++] = 0;
+            
+        } else {
+            // For other node types, use memcpy
+            memcpy(&chain_node->params, &effect_node->params, sizeof(EffectParams_t));
+        }
 
         // Add to graph
         chain_graph->node_ids[i] = node_id;
@@ -617,6 +693,96 @@ int ChainGraph_SyncParamsToGlobalUnits(void)
                 #if CFG_AUDIO_EFFECT_MIC_DRC_EN
                 AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
                 #endif
+                break;
+
+            case EFFECT_NODE_TYPE_EFFECT_EQ:
+                /* Sync to global EQ unit - select based on node ID */
+                {
+                    EQUnit *target_eq_unit;
+                    int band, i, filter_idx;
+                    
+                    // Select EQ unit based on node ID
+                    if (node->id == 7) {
+                        // MIC_OUT_EQ -> mic_out_eq_unit
+                        target_eq_unit = &gCtrlVars.mic_out_eq_unit;
+                    } else if (node->id == 10) {
+                        // USB_BT_EQ -> music_out_eq_unit
+                        target_eq_unit = &gCtrlVars.music_out_eq_unit;
+                    } else {
+                        // Default to mic_out_eq_unit
+                        target_eq_unit = &gCtrlVars.mic_out_eq_unit;
+                    }
+                    
+                    target_eq_unit->enable = node->enabled;
+                    target_eq_unit->pregain = (int32_t)node->params.eq.pregain;
+                    
+                    // 首先复制所有eq_params
+                    for (band = 0; band < node->params.eq.band_count && band < 10; band++) {
+                        target_eq_unit->eq_params[band].gain = (int32_t)node->params.eq.band_gains[band] * 256;
+                        target_eq_unit->eq_params[band].type = node->params.eq.band_types[band];
+                        target_eq_unit->eq_params[band].f0 = node->params.eq.band_f0[band];
+                        target_eq_unit->eq_params[band].Q = node->params.eq.band_Q[band];
+                        target_eq_unit->eq_params[band].enable = node->params.eq.band_enables[band];
+                    }
+                    
+                    /* 关键步骤1: 重置filter_count为0 */
+                    target_eq_unit->filter_count = 0;
+                    
+                    /* 关键步骤2: 重建filter_params数组（只包含启用的频段） */
+                    if (target_eq_unit->filter_params) {
+                        for (i = 0; i < 10; i++) {
+                            if (target_eq_unit->eq_params[i].enable) {
+                                /* 参数有效性检查 - 防止f0=0或Q=0导致除零错误 */
+                                uint16_t f0 = target_eq_unit->eq_params[i].f0;
+                                int16_t Q = target_eq_unit->eq_params[i].Q;
+                                int16_t type = target_eq_unit->eq_params[i].type;
+                                
+                                /* 检查f0有效性：必须大于0 */
+                                if (f0 == 0) {
+                                    f0 = 1000;  /* 默认1000Hz */
+                                    target_eq_unit->eq_params[i].f0 = f0;
+                                    DBG("[EQ] WARN: band%d f0=0 invalid, set to 1000Hz\n", i);
+                                }
+                                
+                                /* 检查Q有效性：Q6.10格式，必须大于0 */
+                                if (Q <= 0) {
+                                    Q = 724;  /* 默认Q=0.707，Q6.10格式=724 */
+                                    target_eq_unit->eq_params[i].Q = Q;
+                                    DBG("[EQ] WARN: band%d Q<=0 invalid, set to 724\n", i);
+                                }
+                                
+                                /* 检查type有效性：类型必须在合理范围内 */
+                                if (type < 0 || type > 6) {
+                                    type = 0;  /* 默认PEAKING */
+                                    target_eq_unit->eq_params[i].type = type;
+                                    DBG("[EQ] WARN: band%d type invalid, set to PEAKING\n", i);
+                                }
+                                
+                                filter_idx = target_eq_unit->filter_count;
+                                target_eq_unit->filter_params[filter_idx].Q    = Q;
+                                target_eq_unit->filter_params[filter_idx].f0   = f0;
+                                target_eq_unit->filter_params[filter_idx].gain = target_eq_unit->eq_params[i].gain;
+                                target_eq_unit->filter_params[filter_idx].type = type;
+                                target_eq_unit->filter_count++;
+                            }
+                        }
+                    }
+                    
+                    DBG("[ChainGraph] EQ node %d: %d enabled bands\n", node->id, target_eq_unit->filter_count);
+                    
+                    // Configure the appropriate EQ unit (使用ClearBuf版本)
+                    if (target_eq_unit->filter_count > 0 && target_eq_unit->ct != NULL) {
+                        if (node->id == 7) {
+                            #if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
+                            AudioEffectEQFilterClearBufConfig(target_eq_unit, 48000);
+                            #endif
+                        } else if (node->id == 10) {
+                            #if CFG_AUDIO_EFFECT_MUSIC_OUT_EQ_EN
+                            AudioEffectEQFilterClearBufConfig(target_eq_unit, 48000);
+                            #endif
+                        }
+                    }
+                }
                 break;
 
             // Add other effect types as needed

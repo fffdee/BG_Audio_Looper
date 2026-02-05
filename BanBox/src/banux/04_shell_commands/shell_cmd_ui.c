@@ -263,6 +263,27 @@ static int ui_debug(int argc, char *argv[])
     return 0;
 }
 
+/**
+ * @brief Query UI state in JSON format: ui -q
+ */
+static int ui_query(int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    
+    extern const BG_UI_t BG_UI;
+    UI_State_t state = BG_UI.GetState();
+    UI_State_t prev = BG_UI.GetPrevState();
+    
+    Shell_Printf("{\"status\":\"ok\",\"ui\":{");
+    Shell_Printf("\"current_state\":%d,", (int)state);
+    Shell_Printf("\"previous_state\":%d,", (int)prev);
+    Shell_Printf("\"ready\":%s", BG_UI.IsReady() ? "true" : "false");
+    Shell_Printf("}}\n");
+    
+    return 0;
+}
+
 /*============================================================================
  * Module Definition
  *===========================================================================*/
@@ -278,6 +299,7 @@ static const ShellOpt_t ui_options[] = {
     OPT("t", "bt",       "<0-4>",             "Set Bluetooth status",                          ui_set_bluetooth),
     OPT("v", "volume",   "<0-100>",           "Set volume",                                    ui_set_volume),
     OPT("u", "update",   NULL,                "Update status bar",                             ui_update_statusbar),
+    OPT("q", "query",    NULL,                "Query UI state (JSON)",                         ui_query),
     OPT("d", "debug",    "<on|off>",          "Enable/disable debug mode",                     ui_debug),
     OPT_END()
 };
