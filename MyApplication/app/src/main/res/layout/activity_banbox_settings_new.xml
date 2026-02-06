@@ -38,18 +38,14 @@
 
         <Button
             android:id="@+id/btn_connect"
+            style="@style/PrimaryButton"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/button_height_small"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:text="连接"
-            android:textColor="@color/primary_darker"
-            android:textStyle="bold"
-            android:textSize="@dimen/text_size_body"
-            android:background="@drawable/button_connect"
             android:paddingStart="@dimen/button_padding_horizontal"
-            android:paddingEnd="@dimen/button_padding_horizontal"
-            android:elevation="@dimen/card_elevation" />
+            android:paddingEnd="@dimen/button_padding_horizontal" />
     </RelativeLayout>
 
     <ScrollView
@@ -82,68 +78,60 @@
                     android:textStyle="bold"
                     android:layout_marginBottom="@dimen/spacing_medium" />
 
-                <!-- 2x2 网格布局 -->
-                <GridLayout
+                <!-- 2x2 网格布局 - 使用LinearLayout确保对齐 -->
+                <!-- 第1行 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:columnCount="2"
-                    android:rowCount="2"
-                    android:alignmentMode="alignBounds"
-                    android:columnOrderPreserved="false">
+                    android:orientation="horizontal"
+                    android:baselineAligned="false">
 
-                    <!-- 第1行第1列 -->
                     <Button
                         android:id="@+id/btn_fx_control"
+                        style="@style/FunctionButton"
                         android:layout_width="0dp"
-                        android:layout_height="@dimen/button_height_large"
-                        android:layout_columnWeight="1"
+                        android:layout_height="140dp"
+                        android:layout_weight="1"
                         android:layout_margin="@dimen/spacing_small"
-                        android:text="效果调节\n(DRC + 混响)"
-                        android:textSize="@dimen/text_size_body"
-                        android:textColor="@color/text_primary"
-                        android:background="@drawable/button_function"
-                        android:elevation="@dimen/card_elevation" />
+                        android:text="效果调节" />
 
-                    <!-- 第1行第2列 -->
                     <Button
                         android:id="@+id/btn_eq_control"
+                        style="@style/FunctionButton"
                         android:layout_width="0dp"
-                        android:layout_height="@dimen/button_height_large"
-                        android:layout_columnWeight="1"
+                        android:layout_height="140dp"
+                        android:layout_weight="1"
                         android:layout_margin="@dimen/spacing_small"
-                        android:text="均衡器\n设置"
-                        android:textSize="@dimen/text_size_body"
-                        android:textColor="@color/text_primary"
-                        android:background="@drawable/button_function"
-                        android:elevation="@dimen/card_elevation" />
+                        android:text="均衡器\n设置" />
 
-                    <!-- 第2行第1列 -->
+                </LinearLayout>
+
+                <!-- 第2行 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false">
+
                     <Button
                         android:id="@+id/btn_volume_control"
+                        style="@style/FunctionButton"
                         android:layout_width="0dp"
-                        android:layout_height="@dimen/button_height_large"
-                        android:layout_columnWeight="1"
+                        android:layout_height="140dp"
+                        android:layout_weight="1"
                         android:layout_margin="@dimen/spacing_small"
-                        android:text="硬件音量\n控制"
-                        android:textSize="@dimen/text_size_body"
-                        android:textColor="@color/text_primary"
-                        android:background="@drawable/button_function"
-                        android:elevation="@dimen/card_elevation" />
+                        android:text="硬件音量\n控制" />
 
-                    <!-- 第2行第2列 -->
                     <Button
                         android:id="@+id/btn_audio_chain"
+                        style="@style/FunctionButton"
                         android:layout_width="0dp"
-                        android:layout_height="@dimen/button_height_large"
-                        android:layout_columnWeight="1"
+                        android:layout_height="140dp"
+                        android:layout_weight="1"
                         android:layout_margin="@dimen/spacing_small"
-                        android:text="🎵 音频\n链路图"
-                        android:textSize="@dimen/text_size_body"
-                        android:textColor="@color/text_primary"
-                        android:background="@drawable/button_function"
-                        android:elevation="@dimen/card_elevation" />
+                        android:text="🎵 音频\n链路图" />
 
-                </GridLayout>
+                </LinearLayout>
             </LinearLayout>
 
             <!-- 调试工具卡片 -->
@@ -166,13 +154,10 @@
 
                 <Button
                     android:id="@+id/btn_terminal"
+                    style="@style/DebugButton"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/button_height_medium"
-                    android:text="BLE 终端"
-                    android:textSize="@dimen/text_size_large"
-                    android:textColor="@color/text_primary"
-                    android:background="@drawable/button_debug"
-                    android:elevation="@dimen/card_elevation" />
+                    android:text="BLE 终端" />
             </LinearLayout>
 
         </LinearLayout>

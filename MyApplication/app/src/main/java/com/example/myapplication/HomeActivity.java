@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.content.pm.PackageManager;
 import android.widget.Toast;
 import android.view.View;
@@ -361,15 +363,22 @@ public class HomeActivity extends AppCompatActivity {
 
     private void initProjectList() {
         projectRecyclerView = findViewById(R.id.rv_project_list);
-        projectRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         projectList = ProjectManager.getProjects(this);
-        projectAdapter = new ProjectAdapter(projectList, new OnItemLongClickListener() {
-            @Override
-            public void onItemLongClick(ImageProject project, View view) {
-                showProjectPopupMenu(project, view);
-            }
-        });
-        projectRecyclerView.setAdapter(projectAdapter);
+        
+        if (projectAdapter == null) {
+            // 首次初始化RecyclerView和Adapter
+            projectRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            projectAdapter = new ProjectAdapter(projectList, new OnItemLongClickListener() {
+                @Override
+                public void onItemLongClick(ImageProject project, View view) {
+                    showProjectPopupMenu(project, view);
+                }
+            });
+            projectRecyclerView.setAdapter(projectAdapter);
+        } else {
+            // 仅更新数据，避免重新创建adapter
+            projectAdapter.updateProjects(projectList);
+        }
     }
 
     private void showProjectPopupMenu(ImageProject project, View anchorView) {
@@ -442,7 +451,10 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        initProjectList();
+        // 异步加载项目列表，避免阻塞UI
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            initProjectList();
+        }, 50);
         requestNotificationPermission();
     }
 
@@ -455,6 +467,13 @@ public class HomeActivity extends AppCompatActivity {
         public ProjectAdapter(List<ImageProject> projects, OnItemLongClickListener onItemLongClickListener) {
             this.projects = projects;
             this.onItemLongClickListener = onItemLongClickListener;
+        }
+        
+        // 添加更新数据方法，避免重新创建adapter
+        public void updateProjects(List<ImageProject> newProjects) {
+            this.projects.clear();
+            this.projects.addAll(newProjects);
+            notifyDataSetChanged();
         }
 
         public void setSelectMode(boolean selectMode) {

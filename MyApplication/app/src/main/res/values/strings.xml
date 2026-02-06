@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Guitar Viewer</string>
+    <string name="app_name">BanBox</string>
     <string name="default_notification_channel_id">image_project_channel</string>
     <string name="notification_channel_name">图片项目管理</string>
     <string name="notification_title">图片播放器</string>

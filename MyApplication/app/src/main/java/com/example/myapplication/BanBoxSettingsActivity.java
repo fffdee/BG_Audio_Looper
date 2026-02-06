@@ -51,17 +51,6 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
 
         // 获取全局BluetoothHelper实例
         bluetoothHelper = com.example.myapplication.BluetoothManager.getInstance().getBluetoothHelper();
-        
-        // 检查蓝牙连接状态，未连接则提示并返回
-        if (!bluetoothHelper.isConnected()) {
-            new AlertDialog.Builder(this)
-                .setTitle("蓝牙未连接")
-                .setMessage("请先在欢迎页面连接蓝牙设备")
-                .setPositiveButton("确定", (dialog, which) -> finish())
-                .setCancelable(false)
-                .show();
-            return;
-        }
 
         setContentView(R.layout.activity_banbox_settings_new);
 

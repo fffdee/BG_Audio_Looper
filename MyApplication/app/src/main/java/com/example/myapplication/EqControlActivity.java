@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.bluetooth.BluetoothGatt;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -45,13 +46,34 @@ public class EqControlActivity extends AppCompatActivity {
     private TextView textGainValue;
     private Button btnAddBand;
     private Button btnRemoveBand;
-    private Button btnSave;
+    private ImageButton btnSave;
+    private Button btnSyncEq;
     private ImageButton btnBack;
+    private ImageButton btnOpenPresets;
+    private ImageButton btnResetEq;
+    
+    // 侧边栏相关
+    private View drawerPresets;
+    private View drawerOverlay;
+    private ImageButton btnCloseDrawer;
+    private TextView tvCurrentNode;
+    private TextView[] drawerPresetNameViews = new TextView[6];
+    private Button[] drawerLoadButtons = new Button[6];
+    private Button[] drawerSaveButtons = new Button[6];
+    private ImageButton[] drawerResetButtons = new ImageButton[6];
+    private int currentPreset = -1; // 当前选中的预设槽位，-1表示无选中
 
     // 数据结构
     private List<List<EqCurveView.EqBand>> nodesBands; // 每个节点的所有频段
     private int currentNode = 0; // 当前选中的节点
     private int currentBand = 0; // 当前选中的频段
+    
+    // 预设存储：每个节点6个预设槽位
+    private List<List<List<EqCurveView.EqBand>>> nodePresets; // [node][preset][band]
+    private List<String[]> nodePresetNames; // [node][6个预设名称]
+    
+    // 防止Spinner更新时触发事件的标志
+    private boolean isUpdatingSpinner = false;
 
     // 蓝牙助手
     private BluetoothHelper bluetoothHelper;
@@ -89,36 +111,73 @@ public class EqControlActivity extends AppCompatActivity {
         // 初始化蓝牙助手
         bluetoothHelper = com.example.myapplication.BluetoothManager.getInstance().getBluetoothHelper();
         
-        // 检查蓝牙连接状态
-        if (bluetoothHelper == null || !bluetoothHelper.isConnected()) {
-            Toast.makeText(this, "请先连接蓝牙设备", Toast.LENGTH_LONG).show();
+        setContentView(R.layout.activity_eq_control);
+
+        try {
+            // 检查蓝牙连接状态（非阻断性）
+            if (bluetoothHelper == null) {
+                android.util.Log.e("EQ_CRASH", "bluetoothHelper is null");
+                Toast.makeText(this, "蓝牙初始化失败", Toast.LENGTH_LONG).show();
+                finish();
+                return;
+            }
+            
+            if (!bluetoothHelper.isConnected()) {
+                android.util.Log.w("EQ_WARN", "蓝牙未连接，页面只读");
+                Toast.makeText(this, "蓝牙未连接，页面为只读状态", Toast.LENGTH_SHORT).show();
+            }
+            
+            // 设置蓝牙连接状态监听
+            bluetoothHelper.setOnConnectionChangedListener(new BluetoothHelper.OnConnectionChangedListener() {
+                @Override
+                public void onConnected(String deviceName, BluetoothGatt gatt) {
+                    android.util.Log.d("EQ_BLE_MONITOR", "Connected to: " + deviceName);
+                    runOnUiThread(() -> {
+                        Toast.makeText(EqControlActivity.this, "蓝牙已连接: " + deviceName, Toast.LENGTH_SHORT).show();
+                        // 刷新UI状态
+                        updateConnectionUI(true);
+                    });
+                }
+
+                @Override
+                public void onDisconnected() {
+                    runOnUiThread(() -> {
+                        Toast.makeText(EqControlActivity.this, "蓝牙连接已断开", Toast.LENGTH_LONG).show();
+                        updateConnectionUI(false);
+                        finish();
+                    });
+                }
+            });
+
+            // 初始化数据结构
+            initData();
+
+            // 初始化 UI 控件
+            initViews();
+        } catch (Exception e) {
+            android.util.Log.e("EQ_CRASH", "onCreate initialization error", e);
+            Toast.makeText(this, "初始化失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             finish();
             return;
         }
-        
-        setContentView(R.layout.activity_eq_control);
-
-        // 初始化数据结构
-        initData();
-
-        // 初始化 UI 控件
-        initViews();
 
         // 设置监听器
         setupListeners();
 
         // 从 SharedPreferences 加载配置
         loadEqConfigFromPreferences();
+        
+        // 延迟加载预设配置，避免阻塞UI初始化
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            loadPresetsFromPreferences();
+            updateDrawerPresetButtons();
+        }, 100);
 
         // 加载当前节点的频段数据
         loadCurrentNodeBands();
         
-        // 暂时禁用查询，避免覆盖本地配置
-        queryEqParams();
-        
-        // 调试：打印当前频段数量
-        android.util.Log.d("EqControl", "Node 0 bands count: " + nodesBands.get(0).size());
-        android.util.Log.d("EqControl", "Node 1 bands count: " + nodesBands.get(1).size());
+        // 禁用自动查询，减少启动时的网络请求，提升性能
+        // queryEqParams();
     }
     
     /**
@@ -147,23 +206,88 @@ public class EqControlActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        // 更新连接状态UI，但不强制退出
+        if (bluetoothHelper != null) {
+            boolean isConnected = bluetoothHelper.isConnected();
+            updateConnectionUI(isConnected);
+            if (!isConnected) {
+                Toast.makeText(this, "蓝牙未连接，页面为只读状态", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * 更新连接状态UI
+     */
+    private void updateConnectionUI(boolean isConnected) {
+        android.util.Log.d("EQ_UI", "更新连接状态UI: " + isConnected);
+        // 可以在这里更新标题栏、按钮状态等
+        // 例如：禁用/启用同步按钮
+        if (btnSyncEq != null) {
+            btnSyncEq.setEnabled(isConnected);
+            btnSyncEq.setAlpha(isConnected ? 1.0f : 0.5f);
+        }
+        if (btnSave != null) {
+            btnSave.setEnabled(isConnected);
+            btnSave.setAlpha(isConnected ? 1.0f : 0.5f);
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        // 移除蓝牙连接监听
+        if (bluetoothHelper != null) {
+            bluetoothHelper.setOnConnectionChangedListener(null);
+        }
         // 清理命令队列
         commandHandler.removeCallbacksAndMessages(null);
         commandQueue.clear();
+        isSendingCommand = false;
+        android.util.Log.d("EQ_QUEUE", "Activity销毁，队列已清空");
     }
 
     /**
      * 初始化数据结构
      */
     private void initData() {
-        nodesBands = new ArrayList<>();
+        nodesBands = new ArrayList<>(NODE_NAMES.length);
+        nodePresets = new ArrayList<>(NODE_NAMES.length);
+        nodePresetNames = new ArrayList<>(NODE_NAMES.length);
+        
+        // 预定义频率分布，避免重复计算
+        float[] defaultFreqs = {32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000};
+        
         for (int i = 0; i < NODE_NAMES.length; i++) {
-            List<EqCurveView.EqBand> bands = new ArrayList<>();
-            // 为每个节点只添加 1 个默认频段
-            bands.add(new EqCurveView.EqBand(true, 0, 1000, 1.0f, 0)); // 默认中频
+            List<EqCurveView.EqBand> bands = new ArrayList<>(10);
+            // 为每个节点添加 10 个频段
+            // 第一个频段默认启用，其余禁用
+            for (int j = 0; j < 10; j++) {
+                bands.add(new EqCurveView.EqBand(
+                    j == 0,  // 只有第一个频段默认启用
+                    0,       // type
+                    defaultFreqs[j], // 使用预定义频率
+                    1.0f,    // Q
+                    0        // gain
+                ));
+            }
             nodesBands.add(bands);
+            
+            // 为每个节点初始化6个空预设槽位
+            List<List<EqCurveView.EqBand>> presets = new ArrayList<>(6);
+            for (int p = 0; p < 6; p++) {
+                presets.add(null);
+            }
+            nodePresets.add(presets);
+            
+            // 为每个节点初始化6个默认预设名称
+            String[] presetNames = new String[6];
+            for (int p = 0; p < 6; p++) {
+                presetNames[p] = "预设 " + (p + 1);
+            }
+            nodePresetNames.add(presetNames);
         }
     }
 
@@ -171,21 +295,71 @@ public class EqControlActivity extends AppCompatActivity {
      * 初始化 UI 控件
      */
     private void initViews() {
-        eqCurveView = findViewById(R.id.eq_curve_view);
-        spinnerNode = findViewById(R.id.spinner_node);
-        spinnerBand = findViewById(R.id.spinner_band);
-        spinnerFilterType = findViewById(R.id.spinner_filter_type);
-        switchBandEnable = findViewById(R.id.switch_band_enable);
-        seekbarFreq = findViewById(R.id.seekbar_freq);
-        seekbarQ = findViewById(R.id.seekbar_q);
-        seekbarGain = findViewById(R.id.seekbar_gain);
-        textFreqValue = findViewById(R.id.text_freq_value);
-        textQValue = findViewById(R.id.text_q_value);
-        textGainValue = findViewById(R.id.text_gain_value);
-        btnAddBand = findViewById(R.id.btn_add_band);
-        btnRemoveBand = findViewById(R.id.btn_remove_band);
-        btnSave = findViewById(R.id.btn_save);
-        btnBack = findViewById(R.id.btn_back);
+        try {
+            eqCurveView = findViewById(R.id.eq_curve_view);
+            if (eqCurveView == null) {
+                android.util.Log.e("EQ_INIT", "eq_curve_view not found in layout");
+                throw new NullPointerException("eq_curve_view not found");
+            }
+            
+            spinnerNode = findViewById(R.id.spinner_node);
+            spinnerBand = findViewById(R.id.spinner_band);
+            spinnerFilterType = findViewById(R.id.spinner_filter_type);
+            switchBandEnable = findViewById(R.id.switch_band_enable);
+            seekbarFreq = findViewById(R.id.seekbar_freq);
+            seekbarQ = findViewById(R.id.seekbar_q);
+            seekbarGain = findViewById(R.id.seekbar_gain);
+            textFreqValue = findViewById(R.id.text_freq_value);
+            textQValue = findViewById(R.id.text_q_value);
+            textGainValue = findViewById(R.id.text_gain_value);
+            btnAddBand = findViewById(R.id.btn_add_band);
+            btnRemoveBand = findViewById(R.id.btn_remove_band);
+            btnSave = findViewById(R.id.btn_save);
+            btnBack = findViewById(R.id.btn_back);
+            btnSyncEq = findViewById(R.id.btn_sync_eq);
+            btnOpenPresets = findViewById(R.id.btn_open_presets);
+            btnResetEq = findViewById(R.id.btn_reset_eq);
+            
+            // 初始化侧边栏
+            drawerPresets = findViewById(R.id.drawer_presets);
+            drawerOverlay = findViewById(R.id.drawer_overlay);
+            btnCloseDrawer = findViewById(R.id.btn_close_drawer);
+            tvCurrentNode = findViewById(R.id.tv_current_node);
+            
+            // 初始化侧边栏预设名称TextView
+            drawerPresetNameViews[0] = findViewById(R.id.tv_preset_1_name);
+            drawerPresetNameViews[1] = findViewById(R.id.tv_preset_2_name);
+        drawerPresetNameViews[2] = findViewById(R.id.tv_preset_3_name);
+        drawerPresetNameViews[3] = findViewById(R.id.tv_preset_4_name);
+        drawerPresetNameViews[4] = findViewById(R.id.tv_preset_5_name);
+        drawerPresetNameViews[5] = findViewById(R.id.tv_preset_6_name);
+        
+        // 初始化侧边栏预设按钮
+        drawerLoadButtons[0] = findViewById(R.id.btn_drawer_preset_1_load);
+        drawerLoadButtons[1] = findViewById(R.id.btn_drawer_preset_2_load);
+        drawerLoadButtons[2] = findViewById(R.id.btn_drawer_preset_3_load);
+        drawerLoadButtons[3] = findViewById(R.id.btn_drawer_preset_4_load);
+        drawerLoadButtons[4] = findViewById(R.id.btn_drawer_preset_5_load);
+        drawerLoadButtons[5] = findViewById(R.id.btn_drawer_preset_6_load);
+        
+        drawerSaveButtons[0] = findViewById(R.id.btn_drawer_preset_1_save);
+        drawerSaveButtons[1] = findViewById(R.id.btn_drawer_preset_2_save);
+        drawerSaveButtons[2] = findViewById(R.id.btn_drawer_preset_3_save);
+        drawerSaveButtons[3] = findViewById(R.id.btn_drawer_preset_4_save);
+        drawerSaveButtons[4] = findViewById(R.id.btn_drawer_preset_5_save);
+        drawerSaveButtons[5] = findViewById(R.id.btn_drawer_preset_6_save);
+        
+        // 初始化侧边栏重置按钮
+        drawerResetButtons[0] = findViewById(R.id.btn_reset_preset_1);
+        drawerResetButtons[1] = findViewById(R.id.btn_reset_preset_2);
+        drawerResetButtons[2] = findViewById(R.id.btn_reset_preset_3);
+        drawerResetButtons[3] = findViewById(R.id.btn_reset_preset_4);
+        drawerResetButtons[4] = findViewById(R.id.btn_reset_preset_5);
+        drawerResetButtons[5] = findViewById(R.id.btn_reset_preset_6);
+        
+        // 隐藏添加/删除按钮，因为固定10个频段
+        btnAddBand.setVisibility(View.GONE);
+        btnRemoveBand.setVisibility(View.GONE);
 
         // 设置节点选择器
         ArrayAdapter<String> nodeAdapter = new ArrayAdapter<>(this,
@@ -198,6 +372,10 @@ public class EqControlActivity extends AppCompatActivity {
             R.layout.spinner_item, FILTER_TYPES);
         filterAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         spinnerFilterType.setAdapter(filterAdapter);
+        } catch (Exception e) {
+            android.util.Log.e("EQ_INIT", "initViews error", e);
+            throw new RuntimeException("UI initialization failed: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -215,17 +393,23 @@ public class EqControlActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 currentNode = position;
+                currentPreset = -1; // 重置预设选择
                 loadCurrentNodeBands();
+                if (tvCurrentNode != null) {
+                    tvCurrentNode.setText("当前节点：" + NODE_NAMES[currentNode]);
+                }
+                updateDrawerPresetButtons(); // 更新侧边栏预设按钮状态
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // 频段选择
+        // 频段选择 - 在setupListeners中设置初始监听器
         spinnerBand.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                android.util.Log.d("EqControl", "Band spinner onItemSelected (initial): position=" + position);
                 currentBand = position;
                 loadCurrentBandParameters();
             }
@@ -248,6 +432,15 @@ public class EqControlActivity extends AppCompatActivity {
         // 频段启用开关
         switchBandEnable.setOnCheckedChangeListener((buttonView, isChecked) -> {
             updateBandParameter(1, isChecked ? 1 : 0); // enable
+            // 更新曲线视图（重新加载启用的频段）
+            List<EqCurveView.EqBand> bands = nodesBands.get(currentNode);
+            List<EqCurveView.EqBand> enabledBands = new ArrayList<>();
+            for (EqCurveView.EqBand band : bands) {
+                if (band.enable) {
+                    enabledBands.add(band);
+                }
+            }
+            eqCurveView.setBands(enabledBands);
         });
 
         // 频率 SeekBar
@@ -316,11 +509,27 @@ public class EqControlActivity extends AppCompatActivity {
             }
         });
 
-        // 添加频段按钮
-        btnAddBand.setOnClickListener(v -> addBand());
-
-        // 删除频段按钮
-        btnRemoveBand.setOnClickListener(v -> removeBand());
+        // 同步EQ按钮
+        btnSyncEq.setOnClickListener(v -> syncCurrentNodeEq());
+        
+        // 重置EQ按钮
+        btnResetEq.setOnClickListener(v -> resetCurrentNodeEq());
+        
+        // 设置侧边栏按钮监听器
+        btnOpenPresets.setOnClickListener(v -> openDrawer());
+        btnCloseDrawer.setOnClickListener(v -> closeDrawer());
+        drawerOverlay.setOnClickListener(v -> closeDrawer());
+        
+        // 设置侧边栏预设按钮监听器
+        for (int i = 0; i < 6; i++) {
+            final int index = i;
+            drawerLoadButtons[i].setOnClickListener(v -> loadPreset(index));
+            drawerSaveButtons[i].setOnClickListener(v -> savePreset(index));
+            drawerResetButtons[i].setOnClickListener(v -> resetPreset(index));
+            drawerPresetNameViews[i].setOnClickListener(v -> editPresetName(index));
+        }
+        
+        updateDrawerPresetButtons();
     }
 
     /**
@@ -328,9 +537,17 @@ public class EqControlActivity extends AppCompatActivity {
      */
     private void loadCurrentNodeBands() {
         List<EqCurveView.EqBand> bands = nodesBands.get(currentNode);
-        eqCurveView.setBands(bands);
+        
+        // 只将启用的频段传递给曲线视图（优化：避免频繁创建新列表）
+        List<EqCurveView.EqBand> enabledBands = new ArrayList<>(bands.size());
+        for (EqCurveView.EqBand band : bands) {
+            if (band.enable) {
+                enabledBands.add(band);
+            }
+        }
+        eqCurveView.setBands(enabledBands);
 
-        // 更新频段选择器
+        // 更新频段选择器（显示所有10个频段）
         updateBandSpinner();
 
         // 加载第一个频段的参数
@@ -346,15 +563,37 @@ public class EqControlActivity extends AppCompatActivity {
      */
     private void updateBandSpinner() {
         List<EqCurveView.EqBand> bands = nodesBands.get(currentNode);
-        List<String> bandNames = new ArrayList<>();
+        
+        // 优化：使用固定数组避免重复创建String
+        String[] bandNames = new String[bands.size()];
         for (int i = 0; i < bands.size(); i++) {
-            bandNames.add("Band " + (i + 1));
+            bandNames[i] = "Band " + (i + 1);
         }
 
+        android.util.Log.d("EqControl", "updateBandSpinner: creating " + bandNames.length + " band names");
+        
+        // 暂时移除监听器
+        spinnerBand.setOnItemSelectedListener(null);
+        
         ArrayAdapter<String> bandAdapter = new ArrayAdapter<>(this,
             R.layout.spinner_item, bandNames);
         bandAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         spinnerBand.setAdapter(bandAdapter);
+        
+        // 恢复监听器
+        spinnerBand.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                android.util.Log.d("EqControl", "Band spinner onItemSelected: position=" + position);
+                currentBand = position;
+                loadCurrentBandParameters();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        
+        android.util.Log.d("EqControl", "updateBandSpinner: adapter set and listener restored");
     }
 
     /**
@@ -443,64 +682,6 @@ public class EqControlActivity extends AppCompatActivity {
     }
 
     /**
-     * 添加频段
-     */
-    private void addBand() {
-        List<EqCurveView.EqBand> bands = nodesBands.get(currentNode);
-        if (bands.size() >= 9) { // 限制最大频段数
-            Toast.makeText(this, "最多只能添加 9 个频段", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 添加默认频段
-        EqCurveView.EqBand newBand = new EqCurveView.EqBand(true, 0, 1000, 1.0f, 0);
-        bands.add(newBand);
-        eqCurveView.addBand(newBand);
-
-        // 更新 UI
-        updateBandSpinner();
-        currentBand = bands.size() - 1;
-        spinnerBand.setSelection(currentBand);
-        loadCurrentBandParameters();
-        
-        // 发送enable=1命令
-        if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
-            int effectId = EFFECT_IDS[currentNode];
-            String command = String.format("fx %d band%d_enable 1\r\n", effectId, currentBand);
-            sendBatchBleCommands(command);
-        }
-    }
-
-    /**
-     * 删除频段
-     */
-    private void removeBand() {
-        List<EqCurveView.EqBand> bands = nodesBands.get(currentNode);
-        if (bands.size() <= 1) { // 最少保留 1 个频段
-            Toast.makeText(this, "至少需要保留 1 个频段", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 发送enable=0命令禁用该频段
-        if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
-            int effectId = EFFECT_IDS[currentNode];
-            String command = String.format("fx %d band%d_enable 0\r\n", effectId, currentBand);
-            sendBatchBleCommands(command);
-        }
-
-        bands.remove(currentBand);
-        eqCurveView.removeBand(currentBand);
-
-        // 更新 UI
-        updateBandSpinner();
-        if (currentBand >= bands.size()) {
-            currentBand = bands.size() - 1;
-        }
-        spinnerBand.setSelection(currentBand);
-        loadCurrentBandParameters();
-    }
-
-    /**
      * 保存 EQ 设置到 SharedPreferences 和设备
      */
     private void saveEqSettings() {
@@ -509,18 +690,10 @@ public class EqControlActivity extends AppCompatActivity {
 
         // 发送保存命令到设备
         if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
-            // 发送所有节点的所有频段配置
-            for (int node = 0; node < nodesBands.size(); node++) {
-                List<EqCurveView.EqBand> bands = nodesBands.get(node);
-                for (int band = 0; band < bands.size(); band++) {
-                    sendEqCommand(node, band, bands.get(band));
-                }
-            }
-            
-            // 发送保存命令（类似 chain -S）
+            // 直接发送 chain -S 保存命令
             bluetoothHelper.writeCharacteristic(
                 "0000ab01-0000-1000-8000-00805f9b34fb",
-                "eq_save\r\n".getBytes(),
+                "chain -S\r\n".getBytes(),
                 success -> runOnUiThread(() -> {
                     if (success) {
                         Toast.makeText(this, "EQ 设置已保存到设备", Toast.LENGTH_LONG).show();
@@ -538,6 +711,9 @@ public class EqControlActivity extends AppCompatActivity {
     private android.os.Handler commandHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private java.util.Queue<Runnable> commandQueue = new java.util.LinkedList<>();
     private boolean isSendingCommand = false;
+    
+    // 队列大小限制
+    private static final int MAX_QUEUE_SIZE = 200;  // 最大队列大小
 
     /**
      * 发送单个 EQ 参数
@@ -568,6 +744,7 @@ public class EqControlActivity extends AppCompatActivity {
                 command = String.format("fx %d band%d_Q %.0f\r\n", effectId, band, eqBand.Q * 100);
                 break;
             case 4: // gain
+                // 增益精度0.1dB，发送时 1dB=10
                 float clampedGain = Math.max(-12.0f, Math.min(12.0f, eqBand.gain));
                 command = String.format("fx %d band%d %.0f\r\n", effectId, band, clampedGain * 10);
                 break;
@@ -613,41 +790,59 @@ public class EqControlActivity extends AppCompatActivity {
      * 将命令加入队列
      */
     private void queueCommand(Runnable command) {
+        // 检查队列大小限制
+        if (commandQueue.size() >= MAX_QUEUE_SIZE) {
+            android.util.Log.w("EQ_QUEUE", "⚠️ 队列已满(" + commandQueue.size() + "/" + MAX_QUEUE_SIZE + ")，丢弃旧命令");
+            // 移除最旧的命令为新命令腾出空间
+            commandQueue.poll();
+        }
+        
         commandQueue.offer(command);
+        android.util.Log.d("EQ_QUEUE", "命令加入队列，当前队列大小: " + commandQueue.size() + ", isSendingCommand: " + isSendingCommand);
         processNextCommand();
     }
 
     /**
-     * 处理下一个命令
+     * 处理下一个命令（只写模式，不等待回复）
      */
     private void processNextCommand() {
-        if (isSendingCommand || commandQueue.isEmpty()) {
+        if (isSendingCommand) {
+            android.util.Log.d("EQ_QUEUE", "正在发送命令，跳过处理");
+            return;
+        }
+        
+        if (commandQueue.isEmpty()) {
+            android.util.Log.d("EQ_QUEUE", "队列为空，处理完成");
             return;
         }
 
         isSendingCommand = true;
         Runnable command = commandQueue.poll();
+        android.util.Log.d("EQ_QUEUE", "开始处理命令，剩余队列大小: " + commandQueue.size());
+        
         if (command != null) {
             command.run();
         } else {
+            android.util.Log.e("EQ_QUEUE", "命令为null，重置状态");
             isSendingCommand = false;
         }
     }
 
-    /**
-     * 发送单个 BLE 命令
-     */
     private void sendBleCommand(String command) {
         if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
             String fullCommand = command + "\r\n";
+            android.util.Log.d("EQ_QUEUE", "发送命令: " + command);
+            
             bluetoothHelper.writeCharacteristic(
                 "0000ab01-0000-1000-8000-00805f9b34fb",
                 fullCommand.getBytes(),
                 success -> {
-                    if (!success) {
-                        android.util.Log.e("EQ", "Failed to send command: " + command);
+                    if (success) {
+                        android.util.Log.d("EQ_QUEUE", "✓ 命令发送成功: " + command);
+                    } else {
+                        android.util.Log.e("EQ_QUEUE", "✗ 命令发送失败: " + command);
                     }
-                    // 无论成功失败，都触发下一个命令（延迟200ms以确保设备处理完成）
+                    // [只写模式] 不等待下位机回复，200ms延迟避免BLE拥塞
                     commandHandler.postDelayed(() -> {
                         isSendingCommand = false;
                         processNextCommand();
@@ -655,7 +850,7 @@ public class EqControlActivity extends AppCompatActivity {
                 }
             );
         } else {
-            // 如果未连接，标记命令完成以继续队列
+            android.util.Log.e("EQ_QUEUE", "蓝牙未连接，跳过命令: " + command);
             isSendingCommand = false;
             processNextCommand();
         }
@@ -666,18 +861,30 @@ public class EqControlActivity extends AppCompatActivity {
      */
     private void sendBatchBleCommands(String batchCommands) {
         if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
-            android.util.Log.d("EQ", "Sending batch commands: " + batchCommands.replace("\r\n", " | "));
+            int cmdCount = batchCommands.split("\r\n").length;
+            android.util.Log.d("EQ_BATCH", "准备发送 " + cmdCount + " 条命令");
+            android.util.Log.d("EQ_BATCH", "命令内容: " + batchCommands.replace("\r\n", " | "));
+            
             bluetoothHelper.writeCharacteristic(
                 "0000ab01-0000-1000-8000-00805f9b34fb",
                 batchCommands.getBytes(),
                 success -> {
                     if (!success) {
-                        android.util.Log.e("EQ", "Failed to send batch commands");
+                        android.util.Log.e("EQ_BATCH", "❌ 批量命令发送失败");
+                        runOnUiThread(() -> 
+                            Toast.makeText(this, "命令发送失败，请检查蓝牙连接", Toast.LENGTH_SHORT).show()
+                        );
                     } else {
-                        android.util.Log.d("EQ", "Batch commands sent successfully");
+                        android.util.Log.d("EQ_BATCH", "✓ 批量命令已发送到设备");
+                        runOnUiThread(() -> 
+                            Toast.makeText(this, "同步完成", Toast.LENGTH_SHORT).show()
+                        );
                     }
                 }
             );
+        } else {
+            android.util.Log.e("EQ_BATCH", "蓝牙未连接，无法发送命令");
+            Toast.makeText(this, "蓝牙未连接", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -708,12 +915,13 @@ public class EqControlActivity extends AppCompatActivity {
     }
 
     private float gainFromProgress(int progress) {
-        // -12dB - +12dB
-        return (progress - 12) * 1.0f;
+        // -12dB - +12dB，240个步进，每步0.1dB
+        return (progress - 120) * 0.1f;
     }
 
     private int progressFromGain(float gain) {
-        return (int) (gain + 12);
+        // 将增益转换为progress（0-240）
+        return (int) ((gain + 12.0f) * 10);
     }
 
     /**
@@ -787,6 +995,385 @@ public class EqControlActivity extends AppCompatActivity {
                     }
                 }
             );
+        }
+    }
+    
+    /**
+     * 同步当前节点的全部EQ信息到设备
+     */
+    private void syncCurrentNodeEq() {
+        if (bluetoothHelper == null || !bluetoothHelper.isConnected()) {
+            Toast.makeText(this, "请先连接蓝牙设备", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        List<EqCurveView.EqBand> bands = nodesBands.get(currentNode);
+        if (bands.isEmpty()) {
+            Toast.makeText(this, "当前节点没有频段", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // 发送当前节点的所有频段配置（包括禁用的频段）
+        int effectId = EFFECT_IDS[currentNode];
+        
+        // 构建所有命令（每个band的5个参数合并，用换行符分隔）
+        java.util.List<String> commandList = new java.util.ArrayList<>();
+        for (int band = 0; band < 10; band++) {
+            EqCurveView.EqBand eqBand = bands.get(band);
+            
+            // 将每个band的5个参数合并成一条命令串，用\r\n分隔每条命令
+            String combinedCmd = String.format(
+                "fx %d band%d_type %d\r\nfx %d band%d_f0 %.0f\r\nfx %d band%d_Q %.0f\r\nfx %d band%d %.0f\r\nfx %d band%d_enable %d\r\n",
+                effectId, band, eqBand.type,
+                effectId, band, eqBand.f0,
+                effectId, band, eqBand.Q * 100,
+                effectId, band, eqBand.gain * 10,
+                effectId, band, eqBand.enable ? 1 : 0
+            );
+            commandList.add(combinedCmd);
+        }
+        
+        android.util.Log.d("EQ_SYNC", "========== 开始同步 ==========");
+        android.util.Log.d("EQ_SYNC", "节点: " + NODE_NAMES[currentNode] + " (EffectId=" + effectId + ")");
+        android.util.Log.d("EQ_SYNC", "命令总数: " + commandList.size());
+        android.util.Log.d("EQ_SYNC", "当前队列状态 - 大小: " + commandQueue.size() + ", isSendingCommand: " + isSendingCommand);
+        
+        Toast.makeText(this, "正在同步节点 " + NODE_NAMES[currentNode] + " 的全部EQ参数...", Toast.LENGTH_LONG).show();
+        
+        // 使用队列机制逐条发送命令
+        for (int i = 0; i < commandList.size(); i++) {
+            final String cmd = commandList.get(i);
+            final int cmdIndex = i + 1;
+            queueCommand(() -> {
+                android.util.Log.d("EQ_SYNC", "执行命令 " + cmdIndex + "/" + commandList.size() + ": " + cmd);
+                sendBleCommand(cmd);
+            });
+        }
+        
+        // 最后一条命令发送后显示完成提示
+        queueCommand(() -> {
+            android.util.Log.d("EQ_SYNC", "所有EQ命令已发送完成");
+            runOnUiThread(() -> 
+                Toast.makeText(this, "同步完成", Toast.LENGTH_SHORT).show()
+            );
+            // 重置标志，避免阻塞后续命令
+            isSendingCommand = false;
+            processNextCommand();
+        });
+    }
+    
+    /**
+     * 重置当前节点的EQ参数
+     */
+    private void resetCurrentNodeEq() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("重置EQ")
+            .setMessage("确定要重置当前节点 \"" + NODE_NAMES[currentNode] + "\" 的所有EQ参数吗？\n\n所有频段将恢复默认值。")
+            .setPositiveButton("重置", (dialog, which) -> {
+                // 预定义频率分布
+                float[] defaultFreqs = {32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000};
+                
+                List<EqCurveView.EqBand> bands = nodesBands.get(currentNode);
+                bands.clear();
+                
+                // 重新创建10个默认频段
+                for (int j = 0; j < 10; j++) {
+                    bands.add(new EqCurveView.EqBand(
+                        j == 0,  // 只有第一个频段默认启用
+                        0,       // type = Peaking
+                        defaultFreqs[j],
+                        1.0f,    // Q = 1.0
+                        0        // gain = 0dB
+                    ));
+                }
+                
+                // 重置预设选择
+                currentPreset = -1;
+                
+                // 刷新UI
+                loadCurrentNodeBands();
+                
+                // 保存到本地
+                saveEqConfigToPreferences();
+                
+                Toast.makeText(this, "已重置 " + NODE_NAMES[currentNode] + " 的EQ参数", Toast.LENGTH_SHORT).show();
+                
+                android.util.Log.d("EQ_RESET", "节点 " + NODE_NAMES[currentNode] + " 已重置为默认参数");
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+    
+    /**
+     * 重置指定的预设槽位
+     */
+    private void resetPreset(int presetIndex) {
+        String[] presetNames = nodePresetNames.get(currentNode);
+        String presetName = presetNames[presetIndex];
+        
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("重置预设")
+            .setMessage("确定要清空预设 \"" + presetName + "\" 吗？\n\n此操作不可恢复！")
+            .setPositiveButton("清空", (dialog, which) -> {
+                // 清空指定预设槽位
+                List<List<EqCurveView.EqBand>> presets = nodePresets.get(currentNode);
+                presets.set(presetIndex, null);
+                
+                // 重置预设名称为默认值
+                presetNames[presetIndex] = "预设 " + (presetIndex + 1);
+                
+                // 如果清空的是当前选中的预设，重置选中状态
+                if (currentPreset == presetIndex) {
+                    currentPreset = -1;
+                }
+                
+                // 更新UI
+                updateDrawerPresetButtons();
+                
+                // 保存到SharedPreferences
+                savePresetsToPreferences();
+                savePresetNamesToPreferences();
+                
+                Toast.makeText(this, "已清空预设 " + (presetIndex + 1), Toast.LENGTH_SHORT).show();
+                
+                android.util.Log.d("EQ_RESET", "节点 " + NODE_NAMES[currentNode] + " 的预设 " + (presetIndex + 1) + " 已清空");
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+    
+    /**
+     * 打开预设侧边栏
+     */
+    private void openDrawer() {
+        drawerPresets.setVisibility(View.VISIBLE);
+        drawerOverlay.setVisibility(View.VISIBLE);
+        tvCurrentNode.setText("当前节点：" + NODE_NAMES[currentNode]);
+        updateDrawerPresetButtons();
+        
+        // 添加滑入动画
+        drawerPresets.setTranslationX(drawerPresets.getWidth());
+        drawerPresets.animate().translationX(0).setDuration(250).start();
+    }
+    
+    /**
+     * 关闭预设侧边栏
+     */
+    private void closeDrawer() {
+        drawerPresets.animate().translationX(drawerPresets.getWidth()).setDuration(250)
+            .withEndAction(() -> {
+                drawerPresets.setVisibility(View.GONE);
+                drawerOverlay.setVisibility(View.GONE);
+            }).start();
+    }
+    
+    /**
+     * 更新侧边栏预设按钮状态
+     */
+    private void updateDrawerPresetButtons() {
+        List<List<EqCurveView.EqBand>> presets = nodePresets.get(currentNode);
+        String[] presetNames = nodePresetNames.get(currentNode);
+        for (int i = 0; i < 6; i++) {
+            boolean hasPreset = presets.get(i) != null;
+            // 更新预设名称
+            drawerPresetNameViews[i].setText(presetNames[i]);
+            // 设置按钮是否可用
+            drawerLoadButtons[i].setEnabled(hasPreset);
+            drawerLoadButtons[i].setAlpha(hasPreset ? 1.0f : 0.5f);
+        }
+    }
+    
+    /**
+     * 编辑预设名称
+     */
+    private void editPresetName(int presetIndex) {
+        String[] presetNames = nodePresetNames.get(currentNode);
+        String currentName = presetNames[presetIndex];
+        
+        // 创建输入框
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setText(currentName);
+        input.setSelection(currentName.length());
+        input.setSingleLine(true);
+        input.setHint("请输入预设名称");
+        
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("编辑预设名称")
+            .setView(input)
+            .setPositiveButton("确定", (dialog, which) -> {
+                String newName = input.getText().toString().trim();
+                if (!newName.isEmpty()) {
+                    presetNames[presetIndex] = newName;
+                    drawerPresetNameViews[presetIndex].setText(newName);
+                    savePresetNamesToPreferences();
+                    Toast.makeText(this, "已更新预设名称", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+    
+    /**
+     * 加载预设
+     */
+    private void loadPreset(int presetIndex) {
+        List<List<EqCurveView.EqBand>> presets = nodePresets.get(currentNode);
+        List<EqCurveView.EqBand> preset = presets.get(presetIndex);
+        
+        if (preset == null) {
+            Toast.makeText(this, "槽位 " + (presetIndex + 1) + " 为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // 加载预设配置到当前节点
+        List<EqCurveView.EqBand> currentBands = nodesBands.get(currentNode);
+        currentBands.clear();
+        for (EqCurveView.EqBand band : preset) {
+            // 深拷贝
+            currentBands.add(new EqCurveView.EqBand(band.enable, band.type, band.f0, band.Q, band.gain));
+        }
+        
+        currentPreset = presetIndex;
+        loadCurrentNodeBands();
+        updateDrawerPresetButtons();
+        closeDrawer();
+        Toast.makeText(this, "已加载预设 " + (presetIndex + 1), Toast.LENGTH_SHORT).show();
+    }
+    
+    /**
+     * 保存当前配置到预设
+     */
+    private void savePreset(int presetIndex) {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("保存预设")
+            .setMessage("确定要保存当前配置到预设 " + (presetIndex + 1) + " 吗？")
+            .setPositiveButton("保存", (dialog, which) -> {
+                // 深拷贝当前配置
+                List<EqCurveView.EqBand> currentBands = nodesBands.get(currentNode);
+                List<EqCurveView.EqBand> preset = new ArrayList<>();
+                for (EqCurveView.EqBand band : currentBands) {
+                    preset.add(new EqCurveView.EqBand(band.enable, band.type, band.f0, band.Q, band.gain));
+                }
+                
+                // 保存到预设槽位
+                List<List<EqCurveView.EqBand>> presets = nodePresets.get(currentNode);
+                presets.set(presetIndex, preset);
+                
+                currentPreset = presetIndex;
+                updateDrawerPresetButtons();
+                
+                // 保存到SharedPreferences
+                savePresetsToPreferences();
+                
+                Toast.makeText(this, "已保存到预设 " + (presetIndex + 1), Toast.LENGTH_LONG).show();
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+    
+    /**
+     * 保存预设到SharedPreferences
+     */
+    private void savePresetsToPreferences() {
+        android.content.SharedPreferences prefs = getSharedPreferences("EqConfig", MODE_PRIVATE);
+        android.content.SharedPreferences.Editor editor = prefs.edit();
+        
+        // 保存所有节点的所有预设
+        for (int node = 0; node < nodePresets.size(); node++) {
+            List<List<EqCurveView.EqBand>> presets = nodePresets.get(node);
+            for (int preset = 0; preset < presets.size(); preset++) {
+                List<EqCurveView.EqBand> bands = presets.get(preset);
+                
+                if (bands == null) {
+                    editor.putBoolean("node_" + node + "_preset_" + preset + "_exists", false);
+                    continue;
+                }
+                
+                editor.putBoolean("node_" + node + "_preset_" + preset + "_exists", true);
+                editor.putInt("node_" + node + "_preset_" + preset + "_band_count", bands.size());
+                
+                for (int band = 0; band < bands.size(); band++) {
+                    EqCurveView.EqBand eqBand = bands.get(band);
+                    String prefix = "node_" + node + "_preset_" + preset + "_band_" + band;
+                    editor.putBoolean(prefix + "_enable", eqBand.enable);
+                    editor.putInt(prefix + "_type", eqBand.type);
+                    editor.putFloat(prefix + "_f0", eqBand.f0);
+                    editor.putFloat(prefix + "_Q", eqBand.Q);
+                    editor.putFloat(prefix + "_gain", eqBand.gain);
+                }
+            }
+        }
+        
+        editor.apply();
+    }
+    
+    /**
+     * 从SharedPreferences加载预设
+     */
+    private void loadPresetsFromPreferences() {
+        android.content.SharedPreferences prefs = getSharedPreferences("EqConfig", MODE_PRIVATE);
+        
+        for (int node = 0; node < nodePresets.size(); node++) {
+            List<List<EqCurveView.EqBand>> presets = nodePresets.get(node);
+            for (int preset = 0; preset < presets.size(); preset++) {
+                boolean exists = prefs.getBoolean("node_" + node + "_preset_" + preset + "_exists", false);
+                
+                if (!exists) {
+                    presets.set(preset, null);
+                    continue;
+                }
+                
+                int bandCount = prefs.getInt("node_" + node + "_preset_" + preset + "_band_count", 0);
+                List<EqCurveView.EqBand> bands = new ArrayList<>();
+                
+                for (int band = 0; band < bandCount; band++) {
+                    String prefix = "node_" + node + "_preset_" + preset + "_band_" + band;
+                    boolean enable = prefs.getBoolean(prefix + "_enable", false);
+                    int type = prefs.getInt(prefix + "_type", 0);
+                    float f0 = prefs.getFloat(prefix + "_f0", 1000);
+                    float Q = prefs.getFloat(prefix + "_Q", 1.0f);
+                    float gain = prefs.getFloat(prefix + "_gain", 0);
+                    
+                    bands.add(new EqCurveView.EqBand(enable, type, f0, Q, gain));
+                }
+                
+                presets.set(preset, bands);
+            }
+        }
+        
+        // 加载预设名称
+        loadPresetNamesFromPreferences();
+    }
+    
+    /**
+     * 保存预设名称到SharedPreferences
+     */
+    private void savePresetNamesToPreferences() {
+        android.content.SharedPreferences prefs = getSharedPreferences("EqConfig", MODE_PRIVATE);
+        android.content.SharedPreferences.Editor editor = prefs.edit();
+        
+        for (int node = 0; node < nodePresetNames.size(); node++) {
+            String[] names = nodePresetNames.get(node);
+            for (int preset = 0; preset < names.length; preset++) {
+                editor.putString("node_" + node + "_preset_" + preset + "_name", names[preset]);
+            }
+        }
+        
+        editor.apply();
+    }
+    
+    /**
+     * 从SharedPreferences加载预设名称
+     */
+    private void loadPresetNamesFromPreferences() {
+        android.content.SharedPreferences prefs = getSharedPreferences("EqConfig", MODE_PRIVATE);
+        
+        for (int node = 0; node < nodePresetNames.size(); node++) {
+            String[] names = nodePresetNames.get(node);
+            for (int preset = 0; preset < names.length; preset++) {
+                String defaultName = "预设 " + (preset + 1);
+                names[preset] = prefs.getString("node_" + node + "_preset_" + preset + "_name", defaultName);
+            }
         }
     }
 }

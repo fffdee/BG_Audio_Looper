@@ -14,7 +14,7 @@
         android:layout_weight="1"
         android:contentDescription="当前播放图片"
         android:scaleType="centerInside"
-        android:src="@mipmap/ic_launcher" />
+        android:src="@mipmap/bg" />
 
     <!-- 控制按钮区域 -->
     <LinearLayout

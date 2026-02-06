@@ -25,13 +25,13 @@
         android:gravity="center"
         android:padding="32dp">
 
-        <!-- Logo区域 -->
+        <!-- Logo区域 - BG科技风Logo -->
         <ImageView
-            android:layout_width="180dp"
-            android:layout_height="180dp"
-            android:src="@mipmap/ic_launcher"
-            android:scaleType="centerInside"
-            android:contentDescription="BanBox Logo"
+            android:layout_width="280dp"
+            android:layout_height="140dp"
+            android:src="@mipmap/bg"
+            android:scaleType="fitCenter"
+            android:contentDescription="BG Audio Logo"
             android:elevation="8dp" />
 
         <!-- 标题 -->
@@ -55,7 +55,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="专业音频处理器"
+            android:text="玩转你的音乐"
             android:textColor="#FF6B9D"
             android:textSize="18sp"
             android:letterSpacing="0.15"
@@ -108,15 +108,11 @@
             <!-- 连接按钮 -->
             <Button
                 android:id="@+id/btn_bluetooth_connect"
+                style="@style/PrimaryButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="16dp"
-                android:text="连接蓝牙设备"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:background="@drawable/button_connect"
-                android:elevation="4dp" />
+                android:text="连接蓝牙设备" />
         </LinearLayout>
 
         <!-- 主按钮区域 -->
@@ -129,25 +125,18 @@
 
             <Button
                 android:id="@+id/btn_banbox_settings"
+                style="@style/GlowButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginBottom="16dp"
-                android:text="BanBox 设置中心"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:background="@drawable/button_glow"
-                android:elevation="4dp" />
+                android:text="BanBox 设置中心" />
 
             <Button
                 android:id="@+id/btn_enter"
+                style="@style/DebugButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="进入主界面"
-                android:textColor="#AAAAAA"
-                android:textSize="16sp"
-                android:background="@drawable/button_debug"
-                android:elevation="4dp" />
+                android:text="自动乐谱" />
         </LinearLayout>
     </LinearLayout>
 

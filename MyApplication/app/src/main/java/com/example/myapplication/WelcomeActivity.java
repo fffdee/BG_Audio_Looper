@@ -82,16 +82,6 @@ public class WelcomeActivity extends AppCompatActivity {
 
         Button banboxSettingsButton = findViewById(R.id.btn_banbox_settings);
         banboxSettingsButton.setOnClickListener(v -> {
-            // 检查蓝牙连接状态
-            if (!bluetoothHelper.isConnected()) {
-                new AlertDialog.Builder(this)
-                        .setTitle("蓝牙未连接")
-                        .setMessage("请先连接蓝牙设备才能进入设置界面")
-                        .setPositiveButton("立即连接", (dialog, which) -> showBluetoothScanDialog())
-                        .setNegativeButton("取消", null)
-                        .show();
-                return;
-            }
             Intent intent = new Intent(WelcomeActivity.this, BanBoxSettingsActivity.class);
             startActivity(intent);
         });

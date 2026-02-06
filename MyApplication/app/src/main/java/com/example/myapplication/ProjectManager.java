@@ -20,20 +20,45 @@ import java.io.FileOutputStream;
 public class ProjectManager {
     private static final String PREF_NAME = "image_projects";
     private static final String KEY_PROJECTS = "projects";
+    
+    // 添加缓存机制，避免频繁JSON解析
+    private static List<ImageProject> cachedProjects = null;
+    private static long lastCacheTime = 0;
+    private static final long CACHE_VALIDITY_MS = 2000; // 缓存有效期2秒
 
     public static void saveProject(Context context, ImageProject project) {
         List<ImageProject> projects = getProjects(context);
         projects.add(project);
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_PROJECTS, new Gson().toJson(projects)).apply();
+        invalidateCache(); // 清除缓存
     }
 
     public static List<ImageProject> getProjects(Context context) {
+        // 检查缓存是否有效
+        long now = System.currentTimeMillis();
+        if (cachedProjects != null && (now - lastCacheTime) < CACHE_VALIDITY_MS) {
+            return new ArrayList<>(cachedProjects); // 返回缓存的副本
+        }
+        
+        // 从SharedPreferences读取并解析
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         String json = prefs.getString(KEY_PROJECTS, "");
-        if (json.isEmpty()) return new ArrayList<>();
-        Type type = new TypeToken<List<ImageProject>>(){}.getType();
-        return new Gson().fromJson(json, type);
+        if (json.isEmpty()) {
+            cachedProjects = new ArrayList<>();
+        } else {
+            Type type = new TypeToken<List<ImageProject>>(){}.getType();
+            cachedProjects = new Gson().fromJson(json, type);
+        }
+        
+        lastCacheTime = now;
+        return new ArrayList<>(cachedProjects); // 返回缓存的副本
+    }
+    
+    // 清除缓存（在修改数据后调用）
+    private static void invalidateCache() {
+        cachedProjects = null;
+        lastCacheTime = 0;
     }
 
     public static void deleteProject(Context context, ImageProject project) {
@@ -48,6 +73,7 @@ public class ProjectManager {
         }
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_PROJECTS, new Gson().toJson(projects)).apply();
+        invalidateCache(); // 清除缓存
     }
 
     public static String exportProject(Context context, ImageProject project) {

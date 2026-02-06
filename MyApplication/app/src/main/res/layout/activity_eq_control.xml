@@ -1,54 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/bg_dark"
     android:fitsSystemWindows="true">
 
-    <!-- 顶部标题栏 -->
-    <RelativeLayout
+    <!-- 主内容区域 -->
+    <LinearLayout
+        android:id="@+id/main_content"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/toolbar_height"
-        android:background="@color/primary_darker"
-        android:elevation="@dimen/card_elevation"
-        android:paddingStart="@dimen/toolbar_padding"
-        android:paddingEnd="@dimen/toolbar_padding">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/bg_dark">
 
-        <ImageButton
-            android:id="@+id/btn_back"
-            android:layout_width="@dimen/icon_size_large"
-            android:layout_height="@dimen/icon_size_large"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_revert"
-            android:tint="@color/text_primary"
-            android:contentDescription="返回" />
+        <!-- 顶部标题栏 -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/toolbar_height"
+            android:background="@color/primary_darker"
+            android:elevation="@dimen/card_elevation"
+            android:paddingStart="@dimen/toolbar_padding"
+            android:paddingEnd="@dimen/toolbar_padding">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="均衡器设置"
-            android:textSize="@dimen/text_size_xlarge"
-            android:textColor="@color/text_accent"
-            android:textStyle="bold" />
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="@dimen/icon_size_large"
+                android:layout_height="@dimen/icon_size_large"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_revert"
+                android:tint="@color/text_primary"
+                android:contentDescription="返回" />
 
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/button_height_small"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="保存"
-            android:textColor="@color/primary_darker"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold"
-            android:background="@drawable/button_glow"
-            android:paddingStart="@dimen/button_padding_horizontal"
-            android:paddingEnd="@dimen/button_padding_horizontal"
-            android:elevation="@dimen/card_elevation" />
-    </RelativeLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="均衡器设置"
+                android:textSize="@dimen/text_size_xlarge"
+                android:textColor="@color/text_accent"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btn_open_presets"
+                android:layout_width="@dimen/icon_size_large"
+                android:layout_height="@dimen/icon_size_large"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_presets"
+                android:tint="@color/text_accent"
+                android:contentDescription="EQ预设" />
+
+            <ImageButton
+                android:id="@+id/btn_save"
+                android:layout_width="@dimen/icon_size_large"
+                android:layout_height="@dimen/icon_size_large"
+                android:layout_toStartOf="@id/btn_open_presets"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_save"
+                android:tint="@color/text_accent"
+                android:contentDescription="保存EQ设置"
+                android:scaleType="centerInside"
+                android:padding="8dp" />
+        </RelativeLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -70,14 +87,34 @@
                 android:padding="@dimen/toolbar_padding"
                 android:elevation="@dimen/card_elevation">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- 标题栏：均衡器设置 + 重置按钮 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🎛️ 均衡器设置"
-                    android:textSize="@dimen/text_size_xlarge"
-                    android:textColor="@color/text_accent"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="@dimen/spacing_medium" />
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="@dimen/spacing_medium">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🎛️ 均衡器设置"
+                        android:textSize="@dimen/text_size_xlarge"
+                        android:textColor="@color/text_accent"
+                        android:textStyle="bold"
+                        android:gravity="start|center_vertical" />
+
+                    <ImageButton
+                        android:id="@+id/btn_reset_eq"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_menu_revert"
+                        android:tint="@color/text_accent"
+                        android:contentDescription="重置EQ参数"
+                        android:scaleType="centerInside"
+                        android:padding="6dp" />
+                </LinearLayout>
 
                 <!-- 节点选择 -->
                 <LinearLayout
@@ -141,7 +178,7 @@
                     <Spinner
                         android:id="@+id/spinner_band"
                         android:layout_width="0dp"
-                        android:layout_height="@dimen/button_height_medium"
+                        android:layout_height="48dp"
                         android:layout_weight="1"
                         android:layout_marginStart="@dimen/spacing_small"
                         android:background="@android:drawable/btn_dropdown"
@@ -151,23 +188,18 @@
 
                     <Button
                         android:id="@+id/btn_add_band"
-                        android:layout_width="@dimen/button_height_medium"
-                        android:layout_height="@dimen/button_height_medium"
+                        style="@style/EqSecondaryButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:text="+"
-                        android:textSize="@dimen/text_size_xlarge"
-                        android:textColor="@color/primary_darker"
-                        android:textStyle="bold"
-                        android:background="@drawable/button_glow"
                         android:layout_marginStart="@dimen/spacing_small" />
 
                     <Button
                         android:id="@+id/btn_remove_band"
-                        android:layout_width="@dimen/button_height_medium"
-                        android:layout_height="@dimen/button_height_medium"
+                        style="@style/EqDangerButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:text="-"
-                        android:textSize="@dimen/text_size_xlarge"
-                        android:textColor="@color/primary_darker"
-                        android:background="@drawable/button_debug"
                         android:layout_marginStart="@dimen/spacing_tiny" />
                 </LinearLayout>
 
@@ -401,8 +433,8 @@
                         android:id="@+id/seekbar_gain"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:max="24"
-                        android:progress="12"
+                        android:max="240"
+                        android:progress="120"
                         android:layout_marginTop="@dimen/spacing_small" />
 
                     <LinearLayout
@@ -432,10 +464,33 @@
                     </LinearLayout>
                 </LinearLayout>
 
+                <!-- 同步按钮 -->
+                <Button
+                    android:id="@+id/btn_sync_eq"
+                    style="@style/EqPrimaryButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/button_height_large"
+                    android:layout_marginTop="@dimen/spacing_large"
+                    android:text="同步当前节点全部EQ信息" />
+
             </LinearLayout>
 
         </LinearLayout>
 
     </ScrollView>
 
-</LinearLayout>
+    </LinearLayout>
+
+    <!-- 预设侧边栏 -->
+    <include layout="@layout/drawer_eq_presets" />
+
+    <!-- 半透明遮罩（点击关闭侧边栏） -->
+    <View
+        android:id="@+id/drawer_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:clickable="true" />
+
+</FrameLayout>
