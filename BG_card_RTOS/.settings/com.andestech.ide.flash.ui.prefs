@@ -1,2 +1,0 @@
-RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>false</eraseAll><flashDriver>E\:\\bp1048_wkp\\MVsB1_BT_Audio_SDK_v0.1.12+P05\\MVsB1_Base_SDK\\tools\\b1_download_v1.9.exe</flashDriver><imageFile>C\:\\Users\\BanGO\\Desktop\\BanGO_prj\\BG_Audio_Looper\\BG_card_RTOS\\Debug\\output\\BG_card_RTOS.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>false</verify></rseFlashDriverModel>
-eclipse.preferences.version=1
