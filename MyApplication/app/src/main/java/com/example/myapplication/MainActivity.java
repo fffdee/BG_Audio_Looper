@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int REQUEST_PERMISSION = 100;
     private ImageView ivImage;
-    private Button btnSelect, btnPrev, btnPlay, btnNext;
+    private Button btnSelect, btnPrev, btnPlay, btnNext, btnMetronome;
     private TextView tvStatus;
     private List<String> imagePaths = new ArrayList<>();
     private int currentPosition = 0;
@@ -56,12 +56,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnPrev = findViewById(R.id.btn_prev);
         btnPlay = findViewById(R.id.btn_play);
         btnNext = findViewById(R.id.btn_next);
+        btnMetronome = findViewById(R.id.btn_metronome);
         tvStatus = findViewById(R.id.tv_status);
 
         btnSelect.setOnClickListener(this);
         btnPrev.setOnClickListener(this);
         btnPlay.setOnClickListener(this);
-        btnNext.setOnClickListener(this); // 修复此处缺少的闭合括号
+        btnNext.setOnClickListener(this);
+        
+        // 节拍器按钮
+        btnMetronome.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, MetronomeActivity.class);
+            startActivity(intent);
+        });
     }
 
     // 初始化图片选择 launcher

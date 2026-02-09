@@ -75,14 +75,43 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ViewHold
                 notifyItemChanged(holder.getAdapterPosition());
                 android.util.Log.d("ExportCheck", "项目点击更新：" + project.getProjectName() + "=" + newState);
             } else {
+                // 点击播放项目
                 android.content.Context context = v.getContext();
-                String mergedImagePath = project.getMergedImagePath();
-                if (mergedImagePath == null || !new java.io.File(mergedImagePath).exists()) {
-                    android.widget.Toast.makeText(context, "项目图片损坏或丢失", android.widget.Toast.LENGTH_SHORT).show();
+                
+                android.util.Log.d("ProjectAdapter", "===== 点击项目 =====");
+                android.util.Log.d("ProjectAdapter", "项目名: " + project.getProjectName());
+                
+                java.util.List<String> imagePaths = project.getImagePaths();
+                android.util.Log.d("ProjectAdapter", "imagePaths 是否为null: " + (imagePaths == null));
+                
+                if (imagePaths == null || imagePaths.isEmpty()) {
+                    android.util.Log.e("ProjectAdapter", "错误：图片列表为空");
+                    android.widget.Toast.makeText(context, "项目图片列表为空", android.widget.Toast.LENGTH_SHORT).show();
                     return;
                 }
+                
+                android.util.Log.d("ProjectAdapter", "图片数量: " + imagePaths.size());
+                for (int i = 0; i < imagePaths.size(); i++) {
+                    android.util.Log.d("ProjectAdapter", "  图片 " + (i+1) + ": " + imagePaths.get(i));
+                }
+                
+                // 验证图片文件是否存在
+                boolean allExists = true;
+                for (String path : imagePaths) {
+                    if (path == null || !new java.io.File(path).exists()) {
+                        android.util.Log.w("ProjectAdapter", "图片不存在: " + path);
+                        allExists = false;
+                        break;
+                    }
+                }
+                if (!allExists) {
+                    android.widget.Toast.makeText(context, "部分图片文件丢失", android.widget.Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                android.util.Log.d("ProjectAdapter", "准备启动ProjectDetailActivity");
                 android.content.Intent intent = new android.content.Intent(context, ProjectDetailActivity.class);
-                intent.putExtra("merged_image_path", mergedImagePath);
+                intent.putStringArrayListExtra("image_paths", new java.util.ArrayList<>(imagePaths));
                 context.startActivity(intent);
             }
         });

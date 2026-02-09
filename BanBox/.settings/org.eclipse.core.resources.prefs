@@ -8,6 +8,7 @@ encoding//src/banux/02_device_drivers/flash/flash_bus.c=UTF-8
 encoding//src/banux/02_device_drivers/flash/flash_test.h=UTF-8
 encoding//src/banux/04_shell_commands/bg_shell.c=UTF-8
 encoding//src/banux/04_shell_commands/bg_shell_commands.c=UTF-8
+encoding//src/banux/04_shell_commands/shell_cmd_mode.c=UTF-8
 encoding//src/banux/04_shell_commands/shell_io_ble.c=UTF-8
 encoding//src/banux/05_component/audio_looper/audio_looper.c=UTF-8
 encoding//src/banux/05_component/effect_graph/effect_graph.c=UTF-8

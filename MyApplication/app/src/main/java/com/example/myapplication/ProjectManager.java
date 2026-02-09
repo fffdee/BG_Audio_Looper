@@ -27,11 +27,36 @@ public class ProjectManager {
     private static final long CACHE_VALIDITY_MS = 2000; // 缓存有效期2秒
 
     public static void saveProject(Context context, ImageProject project) {
+        android.util.Log.d("ProjectManager", "saveProject - 项目名: " + project.getProjectName());
+        android.util.Log.d("ProjectManager", "saveProject - 图片数: " + 
+                          (project.getImagePaths() != null ? project.getImagePaths().size() : "null"));
+        if (project.getImagePaths() != null) {
+            for (int i = 0; i < project.getImagePaths().size(); i++) {
+                android.util.Log.d("ProjectManager", "  图片 " + (i+1) + ": " + project.getImagePaths().get(i));
+            }
+        }
+        
         List<ImageProject> projects = getProjects(context);
         projects.add(project);
+        
+        String json = new Gson().toJson(projects);
+        android.util.Log.d("ProjectManager", "JSON长度: " + json.length());
+        
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        prefs.edit().putString(KEY_PROJECTS, new Gson().toJson(projects)).apply();
+        boolean success = prefs.edit().putString(KEY_PROJECTS, json).commit();
+        android.util.Log.d("ProjectManager", "保存结果: " + success);
+        
         invalidateCache(); // 清除缓存
+        
+        // 验证保存后立即读取
+        List<ImageProject> verifyProjects = getProjects(context);
+        android.util.Log.d("ProjectManager", "验证 - 总项目数: " + verifyProjects.size());
+        if (!verifyProjects.isEmpty()) {
+            ImageProject lastProject = verifyProjects.get(verifyProjects.size() - 1);
+            android.util.Log.d("ProjectManager", "验证 - 最后一个项目: " + lastProject.getProjectName());
+            android.util.Log.d("ProjectManager", "验证 - 图片数: " + 
+                              (lastProject.getImagePaths() != null ? lastProject.getImagePaths().size() : "null"));
+        }
     }
 
     public static List<ImageProject> getProjects(Context context) {

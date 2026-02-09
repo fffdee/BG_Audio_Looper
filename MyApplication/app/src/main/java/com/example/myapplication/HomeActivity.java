@@ -532,13 +532,34 @@ public class HomeActivity extends AppCompatActivity {
                     project.setSelected(newState);
                     holder.checkBox.setChecked(newState);
                 } else {
-                    String mergedImagePath = project.getMergedImagePath();
-                    if (mergedImagePath == null || !new java.io.File(mergedImagePath).exists()) {
-                        Toast.makeText(HomeActivity.this, "项目图片损坏或丢失", Toast.LENGTH_SHORT).show();
+                    // 使用新逻辑：传递图片列表而不是拼接图
+                    android.util.Log.d("HomeActivity", "点击项目: " + project.getProjectName());
+                    
+                    java.util.List<String> imagePaths = project.getImagePaths();
+                    if (imagePaths == null || imagePaths.isEmpty()) {
+                        android.util.Log.e("HomeActivity", "项目图片列表为空");
+                        Toast.makeText(HomeActivity.this, "项目图片列表为空", Toast.LENGTH_SHORT).show();
                         return;
                     }
+                    
+                    android.util.Log.d("HomeActivity", "图片数量: " + imagePaths.size());
+                    
+                    // 验证图片文件是否存在
+                    boolean allExists = true;
+                    for (String path : imagePaths) {
+                        if (path == null || !new java.io.File(path).exists()) {
+                            android.util.Log.w("HomeActivity", "图片不存在: " + path);
+                            allExists = false;
+                            break;
+                        }
+                    }
+                    if (!allExists) {
+                        Toast.makeText(HomeActivity.this, "部分图片文件丢失", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    
                     Intent intent = new Intent(HomeActivity.this, ProjectDetailActivity.class);
-                    intent.putExtra("merged_image_path", mergedImagePath);
+                    intent.putStringArrayListExtra("image_paths", new java.util.ArrayList<>(imagePaths));
                     startActivity(intent);
                 }
             });

@@ -108,7 +108,7 @@
             <!-- 连接按钮 -->
             <Button
                 android:id="@+id/btn_bluetooth_connect"
-                style="@style/PrimaryButton"
+                style="@style/GlowButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="16dp"
@@ -125,7 +125,7 @@
 
             <Button
                 android:id="@+id/btn_banbox_settings"
-                style="@style/GlowButton"
+                style="@style/PrimaryButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginBottom="16dp"
@@ -133,7 +133,7 @@
 
             <Button
                 android:id="@+id/btn_enter"
-                style="@style/DebugButton"
+                style="@style/PrimaryButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="自动乐谱" />
@@ -145,7 +145,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="v1.0 MECHA EDITION"
+        android:text="v1.0 MECHA BanGO"
         android:textColor="#555555"
         android:textSize="12sp"
         android:gravity="center"

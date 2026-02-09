@@ -8,8 +8,8 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanResult;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,19 +18,23 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.EditText;
-import android.view.Gravity;
 import android.widget.Toast;
 import android.widget.LinearLayout;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.viewpager2.widget.ViewPager2;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +49,25 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
     private ArrayAdapter<String> deviceAdapter;
     private AlertDialog scanDialog;
 
+    // 侧边栏相关控件
+    private View settingsDrawerOverlay; // 遮罩层
+    private LinearLayout drawerSettings; // 侧边栏
+    private SwitchCompat switchBootSound; // 开机提示音开关
+    private SharedPreferences sharedPreferences; // 用于保存设置
+
+    // 副音箱模式相关
+    private ImageButton btnSpeakerMode; // 副音箱模式切换按钮
+    private boolean isSecondarySpeakerMode = false; // 当前是否为副音箱模式
+
+    // ViewPager相关
+    private ViewPager2 viewPagerFunctions;
+    private LinearLayout indicatorContainer;
+    private FunctionPagerAdapter functionPagerAdapter;
+
+    // 侧边栏动画常量
+    private static final int DRAWER_WIDTH = 280; // 侧边栏宽度（dp）
+    private static final long ANIMATION_DURATION = 300; // 动画时长（ms）
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,8 +77,11 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_banbox_settings_new);
 
+        // 初始化SharedPreferences（保存设置）
+        sharedPreferences = getSharedPreferences("BanBoxSettings", MODE_PRIVATE);
+
         // 初始化蓝牙适配器
-        android.bluetooth.BluetoothManager bluetoothManager = 
+        android.bluetooth.BluetoothManager bluetoothManager =
                 (android.bluetooth.BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
         if (bluetoothAdapter != null) {
@@ -66,11 +92,18 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
         TextView tvStatus = findViewById(R.id.tv_connection_status);
         TextView tvDeviceName = findViewById(R.id.tv_device_name);
         Button btnConnect = findViewById(R.id.btn_connect);
-        Button btnFxControl = findViewById(R.id.btn_fx_control);
-        Button btnEqControl = findViewById(R.id.btn_eq_control);
-        Button btnVolumeControl = findViewById(R.id.btn_volume_control);
         Button btnTerminal = findViewById(R.id.btn_terminal);
-        Button btnAudioChain = findViewById(R.id.btn_audio_chain);
+        btnSpeakerMode = findViewById(R.id.btn_speaker_mode);
+
+        // 初始化ViewPager
+        viewPagerFunctions = findViewById(R.id.viewpager_functions);
+        indicatorContainer = findViewById(R.id.indicator_container);
+
+        // 设置ViewPager适配器
+        setupFunctionViewPager();
+
+        // ========== 初始化侧边栏相关控件 ==========
+        initSideDrawer();
 
         if (tvStatus != null) {
             updateConnectionStatus(tvStatus, tvDeviceName, btnConnect);
@@ -89,33 +122,6 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
             });
         }
 
-        // 效果控制
-        if (btnFxControl != null) {
-            btnFxControl.setOnClickListener(v -> {
-                if (checkConnection()) {
-                    startActivity(new Intent(this, FxControlActivity.class));
-                }
-            });
-        }
-
-        // 均衡器
-        if (btnEqControl != null) {
-            btnEqControl.setOnClickListener(v -> {
-                if (checkConnection()) {
-                    startActivity(new Intent(this, EqControlActivity.class));
-                }
-            });
-        }
-
-        // 音量控制
-        if (btnVolumeControl != null) {
-            btnVolumeControl.setOnClickListener(v -> {
-                if (checkConnection()) {
-                    startActivity(new Intent(this, HardwareVolumeActivity.class));
-                }
-            });
-        }
-
         // 终端
         if (btnTerminal != null) {
             btnTerminal.setOnClickListener(v -> {
@@ -125,13 +131,20 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
             });
         }
 
-        // 音频链路图
-        if (btnAudioChain != null) {
-            btnAudioChain.setOnClickListener(v -> {
-                if (checkConnection()) {
-                    startActivity(new Intent(this, AudioChainDiagramActivity.class));
-                }
+        // 副音箱模式切换
+        if (btnSpeakerMode != null) {
+            Log.d("BanBoxSettings", "btnSpeakerMode initialized successfully");
+            // 从SharedPreferences加载副音箱模式状态
+            isSecondarySpeakerMode = sharedPreferences.getBoolean("secondary_speaker_mode", false);
+            Log.d("BanBoxSettings", "Loaded speaker mode from prefs: " + isSecondarySpeakerMode);
+            updateSpeakerModeUI();
+
+            btnSpeakerMode.setOnClickListener(v -> {
+                Log.d("BanBoxSettings", "Speaker mode button clicked");
+                toggleSpeakerMode();
             });
+        } else {
+            Log.e("BanBoxSettings", "btnSpeakerMode is null!");
         }
 
         // 监听蓝牙连接状态
@@ -160,6 +173,115 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    /**
+     * 初始化侧边栏控件和交互逻辑
+     */
+    private void initSideDrawer() {
+        // 获取控件引用
+        settingsDrawerOverlay = findViewById(R.id.settings_drawer_overlay);
+        drawerSettings = findViewById(R.id.drawer_settings);
+        switchBootSound = findViewById(R.id.switch_boot_sound);
+        View btnOpenSettings = findViewById(R.id.btn_open_settings); // 打开设置按钮
+        View btnCloseSettingsDrawer = findViewById(R.id.btn_close_settings_drawer); // 关闭侧边栏按钮
+
+        Log.d("BanBoxSettings", "settingsDrawerOverlay: " + settingsDrawerOverlay);
+        Log.d("BanBoxSettings", "drawerSettings: " + drawerSettings);
+        Log.d("BanBoxSettings", "switchBootSound: " + switchBootSound);
+        Log.d("BanBoxSettings", "btnOpenSettings: " + btnOpenSettings);
+        Log.d("BanBoxSettings", "btnCloseSettingsDrawer: " + btnCloseSettingsDrawer);
+
+        // 从SharedPreferences加载开机提示音设置
+        boolean isBootSoundEnabled = sharedPreferences.getBoolean("boot_sound_enabled", true);
+        if (switchBootSound != null) {
+            switchBootSound.setChecked(isBootSoundEnabled);
+        }
+
+        // 1. 打开设置按钮点击事件（右上角的设置图标）
+        if (btnOpenSettings != null) {
+            btnOpenSettings.setOnClickListener(v -> {
+                Log.d("BanBoxSettings", "Settings button clicked");
+                openSettingsDrawer();
+            });
+        }
+
+        // 2. 遮罩层点击事件（点击遮罩关闭侧边栏）
+        if (settingsDrawerOverlay != null) {
+            settingsDrawerOverlay.setOnClickListener(v -> closeSettingsDrawer());
+        }
+
+        // 3. 关闭侧边栏按钮点击事件
+        if (btnCloseSettingsDrawer != null) {
+            btnCloseSettingsDrawer.setOnClickListener(v -> closeSettingsDrawer());
+        }
+
+        // 4. 开机提示音开关状态改变事件（保存设置）
+        if (switchBootSound != null) {
+            switchBootSound.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // 保存设置到SharedPreferences
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean("boot_sound_enabled", isChecked);
+                editor.apply();
+
+                // 可选：如果蓝牙已连接，发送命令到设备更新设置
+                if (bluetoothHelper.isConnected()) {
+                    String cmd = isChecked ? "boot_sound on" : "boot_sound off";
+                    sendBleShellCommand(cmd, success -> {
+                        runOnUiThread(() -> {
+                            String toastMsg = isChecked ? "已启用开机提示音" : "已禁用开机提示音";
+                            if (success) {
+                                Toast.makeText(BanBoxSettingsActivity.this, toastMsg, Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(BanBoxSettingsActivity.this, "设置失败，请重试", Toast.LENGTH_SHORT).show();
+                                // 恢复开关状态
+                                switchBootSound.setChecked(!isChecked);
+                            }
+                        });
+                    });
+                } else {
+                    // 未连接蓝牙，仅保存本地设置
+                    String toastMsg = isChecked ? "已启用开机提示音（下次连接生效）" : "已禁用开机提示音（下次连接生效）";
+                    Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    /**
+     * 打开侧边栏（简化版用于测试）
+     */
+    private void openSettingsDrawer() {
+        if (drawerSettings == null || settingsDrawerOverlay == null) {
+            Log.e("BanBoxSettings", "drawerSettings or settingsDrawerOverlay is null");
+            return;
+        }
+
+        Log.d("BanBoxSettings", "Opening settings drawer");
+
+        // 显示遮罩层
+        settingsDrawerOverlay.setVisibility(View.VISIBLE);
+
+        // 直接设置侧边栏可见，不使用动画
+        drawerSettings.setTranslationX(0); // 确保位置正确
+        drawerSettings.setVisibility(View.VISIBLE);
+
+        Log.d("BanBoxSettings", "Settings drawer opened (no animation)");
+    }
+
+    /**
+     * 关闭侧边栏（简化版用于测试）
+     */
+    private void closeSettingsDrawer() {
+        if (drawerSettings == null || settingsDrawerOverlay == null) return;
+
+        Log.d("BanBoxSettings", "Closing settings drawer");
+
+        // 隐藏遮罩层和侧边栏
+        settingsDrawerOverlay.setVisibility(View.GONE);
+        drawerSettings.setVisibility(View.GONE);
+
+        Log.d("BanBoxSettings", "Settings drawer closed");
     }
 
     // 发送命令到AB01特征（0x0006）
@@ -256,7 +378,6 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
         });
     }
 
-     
     private void updateConnectionStatus(TextView tvStatus, TextView tvDeviceName, Button btnConnect) {
         if (bluetoothHelper.isConnected()) {
             tvStatus.setText("● 已连接");
@@ -286,7 +407,7 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
     /**
      * 检查蓝牙连接状态
      */
-    private boolean checkConnection() {
+    public boolean checkConnection() {
         if (!bluetoothHelper.isConnected()) {
             Toast.makeText(this, "请先连接蓝牙设备", Toast.LENGTH_SHORT).show();
             return false;
@@ -501,6 +622,8 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
         if (isScanning) {
             stopBleScan();
         }
+        // 销毁时关闭侧边栏
+        closeSettingsDrawer();
     }
 
     // 更新扫描对话框
@@ -516,10 +639,6 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
             });
         }
     }
-
-    // 断开设备连接由 BluetoothHelper 统一管理
-
-    // 彻底移除 showBluetoothStatusDialog 旧实现，已由 showBluetoothScanDialog 统一管理
 
     // 开始BLE扫描并设置超时
     private void startBleScanWithTimeout(long timeoutMs, TextView statusText, Button rescanButton) {
@@ -543,5 +662,153 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
                 }
             });
         }, timeoutMs);
+    }
+
+    /**
+     * 切换副音箱模式
+     */
+    private void toggleSpeakerMode() {
+        Log.d("BanBoxSettings", "toggleSpeakerMode called, current mode: " + isSecondarySpeakerMode);
+
+        // 检查蓝牙连接状态
+        if (!checkConnection()) {
+            Log.d("BanBoxSettings", "Connection check failed");
+            return;
+        }
+
+        isSecondarySpeakerMode = !isSecondarySpeakerMode;
+        Log.d("BanBoxSettings", "New mode: " + isSecondarySpeakerMode);
+
+        // 保存设置到SharedPreferences
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("secondary_speaker_mode", isSecondarySpeakerMode);
+        editor.apply();
+
+        // 更新UI
+        runOnUiThread(() -> updateSpeakerModeUI());
+
+        // 发送命令到设备
+        String cmd = isSecondarySpeakerMode ? "mode secondary" : "mode main";
+        Log.d("BanBoxSettings", "Sending command: " + cmd);
+        sendBleShellCommand(cmd, success -> {
+            runOnUiThread(() -> {
+                String modeText = isSecondarySpeakerMode ? "副音箱模式" : "主音箱模式";
+                if (success) {
+                    Toast.makeText(BanBoxSettingsActivity.this, "已切换到" + modeText, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(BanBoxSettingsActivity.this, "切换失败，请重试", Toast.LENGTH_SHORT).show();
+                    // 恢复UI状态
+                    isSecondarySpeakerMode = !isSecondarySpeakerMode;
+                    updateSpeakerModeUI();
+                }
+            });
+        });
+    }
+
+    /**
+     * 更新副音箱模式UI
+     */
+    private void updateSpeakerModeUI() {
+        if (btnSpeakerMode != null) {
+            try {
+                // 根据模式更新图标
+                int iconRes = isSecondarySpeakerMode ? R.drawable.ic_speaker_secondary : R.drawable.ic_speaker_main;
+                Log.d("BanBoxSettings", "Setting icon resource: " + iconRes + " for mode: " + (isSecondarySpeakerMode ? "secondary" : "main"));
+                btnSpeakerMode.setImageResource(iconRes);
+
+                // 更新内容描述
+                String description = isSecondarySpeakerMode ? "当前为副音箱模式，点击切换到主音箱" : "当前为主音箱模式，点击切换到副音箱";
+                btnSpeakerMode.setContentDescription(description);
+
+                Log.d("BanBoxSettings", "Updated speaker mode UI: " + (isSecondarySpeakerMode ? "secondary" : "main"));
+            } catch (Exception e) {
+                Log.e("BanBoxSettings", "Error updating speaker mode UI", e);
+            }
+        } else {
+            Log.w("BanBoxSettings", "btnSpeakerMode is null, cannot update UI");
+        }
+    }
+
+    /**
+     * 重写返回键：如果侧边栏打开，先关闭侧边栏
+     */
+    @Override
+    public void onBackPressed() {
+        if (drawerSettings != null && drawerSettings.getVisibility() == View.VISIBLE) {
+            closeSettingsDrawer();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    /**
+     * 设置功能ViewPager
+     */
+    private void setupFunctionViewPager() {
+        // 创建功能数据
+        List<FunctionItem> functions = new ArrayList<>();
+        functions.add(new FunctionItem("🎛️ 效果调节", FxControlActivity.class));
+        functions.add(new FunctionItem("🎚️ 均衡器设置", EqControlActivity.class));
+        functions.add(new FunctionItem("🔊 硬件音量控制", HardwareVolumeActivity.class));
+        functions.add(new FunctionItem("⏱️ 节拍器", MetronomeActivity.class));
+        functions.add(new FunctionItem("🎵 音频链路图", AudioChainDiagramActivity.class));
+
+        // 创建适配器
+        functionPagerAdapter = new FunctionPagerAdapter(this, functions);
+        viewPagerFunctions.setAdapter(functionPagerAdapter);
+
+        // 设置页面指示器
+        setupIndicators(functions.size());
+
+        // 监听页面变化
+        viewPagerFunctions.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                updateIndicators(position);
+            }
+        });
+    }
+
+    /**
+     * 设置页面指示器
+     */
+    private void setupIndicators(int count) {
+        indicatorContainer.removeAllViews();
+        for (int i = 0; i < count; i++) {
+            View indicator = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(12, 12);
+            params.setMargins(4, 0, 4, 0);
+            indicator.setLayoutParams(params);
+            indicator.setBackgroundResource(R.drawable.indicator_unselected);
+            indicatorContainer.addView(indicator);
+        }
+        updateIndicators(0);
+    }
+
+    /**
+     * 更新指示器状态
+     */
+    private void updateIndicators(int position) {
+        for (int i = 0; i < indicatorContainer.getChildCount(); i++) {
+            View indicator = indicatorContainer.getChildAt(i);
+            if (i == position) {
+                indicator.setBackgroundResource(R.drawable.indicator_selected);
+            } else {
+                indicator.setBackgroundResource(R.drawable.indicator_unselected);
+            }
+        }
+    }
+
+    /**
+     * 功能项数据类
+     */
+    public static class FunctionItem {
+        public String title;
+        public Class<?> activityClass;
+
+        public FunctionItem(String title, Class<?> activityClass) {
+            this.title = title;
+            this.activityClass = activityClass;
+        }
     }
 }

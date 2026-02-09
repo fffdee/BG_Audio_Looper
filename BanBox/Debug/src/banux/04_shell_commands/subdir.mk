@@ -8,6 +8,7 @@ C_SRCS += \
 ../src/banux/04_shell_commands/bg_shell_commands.c \
 ../src/banux/04_shell_commands/shell_cmd_effect.c \
 ../src/banux/04_shell_commands/shell_cmd_metronome.c \
+../src/banux/04_shell_commands/shell_cmd_mode.c \
 ../src/banux/04_shell_commands/shell_cmd_param.c \
 ../src/banux/04_shell_commands/shell_cmd_sysmon.c \
 ../src/banux/04_shell_commands/shell_cmd_ui.c \
@@ -20,6 +21,7 @@ OBJS += \
 ./src/banux/04_shell_commands/bg_shell_commands.o \
 ./src/banux/04_shell_commands/shell_cmd_effect.o \
 ./src/banux/04_shell_commands/shell_cmd_metronome.o \
+./src/banux/04_shell_commands/shell_cmd_mode.o \
 ./src/banux/04_shell_commands/shell_cmd_param.o \
 ./src/banux/04_shell_commands/shell_cmd_sysmon.o \
 ./src/banux/04_shell_commands/shell_cmd_ui.o \
@@ -32,6 +34,7 @@ C_DEPS += \
 ./src/banux/04_shell_commands/bg_shell_commands.d \
 ./src/banux/04_shell_commands/shell_cmd_effect.d \
 ./src/banux/04_shell_commands/shell_cmd_metronome.d \
+./src/banux/04_shell_commands/shell_cmd_mode.d \
 ./src/banux/04_shell_commands/shell_cmd_param.d \
 ./src/banux/04_shell_commands/shell_cmd_sysmon.d \
 ./src/banux/04_shell_commands/shell_cmd_ui.d \

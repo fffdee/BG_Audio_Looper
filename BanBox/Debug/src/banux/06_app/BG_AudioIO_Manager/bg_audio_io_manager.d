@@ -95,6 +95,7 @@ src/banux/06_app/BG_AudioIO_Manager/bg_audio_io_manager.d src/banux/06_app/BG_Au
  /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/05_component/effect_graph/shell_cmd_graph.h \
  /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_sysmon.h \
  /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_metronome.h \
+ /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_mode.h \
  /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/bluetooth/inc/bt_manager.h \
  /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc/timeout.h \
  /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/bluetooth/inc/bt_stack_callback.h \
@@ -294,6 +295,8 @@ src/banux/06_app/BG_AudioIO_Manager/bg_audio_io_manager.d src/banux/06_app/BG_Au
 /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_sysmon.h:
 
 /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_metronome.h:
+
+/cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/04_shell_commands/shell_cmd_mode.h:
 
 /cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/bluetooth/inc/bt_manager.h:
 

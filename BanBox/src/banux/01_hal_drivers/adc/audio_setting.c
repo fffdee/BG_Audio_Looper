@@ -101,7 +101,7 @@ void AudioSetting_SetMic1Volume(uint16_t vol) {
     if (vol > VOL_MAX) vol = VOL_MAX;
     // 静音特殊处理：0直接设为0，否则按硬件规则设为≥0x001
     uint16_t actual_vol = (vol == 0) ? 0 : (vol < VOL_MIN) ? VOL_MIN : vol;
-    DBG("vol is %d\n", actual_vol);
+    //DBG("vol is %d\n", actual_vol);
     AudioADC_VolSetChannel(ADC0_MODULE, CHANNEL_LEFT, actual_vol);
 }
 
@@ -143,7 +143,7 @@ void AudioSetting_SetGuitar1Volume(uint16_t vol) {
 void AudioSetting_SetGuitar2Volume(uint16_t vol) {
     if (vol > VOL_MAX) vol = VOL_MAX;
     uint16_t actual_vol = (vol == 0) ? 0 : (vol < VOL_MIN) ? VOL_MIN : vol;
-    DBG("vol is %d \n",vol);
+    //DBG("vol is %d \n",vol);
     AudioADC_VolSetChannel(ADC0_MODULE, CHANNEL_RIGHT, actual_vol);
 }
 
@@ -193,7 +193,7 @@ uint8_t AudioSetting_GetGuitar1VolumePercent(void) {
 void AudioSetting_SetGuitar2VolumePercent(uint8_t percent) {
     if (percent > 100) percent = 100;
     uint16_t vol = (uint16_t)(((uint32_t)percent * VOL_MAX) / 100);
-    DBG("vol is %d \n",vol);
+    //DBG("vol is %d \n",vol);
     AudioADC_VolSetChannel(ADC0_MODULE, CHANNEL_RIGHT, vol);
 }
 

@@ -49,6 +49,18 @@
             android:layout_height="wrap_content"
             android:text="下一张" />
     </LinearLayout>
+    
+    <!-- 节拍器入口按钮 -->
+    <Button
+        android:id="@+id/btn_metronome"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:text="🎵 节拍器"
+        android:textSize="16sp"
+        android:padding="16dp" />
 
     <!-- 播放状态提示 -->
     <TextView

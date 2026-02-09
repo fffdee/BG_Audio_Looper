@@ -56,11 +56,11 @@ public class FxControlActivity extends AppCompatActivity {
 
         // 创建 DRC 滑条
         LinearLayout drcContainer = findViewById(R.id.drc_sliders_container);
-        createVerticalSliders(drcContainer, 6, DRC_PARAMS, DRC_RANGES, DRC_DEFAULTS, "#00FFA3");
+        createVerticalSliders(drcContainer, 10, DRC_PARAMS, DRC_RANGES, DRC_DEFAULTS, "#00FFA3");
 
         // 创建混响滑条
         LinearLayout reverbContainer = findViewById(R.id.reverb_sliders_container);
-        createVerticalSliders(reverbContainer, 9, REVERB_PARAMS, REVERB_RANGES, REVERB_DEFAULTS, "#00D9FF");
+        createVerticalSliders(reverbContainer, 12, REVERB_PARAMS, REVERB_RANGES, REVERB_DEFAULTS, "#00D9FF");
         
         // 查询效果器参数并同步到UI
         queryEffectParams();

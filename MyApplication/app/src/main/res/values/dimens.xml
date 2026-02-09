@@ -17,7 +17,7 @@
     <dimen name="spacing_medium">16dp</dimen>
     <dimen name="spacing_large">20dp</dimen>
     <dimen name="spacing_xlarge">24dp</dimen>
-    <dimen name="spacing_huge">32dp</dimen>
+    <dimen name="spacing_huge">60dp</dimen>
     
     <!-- 卡片尺寸 -->
     <dimen name="card_padding">16dp</dimen>

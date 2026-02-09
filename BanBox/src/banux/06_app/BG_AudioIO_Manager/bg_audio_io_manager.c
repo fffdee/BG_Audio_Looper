@@ -52,6 +52,7 @@
 // System Monitor 模块
 #include "shell_cmd_sysmon.h"
 #include "shell_cmd_metronome.h"
+#include "shell_cmd_mode.h"
 
 #include "bt_manager.h"
 
@@ -415,7 +416,7 @@ void BG_audio_Init(uint16_t SampleRate)
 		EffectGraphVfs_TryAutoMount();
 
 		// 5. 挂接实际音频设备回调
-		SetupEffectGraphCallbacks();
+		BG_AudioIO_SetupEffectGraphCallbacks();
 	}
 
 	// 6. 注册 Shell 命令（支持 CDC/BLE 远程控制）
@@ -426,6 +427,9 @@ void BG_audio_Init(uint16_t SampleRate)
 	
 	// 8. 注册节拍器命令
 	ShellCmdMetronome_Register();
+	
+	// 9. 注册模式切换命令（主音箱/副音箱模式）
+	ShellCmdMode_Register();
 
 	DBG("[Audio] Effect Graph initialized successfully\n");
 	// ==========================================
@@ -1424,6 +1428,8 @@ static uint16_t BT_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t
  * ADC混音器处理回调 - 将4个单声道EQ输出合并成2个32位双声道
  * 输入: in_bufs[0]=guitar_L, [1]=guitar_R, [2]=mic_L, [3]=mic_R (各16位单声道)
  * 输出: out_buf = [guitar_L+mic_L | guitar_R+mic_R] (32位双声道)
+ * 
+ * 【副音箱模式支持】当只有2个输入时（ADC0, ADC1），直接混合立体声数据
  */
 static void ADC_Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
 {
@@ -1433,13 +1439,54 @@ static void ADC_Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in
 	(void)node;
 	
 	/* 安全检查 */
-	if (!out_buf || len == 0 || in_count < 4) {
+	if (!out_buf || len == 0 || in_count == 0) {
 		return;
 	}
 	
-	/* ADC Mixer需要4个输入: guitar_L, guitar_R, mic_L, mic_R */
+	/* 副音箱模式：2个输入（ADC0立体声, ADC1立体声）*/
+	if (in_count == 2) {
+		/* 直接混合两个立体声输入 */
+		for (i = 0; i < len; i++) {
+			int32_t *in0_32 = (int32_t *)in_bufs[0];
+			int32_t *in1_32 = (int32_t *)in_bufs[1];
+			int16_t *in0_16 = (int16_t *)&in0_32[i];
+			int16_t *in1_16 = (int16_t *)&in1_32[i];
+			
+			int32_t left_sum = 0;
+			int32_t right_sum = 0;
+			
+			/* 混合左声道 */
+			if (in_bufs[0]) {
+				left_sum += in0_16[0];
+			}
+			if (in_bufs[1]) {
+				left_sum += in1_16[0];
+			}
+			
+			/* 混合右声道 */
+			if (in_bufs[0]) {
+				right_sum += in0_16[1];
+			}
+			if (in_bufs[1]) {
+				right_sum += in1_16[1];
+			}
+			
+			/* 饱和限制到16位 */
+			if (left_sum > 32767) left_sum = 32767;
+			if (left_sum < -32768) left_sum = -32768;
+			if (right_sum > 32767) right_sum = 32767;
+			if (right_sum < -32768) right_sum = -32768;
+			
+			/* 打包成32位: [低16位=L | 高16位=R] */
+			out_16[i * 2] = (int16_t)left_sum;
+			out_16[i * 2 + 1] = (int16_t)right_sum;
+		}
+		return;
+	}
+	
+	/* 主音箱模式：4个输入（guitar_L, guitar_R, mic_L, mic_R）*/
 	if (in_count != 4) {
-		DBG("[ADC_Mixer] Warning: Expected 4 inputs, got %d\n", in_count);
+		DBG("[ADC_Mixer] Warning: Expected 2 or 4 inputs, got %d\n", in_count);
 		return;
 	}
 	
@@ -1761,17 +1808,17 @@ static void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count,
 			/* 未知节点，使用默认EQ避免崩溃 */
 			target_eq = &gCtrlVars.eq_guitar_l_unit;
 			src_port = 0;
-			DBG("[EQ_Process] WARNING: Unknown node ID %d, using default EQ\n", node->id);
+			//DBG("[EQ_Process] WARNING: Unknown node ID %d, using default EQ\n", node->id);
 			break;
 	}
 
 	/* 调试输出 */
-	eq_debug_counter++;
-	if ((eq_debug_counter & 0x1FFF) == 0) {
-		DBG("[EQ_Process] node_id=%d name=%s port=%d | target_eq: en=%d fc=%d ch=%d ct=%p\n", 
-		    node->id, node->name, src_port, target_eq->enable, target_eq->filter_count, 
-		    target_eq->channel, target_eq->ct);
-	}
+	// eq_debug_counter++;
+	// if ((eq_debug_counter & 0x1FFF) == 0) {
+	// 	DBG("[EQ_Process] node_id=%d name=%s port=%d | target_eq: en=%d fc=%d ch=%d ct=%p\n", 
+	// 	    node->id, node->name, src_port, target_eq->enable, target_eq->filter_count, 
+	// 	    target_eq->channel, target_eq->ct);
+	// }
 
 	/* 根据target_eq的enable标志决定是否应用EQ处理 */
 	#if CFG_AUDIO_EFFECT_MIC_OUT_EQ_EN
@@ -1895,8 +1942,9 @@ static void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_co
 
 /**
  * 挂接 Effect Graph 节点的音频设备回调
+ * 注意：此函数在预设加载后需要被重新调用，以确保新节点的回调函数正确注册
  */
-static void SetupEffectGraphCallbacks(void)
+void BG_AudioIO_SetupEffectGraphCallbacks(void)
 {
 	EffectNode_t* node = NULL;
 	

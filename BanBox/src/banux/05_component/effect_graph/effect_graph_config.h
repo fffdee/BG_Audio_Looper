@@ -153,7 +153,7 @@ typedef enum {
  *   Reverb ──────┐                                                    │              │
  *   USB_BT_EQ ───┴──> Final_Mixer ──┬──> DAC0_Out                     │              │
  *                                    └──> USB_Out                      │              │
- *  
+ *
  ******************************************************************************/
 #define DEFAULT_EDGES_CONFIG { \
     /* ADC0 (Guitar) 左右声道分别进入独立EQ */ \
@@ -172,14 +172,14 @@ typedef enum {
     \
     /* ADC 效果链 (混音后进入Expander->DRC->Pre_Reverb_Mixer) */ \
     { NODE_ID_ADC_MIXER, NODE_ID_EXPANDER, 0, 0 }, \
-    { NODE_ID_EXPANDER,  NODE_ID_DRC,      0, 0 }, \
-    { NODE_ID_DRC,       NODE_ID_PRE_REVERB_MIXER, 0, 0 }, \
+    { NODE_ID_EXPANDER,  NODE_ID_PRE_REVERB_MIXER,      0, 0 }, \
     \
     /* Looper播放 → Pre_Reverb_Mixer (与DRC输出混音后一起进混响) */ \
     { NODE_ID_LOOPER_PLAY, NODE_ID_PRE_REVERB_MIXER, 0, 1 }, \
     \
     /* Pre_Reverb_Mixer → Reverb */ \
     { NODE_ID_PRE_REVERB_MIXER, NODE_ID_REVERB, 0, 0 }, \
+	 { NODE_ID_REVERB, NODE_ID_DRC, 0, 0 }, \
     \
     /* USB/BT + 节拍器 输入到 USB_BT 混音器 */ \
     { NODE_ID_USB_IN,    NODE_ID_USB_BT_MIXER, 0, 0 }, \
@@ -190,7 +190,7 @@ typedef enum {
     { NODE_ID_USB_BT_MIXER, NODE_ID_USB_BT_EQ, 0, 0 }, \
     \
     /* 最终混音器 (Reverb + USB_BT_EQ) */ \
-    { NODE_ID_REVERB,    NODE_ID_FINAL_MIXER, 0, 0 }, \
+    { NODE_ID_DRC,    NODE_ID_FINAL_MIXER, 0, 0 }, \
     { NODE_ID_USB_BT_EQ, NODE_ID_FINAL_MIXER, 0, 1 }, \
     \
     /* 输出 */ \
@@ -246,6 +246,7 @@ typedef enum {
     GRAPH_PRESET_MIC_ONLY,          /* 仅麦克风 */
     GRAPH_PRESET_BLUETOOTH,         /* 蓝牙音箱模式 */
     GRAPH_PRESET_USB_AUDIO,         /* USB声卡模式 */
+    GRAPH_PRESET_SECONDARY_SPEAKER, /* 副音箱模式 - 仅混音，无效果和looper */
     GRAPH_PRESET_MAX
 } GraphPreset_t;
 
@@ -290,6 +291,50 @@ typedef enum {
 }
 
 #define BT_SPEAKER_EDGE_COUNT   2
+
+/*******************************************************************************
+ * 副音箱配置 - 仅混音所有输入源到输出，无效果和Looper
+ * 使用三个混音器实现完整的信号路径，避免端口冲突
+ * [ADC0, ADC1] -> ADC_Mixer -> Final_Mixer -> DAC0
+ * [USB_IN, BT_IN] -> USB_BT_Mixer -> Final_Mixer -> DAC0
+ * 特点：
+ *   - 不使用任何效果器
+ *   - 不使用Looper功能
+ *   - 不使用Metronome节拍器
+ *   - 仅简单混音多路输入到输出
+ *   - 适用于副音箱场景
+ ******************************************************************************/
+#define SECONDARY_SPEAKER_NODE_COUNT   8
+
+#define SECONDARY_SPEAKER_NODES_CONFIG { \
+    { 0, EFFECT_NODE_TYPE_SOURCE_ADC0,   "guitar_in",   true, {{0}} }, \
+    { 1, EFFECT_NODE_TYPE_SOURCE_ADC1,   "mic_in",   true, {{0}} }, \
+    { 2, EFFECT_NODE_TYPE_SOURCE_USB_IN, "usb_in",    true, {{0}} }, \
+    { 3, EFFECT_NODE_TYPE_SOURCE_BT_IN,  "bt_in",     true, {{0}} }, \
+    { 4, EFFECT_NODE_TYPE_MIXER,         "adc_mixer", true, {{0}} }, \
+    { 5, EFFECT_NODE_TYPE_MIXER,         "usb_bt_mixer", true, {{0}} }, \
+    { 6, EFFECT_NODE_TYPE_MIXER,         "final_mixer", true, {{0}} }, \
+    { 7, EFFECT_NODE_TYPE_SINK_DAC0,     "dac_out",   true, {{0}} }, \
+}
+
+#define SECONDARY_SPEAKER_EDGES_CONFIG { \
+    /* ADC输入到ADC混音器 - ADC是单声道 */ \
+    { 0, 4, 0, 0 }, /* ADC0 (单声道) -> ADC_Mixer:0 */ \
+    { 1, 4, 0, 1 }, /* ADC1 (单声道) -> ADC_Mixer:1 */ \
+    \
+    /* USB/BT输入到USB_BT混音器 - USB/BT是立体声 */ \
+    { 2, 5, 0, 0 }, /* USB_IN (立体声) -> USB_BT_Mixer:0 */ \
+    { 3, 5, 0, 1 }, /* BT_IN (立体声) -> USB_BT_Mixer:1 */ \
+    \
+    /* 两个混音器输出到最终混音器 */ \
+    { 4, 6, 0, 0 }, /* ADC_Mixer -> Final_Mixer:0 */ \
+    { 5, 6, 0, 1 }, /* USB_BT_Mixer -> Final_Mixer:1 */ \
+    \
+    /* 最终混音器输出到DAC0 */ \
+    { 6, 7, 0, 0 }, /* Final_Mixer -> DAC0 */ \
+}
+
+#define SECONDARY_SPEAKER_EDGE_COUNT   7
 
 /*******************************************************************************
  * API函数

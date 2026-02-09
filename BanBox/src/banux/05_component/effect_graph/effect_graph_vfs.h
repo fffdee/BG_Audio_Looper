@@ -62,7 +62,7 @@ extern "C" {
  *   - 适用于生产环境
  ******************************************************************************/
 #ifndef USE_EFFECT_GRAPH_VFS
-#define USE_EFFECT_GRAPH_VFS  1  /* 默认关闭VFS功能，节省内存 */
+#define USE_EFFECT_GRAPH_VFS  1  /* 默认开启VFS功能，方便调试 */
 #endif
 
 #if USE_EFFECT_GRAPH_VFS

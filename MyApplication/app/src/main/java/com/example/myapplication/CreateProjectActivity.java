@@ -9,17 +9,24 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import android.widget.TextView;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CreateProjectActivity extends AppCompatActivity {
     private EditText etProjectName;
+    private TextView tvSelectedCount;
+    private RecyclerView rvSelectedImages;
+    private SelectedImageAdapter imageAdapter;
     private List<String> selectedImagePaths = new ArrayList<>();
     private static final int REQUEST_PERMISSION = 101;
 
@@ -31,9 +38,18 @@ public class CreateProjectActivity extends AppCompatActivity {
         etProjectName = findViewById(R.id.et_project_name);
         Button btnSelectImages = findViewById(R.id.btn_select_images);
         Button btnConfirm = findViewById(R.id.btn_confirm);
+        Button btnCancel = findViewById(R.id.btn_cancel);
+        tvSelectedCount = findViewById(R.id.tv_selected_count);
+        rvSelectedImages = findViewById(R.id.rv_selected_images);
+
+        // 初始化RecyclerView
+        rvSelectedImages.setLayoutManager(new GridLayoutManager(this, 3));
+        imageAdapter = new SelectedImageAdapter(selectedImagePaths, this::onImageRemoved);
+        rvSelectedImages.setAdapter(imageAdapter);
 
         btnSelectImages.setOnClickListener(v -> checkPermissionAndSelectImages());
         btnConfirm.setOnClickListener(v -> createProject());
+        btnCancel.setOnClickListener(v -> finish());
     }
 
     private void checkPermissionAndSelectImages() {
@@ -69,10 +85,29 @@ public class CreateProjectActivity extends AppCompatActivity {
                             if (path != null) selectedImagePaths.add(path);
                         }
                     }
-                    Toast.makeText(this, "已选择 " + selectedImagePaths.size() + " 张图片", Toast.LENGTH_SHORT).show();
+                    updateImagePreview();
                 }
             }
     );
+
+    /**
+     * 更新图片预览
+     */
+    private void updateImagePreview() {
+        tvSelectedCount.setText("已选择 " + selectedImagePaths.size() + " 张图片");
+        imageAdapter.notifyDataSetChanged();
+        Toast.makeText(this, "已选择 " + selectedImagePaths.size() + " 张图片", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 删除图片
+     */
+    private void onImageRemoved(int position) {
+        if (position >= 0 && position < selectedImagePaths.size()) {
+            selectedImagePaths.remove(position);
+            updateImagePreview();
+        }
+    }
 
     private void createProject() {
         String projectName = etProjectName.getText().toString().trim();
@@ -84,13 +119,34 @@ public class CreateProjectActivity extends AppCompatActivity {
             Toast.makeText(this, "请选择图片", Toast.LENGTH_SHORT).show();
             return;
         }
-        String mergedPath = ImageMerger.mergeImages(CreateProjectActivity.this, selectedImagePaths, projectName);
-        if (mergedPath != null) {
-            ProjectManager.saveProject(this, new ImageProject(projectName, selectedImagePaths, mergedPath));
-            Toast.makeText(this, R.string.project_created, Toast.LENGTH_SHORT).show();
-            finish();
-        } else {
-            Toast.makeText(this, "图片拼接失败", Toast.LENGTH_SHORT).show();
+        
+        android.util.Log.d("CreateProject", "开始创建项目: " + projectName);
+        android.util.Log.d("CreateProject", "图片数量: " + selectedImagePaths.size());
+        for (int i = 0; i < selectedImagePaths.size(); i++) {
+            android.util.Log.d("CreateProject", "图片 " + (i+1) + ": " + selectedImagePaths.get(i));
         }
+        
+        // 重要：创建一个新的ArrayList副本，避免引用问题
+        List<String> imagePathsCopy = new ArrayList<>(selectedImagePaths);
+        
+        // 新方案：直接保存图片列表，不再强制拼接
+        // 拼接图片作为可选功能（用于缩略图预览）
+        String mergedPath = null;
+        try {
+            // 尝试拼接，但失败不影响项目创建
+            mergedPath = ImageMerger.mergeImages(CreateProjectActivity.this, imagePathsCopy, projectName);
+            android.util.Log.d("CreateProject", "拼接图片成功: " + mergedPath);
+        } catch (Exception e) {
+            android.util.Log.w("CreateProject", "图片拼接失败，但项目仍可创建", e);
+        }
+        
+        // 保存项目（即使mergedPath为null也可以）
+        ImageProject newProject = new ImageProject(projectName, imagePathsCopy, mergedPath);
+        android.util.Log.d("CreateProject", "保存项目对象 - 名称: " + newProject.getProjectName() + 
+                           ", 图片数: " + (newProject.getImagePaths() != null ? newProject.getImagePaths().size() : "null"));
+        
+        ProjectManager.saveProject(this, newProject);
+        Toast.makeText(this, R.string.project_created, Toast.LENGTH_SHORT).show();
+        finish();
     }
 }

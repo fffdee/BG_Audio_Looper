@@ -4,21 +4,14 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- 图片滚动区域 -->
-    <ScrollView
-        android:id="@+id/scroll_view"
+    <!-- 图片列表显示区域 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_images"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/control_panel"
-        android:scrollbars="none">
-
-        <ImageView
-            android:id="@+id/iv_merged_image"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scaleType="fitStart"
-            android:contentDescription="拼接图片" />
-    </ScrollView>
+        android:scrollbars="none"
+        android:background="@android:color/black" />
 
     <!-- 控制区：播放按钮 + 调速拉条（并列） -->
     <LinearLayout

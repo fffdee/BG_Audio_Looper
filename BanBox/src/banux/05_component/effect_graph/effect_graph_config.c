@@ -49,6 +49,20 @@ static const NodeConfig_t g_BtSpeakerNodes[] = BT_SPEAKER_NODES_CONFIG;
 /* 蓝牙音箱配置边 */
 static const EdgeConfig_t g_BtSpeakerEdges[] = BT_SPEAKER_EDGES_CONFIG;
 
+/* 副音箱配置节点 */
+static const NodeConfig_t g_SecondaryNodes[] = SECONDARY_SPEAKER_NODES_CONFIG;
+
+/* 副音箱配置边 */
+static const EdgeConfig_t g_SecondaryEdges[] = SECONDARY_SPEAKER_EDGES_CONFIG;
+
+/* Secondary Speaker运行时检查用的大小常量 */
+static const uint8_t g_SecondaryNodesArraySize = sizeof(g_SecondaryNodes)/sizeof(g_SecondaryNodes[0]);
+static const uint8_t g_SecondaryEdgesArraySize = sizeof(g_SecondaryEdges)/sizeof(g_SecondaryEdges[0]);
+
+/* 编译时断言：确保Secondary Speaker数组大小与宏定义一致 */
+COMPILE_TIME_ASSERT(sizeof(g_SecondaryNodes)/sizeof(g_SecondaryNodes[0]) == SECONDARY_SPEAKER_NODE_COUNT);
+COMPILE_TIME_ASSERT(sizeof(g_SecondaryEdges)/sizeof(g_SecondaryEdges[0]) == SECONDARY_SPEAKER_EDGE_COUNT);
+
 /*******************************************************************************
  * 预设名称表
  ******************************************************************************/
@@ -58,7 +72,8 @@ static const char* g_PresetNames[] = {
     "Guitar Only",
     "Mic Only",
     "Bluetooth Speaker",
-    "USB Audio"
+    "USB Audio",
+    "Secondary Speaker"
 };
 
 /*******************************************************************************
@@ -161,6 +176,15 @@ GraphError_t EffectGraphConfig_GetPreset(GraphPreset_t preset, GraphConfig_t *co
             config->edge_count = BT_SPEAKER_EDGE_COUNT;
             break;
             
+        case GRAPH_PRESET_SECONDARY_SPEAKER:
+            config->nodes = (NodeConfig_t*)g_SecondaryNodes;
+            config->node_count = g_SecondaryNodesArraySize;  /* 使用实际数组大小 */
+            config->edges = (EdgeConfig_t*)g_SecondaryEdges;
+            config->edge_count = g_SecondaryEdgesArraySize;  /* 使用实际数组大小 */
+            DBG("[GraphConfig] SECONDARY_SPEAKER preset: node_count=%d, edge_count=%d\n",
+                config->node_count, config->edge_count);
+            break;
+            
         case GRAPH_PRESET_GUITAR_ONLY:
         case GRAPH_PRESET_MIC_ONLY:
         case GRAPH_PRESET_USB_AUDIO:
@@ -233,13 +257,28 @@ GraphError_t EffectGraphConfig_LoadPreset(GraphPreset_t preset)
     }
     
     /* 创建所有边(连接) */
-    DBG("[GraphConfig] Creating %d edges (array size=%d)...\n", config.edge_count, g_DefaultEdgesArraySize);
-    
+    /* 计算实际的边数组大小 */
+    size_t actual_edges_array_size = 0;
+    if (config.edges == g_DefaultEdges) {
+        actual_edges_array_size = g_DefaultEdgesArraySize;
+    } else if (config.edges == g_SimpleEdges) {
+        actual_edges_array_size = sizeof(g_SimpleEdges)/sizeof(g_SimpleEdges[0]);
+    } else if (config.edges == g_BtSpeakerEdges) {
+        actual_edges_array_size = sizeof(g_BtSpeakerEdges)/sizeof(g_BtSpeakerEdges[0]);
+    } else if (config.edges == g_SecondaryEdges) {
+        actual_edges_array_size = sizeof(g_SecondaryEdges)/sizeof(g_SecondaryEdges[0]);
+    } else {
+        /* 默认使用默认数组大小 */
+        actual_edges_array_size = g_DefaultEdgesArraySize;
+    }
+
+    DBG("[GraphConfig] Creating %d edges (array size=%d)...\n", config.edge_count, (int)actual_edges_array_size);
+
     /* 安全检查：防止数组越界 */
-    if (config.edge_count > g_DefaultEdgesArraySize) {
+    if (config.edge_count > actual_edges_array_size) {
         DBG("[GraphConfig] ERROR: edge_count (%d) > array_size (%d)! Limiting to array size.\n",
-            config.edge_count, g_DefaultEdgesArraySize);
-        config.edge_count = g_DefaultEdgesArraySize;
+            config.edge_count, (int)actual_edges_array_size);
+        config.edge_count = actual_edges_array_size;
     }
     
     for (i = 0; i < config.edge_count; i++) {

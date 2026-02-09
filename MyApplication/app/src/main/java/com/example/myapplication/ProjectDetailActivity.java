@@ -1,70 +1,88 @@
 package com.example.myapplication;
 
-import android.app.AlertDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
-import com.bumptech.glide.request.target.Target;
-
-import java.io.File;
+import java.util.List;
 
 public class ProjectDetailActivity extends AppCompatActivity {
+    private static final String TAG = "ProjectDetailActivity";
 
-    private ImageView ivMergedImage;
+    private RecyclerView rvImages;
     private Button btnPlayPause;
-    private ScrollView scrollView;
     private SeekBar sbSpeed;
-    private String mergedImagePath;
+    private LinearLayoutManager layoutManager;
+    private List<String> imagePaths;
     private Timer autoScrollTimer;
     private boolean isPlaying = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    // 速度级别：0=慢速，1=中速（默认），2=快速
-    private int currentSpeedLevel = 1;
-    // 不同速度对应的滚动步长（像素/次）和间隔（毫秒）
-    private final int[][] speedConfig = {
-        {2, 60},   // 慢速：步长2，间隔60ms
-        {3, 40},   // 中速：步长3，间隔40ms（默认）
-        {5, 20}    // 快速：步长5，间隔20ms
-    };
-    // 当前使用的速度参数
-    private int scrollStep = 3; // 默认步长
+    
+    // 滚动参数
+    private int scrollStep = 3; // 默认步长（像素）
     private int scrollDelay = 40; // 默认间隔（毫秒）
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project_detail);
-        mergedImagePath = getIntent().getStringExtra("merged_image_path");
-        if (mergedImagePath == null || !new java.io.File(mergedImagePath).exists()) {
-            Toast.makeText(this, "图片不存在", Toast.LENGTH_SHORT).show();
+        
+        Log.d(TAG, "===== ProjectDetailActivity onCreate =====");
+        
+        // 获取图片路径列表
+        imagePaths = getIntent().getStringArrayListExtra("image_paths");
+        
+        Log.d(TAG, "imagePaths 是否为null: " + (imagePaths == null));
+        
+        if (imagePaths == null || imagePaths.isEmpty()) {
+            Log.e(TAG, "错误：未找到图片列表");
+            if (imagePaths == null) {
+                Log.e(TAG, "imagePaths 为 null");
+            } else {
+                Log.e(TAG, "imagePaths 为空列表，大小: " + imagePaths.size());
+            }
+            Toast.makeText(this, "未找到图片列表", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
+        
+        Log.d(TAG, "加载项目，共 " + imagePaths.size() + " 张图片");
+        for (int i = 0; i < imagePaths.size(); i++) {
+            Log.d(TAG, "  图片 " + (i+1) + ": " + imagePaths.get(i));
+        }
+        
         initViews();
-        loadMergedImage();
+        setupRecyclerView();
         initSpeedControl();
     }
 
     private void initViews() {
-        scrollView = findViewById(R.id.scroll_view);
-        ivMergedImage = findViewById(R.id.iv_merged_image);
+        rvImages = findViewById(R.id.rv_images);
         btnPlayPause = findViewById(R.id.btn_play_pause);
         sbSpeed = findViewById(R.id.sb_speed);
         btnPlayPause.setOnClickListener(v -> togglePlay());
+    }
+    
+    private void setupRecyclerView() {
+        layoutManager = new LinearLayoutManager(this);
+        rvImages.setLayoutManager(layoutManager);
+        
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        ImagePlayAdapter adapter = new ImagePlayAdapter(imagePaths, screenWidth);
+        rvImages.setAdapter(adapter);
+        
+        Log.d(TAG, "RecyclerView设置完成");
     }
 
     // 初始化速度调节（SeekBar实时控制）
@@ -87,14 +105,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void loadMergedImage() {
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        Glide.with(this)
-                .load(new java.io.File(mergedImagePath))
-                .override(screenWidth, Integer.MAX_VALUE)
-                .fitCenter()
-                .into(ivMergedImage);
-    }
+
 
     private void togglePlay() {
         isPlaying = !isPlaying;
@@ -114,15 +125,15 @@ public class ProjectDetailActivity extends AppCompatActivity {
             @Override
             public void run() {
                 handler.post(() -> {
-                    int currentScrollY = scrollView.getScrollY();
-                    int imageTotalHeight = ivMergedImage.getHeight();
-                    int scrollViewHeight = scrollView.getHeight();
-                    if (currentScrollY + scrollViewHeight >= imageTotalHeight) {
+                    // 使用smoothScrollBy实现平滑滚动
+                    rvImages.smoothScrollBy(0, scrollStep);
+                    
+                    // 检查是否滚动到底部
+                    if (!rvImages.canScrollVertically(1)) {
                         stopAutoScroll();
                         isPlaying = false;
                         btnPlayPause.setText("播放");
-                    } else {
-                        scrollView.scrollBy(0, scrollStep);
+                        Log.d(TAG, "已滚动到底部");
                     }
                 });
             }

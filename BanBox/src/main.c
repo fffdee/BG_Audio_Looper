@@ -80,7 +80,7 @@
 
 #include "drv_init.h"           /* Driver Framework Initialization */
 
-
+//#define UI_EN
 
 extern void SysTickInit(void);
 extern void UsbAudioMicDacInit(void);
@@ -307,8 +307,10 @@ void EffectTask() {
 	/* SPI and Driver Framework already initialized in main() */
 	/* All hardware drivers (LCD, Flash, etc.) auto-initialized by framework */
 	DBG("[Task] Hardware drivers already initialized in main()\n");
-	BG_lcd.Init();
 
+#ifdef  UI_EN
+	BG_lcd.Init();
+#endif
 	/*=====================================================
 	 * System Parameter Initialization
 	 * 浠庡唴閮‵lash鍔犺浇淇濆瓨鐨勫弬鏁板埌鍏ㄥ眬鍙橀噺
@@ -354,8 +356,9 @@ void EffectTask() {
 	DBG("[Main] Starting from Boot Screen...\n");
 
 	/* Initialize Shell LCD console adapter */
+#ifdef UI_EN
 	ShellLCD_Adapter_Init();
-
+#endif
 	button_init();
 
 	DBG("[Main] Entering main loop...\n");
@@ -375,6 +378,7 @@ void EffectTask() {
 			UI_StatusBar_ScanDetect();
 
 			/* If Shell console enabled, only update console display */
+#ifdef UI_EN
 			if (Shell_ConsoleIsEnabled()) {
 				Shell_ConsoleUpdate();
 			} else {
@@ -385,7 +389,7 @@ void EffectTask() {
 				UI_StatusBar_Update();
 
 			}
-
+#endif
 #ifdef USE_FRAME_BUFFER
 			BG_lcd.FlushFrameBuffer();
 #endif

@@ -46,4 +46,10 @@ typedef enum{
 
 extern BG_Audio_Io_Manager BG_AudioManager;
 
+/**
+ * @brief 重新注册所有Effect Graph节点的回调函数
+ * @note 在加载新预设后必须调用此函数，否则音频处理将失败
+ */
+void BG_AudioIO_SetupEffectGraphCallbacks(void);
+
 #endif 
