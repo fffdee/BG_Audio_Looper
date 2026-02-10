@@ -4,14 +4,14 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    W25Qxx Flash驱动框架适配层
+ * @brief    W25Qxx Flash driver framework adaptation layer
  *****************************************************************************
  * @attention
  *
- * 将W25Qxx Flash驱动注册到驱动框架，提供：
- * 1. 驱动注册到/driver/spi/w25qxx
- * 2. 参数节点：capacity/page_size/sector_size等
- * 3. Shell命令访问: cat /driver/spi/w25qxx/capacity
+ * Register W25Qxx Flash driver to driver framework, providing:
+ * 1. Driver registered to /driver/spi/w25qxx
+ * 2. Parameter nodes: capacity/page_size/sector_size etc.
+ * 3. Shell command access: cat /driver/spi/w25qxx/capacity
  *
  *****************************************************************************
  */
@@ -25,12 +25,12 @@
 #include <string.h>
 
 /*******************************************************************************
- * 私有数据结构
+ * Private data structures
  ******************************************************************************/
 typedef struct {
-    uint32_t capacity;      // Flash容量(字节)
-    uint16_t page_size;     // 页大小
-    uint32_t sector_size;   // 扇区大小
+    uint32_t capacity;      // Flash capacity (bytes)
+    uint16_t page_size;     // Page size
+    uint32_t sector_size;   // Sector size
     bool initialized;
     char name[32];
     uint16_t device_id;
@@ -46,7 +46,7 @@ static W25qxxPrivData_t g_w25qxx_priv = {
 };
 
 /*******************************************************************************
- * 参数读写回调函数
+ * Parameter read/write callback functions
  ******************************************************************************/
 
 static int param_get_name(char *buf, uint16_t maxLen, void *userData)
@@ -59,7 +59,7 @@ static int param_get_name(char *buf, uint16_t maxLen, void *userData)
 static int param_get_capacity(char *buf, uint16_t maxLen, void *userData)
 {
     W25qxxPrivData_t *priv = (W25qxxPrivData_t *)userData;
-    // 显示为KB
+    // Display in KB
     snprintf(buf, maxLen, "%lu KB", (unsigned long)(priv->capacity / 1024));
     return strlen(buf);
 }
@@ -95,7 +95,7 @@ static int param_get_device_id(char *buf, uint16_t maxLen, void *userData)
 static int param_cmd_erase_chip(const char *value, void *userData)
 {
     if (strcmp(value, "confirm") == 0) {
-        // TODO: 执行全片擦除
+        // TODO: Perform chip erase
         // Flash_EraseChip();
         return 0;
     }
@@ -103,48 +103,48 @@ static int param_cmd_erase_chip(const char *value, void *userData)
 }
 
 /*******************************************************************************
- * 参数定义表
+ * Parameter definition table
  ******************************************************************************/
 static const FsParamDef_t w25qxx_params[] = {
     {
         .name = "name",
-        .desc = "Flash驱动名称",
+        .desc = "Flash driver name",
         .get = param_get_name,
         .set = NULL,
     },
     {
         .name = "capacity",
-        .desc = "Flash容量",
+        .desc = "Flash capacity",
         .get = param_get_capacity,
         .set = NULL,
     },
     {
         .name = "page_size",
-        .desc = "页大小(字节)",
+        .desc = "Page size (bytes)",
         .get = param_get_page_size,
         .set = NULL,
     },
     {
         .name = "sector_size",
-        .desc = "扇区大小(字节)",
+        .desc = "Sector size (bytes)",
         .get = param_get_sector_size,
         .set = NULL,
     },
     {
         .name = "status",
-        .desc = "初始化状态",
+        .desc = "Initialization status",
         .get = param_get_status,
         .set = NULL,
     },
     {
         .name = "device_id",
-        .desc = "设备ID",
+        .desc = "Device ID",
         .get = param_get_device_id,
         .set = NULL,
     },
     {
         .name = "erase_chip",
-        .desc = "全片擦除(写入'confirm'执行)",
+        .desc = "Chip erase (write 'confirm' to execute)",
         .get = NULL,
         .set = param_cmd_erase_chip,
     },
@@ -152,7 +152,7 @@ static const FsParamDef_t w25qxx_params[] = {
 };
 
 /*******************************************************************************
- * 驱动操作函数
+ * Driver operation functions
  ******************************************************************************/
 
 static int w25qxx_drv_init(void *priv)
@@ -163,14 +163,14 @@ static int w25qxx_drv_init(void *priv)
         return 0;
     }
     
-    // 调用底层Flash初始化
-    // Flash_Init();  // 假设有此函数
+    // Call underlying Flash initialization
+    // Flash_Init();  // Assume this function exists
     
-    // 读取设备ID
+    // Read device ID
     // flash->device_id = Flash_ReadID();
-    flash->device_id = 0xEF40;  // W25Q64示例ID
+    flash->device_id = 0xEF40;  // W25Q64 example ID
     
-    // 根据ID确定容量
+    // Determine capacity based on ID
     flash->capacity = 8 * 1024 * 1024;  // 8MB for W25Q64
     
     flash->initialized = true;
@@ -197,14 +197,14 @@ static int w25qxx_drv_close(void *priv)
 
 static int w25qxx_drv_read(void *priv, uint8_t *buf, uint32_t len)
 {
-    // 实现Flash读取
+    // Implement Flash read
     // return Flash_Read(0, buf, len);
     return len;
 }
 
 static int w25qxx_drv_write(void *priv, const uint8_t *buf, uint32_t len)
 {
-    // 实现Flash写入
+    // Implement Flash write
     // return Flash_Write(0, buf, len);
     return len;
 }
@@ -214,19 +214,19 @@ static int w25qxx_drv_ioctl(void *priv, uint32_t cmd, void *arg)
     W25qxxPrivData_t *flash = (W25qxxPrivData_t *)priv;
     
     switch (cmd) {
-        case 0x01:  // 擦除扇区
+        case 0x01:  // Erase sector
         {
             uint32_t addr = *(uint32_t *)arg;
             // Flash_EraseSector(addr);
             break;
         }
-        case 0x02:  // 擦除块
+        case 0x02:  // Erase block
         {
             uint32_t addr = *(uint32_t *)arg;
             // Flash_EraseBlock(addr);
             break;
         }
-        case 0x03:  // 全片擦除
+        case 0x03:  // Chip erase
             // Flash_EraseChip();
             break;
         default:
@@ -237,9 +237,9 @@ static int w25qxx_drv_ioctl(void *priv, uint32_t cmd, void *arg)
 }
 
 /*******************************************************************************
- * 驱动定义
+ * Driver definition
  ******************************************************************************/
-/* 注意：不能用const，因为需要在运行时修改isRegistered/fsNode等字段 */
+/* Note: Cannot use const because isRegistered/fsNode fields need to be modified at runtime */
 static DrvDevice_t w25qxx_driver = {
     .name = "w25qxx",
     .bus = DRV_BUS_SPI,
@@ -255,7 +255,7 @@ static DrvDevice_t w25qxx_driver = {
 };
 
 /*******************************************************************************
- * 驱动注册函数
+ * Driver registration function
  ******************************************************************************/
 int W25qxx_DrvRegister(void)
 {

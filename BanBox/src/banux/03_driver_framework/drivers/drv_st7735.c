@@ -4,14 +4,14 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    ST7735 LCD驱动框架适配层
+ * @brief    ST7735 LCD driver framework adaptation layer
  *****************************************************************************
  * @attention
  *
- * 将ST7735 LCD驱动注册到驱动框架，提供：
- * 1. 驱动注册到/driver/spi/st7735
- * 2. 参数节点：width/height/name等
- * 3. Shell命令访问: cat /driver/spi/st7735/width
+ * Register ST7735 LCD driver to driver framework, providing:
+ * 1. Driver registered to /driver/spi/st7735
+ * 2. Parameter nodes: width/height/name etc.
+ * 3. Shell command access: cat /driver/spi/st7735/width
  *
  *****************************************************************************
  */
@@ -26,7 +26,7 @@
 #include <string.h>
 
 /*******************************************************************************
- * 私有数据结构
+ * Private data structures
  ******************************************************************************/
 typedef struct {
     uint16_t width;
@@ -43,7 +43,7 @@ static St7735PrivData_t g_st7735_priv = {
 };
 
 /*******************************************************************************
- * 参数读写回调函数
+ * Parameter read/write callback functions
  ******************************************************************************/
 
 static int param_get_name(char *buf, uint16_t maxLen, void *userData)
@@ -80,49 +80,49 @@ static int param_set_brightness(const char *value, void *userData)
     if (brightness > 100) {
         return -1;
     }
-    // TODO: 设置LCD亮度
+    // TODO: Set LCD brightness
     return 0;
 }
 
 /*******************************************************************************
- * 参数定义表
+ * Parameter definition table
  ******************************************************************************/
 static const FsParamDef_t st7735_params[] = {
     {
         .name = "name",
-        .desc = "LCD驱动名称",
+        .desc = "LCD driver name",
         .get = param_get_name,
-        .set = NULL,  // 只读
+        .set = NULL,  // read-only
     },
     {
         .name = "width",
-        .desc = "LCD宽度(像素)",
+        .desc = "LCD width (pixels)",
         .get = param_get_width,
-        .set = NULL,  // 只读
+        .set = NULL,  // read-only
     },
     {
         .name = "height",
-        .desc = "LCD高度(像素)",
+        .desc = "LCD height (pixels)",
         .get = param_get_height,
-        .set = NULL,  // 只读
+        .set = NULL,  // read-only
     },
     {
         .name = "status",
-        .desc = "初始化状态",
+        .desc = "Initialization status",
         .get = param_get_status,
-        .set = NULL,  // 只读
+        .set = NULL,  // read-only
     },
     {
         .name = "brightness",
-        .desc = "屏幕亮度(0-100)",
+        .desc = "Screen brightness (0-100)",
         .get = NULL,
-        .set = param_set_brightness,  // 只写
+        .set = param_set_brightness,  // write-only
     },
     FS_PARAM_END
 };
 
 /*******************************************************************************
- * 驱动操作函数
+ * Driver operation functions
  ******************************************************************************/
 
 static int st7735_drv_init(void *priv)
@@ -130,10 +130,10 @@ static int st7735_drv_init(void *priv)
     St7735PrivData_t *st7735 = (St7735PrivData_t *)priv;
     
     if (st7735->initialized) {
-        return 0;  // 已初始化
+        return 0;  // Already initialized
     }
     
-    // 调用底层LCD初始化
+    // Call underlying LCD initialization
     BG_lcd.Init();
     st7735->initialized = true;
     
@@ -149,7 +149,7 @@ static int st7735_drv_deinit(void *priv)
 
 static int st7735_drv_open(void *priv)
 {
-    // LCD通常不需要open/close操作
+    // LCD usually doesn't need open/close operations
     return 0;
 }
 
@@ -160,14 +160,14 @@ static int st7735_drv_close(void *priv)
 
 static int st7735_drv_read(void *priv, uint8_t *buf, uint32_t len)
 {
-    // ST7735不支持读取屏幕内容
+    // ST7735 does not support reading screen content
     return -1;
 }
 
 static int st7735_drv_write(void *priv, const uint8_t *buf, uint32_t len)
 {
-    // 可以通过write接口写入图像数据
-    // 这里简单返回成功
+    // Image data can be written through write interface
+    // Simply return success here
     return len;
 }
 
@@ -176,11 +176,11 @@ static int st7735_drv_ioctl(void *priv, uint32_t cmd, void *arg)
     St7735PrivData_t *st7735 = (St7735PrivData_t *)priv;
     
     switch (cmd) {
-        case 0x01:  // 清屏命令
-            // TODO: 调用清屏函数
+        case 0x01:  // Clear screen command
+            // TODO: Call clear screen function
             break;
-        case 0x02:  // 刷新命令
-            // TODO: 调用刷新函数
+        case 0x02:  // Refresh command
+            // TODO: Call refresh function
             break;
         default:
             return -1;
@@ -190,9 +190,9 @@ static int st7735_drv_ioctl(void *priv, uint32_t cmd, void *arg)
 }
 
 /*******************************************************************************
- * 驱动定义
+ * Driver definition
  ******************************************************************************/
-/* 注意：不能用const，因为需要在运行时修改isRegistered/fsNode等字段 */
+/* Note: Cannot use const because isRegistered/fsNode fields need to be modified at runtime */
 static DrvDevice_t st7735_driver = {
     .name = "st7735",
     .bus = DRV_BUS_SPI,
@@ -208,7 +208,7 @@ static DrvDevice_t st7735_driver = {
 };
 
 /*******************************************************************************
- * 驱动注册函数
+ * Driver registration function
  ******************************************************************************/
 int St7735_DrvRegister(void)
 {

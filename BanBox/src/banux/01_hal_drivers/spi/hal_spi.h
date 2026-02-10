@@ -4,17 +4,17 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    SPI HAL适配层 - 封装SDK底层SPI驱动
+ * @brief    SPI HAL adaptation layer - Encapsulate SDK underlying SPI driver
  *****************************************************************************
  * @attention
  *
- * 本文件是SDK SPI驱动的包装层，提供统一的HAL接口。
- * 实际驱动实现在 MVsB1_Base_SDK/driver/ 目录中。
+ * This file is the wrapper layer for SDK SPI driver, providing unified HAL interface.
+ * Actual driver implementation in MVsB1_Base_SDK/driver/ directory.
  *
- * SDK原始文件:
- *   - driver/driver/inc/spim.h        (SPI Master 寄存器级驱动)
- *   - driver/driver_api/inc/spim_interface.h (SPI Master 接口层)
- *   - driver/driver/libDriver.a       (编译好的驱动库)
+ * SDK original files:
+ *   - driver/driver/inc/spim.h        (SPI Master register-level driver)
+ *   - driver/driver_api/inc/spim_interface.h (SPI Master interface layer)
+ *   - driver/driver/libDriver.a       (Compiled driver library)
  *
  *****************************************************************************
  */
@@ -35,10 +35,10 @@ extern "C" {
 /*******************************************************************************
  * SPI模式定义 (来自SDK spim.h)
  ******************************************************************************/
-#define HAL_SPI_MODE0       0   /* CPOL=0, CPHA=0, 空闲低电平，第一边沿采样(上升沿) */
-#define HAL_SPI_MODE1       1   /* CPOL=0, CPHA=1, 空闲低电平，第二边沿采样(下降沿) */
-#define HAL_SPI_MODE2       2   /* CPOL=1, CPHA=0, 空闲高电平，第一边沿采样(下降沿) */
-#define HAL_SPI_MODE3       3   /* CPOL=1, CPHA=1, 空闲高电平，第一边沿采样(上升沿) */
+#define HAL_SPI_MODE0       0   /* CPOL=0, CPHA=0, idle low, first edge sample (rising edge) */
+#define HAL_SPI_MODE1       1   /* CPOL=0, CPHA=1, idle low, second edge sample (falling edge) */
+#define HAL_SPI_MODE2       2   /* CPOL=1, CPHA=0, idle high, first edge sample (falling edge) */
+#define HAL_SPI_MODE3       3   /* CPOL=1, CPHA=1, idle high, second edge sample (rising edge) */
 
 /*******************************************************************************
  * SPI时钟分频定义 (来自SDK spim.h, 基于288M PLL)

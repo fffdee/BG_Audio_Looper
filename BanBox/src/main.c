@@ -310,12 +310,15 @@ void EffectTask() {
 
 #ifdef  UI_EN
 	BG_lcd.Init();
+
+	BANGUI_QUICK_INIT();
+
+	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);
+
+	BANGUI_START(UI_STATE_BOOT);
+
 #endif
-	/*=====================================================
-	 * System Parameter Initialization
-	 * 浠庡唴閮‵lash鍔犺浇淇濆瓨鐨勫弬鏁板埌鍏ㄥ眬鍙橀噺
-	 * 蹇呴』鍦ㄧ‖浠跺垵濮嬪寲鍚庛�鍔熻兘妯″潡鍒濆鍖栧墠璋冪敤
-	 *====================================================*/
+
 	DBG("[Task] Loading system parameters from flash...\n");
 	{
 		SysParam_Status_t param_status = SysParam_Init();
@@ -338,18 +341,7 @@ void EffectTask() {
 	DBG("[Task] Initializing UI System...\n");
 
 
-	BANGUI_QUICK_INIT();
 
-
-	/* 璁剧疆 Home 瑙嗗浘鍥炬爣鍥炶皟 */
-	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 缁戝畾 Looper 瑙嗗浘 */
-
-	/*=====================================================
-	 * BOOT SPLASH SCREEN - 寮�満鐣岄潰
-	 * 鍚姩 UI 绯荤粺锛屼粠寮�満鐣岄潰寮�锛圠ogo + 杩涘害鏉★級
-	 * 鍔ㄧ敾鐢�view_boot.c 鐨勭姸鎬佹満椹卞姩锛屾棤纭欢杩�	 * 鍔ㄧ敾瀹屾垚鍚庤嚜鍔ㄥ垏鎹㈠埌 Home 妗岄潰
-	 *====================================================*/
-	BANGUI_START(UI_STATE_BOOT);
 
 
 	DBG("[Main] System initialized successfully\n");

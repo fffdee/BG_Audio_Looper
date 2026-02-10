@@ -4,7 +4,7 @@
  * @author   BG Card Team  
  * @version  V2.0.0
  * @date     04-January-2026
- * @brief    驱动框架初始化 - 注册所有硬件驱动
+ * @brief    Driver framework initialization - register all hardware drivers
  *****************************************************************************
  */
 
@@ -26,39 +26,39 @@
 #include "debug.h"
 
 /*******************************************************************************
- * 驱动框架初始化函数
+ * Driver framework initialization functions
  ******************************************************************************/
 
 /**
- * @brief  初始化驱动文件系统
- * @retval 0-成功, <0-失败
+ * @brief  Initialize driver file system
+ * @retval 0-success, <0-failure
  */
 int DrvFramework_Init(void)
 {
     int ret;
     
-    /* 1. 初始化VFS核心 */
+    /* 1. Initialize VFS core */
     ret = Vfs_Init();
     if (ret != VFS_OK) {
         DBG("[DrvInit] VFS init failed!\n");
         return -1;
     }
     
-    /* 2. 初始化驱动文件系统（创建/driver目录） */
+    /* 2. Initialize driver file system (create /driver directory) */
     ret = DrvFs_Init();
     if (ret != FS_OK) {
         DBG("[DrvInit] DrvFs init failed!\n");
         return -2;
     }
     
-    /* 3. 初始化Shell文件系统（创建/bin目录） */
+    /* 3. Initialize Shell file system (create /bin directory) */
     ret = ShellFs_Init();
     if (ret != VFS_OK) {
         DBG("[DrvInit] ShellFs init failed!\n");
         return -3;
     }
     
-    /* 4. 初始化设备管理系统 */
+    /* 4. Initialize device management system */
     ret = DrvDevice_Init();
     if (ret != 0) {
         return -4;
@@ -68,13 +68,13 @@ int DrvFramework_Init(void)
 }
 
 /**
- * @brief  注册所有硬件驱动到框架
- * @retval 0-成功, <0-失败
+ * @brief  Register all hardware drivers to framework
+ * @retval 0-success, <0-failure
  * 
- * @note   调用顺序:
- *         1. DrvFramework_Init() - 初始化框架
- *         2. DrvFramework_RegisterAll() - 注册所有驱动
- *         3. 使用Shell命令查看: drivers, ls /driver
+ * @note   Call sequence:
+ *         1. DrvFramework_Init() - Initialize framework
+ *         2. DrvFramework_RegisterAll() - Register all drivers
+ *         3. Use Shell commands to view: drivers, ls /driver
  */
 int DrvFramework_RegisterAll(void)
 {
@@ -84,19 +84,19 @@ int DrvFramework_RegisterAll(void)
     
     DBG("[DrvInit] Starting driver registration...\n");
     
-    /* 初始化Flash管理器（先于其他需要Flash的驱动） */
+    /* Initialize Flash manager (before other drivers that need Flash) */
     DBG("[DrvInit] Initializing Flash Manager...\n");
     BG_flash_manager.Init();
     total++;
     DBG("[DrvInit] Flash Manager initialized OK\n");
     
-    /* 初始化BG_FlashMgr（Looper使用的应用层接口） */
+    /* Initialize BG_FlashMgr (application layer interface used by Looper) */
     DBG("[DrvInit] Initializing BG_FlashMgr...\n");
     BG_FlashMgr.Init();
     total++;
     DBG("[DrvInit] BG_FlashMgr initialized OK\n");
     
-    /* 注册ST7735 LCD驱动 */
+    /* Register ST7735 LCD driver */
     DBG("[DrvInit] Registering ST7735 LCD driver...\n");
     ret = St7735_DrvRegister();
     if (ret == 0) {
@@ -107,7 +107,7 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] ST7735 registration FAILED\n");
     }
     
-    /* 注册W25Qxx Flash驱动 */
+    /* Register W25Qxx Flash driver */
     DBG("[DrvInit] Registering W25Qxx Flash driver...\n");
     ret = W25qxx_DrvRegister();
     if (ret == 0) {
@@ -118,7 +118,7 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] W25Qxx registration FAILED\n");
     }
     
-    /* 注册电池管理驱动 */
+    /* Register battery management driver */
     DBG("[DrvInit] Registering Battery driver...\n");
     ret = Battery_DrvRegister();
     if (ret == 0) {
@@ -129,7 +129,7 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] Battery registration FAILED\n");
     }
     
-    /* 注册USB CDC驱动 */
+    /* Register USB CDC driver */
     DBG("[DrvInit] Registering USB CDC driver...\n");
     ret = UsbCdc_DrvRegister();
     if (ret == 0) {
@@ -140,10 +140,10 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] USB CDC registration FAILED\n");
     }
     
-    /* 初始化并挂载蓝牙设备到VFS */
+    /* Initialize and mount Bluetooth devices to VFS */
     DBG("[DrvInit] Initializing Bluetooth VFS drivers...\n");
     
-    /* 初始化BT驱动 */
+    /* Initialize BT driver */
     ret = BtVfs_Init();
     if (ret == 0) {
         VfsNode_t *driverDir = Vfs_FindNode("/driver");
@@ -165,7 +165,7 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] BT init FAILED\n");
     }
     
-    /* 初始化BLE驱动 */
+    /* Initialize BLE driver */
     ret = BleVfs_Init();
     if (ret == 0) {
         VfsNode_t *driverDir = Vfs_FindNode("/driver");
@@ -187,12 +187,12 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] BLE init FAILED\n");
     }
     
-    /* 注册系统命令到 /bin */
+    /* Register system commands to /bin */
     DBG("[DrvInit] Registering /bin commands...\n");
     ShellFs_RegisterAllCommands();
     DBG("[DrvInit] /bin commands registered OK\n");
 
-    /* 初始化音频效果图VFS（创建/audio目录） */
+    /* Initialize audio effect graph VFS (create /audio directory) */
     DBG("[DrvInit] Initializing Audio Graph VFS...\n");
     ret = EffectGraphVfs_MountDefault();
     if (ret == GRAPH_VFS_OK) {
@@ -201,12 +201,12 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] Audio Graph VFS mount deferred (graph not ready)\n");
     }
     
-    /* 注册audio VFS Shell命令 */
+    /* Register audio VFS Shell commands */
 #if USE_EFFECT_GRAPH_VFS
     ShellCmdAudioVfs_Register();
 #endif
 
-    /* 初始化蓝牙VFS（创建/bluetooth目录） */
+    /* Initialize Bluetooth VFS (create /bluetooth directory) */
     DBG("[DrvInit] Initializing Bluetooth VFS...\n");
     ret = BtVfsDriver_MountDefault();
     if (ret == BT_VFS_OK) {
@@ -215,7 +215,7 @@ int DrvFramework_RegisterAll(void)
         DBG("[DrvInit] Bluetooth VFS mount deferred (bluetooth not ready)\n");
     }
     
-    /* TODO: 添加更多驱动注册
+    /* TODO: Add more driver registrations
      * - Audio Codec
      */
     
@@ -224,10 +224,10 @@ int DrvFramework_RegisterAll(void)
 }
 
 /**
- * @brief  驱动框架完整初始化
- * @retval 0-成功, <0-失败
+ * @brief  Driver framework full initialization
+ * @retval 0-success, <0-failure
  * 
- * @note   一步完成：框架初始化 + 驱动注册
+ * @note   One-step completion: framework initialization + driver registration
  */
 int DrvFramework_FullInit(void)
 {
@@ -238,13 +238,13 @@ int DrvFramework_FullInit(void)
         DBG("[DrvInit] WARNING: VFS init failed, but continuing with Flash initialization...\n");
     }
     
-    /* 即使VFS失败，也要初始化Flash管理器（Flash不依赖VFS）*/
+    /* Even if VFS fails, initialize Flash manager (Flash does not depend on VFS)*/
     DBG("[DrvInit] Initializing Flash Managers (critical for audio looper)...\n");
     BG_flash_manager.Init();
     BG_FlashMgr.Init();
     DBG("[DrvInit] Flash Managers initialized OK\n");
     
-    /* 如果VFS已就绪，继续注册其他驱动 */
+    /* If VFS is ready, continue registering other drivers */
     if (ret == 0) {
         ret = DrvFramework_RegisterAll();
         if (ret != 0) {

@@ -7,16 +7,16 @@
 #include <stdbool.h>
 
 /**
- * @brief 电池管理驱动私有数据
+ * @brief Battery management driver private data
  */
 typedef struct {
-    uint8_t  soc;           // 电量百分比 State of Charge (0~100)
-    float    voltage;       // 实时电压(V)
-    bool     initialized;   // 初始化标志
-    uint32_t last_update;   // 上次更新时间戳(用于缓存优化)
+    uint8_t  soc;           // Battery percentage State of Charge (0~100)
+    float    voltage;       // Real-time voltage (V)
+    bool     initialized;   // Initialization flag
+    uint32_t last_update;   // Last update timestamp (for cache optimization)
 } BatteryPrivData_t;
 
-// 全局私有数据
+// Global private data
 static BatteryPrivData_t g_battery_priv = {
     .soc = 0,
     .voltage = 0.0f,
@@ -25,11 +25,11 @@ static BatteryPrivData_t g_battery_priv = {
 };
 
 /*****************************************************************************
- * 参数读取回调函数
+ * Parameter read callback functions
  *****************************************************************************/
 
 /**
- * @brief 获取设备名称
+ * @brief Get device name
  */
 static int param_get_name(char *buf, uint16_t maxLen, void *userData)
 {
@@ -38,13 +38,13 @@ static int param_get_name(char *buf, uint16_t maxLen, void *userData)
 }
 
 /**
- * @brief 获取电量百分比
+ * @brief Get battery percentage
  */
 static int param_get_soc(char *buf, uint16_t maxLen, void *userData)
 {
     BatteryPrivData_t *priv = (BatteryPrivData_t *)userData;
     
-    // 读取最新电量
+    // Read latest battery level
     priv->soc = battery_get_soc();
     
     snprintf(buf, maxLen, "%u", priv->soc);
@@ -52,33 +52,33 @@ static int param_get_soc(char *buf, uint16_t maxLen, void *userData)
 }
 
 /**
- * @brief 获取实时电压
+ * @brief Get real-time voltage
  */
 static int param_get_voltage(char *buf, uint16_t maxLen, void *userData)
 {
     BatteryPrivData_t *priv = (BatteryPrivData_t *)userData;
     
-    // 读取最新电压
+    // Read latest voltage
     priv->voltage = battery_get_volt();
     
-    // 将浮点数转换为整数表示 (millivolts)
+    // Convert float to integer representation (millivolts)
     int millivolts = (int)(priv->voltage * 1000);
     int volts = millivolts / 1000;
-    int decimal = (millivolts % 1000) / 10;  // 保留两位小数
+    int decimal = (millivolts % 1000) / 10;  // Keep two decimal places
     
     snprintf(buf, maxLen, "%d.%02d", volts, decimal);
     return strlen(buf);
 }
 
 /**
- * @brief 获取电池状态
- * @note 根据SOC返回状态: normal(>20%), low(10~20%), critical(<10%)
+ * @brief Get battery status
+ * @note Returns status based on SOC: normal(>20%), low(10~20%), critical(<10%)
  */
 static int param_get_status(char *buf, uint16_t maxLen, void *userData)
 {
     BatteryPrivData_t *priv = (BatteryPrivData_t *)userData;
     
-    // 读取最新电量
+    // Read latest battery level
     priv->soc = battery_get_soc();
     
     const char *status;
@@ -95,94 +95,94 @@ static int param_get_status(char *buf, uint16_t maxLen, void *userData)
 }
 
 /**
- * @brief 获取满电电压
+ * @brief Get full charge voltage
  */
 static int param_get_full_volt(char *buf, uint16_t maxLen, void *userData)
 {
-    // 将浮点数转换为整数表示
+    // Convert float to integer representation
     int millivolts = (int)(FULL_VOLT * 1000);
     int volts = millivolts / 1000;
-    int decimal = (millivolts % 1000) / 100;  // 保留一位小数
+    int decimal = (millivolts % 1000) / 100;  // Keep one decimal place
     
     snprintf(buf, maxLen, "%d.%01d", volts, decimal);
     return strlen(buf);
 }
 
 /**
- * @brief 获取空电电压
+ * @brief Get empty battery voltage
  */
 static int param_get_empty_volt(char *buf, uint16_t maxLen, void *userData)
 {
-    // 将浮点数转换为整数表示
+    // Convert float to integer representation
     int millivolts = (int)(EMPTY_VOLT * 1000);
     int volts = millivolts / 1000;
-    int decimal = (millivolts % 1000) / 100;  // 保留一位小数
+    int decimal = (millivolts % 1000) / 100;  // Keep one decimal place
     
     snprintf(buf, maxLen, "%d.%01d", volts, decimal);
     return strlen(buf);
 }
 
 /*****************************************************************************
- * 参数写入回调函数
+ * Parameter write callback functions
  *****************************************************************************/
 
 /**
- * @brief 刷新电量数据(写入任意值触发)
+ * @brief Refresh battery data (triggered by writing any value)
  */
 static int param_cmd_refresh(const char *value, void *userData)
 {
     BatteryPrivData_t *priv = (BatteryPrivData_t *)userData;
     
-    // 强制刷新电量和电压
+    // Force refresh battery level and voltage
     priv->soc = battery_get_soc();
     priv->voltage = battery_get_volt();
     
-    return 0;  // 成功
+    return 0;  // Success
 }
 
 /*****************************************************************************
- * 参数定义表
+ * Parameter definition table
  *****************************************************************************/
 static const FsParamDef_t battery_params[] = {
     {
         .name = "name",
-        .desc = "设备名称",
+        .desc = "Device name",
         .get = param_get_name,
         .set = NULL,  // 只读
     },
     {
         .name = "soc",
-        .desc = "电量百分比(0~100)",
+        .desc = "Battery percentage (0~100)",
         .get = param_get_soc,
         .set = NULL,  // 只读
     },
     {
         .name = "voltage",
-        .desc = "实时电压(V)",
+        .desc = "Real-time voltage (V)",
         .get = param_get_voltage,
         .set = NULL,  // 只读
     },
     {
         .name = "status",
-        .desc = "电池状态(normal/low/critical)",
+        .desc = "Battery status (normal/low/critical)",
         .get = param_get_status,
         .set = NULL,  // 只读
     },
     {
         .name = "full_volt",
-        .desc = "满电电压(V)",
+        .desc = "Full charge voltage (V)",
         .get = param_get_full_volt,
         .set = NULL,  // 只读
     },
     {
         .name = "empty_volt",
-        .desc = "空电电压(V)",
+        .desc = "Empty battery voltage (V)",
         .get = param_get_empty_volt,
         .set = NULL,  // 只读
     },
     {
         .name = "refresh",
-        .desc = "刷新电量数据(写入任意值)",
+        .desc = "Refresh battery data (write any value)",
         .get = NULL,  // 只写
         .set = param_cmd_refresh,
     },
@@ -190,22 +190,22 @@ static const FsParamDef_t battery_params[] = {
 };
 
 /*****************************************************************************
- * 驱动操作函数
+ * Driver operation functions
  *****************************************************************************/
 
 /**
- * @brief 电池管理驱动初始化
+ * @brief Battery management driver initialization
  */
 static int battery_drv_init(void *priv)
 {
     BatteryPrivData_t *battery_priv = (BatteryPrivData_t *)priv;
     
     if (battery_priv->initialized) {
-        return 0;  // 已初始化
+        return 0;  // Already initialized
     }
     
-    // 延迟读取电量，避免在main()中调用Shell_Printf导致问题
-    // 首次读取将在第一次参数访问时进行
+    // Delay reading battery level to avoid issues with calling Shell_Printf in main()
+    // First read will occur on first parameter access
     battery_priv->soc = 0;
     battery_priv->voltage = 0.0f;
     battery_priv->initialized = true;
@@ -214,7 +214,7 @@ static int battery_drv_init(void *priv)
 }
 
 /**
- * @brief 电池管理驱动反初始化
+ * @brief Battery management driver deinitialization
  */
 static int battery_drv_deinit(void *priv)
 {
@@ -224,7 +224,7 @@ static int battery_drv_deinit(void *priv)
 }
 
 /**
- * @brief 打开电池设备(可选实现)
+ * @brief Open battery device (optional implementation)
  */
 static int battery_drv_open(void *priv)
 {
@@ -233,7 +233,7 @@ static int battery_drv_open(void *priv)
 }
 
 /**
- * @brief 关闭电池设备(可选实现)
+ * @brief Close battery device (optional implementation)
  */
 static int battery_drv_close(void *priv)
 {
@@ -242,22 +242,22 @@ static int battery_drv_close(void *priv)
 }
 
 /**
- * @brief 读取电池数据
- * @param priv 私有数据
- * @param buf 读取缓冲区
- * @param len 读取长度
- * @return 实际读取的字节数
- * @note 返回格式化的电池信息字符串
+ * @brief Read battery data
+ * @param priv Private data
+ * @param buf Read buffer
+ * @param len Read length
+ * @return Actual number of bytes read
+ * @note Returns formatted battery information string
  */
 static int battery_drv_read(void *priv, uint8_t *buf, uint32_t len)
 {
     BatteryPrivData_t *battery_priv = (BatteryPrivData_t *)priv;
     
-    // 刷新数据
+    // Refresh data
     battery_priv->soc = battery_get_soc();
     battery_priv->voltage = battery_get_volt();
     
-    // 格式化输出
+    // Format output
     int written = snprintf((char *)buf, len,
         "Battery Info:\n"
         "  SOC: %u%%\n"
@@ -273,16 +273,16 @@ static int battery_drv_read(void *priv, uint8_t *buf, uint32_t len)
 }
 
 /**
- * @brief IOCTL控制命令
- * @param priv 私有数据
- * @param cmd 命令码
- * @param arg 参数
- * @return 0成功, 负值失败
+ * @brief IOCTL control command
+ * @param priv Private data
+ * @param cmd Command code
+ * @param arg Argument
+ * @return 0 on success, negative on failure
  * 
- * 支持的命令:
- *   0x01 - 刷新电量数据
- *   0x02 - 获取SOC到arg指向的uint8_t*
- *   0x03 - 获取电压到arg指向的float*
+ * Supported commands:
+ *   0x01 - Refresh battery data
+ *   0x02 - Get SOC to uint8_t* pointed by arg
+ *   0x03 - Get voltage to float* pointed by arg
  */
 static int battery_drv_ioctl(void *priv, uint32_t cmd, void *arg)
 {
@@ -316,7 +316,7 @@ static int battery_drv_ioctl(void *priv, uint32_t cmd, void *arg)
 /*****************************************************************************
  * 驱动设备结构定义
  *****************************************************************************/
-/* 注意：不能用const，因为需要在运行时修改isRegistered/fsNode等字段 */
+/* 注意：不能用const，因为需要在运行时修改isRegistered/fsNode等字�?*/
 static DrvDevice_t battery_driver = {
     .name = "battery",
     .bus = DRV_BUS_POWER,  // 电源总线
@@ -325,8 +325,7 @@ static DrvDevice_t battery_driver = {
     .open = battery_drv_open,
     .close = battery_drv_close,
     .read = battery_drv_read,
-    .write = NULL,  // 电池不支持写入
-    .ioctl = battery_drv_ioctl,
+    .write = NULL,  // 电池不支持写�?    .ioctl = battery_drv_ioctl,
     .params = battery_params,
     .privData = &g_battery_priv,
 };
@@ -336,10 +335,8 @@ static DrvDevice_t battery_driver = {
  *****************************************************************************/
 
 /**
- * @brief 注册电池管理驱动到驱动框架
- * @return 0成功, 负值失败
- * 
- * 注册后创建以下文件系统节点:
+ * @brief 注册电池管理驱动到驱动框�? * @return 0成功, 负值失�? * 
+ * 注册后创建以下文件系统节�?
  *   /driver/power/battery/
  *   ├── name
  *   ├── soc

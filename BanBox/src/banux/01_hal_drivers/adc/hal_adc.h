@@ -4,14 +4,14 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    ADC HAL适配层 - 封装SDK底层ADC驱动
+ * @brief    ADC HAL adaptation layer - Encapsulate SDK underlying ADC driver
  *****************************************************************************
  * @attention
  *
- * 本文件是SDK ADC驱动的包装层，提供统一的HAL接口。
- * 用于电池电压检测等功能。
+ * This file is the wrapper layer for SDK ADC driver, providing unified HAL interface.
+ * Used for battery voltage detection and other functions.
  *
- * SDK原始文件:
+ * SDK original files:
  *   - driver/driver/inc/adc.h
  *   - driver/driver_api/inc/adc_interface.h
  *

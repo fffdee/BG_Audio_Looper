@@ -4,32 +4,32 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    HAL驱动层统一头文件
+ * @brief    HAL driver layer unified header file
  *****************************************************************************
  * @attention
  *
- * 本文件汇总所有HAL驱动适配层头文件。
+ * This file summarizes all HAL driver adaptation layer header files.
  * 
- * HAL层定位：
- *   - 不重复实现SDK已有的驱动
- *   - 提供统一的HAL接口封装
- *   - 屏蔽SDK底层实现细节
- *   - 方便上层驱动调用
+ * HAL layer positioning:
+ *   - Do not reimplement existing SDK drivers
+ *   - Provide unified HAL interface encapsulation
+ *   - Shield SDK underlying implementation details
+ *   - Convenient for upper layer driver calls
  *
- * 目录结构：
+ * Directory structure:
  *   01_hal_drivers/
- *   ├── hal_drivers.h      (本文件 - 统一头文件)
+ *   ├── hal_drivers.h      (This file - unified header file)
  *   ├── spi/
- *   │   └── hal_spi.h      (SPI HAL接口)
+ *   │   └── hal_spi.h      (SPI HAL interface)
  *   ├── gpio/
- *   │   └── hal_gpio.h     (GPIO HAL接口)
+ *   │   └── hal_gpio.h     (GPIO HAL interface)
  *   └── adc/
- *       └── hal_adc.h      (ADC HAL接口)
+ *       └── hal_adc.h      (ADC HAL interface)
  *
- * SDK原始驱动位置：
- *   MVsB1_Base_SDK/driver/driver/inc/       (寄存器级驱动头文件)
- *   MVsB1_Base_SDK/driver/driver/libDriver.a (编译好的驱动库)
- *   MVsB1_Base_SDK/driver/driver_api/       (驱动接口层)
+ * SDK original driver location:
+ *   MVsB1_Base_SDK/driver/driver/inc/       (Register-level driver header files)
+ *   MVsB1_Base_SDK/driver/driver/libDriver.a (Compiled driver library)
+ *   MVsB1_Base_SDK/driver/driver_api/       (Driver interface layer)
  *
  *****************************************************************************
  */
@@ -55,31 +55,31 @@ extern "C" {
 #include "adc/hal_adc.h"
 
 /*******************************************************************************
- * HAL层说明
+ * HAL layer description
  ******************************************************************************/
 /*
- * 为什么HAL层是包装层而不是重新实现？
+ * Why is the HAL layer a wrapper layer rather than reimplementation?
  *
- * 1. SDK已提供完整的底层驱动实现（libDriver.a）
- * 2. 重新实现会导致代码冗余和维护困难
- * 3. 包装层提供统一接口，便于移植到其他平台
- * 4. 如需更换芯片平台，只需修改HAL层适配
+ * 1. SDK already provides complete underlying driver implementation (libDriver.a)
+ * 2. Reimplementation will lead to code redundancy and maintenance difficulties
+ * 3. Wrapper layer provides unified interface, easy to port to other platforms
+ * 4. If need to change chip platform, only need to modify HAL layer adaptation
  *
- * 使用示例：
+ * Usage example:
  *
- *   // SPI初始化
+ *   // SPI initialization
  *   HAL_SPI_Init(HAL_SPI_MODE0, HAL_SPI_CLK_12M);
  *   HAL_SPI_PortSelect(HAL_SPI_PORT0);
  *
- *   // SPI发送数据
+ *   // SPI send data
  *   uint8_t txBuf[4] = {0x01, 0x02, 0x03, 0x04};
  *   HAL_SPI_Send(txBuf, 4);
  *
- *   // GPIO控制
+ *   // GPIO control
  *   HAL_GPIO_SetOutput(GPIO_A_START, GPIO_INDEX10);
  *   HAL_GPIO_SetHigh(GPIO_A_START, GPIO_INDEX10);
  *
- *   // ADC读取
+ *   // ADC reading
  *   uint16_t adcVal = HAL_ADC_SingleRead(HAL_ADC_CH_A31);
  *   float voltage = HAL_ADC_ToVoltage(adcVal);
  */

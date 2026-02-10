@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    驱动设备注册框架实现
+ * @brief    Driver device registration framework implementation
  *****************************************************************************
  */
 
@@ -14,13 +14,13 @@
 #include "debug.h"  /* For DBG macro */
 
 /*******************************************************************************
- * 静态变量
+ * Static variables
  ******************************************************************************/
 static DrvDevice_t *g_Devices[DRV_DEVICE_MAX];
 static uint8_t      g_DeviceCount = 0;
 static bool         g_Initialized = FALSE;
 
-/* 总线名称表 */
+/* Bus name table */
 static const char *g_BusNames[] = {
     "spi",      /* DRV_BUS_SPI */
     "i2c",      /* DRV_BUS_I2C */
@@ -33,11 +33,11 @@ static const char *g_BusNames[] = {
 };
 
 /*******************************************************************************
- * 内部函数
+ * Internal functions
  ******************************************************************************/
 
 /**
- * @brief  为设备创建参数节点
+ * @brief  Create parameter nodes for device
  */
 static int CreateDeviceParams(DrvDevice_t *dev, FsNode_t *devNode)
 {
@@ -69,7 +69,7 @@ static int CreateDeviceParams(DrvDevice_t *dev, FsNode_t *devNode)
             param->desc,
             param->get,
             param->set,
-            dev->privData  /* 传递设备私有数据 */
+            dev->privData  /* Pass device private data */
         );
         
         if (!paramNode) {
@@ -87,7 +87,7 @@ static int CreateDeviceParams(DrvDevice_t *dev, FsNode_t *devNode)
 }
 
 /*******************************************************************************
- * 公共API实现
+ * Public API implementation
  ******************************************************************************/
 
 int DrvDevice_Init(void)
@@ -96,11 +96,11 @@ int DrvDevice_Init(void)
     
     if (g_Initialized) return 0;
     
-    /* 初始化设备列表 */
+    /* Initialize device list */
     memset(g_Devices, 0, sizeof(g_Devices));
     g_DeviceCount = 0;
     
-    /* 初始化文件系统 */
+    /* Initialize file system */
     err = DrvFs_Init();
     if (err != FS_OK) {
         return -1;
@@ -139,21 +139,21 @@ int DrvDevice_Register(DrvDevice_t *dev)
     
     if (dev->isRegistered) {
         DBG("[DrvDev] ERROR: Already registered\n");
-        return -3;  /* 已注册 */
+        return -3;  /* Already registered */
     }
     
     DBG("[DrvDev] Getting bus directory (bus=%d)...\n", dev->bus);
-    /* 获取对应总线目录 */
+    /* Get corresponding bus directory */
     busDir = DrvDevice_GetBusDir(dev->bus);
     if (!busDir) {
         DBG("[DrvDev] Bus dir not found, using driver dir\n");
-        /* 如果是未知总线，在driver下创建 */
+        /* If unknown bus, create under driver */
         busDir = DrvFs_GetDriverDir();
     }
     DBG("[DrvDev] Bus dir: %p\n", busDir);
     
     DBG("[DrvDev] Creating device node...\n");
-    /* 创建设备节点 */
+    /* Create device node */
     devNode = DrvFs_CreateDevice(busDir, dev->name, dev);
     if (!devNode) {
         DBG("[DrvDev] ERROR: DrvFs_CreateDevice failed\n");
@@ -161,12 +161,12 @@ int DrvDevice_Register(DrvDevice_t *dev)
     }
     DBG("[DrvDev] Device node created: %p\n", devNode);
     
-    /* 关联设备和节点 */
+    /* Associate device and node */
     dev->fsNode = devNode;
     devNode->driver = dev;
     
     DBG("[DrvDev] Creating params (params=%p)...\n", dev->params);
-    /* 创建参数节点 */
+    /* Create parameter nodes */
     if (dev->params) {
         if (CreateDeviceParams(dev, devNode) != 0) {
             DBG("[DrvDev] ERROR: CreateDeviceParams failed\n");
@@ -177,13 +177,13 @@ int DrvDevice_Register(DrvDevice_t *dev)
         DBG("[DrvDev] Params created\n");
     }
     
-    /* 添加到设备列表 */
+    /* Add to device list */
     g_Devices[g_DeviceCount++] = dev;
     dev->isRegistered = TRUE;
     
     DBG("[DrvDev] Device '%s' registered successfully\n", dev->name);
     
-    /* 自动调用驱动初始化（已移除所有FreeRTOS依赖，可安全调用） */
+    /* Auto call driver initialization (all FreeRTOS dependencies removed, safe to call) */
     if (dev->init) {
         DBG("[DrvDev] Calling init for device '%s'...\n", dev->name);
         if (dev->init(dev->privData) == 0) {
@@ -202,18 +202,18 @@ int DrvDevice_Unregister(DrvDevice_t *dev)
     
     if (!dev || !dev->isRegistered) return -1;
     
-    /* 调用驱动去初始化 */
+    /* Call driver deinitialization */
     if (dev->deinit) {
         dev->deinit(dev->privData);
     }
     
-    /* 从文件系统中移除节点 */
+    /* Remove node from file system */
     if (dev->fsNode) {
         DrvFs_RemoveNode(dev->fsNode);
         dev->fsNode = NULL;
     }
     
-    /* 从设备列表中移除 */
+    /* Remove from device list */
     for (i = 0; i < g_DeviceCount; i++) {
         if (g_Devices[i] == dev) {
             for (j = i; j < g_DeviceCount - 1; j++) {

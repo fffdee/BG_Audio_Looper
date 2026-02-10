@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    驱动框架初始化头文件
+ * @brief    Driver framework initialization header file
  *****************************************************************************
  */
 
@@ -18,39 +18,39 @@ extern "C" {
 #include "type.h"
 
 /*******************************************************************************
- * 函数声明
+ * Function declarations
  ******************************************************************************/
 
 /**
- * @brief  初始化驱动框架核心
- * @retval 0-成功, <0-失败
+ * @brief  Initialize driver framework core
+ * @retval 0-success, <0-failure
  */
 int DrvFramework_Init(void);
 
 /**
- * @brief  注册所有硬件驱动
- * @retval 0-成功, <0-失败
+ * @brief  Register all hardware drivers
+ * @retval 0-success, <0-failure
  */
 int DrvFramework_RegisterAll(void);
 
 /**
- * @brief  驱动框架完整初始化(框架+驱动)
- * @retval 0-成功, <0-失败
+ * @brief  Driver framework full initialization (framework + drivers)
+ * @retval 0-success, <0-failure
  * 
- * @note   在main()中调用此函数完成所有驱动注册
+ * @note   Call this function in main() to complete all driver registration
  * 
  * @example
  *   int main(void) {
- *       // 硬件初始化...
+ *       // Hardware initialization...
  *       
- *       // 驱动框架初始化
+ *       // Driver framework initialization
  *       DrvFramework_FullInit();
  *       
- *       // Shell初始化
+ *       // Shell initialization
  *       Shell_Init();
  *       
  *       while(1) {
- *           // 主循环
+ *           // Main loop
  *       }
  *   }
  */

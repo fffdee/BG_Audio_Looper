@@ -3,49 +3,49 @@
 
 #include <stdint.h>
 
-/************************ 硬件参数配置（可根据实际修改） ************************/
+/************************ Hardware parameters, can be modified according to actual situation ************************/
 /**
- * @brief ADC最大量程（通常12位ADC为4095）
+ * @brief ADC maximum value, 12-bit ADC is 4095
  */
 #define ADC_MAX         4095
 
 /**
- * @brief ADC参考电压（单位：V，如STM32默认3.3V，ESP32可配置为3.3V/1.1V）
+ * @brief ADC reference voltage in V, STM32 default 3.3V, ESP32 may be 3.3V/1.1V
  */
 #define ADC_REF_VOLT    3.3f
 
 /**
- * @brief 分压比系数（1:1分压 → 电池电压=ADC采样电压×2；若2:1分压则为3）
- *        计算公式：分压比系数 = (上拉电阻+下拉电阻)/下拉电阻
+ * @brief Voltage divider ratio, 1:1 voltage divider, measured voltage = ADC voltage * 2, for 2:1 divider is 3
+ *        Calculation formula: voltage ratio = (upper resistor + lower resistor)/lower resistor
  */
 #define VOLT_DIV_RATIO  2.0f
 
 /**
- * @brief 锂电池满电电压（单位：V，单体三元锂典型值4.2V，磷酸铁锂3.65V）
+ * @brief Full battery voltage in V, lithium battery max 4.2V, some 3.65V
  */
 #define FULL_VOLT       4.2f
 
 /**
- * @brief 锂电池放电截止电压（单位：V，单体三元锂最低3.0V，避免过放）
+ * @brief Battery discharge cutoff voltage in V, lithium battery 3.0V, some lower
  */
 #define EMPTY_VOLT      3.0f
 
 /**
- * @brief 滑动滤波缓存长度（值越大滤波效果越好，响应越慢，建议3~8）
+ * @brief Filter buffer length, larger value better filtering, slower response, 3~8
  */
 #define FILTER_BUF_LEN  5
 
-/************************ 对外暴露的核心API ************************/
+/************************ Battery related API functions ************************/
 /**
- * @brief 获取电池剩余电量百分比（SOC）
- * @return 电量百分比（0~100），0表示过放，100表示满电
- * @note 驱动内部自动完成ADC读取、滤波、电压转换、电量计算，主函数直接调用即可
+ * @brief Get battery level, state of charge SOC
+ * @return Battery percentage 0~100, 0 means empty, 100 means full
+ * @note This function internally automatically reads ADC, filters, converts voltage to percentage, can be called directly
  */
 uint8_t battery_get_soc(void);
 
 /**
- * @brief （可选）获取电池实时电压（便于调试）
- * @return 电池实际电压（单位：V）
+ * @brief For debugging, get battery real-time voltage
+ * @return Battery actual voltage in V
  */
 float battery_get_volt(void);
 

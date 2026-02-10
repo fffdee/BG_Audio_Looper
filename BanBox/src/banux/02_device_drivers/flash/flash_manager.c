@@ -1,9 +1,9 @@
 /**
- * flash_manager.c - Flash绠＄悊灞傚疄鐜�
+ * flash_manager.c - Flash management layer implementation
  * 
- * 绠＄悊涓らW25Q64 NOR Flash锛�
- * - Flash #0: 鍓�MB绯荤粺璁剧疆 + 鍚�MB缁橪ooper
- * - Flash #1: 8MB绾瓨鍌�
+ * Manage two W25Q64 NOR Flash chips:
+ * - Flash #0: First 1MB system settings + Last 7MB for Looper
+ * - Flash #1: 8MB pure storage
  */
 
 #include "flash_manager.h"
@@ -11,10 +11,10 @@
 #include <string.h>
 
 /*===========================================================================
- * CS寮曡剼鎺у埗鍑芥暟
+ * CS Pin Control Functions
  *===========================================================================*/
 
-/* Flash #0 CS鎺у埗 (GPIOA21) */
+/* Flash #0 CS control (GPIOA21) */
 static void flash0_cs_enable(bool enable)
 {
     if (enable) {
@@ -24,7 +24,7 @@ static void flash0_cs_enable(bool enable)
     }
 }
 
-/* Flash #1 CS鎺у埗 (GPIOA23) */
+/* Flash #1 CS control (GPIOA23) */
 static void flash1_cs_enable(bool enable)
 {
     if (enable) {
@@ -35,13 +35,13 @@ static void flash1_cs_enable(bool enable)
 }
 
 /*===========================================================================
- * Flash绠＄悊鍣ㄥ崟渚�
+ * Flash Manager Singleton
  *===========================================================================*/
 
 static FlashManager_t g_flash_manager = {0};
 
 /*===========================================================================
- * 鍒濆鍖栧拰鍙嶅垵濮嬪寲
+ * Initialization and Deinitialization
  *===========================================================================*/
 
 FlashStatus_t FlashManager_Init(void)
@@ -54,60 +54,60 @@ FlashStatus_t FlashManager_Init(void)
     
     DBG("FlashManager: Initializing...\n");
     
-    /* 鍒濆鍖朇S寮曡剼 */
+    /* Initialize CS pins */
     FLASH_NOR0_CS_INIT();
     FLASH_NOR1_CS_INIT();
     FLASH_WP_INIT();
     
-    /* 绂佺敤鎵�湁CS */
+    /* Disable all CS */
     FLASH_NOR0_CS_DISABLE();
     FLASH_NOR1_CS_DISABLE();
     FLASH_WP_DISABLE();
     
-    /* 鍒涘缓Flash #0椹卞姩 */
+    /* Create Flash #0 driver */
     g_flash_manager.flash[FLASH_DEV_0] = FlashDriver_CreateNOR(0, flash0_cs_enable, NULL);
     if (!g_flash_manager.flash[FLASH_DEV_0]) {
         DBG("FlashManager: Failed to create Flash #0 driver\n");
         return FLASH_ERROR_PARAM;
     }
     
-    /* 鍒涘缓Flash #1椹卞姩 */
+    /* Create Flash #1 driver */
     g_flash_manager.flash[FLASH_DEV_1] = FlashDriver_CreateNOR(1, flash1_cs_enable, NULL);
     if (!g_flash_manager.flash[FLASH_DEV_1]) {
         DBG("FlashManager: Failed to create Flash #1 driver\n");
         return FLASH_ERROR_PARAM;
     }
     
-    /* 鍒濆鍖朏lash #0 */
+    /* Initialize Flash #0 */
     ret = g_flash_manager.flash[FLASH_DEV_0]->init(g_flash_manager.flash[FLASH_DEV_0]);
     if (ret != FLASH_OK) {
         DBG("FlashManager: Flash #0 init failed\n");
         return ret;
     }
     
-    /* 鍒濆鍖朏lash #1 */
+    /* Initialize Flash #1 */
     ret = g_flash_manager.flash[FLASH_DEV_1]->init(g_flash_manager.flash[FLASH_DEV_1]);
     if (ret != FLASH_OK) {
         DBG("FlashManager: Flash #1 init failed\n");
         return ret;
     }
     
-    /* 璁剧疆鍒嗗尯淇℃伅 */
-    /* 绯荤粺璁剧疆鍒嗗尯 - Flash #0 鍓�MB */
+    /* Set partition information */
+    /* System settings partition - Flash #0 first 1MB */
     g_flash_manager.partitions[PARTITION_TYPE_SYSTEM].type = PARTITION_TYPE_SYSTEM;
     g_flash_manager.partitions[PARTITION_TYPE_SYSTEM].flash_id = FLASH_DEV_0;
     g_flash_manager.partitions[PARTITION_TYPE_SYSTEM].start_addr = PARTITION_SYSTEM_START;
     g_flash_manager.partitions[PARTITION_TYPE_SYSTEM].size = PARTITION_SYSTEM_SIZE;
     g_flash_manager.partitions[PARTITION_TYPE_SYSTEM].name = "System";
     
-    /* Looper鍒嗗尯 - Flash #0 鍚�MB */
+    /* Looper partition - Flash #0 last 7MB */
     g_flash_manager.partitions[PARTITION_TYPE_LOOPER].type = PARTITION_TYPE_LOOPER;
     g_flash_manager.partitions[PARTITION_TYPE_LOOPER].flash_id = FLASH_DEV_0;
     g_flash_manager.partitions[PARTITION_TYPE_LOOPER].start_addr = PARTITION_LOOPER_START;
     g_flash_manager.partitions[PARTITION_TYPE_LOOPER].size = PARTITION_LOOPER_SIZE;
     g_flash_manager.partitions[PARTITION_TYPE_LOOPER].name = "Looper";
     
-    /* 瀛樺偍鍒嗗尯 - Flash #1 鍏ㄩ儴8MB */
+    /* Storage partition - Flash #1 entire 8MB */
     g_flash_manager.partitions[PARTITION_TYPE_STORAGE].type = PARTITION_TYPE_STORAGE;
     g_flash_manager.partitions[PARTITION_TYPE_STORAGE].flash_id = FLASH_DEV_1;
     g_flash_manager.partitions[PARTITION_TYPE_STORAGE].start_addr = PARTITION_STORAGE_START;
@@ -161,7 +161,7 @@ const PartitionInfo_t* FlashManager_GetPartition(PartitionType_t type)
 }
 
 /*===========================================================================
- * 鍒嗗尯璇诲啓瀹炵幇
+ * Partition Read/Write Implementation
  *===========================================================================*/
 
 FlashStatus_t FlashManager_Read(PartitionType_t type, uint32_t offset, uint8_t *buf, uint32_t len)
@@ -179,7 +179,7 @@ FlashStatus_t FlashManager_Read(PartitionType_t type, uint32_t offset, uint8_t *
         return FLASH_ERROR_PARAM;
     }
     
-    /* 妫�煡杈圭晫 */
+    /* Check bounds */
     if (offset + len > part->size) {
         DBG("FlashManager: Read out of partition bounds\n");
         return FLASH_ERROR_PARAM;
@@ -209,7 +209,7 @@ FlashStatus_t FlashManager_Write(PartitionType_t type, uint32_t offset, const ui
         return FLASH_ERROR_PARAM;
     }
     
-    /* 妫�煡杈圭晫 */
+    /* Check bounds */
     if (offset + len > part->size) {
         DBG("FlashManager: Write out of partition bounds\n");
         return FLASH_ERROR_PARAM;
@@ -239,7 +239,7 @@ FlashStatus_t FlashManager_EraseSector(PartitionType_t type, uint32_t offset)
         return FLASH_ERROR_PARAM;
     }
     
-    /* 妫�煡杈圭晫 */
+    /* Check bounds */
     if (offset >= part->size) {
         return FLASH_ERROR_PARAM;
     }
@@ -293,7 +293,7 @@ FlashStatus_t FlashManager_ErasePartition(PartitionType_t type)
 }
 
 /*===========================================================================
- * 绯荤粺璁剧疆API瀹炵幇
+ * System Settings API Implementation
  *===========================================================================*/
 
 bool FlashManager_IsSettingsValid(void)
@@ -316,20 +316,20 @@ FlashStatus_t FlashManager_InitSettings(void)
     
     DBG("FlashManager: Initializing settings partition...\n");
     
-    /* 鎿﹂櫎璁剧疆鍖�*/
+    /* Erase settings partition */
     ret = FlashManager_EraseSector(PARTITION_TYPE_SYSTEM, 0);
     if (ret != FLASH_OK) {
         return ret;
     }
     
-    /* 鍐欏叆榄旀湳瀛�*/
+    /* Write magic word */
     ret = FlashManager_Write(PARTITION_TYPE_SYSTEM, SETTINGS_MAGIC_ADDR, 
                              (uint8_t*)&magic, sizeof(magic));
     if (ret != FLASH_OK) {
         return ret;
     }
     
-    /* 鍐欏叆鐗堟湰鍙�*/
+    /* Write version number */
     ret = FlashManager_Write(PARTITION_TYPE_SYSTEM, SETTINGS_VERSION_ADDR, 
                              (uint8_t*)&version, sizeof(version));
     if (ret != FLASH_OK) {
@@ -351,7 +351,7 @@ FlashStatus_t FlashManager_WriteSettings(uint32_t key, const uint8_t *buf, uint3
 }
 
 /*===========================================================================
- * Looper涓撶敤API瀹炵幇
+ * Looper Dedicated API Implementation
  *===========================================================================*/
 
 FlashStatus_t FlashManager_LooperRead(uint32_t offset, uint8_t *buf, uint32_t len)
@@ -375,7 +375,7 @@ uint32_t FlashManager_LooperGetSize(void)
 }
 
 /*===========================================================================
- * 瀛樺偍鍒嗗尯API瀹炵幇
+ * Storage Partition API Implementation
  *===========================================================================*/
 
 FlashStatus_t FlashManager_StorageRead(uint32_t offset, uint8_t *buf, uint32_t len)
@@ -399,7 +399,7 @@ uint32_t FlashManager_StorageGetSize(void)
 }
 
 /*===========================================================================
- * 璋冭瘯鍜屾祴璇�
+ * Debug and Test
  *===========================================================================*/
 
 void FlashManager_PrintInfo(void)
@@ -447,19 +447,19 @@ FlashStatus_t FlashManager_Test(uint8_t flash_id)
     
     DBG("\n=== Flash #%d Test ===\n", flash_id);
     
-    /* 鏍规嵁Flash ID閫夋嫨娴嬭瘯鍦板潃 */
+    /* Select test address based on Flash ID */
     if (flash_id == FLASH_DEV_0) {
-        test_addr = PARTITION_LOOPER_START; /* 鍦↙ooper鍖烘祴璇曪紝閬垮厤鐮村潖绯荤粺璁剧疆 */
+        test_addr = PARTITION_LOOPER_START; /* Test in Looper partition to avoid damaging system settings */
     } else {
         test_addr = 0;
     }
     
-    /* 鍑嗗娴嬭瘯鏁版嵁 */
+    /* Prepare test data */
     for (i = 0; i < 256; i++) {
         write_buf[i] = i;
     }
     
-    /* 鎿﹂櫎娴嬭瘯鎵囧尯 */
+    /* Erase test sector */
     DBG("Erasing sector at 0x%06X...\n", test_addr);
     ret = drv->erase_sector(drv, test_addr);
     if (ret != FLASH_OK) {
@@ -467,7 +467,7 @@ FlashStatus_t FlashManager_Test(uint8_t flash_id)
         return ret;
     }
     
-    /* 楠岃瘉鎿﹂櫎 */
+    /* Verify erase */
     ret = drv->read(drv, test_addr, read_buf, 256);
     if (ret != FLASH_OK) {
         DBG("Read after erase failed!\n");
@@ -482,7 +482,7 @@ FlashStatus_t FlashManager_Test(uint8_t flash_id)
     }
     DBG("Erase verified OK\n");
     
-    /* 鍐欏叆娴嬭瘯鏁版嵁 */
+    /* Write test data */
     DBG("Writing test data...\n");
     ret = drv->write(drv, test_addr, write_buf, 256);
     if (ret != FLASH_OK) {
@@ -490,7 +490,7 @@ FlashStatus_t FlashManager_Test(uint8_t flash_id)
         return ret;
     }
     
-    /* 璇诲彇骞堕獙璇�*/
+    /* Read and verify */
     memset(read_buf, 0, 256);
     ret = drv->read(drv, test_addr, read_buf, 256);
     if (ret != FLASH_OK) {
