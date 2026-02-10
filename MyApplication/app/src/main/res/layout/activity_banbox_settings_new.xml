@@ -68,7 +68,6 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="100dp"
                     android:background="@color/bg_card"
                     android:padding="@dimen/toolbar_padding"
                     android:elevation="@dimen/card_elevation"
@@ -85,6 +84,7 @@
                         android:layout_marginBottom="@dimen/spacing_large" />
 
                     <LinearLayout
+                        android:id="@+id/buttons_container"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
@@ -117,10 +117,12 @@
                     <!-- ViewPager容器 -->
                     <androidx.viewpager2.widget.ViewPager2
                         android:id="@+id/viewpager_functions"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/btn_open_settings"
-                        android:layout_marginTop="@dimen/spacing_huge" />
+                        android:layout_width="300dp"
+                        android:layout_height="300dp"
+                        android:layout_centerInParent="true"
+                        android:layout_below="@id/buttons_container"
+                        android:layout_marginTop="@dimen/spacing_medium">
+                    </androidx.viewpager2.widget.ViewPager2>
 
                     <!-- 页面指示器 -->
                     <LinearLayout
@@ -130,7 +132,8 @@
                         android:layout_below="@id/viewpager_functions"
                         android:layout_centerHorizontal="true"
                         android:layout_marginTop="@dimen/spacing_small"
-                        android:orientation="horizontal" />
+                        android:orientation="horizontal">
+                    </LinearLayout>
                 </RelativeLayout>
 
                 <!-- 调试工具卡片 -->

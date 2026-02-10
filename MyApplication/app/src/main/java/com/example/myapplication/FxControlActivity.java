@@ -51,7 +51,7 @@ public class FxControlActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         // 初始化保存按钮
-        Button btnSave = findViewById(R.id.btn_save_fx);
+        ImageButton btnSave = findViewById(R.id.btn_save_fx);
         btnSave.setOnClickListener(v -> saveFxSettings());
 
         // 创建 DRC 滑条

@@ -747,11 +747,11 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
     private void setupFunctionViewPager() {
         // 创建功能数据
         List<FunctionItem> functions = new ArrayList<>();
-        functions.add(new FunctionItem("🎛️ 效果调节", FxControlActivity.class));
-        functions.add(new FunctionItem("🎚️ 均衡器设置", EqControlActivity.class));
-        functions.add(new FunctionItem("🔊 硬件音量控制", HardwareVolumeActivity.class));
-        functions.add(new FunctionItem("⏱️ 节拍器", MetronomeActivity.class));
-        functions.add(new FunctionItem("🎵 音频链路图", AudioChainDiagramActivity.class));
+        functions.add(new FunctionItem("", FxControlActivity.class));
+        functions.add(new FunctionItem("", EqControlActivity.class));
+        functions.add(new FunctionItem("", HardwareVolumeActivity.class));
+        functions.add(new FunctionItem("", MetronomeActivity.class));
+        functions.add(new FunctionItem("", AudioChainDiagramActivity.class));
 
         // 创建适配器
         functionPagerAdapter = new FunctionPagerAdapter(this, functions);

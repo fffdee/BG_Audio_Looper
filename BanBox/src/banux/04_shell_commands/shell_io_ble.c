@@ -80,60 +80,28 @@ uint16_t BLE_Send(uint8_t *data, uint16_t len)
 {
     uint16_t sent = 0;
     uint16_t chunk_size;
-    uint16_t print_len;
-    uint16_t i;
     const uint16_t max_len = 23;
     int result;
-    
-    // DBG("[BLE_TX] BLE_Send called, total_len=%d\n", len);
-    // DBG("[BLE_TX_DATA] ");
-    // print_len = len > 64 ? 64 : len;
-    // for (i = 0; i < print_len; i++) {
-    //     if (data[i] >= 0x20 && data[i] <= 0x7E) {
-    //         DBG("%c", data[i]);
-    //     } else if (data[i] == '\n') {
-    //         DBG("\\n");
-    //     } else if (data[i] == '\r') {
-    //         DBG("\\r");
-    //     } else {
-    //         DBG("[%02X]", data[i]);
-    //     }
-    // }
-    // if (len > 64) DBG("...");
-    // DBG("\n");
-    
-    /* 实时检查CCCD状态 - 必须使用att_server_can_send() */
-    // if (att_server_can_send() == 0) {
-    //     DBG("[BLE_TX] WARN: CCCD not ready (att_server_can_send=0), skipping send\n");
-    //     return 0;
-    // }
-    
+
+    // 主动检查CCCD/Notify状态
+    if (att_server_can_send() == 0) {
+        DBG("[BLE_TX] WARN: CCCD not ready (att_server_can_send=0), skipping send\n");
+        return 0;
+    }
+
     while (sent < len)
     {
         chunk_size = (len - sent) > max_len ? max_len : (len - sent);
-        
-       // DBG("[BLE_TX] GattServerNotify: handle=0x%04X, offset=%d, chunk=%d\n", 
- //           BLE_SHELL_NOTIFY_HANDLE, sent, chunk_size);
-        
         result = GattServerNotify(BLE_SHELL_NOTIFY_HANDLE, data + sent, chunk_size);
-        
-        // if (result == 0) {
-        //     DBG("[BLE_TX] result=0 (SUCCESS)\n");
-        // } else if (result == 0x57) {
-        //     DBG("[BLE_TX] result=0x57 (BT_STACK_STATUS_ACL_BUFFER_FULL or NOTIFY_NOT_ENABLED)\n");
-        // } else {
-        //     DBG("[BLE_TX] result=%d (0x%02X) UNKNOWN_ERROR\n", result, result);
-        // }
-        
         if (result != 0)
         {
-          //  DBG("[BLE_TX] ERROR at offset %d\n", sent);
+            DBG("[BLE_TX] ERROR: GattServerNotify failed at offset %d, result=%d\n", sent, result);
             break;
         }
         sent += chunk_size;
     }
-    
-   // DBG("[BLE_TX] Completed: sent=%d/%d\n", sent, len);
+
+    DBG("[BLE_TX] Completed: sent=%d/%d\n", sent, len);
     return sent;
 }
 

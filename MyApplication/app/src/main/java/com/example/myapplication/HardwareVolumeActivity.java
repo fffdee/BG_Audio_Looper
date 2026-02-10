@@ -45,7 +45,7 @@ public class HardwareVolumeActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         // 初始化保存按钮
-        Button btnSave = findViewById(R.id.btn_save_volume);
+        ImageButton btnSave = findViewById(R.id.btn_save_volume);
         btnSave.setOnClickListener(v -> saveVolumeSettings());
 
         // 创建音量滑条

@@ -20,7 +20,7 @@
             android:layout_width="@dimen/icon_size_large"
             android:layout_height="@dimen/icon_size_large"
             android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/eq"
             android:src="@android:drawable/ic_menu_revert"
             android:tint="@color/text_primary"
             android:contentDescription="返回" />
@@ -34,20 +34,19 @@
             android:textColor="@color/primary_accent_glow"
             android:textStyle="bold" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_save_fx"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/button_height_small"
+            android:layout_width="@dimen/icon_size_large"
+            android:layout_height="@dimen/icon_size_large"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:text="保存"
-            android:textColor="@color/primary_darker"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold"
-            android:background="@drawable/button_glow"
-            android:paddingStart="@dimen/button_padding_horizontal"
-            android:paddingEnd="@dimen/button_padding_horizontal"
-            android:elevation="@dimen/card_elevation" />
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_save"
+            android:tint="@color/text_accent"
+            android:contentDescription="保存效果设置"
+            android:scaleType="centerInside"
+            android:padding="8dp" />
     </RelativeLayout>
 
     <ScrollView

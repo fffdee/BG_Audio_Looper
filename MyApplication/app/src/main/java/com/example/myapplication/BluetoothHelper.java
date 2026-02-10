@@ -32,8 +32,55 @@ public class BluetoothHelper {
     private int cccdRetryCount = 0;
     private static final int MAX_CCCD_RETRIES = 3;  // 最多重试3次
     
+
     // 写入回调管理
     private java.util.function.Consumer<Boolean> pendingWriteCallback = null;
+
+    // 启用AB02 Notify（订阅下位机推送）
+    private void enableNotify(BluetoothGatt gatt) {
+        Log.d("BLE", "[STEP 4] Starting to enable AB02 notify...");
+        String ab02Uuid = "0000ab02-0000-1000-8000-00805f9b34fb";
+        String cccdUuid = "00002902-0000-1000-8000-00805f9b34fb";
+        boolean found = false;
+        for (BluetoothGattService service : gatt.getServices()) {
+            for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
+                String charUuid = characteristic.getUuid().toString();
+                if (charUuid.equalsIgnoreCase(ab02Uuid)) {
+                    found = true;
+                    Log.d("BLE", "[STEP 5] Found AB02 characteristic: " + charUuid);
+                    int props = characteristic.getProperties();
+                    if ((props & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == 0) {
+                        Log.e("BLE", "[ERROR] AB02 does not support NOTIFY (props=" + props + ")");
+                        return;
+                    }
+                    Log.d("BLE", "[STEP 6] AB02 supports NOTIFY (props=" + props + ")");
+                    boolean notifySet = gatt.setCharacteristicNotification(characteristic, true);
+                    Log.d("BLE", "[STEP 7] setCharacteristicNotification(AB02): " + notifySet);
+                    if (!notifySet) {
+                        Log.e("BLE", "[ERROR] Failed to set characteristic notification");
+                        return;
+                    }
+                    BluetoothGattDescriptor cccd = characteristic.getDescriptor(UUID.fromString(cccdUuid));
+                    if (cccd == null) {
+                        Log.e("BLE", "[ERROR] No CCCD descriptor found for AB02");
+                        return;
+                    }
+                    Log.d("BLE", "[STEP 8] Found CCCD descriptor, writing ENABLE_NOTIFICATION_VALUE (0x0001)...");
+                    cccd.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    boolean descResult = gatt.writeDescriptor(cccd);
+                    Log.d("BLE", "[STEP 9] writeDescriptor(CCCD-AB02): " + descResult);
+                    if (!descResult) {
+                        Log.e("BLE", "[ERROR] Failed to write CCCD descriptor");
+                    }
+                    break;
+                }
+            }
+            if (found) break;
+        }
+        if (!found) {
+            Log.e("BLE", "[ERROR] AB02 characteristic not found!");
+        }
+    }
 
     public interface OnConnectionChangedListener {
         void onConnected(String deviceName, BluetoothGatt gatt);
@@ -96,7 +143,6 @@ public class BluetoothHelper {
                     Log.e("BLE", "[ERROR] Service discovery failed!");
                     return;
                 }
-                
                 // 打印所有服务和特性
                 Log.d("BLE", "[STEP 3] Listing all services and characteristics:");
                 int serviceCount = 0;
@@ -110,11 +156,8 @@ public class BluetoothHelper {
                     }
                 }
                 Log.i("BLE", "[Discovery] 发现 " + serviceCount + " 个服务, " + charCount + " 个特征值");
-                
-                // [已禁用] 不再启用通知功能，工作在只写模式
-                // handler.postDelayed(() -> enableNotify(gatt), 100);
-                Log.i("BLE", "[MODE] Working in WRITE-ONLY mode (notifications disabled)");
-                isCccdEnabled = false;  // 明确标记为未启用通知
+                // 启用AB02 Notify
+                handler.postDelayed(() -> enableNotify(gatt), 100);
             }
             
             // [已禁用] enableNotify功能 - 不再依赖下位机回复
