@@ -1,9 +1,9 @@
-# Ignore compiled folders and build outputs
-Debug/
-Release/
-build/
-gradle/
-output/
+# Ignore compiled folders and build outputs for specific projects
+BanBox/Debug/
+BanBox/Release/
+BT_Audio_APP/Debug/
+MyApplication/build/
+MyApplication/gradle/
 *.o
 *.d
 *.exe
@@ -27,3 +27,5 @@ output/
 *.swp
 *.swo
 *~
+.metadata/
+_ICEman_/
