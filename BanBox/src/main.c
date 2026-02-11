@@ -103,6 +103,9 @@ uint8_t right_flag = false;
 /* extern BG_Page BG_page; -- 鐢�app_pages.h 澹版槑 */
 uint8_t UI_count = 0, UI_flag = 0;
 
+/* BLE sync command timing */
+static uint32_t ble_tick_counter = 0;
+
 void Timer2Interrupt(void) {
 	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
 	OTG_PortLinkCheck();
@@ -122,6 +125,9 @@ void Timer2Interrupt(void) {
 #ifdef CFG_APP_USB_AUDIO_MODE_EN
 	UsbAudioTimer1msProcess(); //1ms閿熷彨鏂》鎷烽敓锟�
 #endif
+
+	/* Increment BLE tick counter for sync command timing */
+	ble_tick_counter++;
 }
 
 xQueueHandle xQueue;
@@ -310,15 +316,12 @@ void EffectTask() {
 
 #ifdef  UI_EN
 	BG_lcd.Init();
-
-	BANGUI_QUICK_INIT();
-
-	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);
-
-	BANGUI_START(UI_STATE_BOOT);
-
 #endif
-
+	/*=====================================================
+	 * System Parameter Initialization
+	 * 浠庡唴閮‵lash鍔犺浇淇濆瓨鐨勫弬鏁板埌鍏ㄥ眬鍙橀噺
+	 * 蹇呴』鍦ㄧ‖浠跺垵濮嬪寲鍚庛�鍔熻兘妯″潡鍒濆鍖栧墠璋冪敤
+	 *====================================================*/
 	DBG("[Task] Loading system parameters from flash...\n");
 	{
 		SysParam_Status_t param_status = SysParam_Init();
@@ -341,7 +344,18 @@ void EffectTask() {
 	DBG("[Task] Initializing UI System...\n");
 
 
+	BANGUI_QUICK_INIT();
 
+
+	/* 璁剧疆 Home 瑙嗗浘鍥炬爣鍥炶皟 */
+	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 缁戝畾 Looper 瑙嗗浘 */
+
+	/*=====================================================
+	 * BOOT SPLASH SCREEN - 寮�満鐣岄潰
+	 * 鍚姩 UI 绯荤粺锛屼粠寮�満鐣岄潰寮�锛圠ogo + 杩涘害鏉★級
+	 * 鍔ㄧ敾鐢�view_boot.c 鐨勭姸鎬佹満椹卞姩锛屾棤纭欢杩�	 * 鍔ㄧ敾瀹屾垚鍚庤嚜鍔ㄥ垏鎹㈠埌 Home 妗岄潰
+	 *====================================================*/
+	BANGUI_START(UI_STATE_BOOT);
 
 
 	DBG("[Main] System initialized successfully\n");
@@ -356,6 +370,9 @@ void EffectTask() {
 	DBG("[Main] Entering main loop...\n");
 
 	while (1) {
+		/* Check and send delayed BLE sync responses */
+		extern void BLE_CheckSyncResponse(void);
+		BLE_CheckSyncResponse();
 
 		BG_AudioManager.Audio_Loop();
 
@@ -561,6 +578,17 @@ void FlashNewDriverTask(void)
 	DBG("You can also run FlashNewDriver_QuickTest() for quick debug.\n");
 }
 
+/* BLE timing functions for sync command buffering */
+uint32_t BLE_GetTick(void) {
+    return ble_tick_counter;
+}
+
+uint8_t BLE_IsDelayElapsed(uint32_t start_tick, uint32_t delay_ms) {
+    uint32_t current_tick = ble_tick_counter;
+    uint32_t elapsed_ticks = current_tick - start_tick;
+    /* Assuming Timer2Interrupt runs at 1ms intervals, so ticks = ms */
+    return (elapsed_ticks >= delay_ms);
+}
 
 void prvInitialiseHeap(void);
 int main(void) {

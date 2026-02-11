@@ -59,6 +59,21 @@ void ShellIO_BLE_Init(void);
  */
 void ShellIO_BLE_OnDataReceived(uint8_t *data, uint16_t len);
 
+/**
+ * @brief  缓冲同步命令响应（延迟1秒发送）
+ * @param  data: 响应数据
+ * @param  len: 数据长度
+ */
+void BLE_BufferSyncResponse(const char *data, int len);
+
+/**
+ * @brief  检查并发送延迟的BLE同步响应
+ */
+void BLE_CheckSyncResponse(void);
+
+/* 同步命令标志：当前命令是否为同步命令（包含-q） */
+extern uint8_t g_is_sync_command;
+
 #ifdef __cplusplus
 }
 #endif

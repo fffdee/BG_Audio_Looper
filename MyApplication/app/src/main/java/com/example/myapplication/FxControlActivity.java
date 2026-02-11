@@ -26,6 +26,10 @@ public class FxControlActivity extends AppCompatActivity {
 
     private BluetoothHelper bluetoothHelper;
     
+    // 效果器滑条和数值显示的引用
+    private java.util.Map<Integer, java.util.Map<String, VerticalSeekBar>> effectSeekBars = new java.util.HashMap<>();
+    private java.util.Map<Integer, java.util.Map<String, TextView>> effectValueTexts = new java.util.HashMap<>();
+    
     // 命令队列和 Handler
     private android.os.Handler commandHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private java.util.Queue<Runnable> commandQueue = new java.util.LinkedList<>();
@@ -62,6 +66,9 @@ public class FxControlActivity extends AppCompatActivity {
         LinearLayout reverbContainer = findViewById(R.id.reverb_sliders_container);
         createVerticalSliders(reverbContainer, 12, REVERB_PARAMS, REVERB_RANGES, REVERB_DEFAULTS, "#00D9FF");
         
+        // 设置BLE通知监听器来接收查询响应
+        setupBleNotificationListener();
+        
         // 查询效果器参数并同步到UI
         queryEffectParams();
     }
@@ -70,10 +77,8 @@ public class FxControlActivity extends AppCompatActivity {
      * 查询效果器参数
      */
     private void queryEffectParams() {
-        // 查询DRC参数 (effect_id = 1)
-        sendQueryCommand("effect query 1");
-        // 查询混响参数 (effect_id = 0)
-        sendQueryCommand("effect query 0");
+        // 发送两条命令，每条结尾都带换行符
+        sendQueryCommand("param -q effect 10\r\nparam -q effect 12");
     }
     
     /**
@@ -111,10 +116,55 @@ public class FxControlActivity extends AppCompatActivity {
     }
 
     /**
+     * 设置BLE通知监听器
+     */
+    private void setupBleNotificationListener() {
+        if (bluetoothHelper != null) {
+            bluetoothHelper.setBleNotifyListener(data -> {
+                android.util.Log.d("FxControl", "BLE notify received: " + data);
+                // 处理效果器查询响应
+                try {
+                    org.json.JSONObject json = new org.json.JSONObject(data);
+
+                    // 检查是否是完整的effect格式
+                    if (json.has("effect")) {
+                        org.json.JSONObject effectObj = json.getJSONObject("effect");
+                        android.util.Log.d("FxControl", "Parsed effect object: " + effectObj.toString());
+                        updateFxUI(effectObj);
+                    }
+                    // 检查是否是直接的drc或reverb格式（下位机简化格式）
+                    else if (json.has("drc")) {
+                        android.util.Log.d("FxControl", "Received DRC data in simplified format");
+                        updateEffectParams(10, json.getJSONObject("drc"),
+                            new String[]{"threshold", "ratio", "attack", "release"},
+                            new String[]{"threshold", "ratio", "attack", "release"}, DRC_RANGES);
+                        Toast.makeText(this, "DRC参数已同步", Toast.LENGTH_SHORT).show();
+                    }
+                    else if (json.has("reverb")) {
+                        android.util.Log.d("FxControl", "Received Reverb data in simplified format");
+                        updateEffectParams(12, json.getJSONObject("reverb"),
+                            new String[]{"room_size", "damping", "wet_dry"},
+                            new String[]{"room", "damp", "wet"}, REVERB_RANGES);
+                        Toast.makeText(this, "混响参数已同步", Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        android.util.Log.d("FxControl", "No recognized effect field in JSON");
+                    }
+                } catch (org.json.JSONException e) {
+                    android.util.Log.e("FxControl", "Failed to parse effect data: " + data, e);
+                }
+            });
+        }
+    }
+
+    /**
      * 创建竖向滑条组
      */
     private void createVerticalSliders(LinearLayout container, int nodeId, String[] params, 
                                       int[] ranges, int[] defaults, String accentColor) {
+        java.util.Map<String, VerticalSeekBar> seekBars = new java.util.HashMap<>();
+        java.util.Map<String, TextView> valueTexts = new java.util.HashMap<>();
+        
         for (int i = 0; i < params.length; i++) {
             String param = params[i];
             int min = ranges[i * 2];
@@ -178,7 +228,14 @@ public class FxControlActivity extends AppCompatActivity {
             sliderLayout.addView(seekBar);
             sliderLayout.addView(labelText);
             container.addView(sliderLayout);
+            
+            // 存储引用
+            seekBars.put(param.toLowerCase(), seekBar);
+            valueTexts.put(param.toLowerCase(), valueText);
         }
+        
+        effectSeekBars.put(nodeId, seekBars);
+        effectValueTexts.put(nodeId, valueTexts);
     }
 
     /**
@@ -226,6 +283,88 @@ public class FxControlActivity extends AppCompatActivity {
             command.run();
         } else {
             isSendingCommand = false;
+        }
+    }
+
+    /**
+     * 更新效果器UI
+     */
+    private void updateFxUI(org.json.JSONObject effectObj) {
+        android.util.Log.d("FxControl", "updateFxUI called with: " + effectObj.toString());
+        runOnUiThread(() -> {
+            try {
+                android.util.Log.d("FxControl", "Running on UI thread");
+                
+                // 检查是否有params字段
+                if (effectObj.has("params")) {
+                    org.json.JSONObject paramsObj = effectObj.getJSONObject("params");
+                    android.util.Log.d("FxControl", "Parsed params object: " + paramsObj.toString());
+                    
+                    // 处理DRC参数 (nodeId = 10)
+                    if (paramsObj.has("drc")) {
+                        org.json.JSONObject drcObj = paramsObj.getJSONObject("drc");
+                        updateEffectParams(10, drcObj, new String[]{"threshold", "ratio", "attack", "release"}, new String[]{"threshold", "ratio", "attack", "release"}, DRC_RANGES);
+                    }
+                    
+                    // 处理混响参数 (nodeId = 12)
+                    if (paramsObj.has("reverb")) {
+                        org.json.JSONObject reverbObj = paramsObj.getJSONObject("reverb");
+                        updateEffectParams(12, reverbObj, new String[]{"room_size", "damping", "wet_dry"}, new String[]{"room", "damp", "wet"}, REVERB_RANGES);
+                    }
+                    
+                    Toast.makeText(this, "效果参数已同步", Toast.LENGTH_SHORT).show();
+                    android.util.Log.d("FxControl", "UI update completed");
+                } else {
+                    android.util.Log.w("FxControl", "No params field in effect object");
+                }
+            } catch (org.json.JSONException e) {
+                android.util.Log.e("FxControl", "Failed to update effect UI", e);
+                Toast.makeText(this, "解析效果数据失败", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    
+    /**
+     * 更新特定效果的参数 (带映射)
+     */
+    private void updateEffectParams(int nodeId, org.json.JSONObject paramsObj, String[] jsonKeys, String[] uiKeys, int[] ranges) {
+        java.util.Map<String, VerticalSeekBar> seekBars = effectSeekBars.get(nodeId);
+        java.util.Map<String, TextView> valueTexts = effectValueTexts.get(nodeId);
+        
+        if (seekBars == null || valueTexts == null) {
+            android.util.Log.w("FxControl", "No UI references found for nodeId: " + nodeId);
+            return;
+        }
+        
+        for (int i = 0; i < jsonKeys.length && i < uiKeys.length; i++) {
+            String jsonKey = jsonKeys[i];
+            String uiKey = uiKeys[i];
+            
+            try {
+                if (paramsObj.has(jsonKey)) {
+                    int value = paramsObj.getInt(jsonKey);
+                    android.util.Log.d("FxControl", "Updating " + jsonKey + " to " + value);
+                    
+                    // 找到对应的UI组件
+                    VerticalSeekBar seekBar = seekBars.get(uiKey);
+                    TextView valueText = valueTexts.get(uiKey);
+                    
+                    if (seekBar != null && valueText != null) {
+                        // 计算滑条位置 (value - min)
+                        int min = ranges[i * 2];
+                        
+                        seekBar.setProgress(value - min);
+                        valueText.setText(String.valueOf(value));
+                        android.util.Log.d("FxControl", "Updated " + uiKey + " UI to " + value);
+                    } else {
+                        android.util.Log.w("FxControl", "UI component not found for " + uiKey);
+                    }
+                } else {
+                    android.util.Log.w("FxControl", "Param " + jsonKey + " not found in JSON");
+                }
+            } catch (org.json.JSONException e) {
+                android.util.Log.e("FxControl", "Failed to parse param " + jsonKey, e);
+            }
         }
     }
 

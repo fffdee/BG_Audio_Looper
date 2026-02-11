@@ -12,6 +12,7 @@
 #include "sys_param.h"
 #include "bg_shell.h"
 #include "spi_flash.h"  /* Flash API for erase operation */
+#include "effect_graph.h"  /* Effect graph API for node queries */
 #include <string.h>
 #include <stdlib.h>
 
@@ -187,12 +188,14 @@ static int param_test(int argc, char *argv[])
 /**
  * @brief Query parameters in JSON format for APP
  */
-static int param_query(int argc, char *argv[])
+
+ static int param_query(int argc, char *argv[])
 {
     extern SysParam_t g_sys_param;
     const char *target = (argc >= 1) ? argv[0] : "all";
     
     if (strcmp(target, "all") == 0 || strcmp(target, "system") == 0) {
+
         Shell_Printf("{\"status\":\"ok\",\"system\":{" 
                     "\"boot_count\":%d," 
                     "\"current_boot_status\":%d" 
@@ -200,6 +203,7 @@ static int param_query(int argc, char *argv[])
                     g_sys_param.system.boot_count,
                     g_sys_param.system.current_boot_status);
         Shell_Printf("\n");
+
     }
     else if (strcmp(target, "volume") == 0) {
         Shell_Printf("{\"status\":\"ok\",\"volume\":{" 
@@ -237,19 +241,114 @@ static int param_query(int argc, char *argv[])
                     (unsigned long)g_sys_param.looper.max_loop_time);
         Shell_Printf("\n");
     }
-    else if (strcmp(target, "bluetooth") == 0) {
-        Shell_Printf("{\"status\":\"ok\",\"bluetooth\":{" 
-                    "\"enabled\":%d," 
-                    "\"discoverable\":%d," 
-                    "\"auto_connect\":%d," 
-                    "\"a2dp_volume\":%d," 
-                    "\"device_name\":\"%s\"" 
-                    "}}",
-                    g_sys_param.bluetooth.enabled,
-                    g_sys_param.bluetooth.discoverable,
-                    g_sys_param.bluetooth.auto_connect,
-                    g_sys_param.bluetooth.a2dp_volume,
-                    g_sys_param.bluetooth.device_name);
+    else if (strcmp(target, "effect") == 0 || strcmp(target, "effects") == 0) {
+        // Query effect node parameters by ID in JSON format for app
+        if (argc >= 2) {
+            int node_id = atoi(argv[1]);
+            extern EffectNode_t* EffectGraph_FindNodeById(uint8_t id);
+            EffectNode_t* node = EffectGraph_FindNodeById((uint8_t)node_id);
+            
+            if (node != NULL) {
+                // JSON response for app
+                Shell_Printf("{\"status\":\"ok\",\"effect\":{");
+                Shell_Printf("\"id\":%d,", node->id);
+                Shell_Printf("\"name\":\"%s\",", node->name);
+                Shell_Printf("\"type\":%d,", node->type);
+                Shell_Printf("\"enabled\":%s,", node->enabled ? "true" : "false");
+                Shell_Printf("\"bypass\":%s,", node->bypass ? "true" : "false");
+                Shell_Printf("\"params\":{");
+                
+                // Type-specific parameters
+                switch (node->type) {
+                    case EFFECT_NODE_TYPE_EFFECT_EQ:
+                        Shell_Printf("\"eq\":{");
+                        Shell_Printf("\"band_count\":%d,", node->params.eq.band_count);
+                        Shell_Printf("\"pregain\":%d,", node->params.eq.pregain);
+                        Shell_Printf("\"bands\":[");
+                        {
+                            int i;
+                            for (i = 0; i < node->params.eq.band_count && i < 10; i++) {
+                                if (i > 0) Shell_Printf(",");
+                                Shell_Printf("{\"gain\":%d,\"f0\":%lu,\"Q\":%lu,\"type\":%d,\"enabled\":%s}",
+                                           node->params.eq.band_gains[i],
+                                           (unsigned long)node->params.eq.band_f0[i],
+                                           (unsigned long)node->params.eq.band_Q[i],
+                                           node->params.eq.band_types[i],
+                                           node->params.eq.band_enables[i] ? "true" : "false");
+                            }
+                        }
+                        Shell_Printf("]}");
+                        break;
+                        
+                    case EFFECT_NODE_TYPE_EFFECT_DRC:
+                        Shell_Printf("\"drc\":{");
+                        Shell_Printf("\"threshold\":%d,", node->params.drc.threshold);
+                        Shell_Printf("\"ratio\":%d,", node->params.drc.ratio);
+                        Shell_Printf("\"attack\":%d,", node->params.drc.attack);
+                        Shell_Printf("\"release\":%d", node->params.drc.release);
+                        Shell_Printf("}");
+                        break;
+                        
+                    case EFFECT_NODE_TYPE_EFFECT_REVERB:
+                        Shell_Printf("\"reverb\":{");
+                        Shell_Printf("\"room_size\":%d,", node->params.reverb.room_size);
+                        Shell_Printf("\"damping\":%d,", node->params.reverb.damping);
+                        Shell_Printf("\"wet_dry\":%d", node->params.reverb.wet_dry);
+                        Shell_Printf("}");
+                        break;
+                        
+                    case EFFECT_NODE_TYPE_EFFECT_DELAY:
+                        Shell_Printf("\"delay\":{");
+                        Shell_Printf("\"delay_ms\":%d,", node->params.delay.delay_ms);
+                        Shell_Printf("\"feedback\":%d,", node->params.delay.feedback);
+                        Shell_Printf("\"wet_dry\":%d", node->params.delay.wet_dry);
+                        Shell_Printf("}");
+                        break;
+                        
+                    case EFFECT_NODE_TYPE_EFFECT_GAIN:
+                        Shell_Printf("\"gain\":{");
+                        Shell_Printf("\"gain_db\":%d", node->params.gain.gain_db);
+                        Shell_Printf("}");
+                        break;
+                        
+                    default:
+                        // No additional parameters
+                        break;
+                }
+                
+                Shell_Printf("}}}");
+                Shell_Printf("\n");
+            } else {
+                Shell_Printf("{\"error\":\"Effect node with ID %d not found\"}", node_id);
+                Shell_Printf("\n");
+            }
+        } else {
+            // List all effect nodes in JSON format
+            Shell_Printf("{\"status\":\"ok\",\"effects\":[");
+            
+            // For demonstration, return some example nodes
+            // In a real implementation, you would iterate through all nodes in the graph
+            extern EffectGraphRuntime_t* EffectGraph_GetInstance(void);
+            EffectGraphRuntime_t* graph = EffectGraph_GetInstance();
+            
+            if (graph != NULL) {
+                // Simplified implementation - in practice you would enumerate all nodes
+                Shell_Printf("{\"id\":5,\"name\":\"eq_guitar_r\",\"type\":%d,\"enabled\":true}", EFFECT_NODE_TYPE_EFFECT_EQ);
+                Shell_Printf(",{\"id\":10,\"name\":\"drc\",\"type\":%d,\"enabled\":true}", EFFECT_NODE_TYPE_EFFECT_DRC);
+                Shell_Printf(",{\"id\":12,\"name\":\"reverb\",\"type\":%d,\"enabled\":true}", EFFECT_NODE_TYPE_EFFECT_REVERB);
+            }
+            
+            Shell_Printf("]}");
+            Shell_Printf("\n");
+        }
+    }
+    else if (strcmp(target, "metronome") == 0) {
+        Shell_Printf("{\"status\":\"ok\",\"metronome\":{");
+        Shell_Printf("\"enabled\":%s,", g_sys_param.looper.click_volume > 0 ? "true" : "false");
+        Shell_Printf("\"bpm\":%d,", g_sys_param.looper.tempo);
+        Shell_Printf("\"beats\":%d,", g_sys_param.looper.time_signature + 4);
+        Shell_Printf("\"volume\":%d", g_sys_param.looper.click_volume);
+        Shell_Printf("}}");
         Shell_Printf("\n");
     }
     else if (strcmp(target, "lcd") == 0) {
@@ -268,7 +367,7 @@ static int param_query(int argc, char *argv[])
     else {
         Shell_Printf("{\"error\":\"Unknown target: %s\"}", target);
         Shell_Printf("\n");
-        Shell_Printf("{\"hint\":\"Available: all, system, volume, looper, bluetooth, lcd\"}");
+        Shell_Printf("{\"hint\":\"Available: all, system, volume, looper, bluetooth, lcd, effect, metronome\"}");
         Shell_Printf("\n");
         return -1;
     }
@@ -286,7 +385,7 @@ static const ShellOpt_t param_opts[] = {
     OPT("d", "default", NULL,       "Reset to default params",      param_default),
     OPT("p", "print",   "[module]", "Print params (sys/audio/looper/bt/lcd)", param_print),
     OPT("i", "info",    NULL,       "Show param system info",       param_info),
-    OPT("q", "query",   "<target>", "Query params in JSON (system/volume/looper/bluetooth/lcd)", param_query),
+    OPT("q", "query",   "<target>", "Query params in JSON (system/volume/looper/bluetooth/lcd/effect/metronome)", param_query),
     OPT("e", "erase",   NULL,       "Erase param sector (danger!)", param_erase),
     OPT("t", "test",    NULL,       "Test flash save/load",         param_test),
     OPT_END()

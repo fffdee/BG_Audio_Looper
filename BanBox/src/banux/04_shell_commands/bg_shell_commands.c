@@ -2375,6 +2375,43 @@ static const ShellOpt_t drivers_opts[] = {
 
 DEFINE_MODULE(drivers, "List device drivers", MOD_CAT_SYSTEM, drivers_opts);
 
+static int cmd_ble_send(int argc, char *argv[])
+{
+    if (argc < 1) {
+        Shell_Print("ble_send: missing string operand\r\n");
+        Shell_Print("Usage: ble_send <string>\r\n");
+        return -1;
+    }
+
+    // 检查BLE连接状态 (使用att_server_can_send作为连接指示)
+    extern int att_server_can_send(void);
+    if (att_server_can_send() == 0) {
+        Shell_Print("BLE not connected or CCCD not enabled\r\n");
+        return -1;
+    }
+
+    // 合并所有参数为字符串
+    char send_str[256] = "";
+    int i;
+    for (i = 0; i < argc; i++) {
+        if (i > 0) strcat(send_str, " ");
+        strncat(send_str, argv[i], sizeof(send_str) - strlen(send_str) - 1);
+    }
+
+    // 发送到BLE
+    BLE_Send((uint8_t *)send_str, strlen(send_str));
+
+    Shell_Printf("Sent to BLE: %s\r\n", send_str);
+    return 0;
+}
+
+static const ShellOpt_t ble_send_opts[] = {
+    OPT("", "", "<string>", "Send string via BLE when connected", cmd_ble_send),
+    OPT_END()
+};
+
+DEFINE_MODULE(ble_send, "Send string via BLE", MOD_CAT_SYSTEM, ble_send_opts);
+
 /*============================================================================
  * Module registration
  *===========================================================================*/
@@ -2396,7 +2433,7 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(chain);
     #ifdef VFS_EN
 
-    /* 鏂囦欢绯荤粺瀵艰埅鍛戒护 */
+    /* 鏂囦欢绯荤粺瀵艰埅鍛戒护 [SHELL_BLE] Calling Shell_Process()*/
     REGISTER_MODULE(ls);
     REGISTER_MODULE(pwd);
     REGISTER_MODULE(cd);
@@ -2406,6 +2443,7 @@ void Shell_RegisterAllModules(void)
 
     #endif /* VFS_EN */
     REGISTER_MODULE(drivers);
+    REGISTER_MODULE(ble_send);
     /* 鏁堟灉鍥惧拰鏁堟灉鍣ㄥ懡浠�*/
     ShellCmdEffect_Register();   /* effect 鍛戒护 */
     ShellCmdGraph_Register();    /* graph 鍜�fx 鍛戒护 */

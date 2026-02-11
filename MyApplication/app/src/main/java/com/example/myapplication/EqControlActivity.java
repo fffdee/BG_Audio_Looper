@@ -164,6 +164,9 @@ public class EqControlActivity extends AppCompatActivity {
         // 设置监听器
         setupListeners();
 
+        // 设置BLE通知监听器来接收查询响应
+        setupBleNotificationListener();
+
         // 从 SharedPreferences 加载配置
         loadEqConfigFromPreferences();
         
@@ -176,16 +179,20 @@ public class EqControlActivity extends AppCompatActivity {
         // 加载当前节点的频段数据
         loadCurrentNodeBands();
         
-        // 禁用自动查询，减少启动时的网络请求，提升性能
-        // queryEqParams();
+        // 查询EQ参数并同步到UI
+        queryEqParams();
     }
     
     /**
      * 查询EQ参数
      */
     private void queryEqParams() {
-        // 查询所有EQ节点参数
-        sendQueryCommand("graph query eq");
+        // 一次发送所有节点的查询命令，每条命令结尾都带换行符
+        StringBuilder cmdBuilder = new StringBuilder();
+        for (int i = 0; i < EFFECT_IDS.length; i++) {
+            cmdBuilder.append("param -q effect ").append(EFFECT_IDS[i]).append("\r\n");
+        }
+        sendQueryCommand(cmdBuilder.toString());
     }
     
     /**
@@ -1374,6 +1381,133 @@ public class EqControlActivity extends AppCompatActivity {
                 String defaultName = "预设 " + (preset + 1);
                 names[preset] = prefs.getString("node_" + node + "_preset_" + preset + "_name", defaultName);
             }
+        }
+    }
+
+    /**
+     * 设置BLE通知监听器
+     */
+    private void setupBleNotificationListener() {
+        if (bluetoothHelper != null) {
+            bluetoothHelper.setBleNotifyListener(data -> {
+                android.util.Log.d("EqControl", "BLE notify received: " + data);
+                // 处理EQ查询响应
+                try {
+                    org.json.JSONObject json = new org.json.JSONObject(data);
+
+                    // 检查是否是完整的effect格式
+                    if (json.has("effect")) {
+                        org.json.JSONObject effectObj = json.getJSONObject("effect");
+                        android.util.Log.d("EqControl", "Parsed effect object: " + effectObj.toString());
+                        updateEqUI(effectObj);
+                    }
+                    // 检查是否是直接的eq格式（下位机简化格式）
+                    else if (json.has("eq")) {
+                        android.util.Log.d("EqControl", "Received EQ data in simplified format");
+                        updateEqParams(json.getJSONObject("eq"));
+                        Toast.makeText(this, "EQ参数已同步", Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        android.util.Log.d("EqControl", "No recognized effect field in JSON");
+                    }
+                } catch (org.json.JSONException e) {
+                    android.util.Log.e("EqControl", "Failed to parse EQ data: " + data, e);
+                }
+            });
+        }
+    }
+
+    /**
+     * 更新EQ UI
+     */
+    private void updateEqUI(org.json.JSONObject effectObj) {
+        android.util.Log.d("EqControl", "updateEqUI called with: " + effectObj.toString());
+        runOnUiThread(() -> {
+            try {
+                android.util.Log.d("EqControl", "Running on UI thread");
+
+                // 检查是否有params字段
+                if (effectObj.has("params")) {
+                    org.json.JSONObject paramsObj = effectObj.getJSONObject("params");
+                    android.util.Log.d("EqControl", "Parsed params object: " + paramsObj.toString());
+
+                    // 处理EQ参数
+                    if (paramsObj.has("eq")) {
+                        org.json.JSONObject eqObj = paramsObj.getJSONObject("eq");
+                        updateEqParams(eqObj);
+                    } else {
+                        android.util.Log.w("EqControl", "No eq field in params object");
+                    }
+
+                    Toast.makeText(this, "EQ参数已同步", Toast.LENGTH_SHORT).show();
+                    android.util.Log.d("EqControl", "UI update completed");
+                } else {
+                    android.util.Log.w("EqControl", "No params field in effect object");
+                }
+            } catch (org.json.JSONException e) {
+                android.util.Log.e("EqControl", "Failed to update EQ UI", e);
+                Toast.makeText(this, "解析EQ数据失败", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * 更新EQ参数
+     */
+    private void updateEqParams(org.json.JSONObject eqObj) {
+        try {
+            // 获取band_count
+            int bandCount = eqObj.getInt("band_count");
+            android.util.Log.d("EqControl", "Band count: " + bandCount);
+
+            // 获取pregain
+            int pregain = eqObj.getInt("pregain");
+            android.util.Log.d("EqControl", "Pregain: " + pregain);
+
+            // 获取bands数组
+            if (eqObj.has("bands")) {
+                org.json.JSONArray bandsArray = eqObj.getJSONArray("bands");
+                android.util.Log.d("EqControl", "Bands array length: " + bandsArray.length());
+
+                // 清空当前节点的频段数据
+                List<EqCurveView.EqBand> currentBands = nodesBands.get(currentNode);
+                currentBands.clear();
+
+                // 解析每个频段
+                for (int i = 0; i < bandsArray.length() && i < bandCount; i++) {
+                    org.json.JSONObject bandObj = bandsArray.getJSONObject(i);
+
+                    EqCurveView.EqBand band = new EqCurveView.EqBand();
+                    band.gain = bandObj.getInt("gain");
+                    band.f0 = bandObj.getInt("f0");
+                    band.Q = bandObj.getInt("Q") / 100.0f; // Q值在固件中是整数，需要转换为浮点数
+                    band.type = bandObj.getInt("type");
+                    band.enable = bandObj.getBoolean("enabled");
+
+                    currentBands.add(band);
+                    android.util.Log.d("EqControl", "Added band " + i + ": gain=" + band.gain +
+                                     ", f0=" + band.f0 + ", Q=" + band.Q + ", type=" + band.type +
+                                     ", enable=" + band.enable);
+                }
+
+                // 更新曲线视图
+                eqCurveView.setBands(currentBands);
+                eqCurveView.invalidate();
+
+                // 更新频段选择器
+                updateBandSpinner();
+
+                // 如果有选中的频段，更新UI控件
+                if (currentBand >= 0 && currentBand < currentBands.size()) {
+                    loadCurrentBandParameters();
+                }
+
+                android.util.Log.d("EqControl", "EQ parameters updated successfully");
+            } else {
+                android.util.Log.w("EqControl", "No bands array in EQ object");
+            }
+        } catch (org.json.JSONException e) {
+            android.util.Log.e("EqControl", "Failed to parse EQ params", e);
         }
     }
 }

@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "bg_shell.h"
+#include "shell_io_ble.h"
+#include "debug.h"
 
 /*******************************************************************************
  * Static variables
@@ -409,7 +411,14 @@ void Shell_Printf(const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(g_OutBuf, sizeof(g_OutBuf), fmt, args);
     va_end(args);
-    Shell_Print(g_OutBuf);  /* Shell_Print already outputs to LCD console */
+    
+    /* Check if this is a BLE sync command response that needs buffering */
+    if (g_is_sync_command && g_IO && g_IO->name && strstr(g_IO->name, "BLE")) {
+        BLE_BufferSyncResponse(g_OutBuf, strlen(g_OutBuf));
+        DBG("[BLE_SYNC] Response buffered for sync command\n");
+    } else {
+        Shell_Print(g_OutBuf);  /* Shell_Print already outputs to LCD console */
+    }
 }
 
 void Shell_NewLine(void)

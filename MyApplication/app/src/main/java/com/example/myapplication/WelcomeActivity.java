@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,14 +74,14 @@ public class WelcomeActivity extends AppCompatActivity {
         btnBluetoothConnect = findViewById(R.id.btn_bluetooth_connect);
         statusIndicator = findViewById(R.id.status_indicator);
 
-        Button enterButton = findViewById(R.id.btn_enter);
+        ImageButton enterButton = findViewById(R.id.btn_enter);
         enterButton.setOnClickListener(v -> {
             Intent intent = new Intent(WelcomeActivity.this, HomeActivity.class);
             startActivity(intent);
             finish();
         });
 
-        Button banboxSettingsButton = findViewById(R.id.btn_banbox_settings);
+        ImageButton banboxSettingsButton = findViewById(R.id.btn_banbox_settings);
         banboxSettingsButton.setOnClickListener(v -> {
             Intent intent = new Intent(WelcomeActivity.this, BanBoxSettingsActivity.class);
             startActivity(intent);

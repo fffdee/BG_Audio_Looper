@@ -32,6 +32,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
@@ -757,14 +758,41 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
         functionPagerAdapter = new FunctionPagerAdapter(this, functions);
         viewPagerFunctions.setAdapter(functionPagerAdapter);
 
+        // 设置预加载页面数
+        viewPagerFunctions.setOffscreenPageLimit(3);
+
         // 设置页面指示器
         setupIndicators(functions.size());
+
+        // 设置初始位置到中间以支持循环
+        viewPagerFunctions.setCurrentItem(functions.size() * 1000, false);
+
+        // 设置页面变换器，实现中间完整，两侧一半的效果
+        viewPagerFunctions.setPageTransformer(new ViewPager2.PageTransformer() {
+            @Override
+            public void transformPage(@NonNull View page, float position) {
+                float absPosition = Math.abs(position);
+                if (absPosition >= 1) {
+                    // 完全不可见
+                    page.setScaleX(0.5f);
+                    page.setScaleY(0.5f);
+                    page.setAlpha(0.5f);
+                } else {
+                    // 中间完整，两侧一半
+                    float scale = 1 - absPosition * 0.5f; // 从1到0.5
+                    page.setScaleX(scale);
+                    page.setScaleY(scale);
+                    page.setAlpha(1 - absPosition * 0.3f); // 透明度
+                }
+            }
+        });
 
         // 监听页面变化
         viewPagerFunctions.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
-                updateIndicators(position);
+                int realPosition = position % functions.size();
+                updateIndicators(realPosition);
             }
         });
     }

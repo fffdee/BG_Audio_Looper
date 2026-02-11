@@ -20,6 +20,10 @@ public class HardwareVolumeActivity extends AppCompatActivity {
     
     private BluetoothHelper bluetoothHelper;
     
+    // 音量滑条和数值显示的引用
+    private VerticalSeekBar[] volumeSeekBars = new VerticalSeekBar[5];
+    private TextView[] volumeValueTexts = new TextView[5];
+    
     // 命令队列和 Handler
     private android.os.Handler commandHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private java.util.Queue<Runnable> commandQueue = new java.util.LinkedList<>();
@@ -52,14 +56,89 @@ public class HardwareVolumeActivity extends AppCompatActivity {
         LinearLayout volumeContainer = findViewById(R.id.volume_sliders_container);
         createVolumeSliders(volumeContainer);
         
+        // 设置BLE通知监听器来接收查询响应
+        setupBleNotificationListener();
+        
         // 查询音量参数并同步到UI
         queryVolumeParams();
+    }
+    
+    /**
+     * 设置BLE通知监听器
+     */
+    private void setupBleNotificationListener() {
+        if (bluetoothHelper != null) {
+            bluetoothHelper.setBleNotifyListener(data -> {
+                android.util.Log.d("VolumeControl", "BLE notify received: " + data);
+                // 处理音量查询响应
+                try {
+                    org.json.JSONObject json = new org.json.JSONObject(data);
+                    if (json.has("volume")) {
+                        org.json.JSONObject volumeObj = json.getJSONObject("volume");
+                        android.util.Log.d("VolumeControl", "Parsed volume object: " + volumeObj.toString());
+                        updateVolumeUI(volumeObj);
+                    } else {
+                        android.util.Log.d("VolumeControl", "No volume field in JSON");
+                    }
+                } catch (org.json.JSONException e) {
+                    android.util.Log.e("VolumeControl", "Failed to parse volume data: " + data, e);
+                }
+            });
+        }
+    }
+    
+    /**
+     * 更新音量UI
+     */
+    private void updateVolumeUI(org.json.JSONObject volumeObj) {
+        android.util.Log.d("VolumeControl", "updateVolumeUI called with: " + volumeObj.toString());
+        runOnUiThread(() -> {
+            try {
+                android.util.Log.d("VolumeControl", "Running on UI thread");
+                // 映射设备返回的字段名到UI索引
+                String[] deviceFields = {"guitar1", "guitar2", "mic1", "mic2", "output"};
+                
+                for (int i = 0; i < deviceFields.length && i < volumeSeekBars.length; i++) {
+                    if (volumeObj.has(deviceFields[i])) {
+                        int value = volumeObj.getInt(deviceFields[i]);
+                        android.util.Log.d("VolumeControl", "Updating " + deviceFields[i] + " to " + value);
+                        
+                        // 更新滑条
+                        if (volumeSeekBars[i] != null) {
+                            volumeSeekBars[i].setProgress(value);
+                            android.util.Log.d("VolumeControl", "SeekBar " + i + " updated to " + value);
+                        } else {
+                            android.util.Log.e("VolumeControl", "SeekBar " + i + " is null!");
+                        }
+                        
+                        // 更新数值显示
+                        if (volumeValueTexts[i] != null) {
+                            volumeValueTexts[i].setText(String.valueOf(value));
+                            android.util.Log.d("VolumeControl", "TextView " + i + " updated to " + value);
+                        } else {
+                            android.util.Log.e("VolumeControl", "TextView " + i + " is null!");
+                        }
+                        
+                        android.util.Log.d("VolumeControl", "Updated " + CHANNELS[i] + " to " + value);
+                    } else {
+                        android.util.Log.w("VolumeControl", "Volume object missing field: " + deviceFields[i]);
+                    }
+                }
+                
+                Toast.makeText(this, "音量参数已同步", Toast.LENGTH_SHORT).show();
+                android.util.Log.d("VolumeControl", "UI update completed");
+            } catch (org.json.JSONException e) {
+                android.util.Log.e("VolumeControl", "Failed to update volume UI", e);
+                Toast.makeText(this, "解析音量数据失败", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
     
     /**
      * 查询音量参数
      */
     private void queryVolumeParams() {
+        android.util.Log.d("VolumeControl", "queryVolumeParams called");
         sendQueryCommand("param -q volume");
     }
     
@@ -116,6 +195,10 @@ public class HardwareVolumeActivity extends AppCompatActivity {
             valueText.setPadding(0, 0, 0, 12);
             valueText.setTypeface(null, android.graphics.Typeface.BOLD);
             sliderLayout.addView(valueText);
+            
+            // 保存引用
+            volumeValueTexts[i] = valueText;
+            android.util.Log.d("VolumeControl", "Created TextView for " + channel + " at index " + i);
 
             // 竖向 SeekBar
             VerticalSeekBar seekBar = new VerticalSeekBar(this);
@@ -124,6 +207,10 @@ public class HardwareVolumeActivity extends AppCompatActivity {
             LinearLayout.LayoutParams seekBarParams = new LinearLayout.LayoutParams(
                 80, 0, 1f);
             seekBar.setLayoutParams(seekBarParams);
+            
+            // 保存引用
+            volumeSeekBars[i] = seekBar;
+            android.util.Log.d("VolumeControl", "Created SeekBar for " + channel + " at index " + i);
 
             // 通道名称标签
             TextView labelText = new TextView(this);

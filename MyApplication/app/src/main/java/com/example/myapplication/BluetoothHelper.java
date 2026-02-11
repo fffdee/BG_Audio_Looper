@@ -36,6 +36,9 @@ public class BluetoothHelper {
     // 写入回调管理
     private java.util.function.Consumer<Boolean> pendingWriteCallback = null;
 
+    // 数据累积缓冲区，用于处理分包的BLE数据
+    private StringBuilder dataBuffer = new StringBuilder();
+
     // 启用AB02 Notify（订阅下位机推送）
     private void enableNotify(BluetoothGatt gatt) {
         Log.d("BLE", "[STEP 4] Starting to enable AB02 notify...");
@@ -227,12 +230,11 @@ public class BluetoothHelper {
             */
             
             // [已禁用] onDescriptorWrite - 不再处理CCCD写入回调
-            /*
             @Override
             public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
                 super.onDescriptorWrite(gatt, descriptor, status);
                 Log.d("BLE", "[STEP 10] onDescriptorWrite: descriptor=" + descriptor.getUuid() + ", status=" + status + (status == BluetoothGatt.GATT_SUCCESS ? " (SUCCESS)" : " (FAILED)"));
-                
+
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     isCccdEnabled = true;
                     cccdRetryCount = 0;  // 成功后重置计数
@@ -242,7 +244,7 @@ public class BluetoothHelper {
                     isCccdEnabled = false;
                     cccdRetryCount++;
                     Log.e("BLE", "[ERROR] ✗ Failed to enable CCCD! status=" + status + " (retry " + cccdRetryCount + "/" + MAX_CCCD_RETRIES + ")");
-                    
+
                     if (cccdRetryCount < MAX_CCCD_RETRIES) {
                         // 继续重试
                         Log.w("BLE", "[RETRY] Retrying CCCD write in 500ms...");
@@ -252,13 +254,12 @@ public class BluetoothHelper {
                         Log.e("BLE", "[FATAL] ❌ CCCD enable failed after " + MAX_CCCD_RETRIES + " retries!");
                         Log.e("BLE", "[FATAL] Device will work in WRITE-ONLY mode (no response notifications)");
                         Log.e("BLE", "[SUGGESTION] Try: 1) Reconnect device  2) Restart app  3) Check device firmware");
-                        
+
                         // 即使CCCD失败，也标记为已连接，但提醒用户功能受限
                         isCccdEnabled = false;  // 明确标记通知未启用
                     }
                 }
             }
-            */
             
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
@@ -277,13 +278,58 @@ public class BluetoothHelper {
             // 由于工作在只写模式，此回调不会被触发
             @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                if (bleNotifyListener != null) {
-                    String data = new String(characteristic.getValue());
-                    Log.d("BLE", "[Notify] " + data);
-                    handler.post(() -> bleNotifyListener.onNotify(data));
+                String chunk = new String(characteristic.getValue());
+                Log.d("BLE", "[Notify] " + chunk);
+                
+                // 累积数据
+                dataBuffer.append(chunk);
+                String accumulatedData = dataBuffer.toString();
+                
+                // 查找完整的JSON对象（从 { 开始到 } 结束）
+                int startIndex = accumulatedData.indexOf('{');
+                if (startIndex >= 0) {
+                    String potentialJson = accumulatedData.substring(startIndex);
+                    
+                    // 尝试解析JSON
+                    try {
+                        // 使用简单的括号计数来找到完整的JSON
+                        int braceCount = 0;
+                        int endIndex = -1;
+                        for (int i = 0; i < potentialJson.length(); i++) {
+                            char c = potentialJson.charAt(i);
+                            if (c == '{') braceCount++;
+                            else if (c == '}') {
+                                braceCount--;
+                                if (braceCount == 0) {
+                                    endIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (endIndex > 0) {
+                            String completeJson = potentialJson.substring(0, endIndex + 1);
+                            Log.d("BLE", "[Notify] Found complete JSON: " + completeJson);
+                            
+                            // 验证JSON格式
+                            new org.json.JSONObject(completeJson);
+                            
+                            // 触发回调
+                            if (bleNotifyListener != null) {
+                                handler.post(() -> bleNotifyListener.onNotify(completeJson));
+                            }
+                            
+                            // 清空缓冲区
+                            dataBuffer.setLength(0);
+                        } else {
+                            Log.d("BLE", "[Notify] JSON incomplete, braces not balanced: " + potentialJson);
+                        }
+                    } catch (org.json.JSONException e) {
+                        Log.d("BLE", "[Notify] Invalid JSON format: " + potentialJson);
+                        // 如果JSON无效，继续累积
+                    }
                 } else {
-                    String data = new String(characteristic.getValue());
-                    Log.d("BLE", "[Notify] " + data);
+                    Log.d("BLE", "[Notify] No JSON start found, continuing to accumulate: " + accumulatedData);
                 }
             }
         };
@@ -296,6 +342,10 @@ public class BluetoothHelper {
             if (callback != null) callback.accept(false);
             return;
         }
+        
+        // Clear the data buffer before sending a new command to prevent old data interference
+        dataBuffer.setLength(0);
+        
         Log.d("BLE", "[writeCharacteristic] handleOrUuid=" + handleOrUuid);
         
         // 检查服务列表是否为空
@@ -374,6 +424,8 @@ public class BluetoothHelper {
         // 检查是否有未完成的写入操作
         if (pendingWriteCallback != null) {
             Log.w("BLE", "⚠️ 上一次写入还未完成，拒绝新的写入请求");
+            // 不要调用之前的回调，因为它可能还在等待
+            // 直接拒绝新请求
             if (callback != null) callback.accept(false);
             return;
         }
@@ -400,6 +452,8 @@ public class BluetoothHelper {
         }
         isConnected = false;
         connectedDevice = null;
+        // 清空数据缓冲区
+        dataBuffer.setLength(0);
         if (listener != null) listener.onDisconnected();
     }
 }

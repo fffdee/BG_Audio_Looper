@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
@@ -43,12 +43,13 @@ public class FunctionPagerAdapter extends RecyclerView.Adapter<FunctionPagerAdap
 
     @Override
     public void onBindViewHolder(@NonNull FunctionViewHolder holder, int position) {
-        BanBoxSettingsActivity.FunctionItem function = functions.get(position);
-        holder.btnFunction.setText(function.title);
+        int realPosition = position % functions.size();
+        BanBoxSettingsActivity.FunctionItem function = functions.get(realPosition);
+        // ImageButton 不显示文字，只显示背景图片
 
         // 设置不同背景
-        if (position < BG_RES_IDS.length) {
-            holder.btnFunction.setBackgroundResource(BG_RES_IDS[position]);
+        if (realPosition < BG_RES_IDS.length) {
+            holder.btnFunction.setBackgroundResource(BG_RES_IDS[realPosition]);
         } else {
             holder.btnFunction.setBackgroundResource(android.R.color.transparent);
         }
@@ -67,11 +68,11 @@ public class FunctionPagerAdapter extends RecyclerView.Adapter<FunctionPagerAdap
 
     @Override
     public int getItemCount() {
-        return functions.size();
+        return Integer.MAX_VALUE; // 支持无限循环
     }
 
     static class FunctionViewHolder extends RecyclerView.ViewHolder {
-        Button btnFunction;
+        ImageButton btnFunction;
 
         FunctionViewHolder(@NonNull View itemView) {
             super(itemView);

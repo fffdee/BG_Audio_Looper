@@ -202,7 +202,7 @@ public class MetronomeActivity extends AppCompatActivity {
      * 查询节拍器状态
      */
     private void queryMetronomeStatus() {
-        sendCommand("metro", null);
+        sendCommand("param -q metronome", null);
         // 状态信息会通过BLE监听器接收并解析
     }
     
