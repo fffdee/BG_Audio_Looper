@@ -48,6 +48,7 @@
 #include "shell_cmd_graph.h"
 
 #include "otg_device_cdc.h"
+#include "product_def.h"
 
 // System Monitor 模块
 #include "shell_cmd_sysmon.h"
@@ -190,7 +191,7 @@ static void InitDAC(uint16_t SampleRate)
 }
 
 // 初始化ADC0（LineIn5）
-static void InitADC0LineIn(void)
+static void InitADC0LineIn(uint16_t SampleRate)
 {
 	AudioADC_AnaInit();
 	AudioADC_DynamicElementMatch(ADC0_MODULE, TRUE, TRUE);
@@ -200,27 +201,24 @@ static void InitADC0LineIn(void)
 	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT);
 	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT, 32, 0);
 	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT, 32, 0);
+	AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void *)AudioADC1Buf, sizeof(AudioADC1Buf));
 }
 
 // 初始化ADC1（麦克风）
-static void InitADC1Mic(void)
+static void InitADC1Mic(uint16_t SampleRate)
 {
 	AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
 	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 12, 2);
 	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 12, 2);
-
-}
-
-// 初始化数字化ADC采样
-static void InitADCDigital(uint16_t SampleRate)
-{
-	AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void *)AudioADC1Buf, sizeof(AudioADC1Buf));
 	AudioADC_MicBias1Enable(TRUE);
 	AudioADC_VcomConfig(1);
 	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void *)AudioADC2Buf, sizeof(AudioADC2Buf));
+
 }
+
+
 
 // 初始化音频效果（混响等）
 static void InitAudioEffects(uint16_t SampleRate)
@@ -348,20 +346,23 @@ static void InitControlGPIO(void)
 // 初始化GPIO检测引脚
 static void InitDetectionGPIO(void)
 {
+#ifdef LINE1_INPUT_DETECT_EN
 	// GPIO_A_INDEX29: 吉他检测输入，上拉
 	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX29);
 	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX29);
 	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX29);
 	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX29);
-
+#endif
+#ifdef LINE2_INPUT_DETECT_EN
 	ADC_PowerkeyChannelEnable();
-
+#endif
+#ifdef MIC_INPUT_DETECT_EN
 	// GPIO_A_INDEX30: 麦克风检测输入，下拉
 	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX30);
 	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX30);
 	GPIO_RegOneBitClear(GPIO_A_PU, GPIO_INDEX30);
 	GPIO_RegOneBitSet(GPIO_A_PD, GPIO_INDEX30);
-
+#endif
 	// GPIO_B_INDEX4: 耳机检测输入，上拉
 	GPIO_RegOneBitSet(GPIO_B_IE, GPIO_INDEX4);
 	GPIO_RegOneBitClear(GPIO_B_OE, GPIO_INDEX4);
@@ -377,12 +378,10 @@ void BG_audio_Init(uint16_t SampleRate)
 {
 	BG_AudioManager.Audio_data.SampleRate = SampleRate;
 	system_default_sample_rate = SampleRate;  /* 保存默认采样率，蓝牙断开后恢复 */
-
 	InitUSBDevice();
 	InitDAC(SampleRate);
-	InitADC0LineIn();
-	InitADC1Mic();
-	InitADCDigital(SampleRate);
+	InitADC0LineIn(SampleRate);
+	InitADC1Mic(SampleRate);
 	InitAudioEffects(SampleRate);
 	InitControlGPIO();
 	InitDetectionGPIO();
@@ -520,7 +519,7 @@ static void SaveDataToSbcBuffer(uint8_t *data, uint16_t dataLen)
 /**
  * 处理吉他信号输出
  */
-static void ProcessGuitarOutput(uint16_t n)
+static void ProcessGuitarOutput()
 {
 	if (!GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX29))
 	{
@@ -542,7 +541,7 @@ static void ProcessGuitarOutput(uint16_t n)
 /**
  * 处理麦克风信号输出
  */
-static void ProcessMicOutput(uint16_t n)
+static void ProcessMicOutput()
 {
 	if (GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX30))
 	{
@@ -804,8 +803,8 @@ static void AudioLoopWithBT(uint32_t *bt_audio_buffer)
 
 			ReadAudioData(n, &RealLen);
 			ApplyAudioEffects(RealLen);
-			ProcessGuitarOutput(RealLen);
-			ProcessMicOutput(RealLen);
+			ProcessGuitarOutput();
+			ProcessMicOutput();
 			ProcessSpeakerSwitch();
 			BuildFinalOutput(RealLen, bt_audio_buffer);
 			handle_usb_record(RealLen);
@@ -827,8 +826,8 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 	{
 		ReadAudioData(MIN_SAMPLE, &RealLen);
 		ApplyAudioEffects(RealLen);
-		ProcessGuitarOutput(RealLen);
-		ProcessMicOutput(RealLen);
+		ProcessGuitarOutput();
+		ProcessMicOutput();
 		ProcessSpeakerSwitch();
 
 		/* Looper录制处理 - 使用mic_buf_in（麦克风输入）*/
@@ -1039,8 +1038,8 @@ static void AudioLoopWithGraph(void)
 	
 	if (processed_samples > 0) {
 		/* 更新 GPIO 检测状态 */
-		ProcessGuitarOutput(processed_samples);
-		ProcessMicOutput(processed_samples);
+		ProcessGuitarOutput();
+		ProcessMicOutput();
 		ProcessSpeakerSwitch();
 		
 		BG_AudioManager.Audio_data.guitar_count++;

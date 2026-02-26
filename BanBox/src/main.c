@@ -48,19 +48,17 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
-
 /* Driver Framework */
 #include "drv_device.h"
 #include "otg_device_hcd.h"
 #include "otg_device_standard_request.h"
 #include "otg_device_stor.h"
-
 #include "gui_tool.h"
 #include "usb_audio_api.h"
 #include "otg_detect.h"
 #include "otg_device_audio.h"
 #include "ctrlvars.h"
-
+#include "product_def.h"
 /* Page Manager - Now in BanGUI core (via bangui.h) */
 /* #include "page_manager.h" - Removed, use bangui.h */
 

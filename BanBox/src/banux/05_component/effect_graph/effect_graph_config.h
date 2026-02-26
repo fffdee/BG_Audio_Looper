@@ -174,13 +174,10 @@ typedef enum {
     { NODE_ID_ADC_MIXER, NODE_ID_EXPANDER, 0, 0 }, \
     { NODE_ID_EXPANDER,  NODE_ID_PRE_REVERB_MIXER,      0, 0 }, \
     \
-    /* Looper播放 → Pre_Reverb_Mixer (与DRC输出混音后一起进混响) */ \
     { NODE_ID_LOOPER_PLAY, NODE_ID_PRE_REVERB_MIXER, 0, 1 }, \
     \
     /* Pre_Reverb_Mixer → Reverb */ \
     { NODE_ID_PRE_REVERB_MIXER, NODE_ID_REVERB, 0, 0 }, \
-	 { NODE_ID_REVERB, NODE_ID_DRC, 0, 0 }, \
-    \
     /* USB/BT + 节拍器 输入到 USB_BT 混音器 */ \
     { NODE_ID_USB_IN,    NODE_ID_USB_BT_MIXER, 0, 0 }, \
     { NODE_ID_BT_IN,     NODE_ID_USB_BT_MIXER, 0, 1 }, \
@@ -190,12 +187,13 @@ typedef enum {
     { NODE_ID_USB_BT_MIXER, NODE_ID_USB_BT_EQ, 0, 0 }, \
     \
     /* 最终混音器 (Reverb + USB_BT_EQ) */ \
-    { NODE_ID_DRC,    NODE_ID_FINAL_MIXER, 0, 0 }, \
+    { NODE_ID_REVERB,    NODE_ID_FINAL_MIXER, 0, 0 }, \
     { NODE_ID_USB_BT_EQ, NODE_ID_FINAL_MIXER, 0, 1 }, \
     \
     /* 输出 */ \
-    { NODE_ID_FINAL_MIXER, NODE_ID_DAC0_OUT, 0, 0 }, \
-    { NODE_ID_FINAL_MIXER, NODE_ID_USB_OUT,  0, 0 }, \
+    { NODE_ID_FINAL_MIXER, NODE_ID_DRC, 0, 0 }, \
+    { NODE_ID_DRC, NODE_ID_DAC0_OUT, 0, 0 }, \
+    { NODE_ID_DRC, NODE_ID_USB_OUT,  0, 0 }, \
     \
     /* ADC混音器 → Looper录制 */ \
     { NODE_ID_ADC_MIXER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
