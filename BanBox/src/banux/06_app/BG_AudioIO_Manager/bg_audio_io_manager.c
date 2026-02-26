@@ -95,7 +95,7 @@ BG_Audio_Io_Manager BG_AudioManager = {
 #include "bt_stack_service.h"
 
 #define BT_SBC_PACKET_SIZE 595
-#define BT_SBC_DECODER_INPUT_LEN (2 * 1024)
+#define BT_SBC_DECODER_INPUT_LEN (8 * 1024)
 #define BT_SBC_LEVEL_HIGH (BT_SBC_DECODER_INPUT_LEN - BT_SBC_PACKET_SIZE * 4)
 #define BT_SBC_LEVEL_LOW (BT_SBC_PACKET_SIZE * 6)
 #define BT_SBC_LEVEL_START (BT_SBC_LEVEL_HIGH - BT_SBC_PACKET_SIZE * 3)

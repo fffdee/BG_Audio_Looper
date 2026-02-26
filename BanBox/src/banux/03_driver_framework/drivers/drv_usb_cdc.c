@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    USB CDC driver framework adaptation layer implementation
+ * @brief    USB CDC驱动框架适配层实现
  *****************************************************************************
  */
 
@@ -17,28 +17,28 @@
 #include <stdbool.h>
 
 /**
- * @brief USB CDC driver private data
+ * @brief USB CDC驱动私有数据
  */
 typedef struct {
     bool initialized;
     char name[32];
 } UsbCdcPrivData_t;
 
-// Global private data
+// 全局私有数据
 static UsbCdcPrivData_t g_usb_cdc_priv = {
     .initialized = false,
     .name = "USB_CDC"
 };
 
-// External USB CDC device instance
+// 外部USB CDC设备实例
 extern UsbCDC_t UsbCDC;
 
 /*****************************************************************************
- * Parameter read callback functions
+ * 参数读取回调函数
  *****************************************************************************/
 
 /**
- * @brief Get device name
+ * @brief 获取设备名称
  */
 static int param_get_name(char *buf, uint16_t maxLen, void *userData)
 {

@@ -278,9 +278,35 @@ public class BluetoothHelper {
             // 由于工作在只写模式，此回调不会被触发
             @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                String chunk = new String(characteristic.getValue());
+                byte[] rawData = characteristic.getValue();
+                String chunk = new String(rawData);
                 Log.d("BLE", "[Notify] " + chunk);
                 
+                // 检查是否是二进制数据（以AA 55 header开头）
+                if (rawData.length >= 4) {
+                    int firstByte = rawData[0] & 0xFF;
+                    int secondByte = rawData[1] & 0xFF;
+                    int typeByte = rawData[2] & 0xFF;
+
+                    if (firstByte == 0xAA && secondByte == 0x55 &&
+                        (typeByte == 0x01 || typeByte == 0x10 || typeByte == 0x11 || typeByte == 0x12)) {
+                        // 这是带有header的二进制数据，直接转换为十六进制字符串传递
+                        StringBuilder hexString = new StringBuilder();
+                        for (byte b : rawData) {
+                            hexString.append(String.format("%02X", b));
+                        }
+                        String hexData = hexString.toString();
+                        Log.d("BLE", "[Notify] Detected binary data with header, converted to hex: " + hexData);
+
+                        // 直接触发回调，不累积
+                        if (bleNotifyListener != null) {
+                            handler.post(() -> bleNotifyListener.onNotify(hexData));
+                        }
+                        return;
+                    }
+                }
+                
+                // 处理JSON数据（原有逻辑）
                 // 累积数据
                 dataBuffer.append(chunk);
                 String accumulatedData = dataBuffer.toString();

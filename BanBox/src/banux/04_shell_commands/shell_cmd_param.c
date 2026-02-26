@@ -13,6 +13,7 @@
 #include "bg_shell.h"
 #include "spi_flash.h"  /* Flash API for erase operation */
 #include "effect_graph.h"  /* Effect graph API for node queries */
+#include "shell_io_ble.h"  /* BLE sync response buffering */
 #include <string.h>
 #include <stdlib.h>
 
@@ -186,195 +187,251 @@ static int param_test(int argc, char *argv[])
 }
 
 /**
- * @brief Query parameters in JSON format for APP
+ * @brief Query parameters in binary format for APP (compact BLE transmission)
+ * Binary protocol: [0xAA][0x55][type][length][data...]
+ * Types: 0x01=volume, 0x02=system, 0x03=looper, 0x04=metronome, 0x05=lcd,
+ *        0x10=effect_drc, 0x11=effect_reverb, 0x12=effect_eq
  */
 
- static int param_query(int argc, char *argv[])
+static int param_query(int argc, char *argv[])
 {
     extern SysParam_t g_sys_param;
+    extern uint8_t g_is_sync_command;  /* From shell_io_ble.c */
     const char *target = (argc >= 1) ? argv[0] : "all";
+    uint8_t buf[200]; // Max 200 bytes to stay under BLE 250 limit
+    int idx = 0;
     
     if (strcmp(target, "all") == 0 || strcmp(target, "system") == 0) {
-
-        Shell_Printf("{\"status\":\"ok\",\"system\":{" 
-                    "\"boot_count\":%d," 
-                    "\"current_boot_status\":%d" 
-                    "}}", 
-                    g_sys_param.system.boot_count,
-                    g_sys_param.system.current_boot_status);
-        Shell_Printf("\n");
-
+        // System parameters: boot_count (2), current_boot_status (2) = 4 bytes
+        buf[idx++] = 0xAA; // header
+        buf[idx++] = 0x55;
+        buf[idx++] = 0x02; // type: system
+        buf[idx++] = 4;    // length
+        buf[idx++] = (uint8_t)(g_sys_param.system.boot_count & 0xFF);
+        buf[idx++] = (uint8_t)((g_sys_param.system.boot_count >> 8) & 0xFF);
+        buf[idx++] = (uint8_t)(g_sys_param.system.current_boot_status & 0xFF);
+        buf[idx++] = (uint8_t)((g_sys_param.system.current_boot_status >> 8) & 0xFF);
+        
+        if (g_is_sync_command) {
+            BLE_BufferSyncResponse((const char *)buf, idx);
+        } else {
+            Shell_WriteRaw(buf, idx);
+        }
+        return 0;
     }
     else if (strcmp(target, "volume") == 0) {
-        Shell_Printf("{\"status\":\"ok\",\"volume\":{" 
-                    "\"mic1\":%d," 
-                    "\"mic2\":%d," 
-                    "\"guitar1\":%d," 
-                    "\"guitar2\":%d," 
-                    "\"output\":%d" 
-                    "}}",
-                    g_sys_param.volume.mic1_volume,
-                    g_sys_param.volume.mic2_volume,
-                    g_sys_param.volume.guitar1_volume,
-                    g_sys_param.volume.guitar2_volume,
-                    g_sys_param.volume.output_volume);
-        Shell_Printf("\n");
+        // Volume parameters: mic1, mic2, guitar1, guitar2, output = 5 bytes
+        buf[idx++] = 0xAA; // header
+        buf[idx++] = 0x55;
+        buf[idx++] = 0x01; // type: volume
+        buf[idx++] = 5;    // length
+        buf[idx++] = (uint8_t)g_sys_param.volume.mic1_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.mic2_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.guitar1_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.guitar2_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.output_volume;
+        
+        if (g_is_sync_command) {
+            BLE_BufferSyncResponse((const char *)buf, idx);
+        } else {
+            Shell_WriteRaw(buf, idx);
+        }
+        return 0;
     }
     else if (strcmp(target, "looper") == 0) {
-        Shell_Printf("{\"status\":\"ok\",\"looper\":{" 
-                    "\"loop_count\":%d," 
-                    "\"overdub_mode\":%d," 
-                    "\"quantize\":%d," 
-                    "\"click_volume\":%d," 
-                    "\"tempo\":%d," 
-                    "\"time_signature\":%d," 
-                    "\"fade_time\":%d," 
-                    "\"max_loop_time\":%lu" 
-                    "}}",
-                    g_sys_param.looper.loop_count,
-                    g_sys_param.looper.overdub_mode,
-                    g_sys_param.looper.quantize,
-                    g_sys_param.looper.click_volume,
-                    g_sys_param.looper.tempo,
-                    g_sys_param.looper.time_signature,
-                    g_sys_param.looper.fade_time,
-                    (unsigned long)g_sys_param.looper.max_loop_time);
-        Shell_Printf("\n");
+        // Looper parameters: loop_count(1), overdub_mode(1), quantize(1), click_volume(1), 
+        // tempo(1), time_signature(1), fade_time(2), max_loop_time(4) = 12 bytes
+        buf[idx++] = 0xAA; // header
+        buf[idx++] = 0x55;
+        buf[idx++] = 0x03; // type: looper
+        buf[idx++] = 12;   // length
+        buf[idx++] = (uint8_t)g_sys_param.looper.loop_count;
+        buf[idx++] = (uint8_t)g_sys_param.looper.overdub_mode;
+        buf[idx++] = (uint8_t)g_sys_param.looper.quantize;
+        buf[idx++] = (uint8_t)g_sys_param.looper.click_volume;
+        buf[idx++] = (uint8_t)g_sys_param.looper.tempo;
+        buf[idx++] = (uint8_t)g_sys_param.looper.time_signature;
+        buf[idx++] = (uint8_t)(g_sys_param.looper.fade_time & 0xFF);
+        buf[idx++] = (uint8_t)((g_sys_param.looper.fade_time >> 8) & 0xFF);
+        buf[idx++] = (uint8_t)(g_sys_param.looper.max_loop_time & 0xFF);
+        buf[idx++] = (uint8_t)((g_sys_param.looper.max_loop_time >> 8) & 0xFF);
+        buf[idx++] = (uint8_t)((g_sys_param.looper.max_loop_time >> 16) & 0xFF);
+        buf[idx++] = (uint8_t)((g_sys_param.looper.max_loop_time >> 24) & 0xFF);
+        
+        if (g_is_sync_command) {
+            BLE_BufferSyncResponse((const char *)buf, idx);
+        } else {
+            Shell_WriteRaw(buf, idx);
+        }
+        return 0;
+    }
+    else if (strcmp(target, "metronome") == 0) {
+        // Metronome parameters: enabled(1), bpm(1), beats(1), volume(1) = 4 bytes
+        buf[idx++] = 0xAA; // header
+        buf[idx++] = 0x55;
+        buf[idx++] = 0x04; // type: metronome
+        buf[idx++] = 4;    // length
+        buf[idx++] = (uint8_t)(g_sys_param.looper.click_volume > 0 ? 1 : 0);
+        buf[idx++] = (uint8_t)g_sys_param.looper.tempo;
+        buf[idx++] = (uint8_t)(g_sys_param.looper.time_signature + 4);
+        buf[idx++] = (uint8_t)g_sys_param.looper.click_volume;
+        
+        if (g_is_sync_command) {
+            BLE_BufferSyncResponse((const char *)buf, idx);
+        } else {
+            Shell_WriteRaw(buf, idx);
+        }
+        return 0;
+    }
+    else if (strcmp(target, "lcd") == 0) {
+        // LCD parameters: contrast(1), color_scheme(1), screen_saver(1), bg_color(1) = 4 bytes
+        buf[idx++] = 0xAA; // header
+        buf[idx++] = 0x55;
+        buf[idx++] = 0x05; // type: lcd
+        buf[idx++] = 4;    // length
+        buf[idx++] = (uint8_t)g_sys_param.lcd.contrast;
+        buf[idx++] = (uint8_t)g_sys_param.lcd.color_scheme;
+        buf[idx++] = (uint8_t)g_sys_param.lcd.screen_saver;
+        buf[idx++] = (uint8_t)g_sys_param.lcd.bg_color;
+        
+        if (g_is_sync_command) {
+            BLE_BufferSyncResponse((const char *)buf, idx);
+        } else {
+            Shell_WriteRaw(buf, idx);
+        }
+        return 0;
     }
     else if (strcmp(target, "effect") == 0 || strcmp(target, "effects") == 0) {
-        // Query effect node parameters by ID in JSON format for app
+        // Query effect node parameters by ID in binary format for app
         if (argc >= 2) {
             int node_id = atoi(argv[1]);
             extern EffectNode_t* EffectGraph_FindNodeById(uint8_t id);
             EffectNode_t* node = EffectGraph_FindNodeById((uint8_t)node_id);
             
             if (node != NULL) {
-                // JSON response for app
-                Shell_Printf("{\"status\":\"ok\",\"effect\":{");
-                Shell_Printf("\"id\":%d,", node->id);
-                Shell_Printf("\"name\":\"%s\",", node->name);
-                Shell_Printf("\"type\":%d,", node->type);
-                Shell_Printf("\"enabled\":%s,", node->enabled ? "true" : "false");
-                Shell_Printf("\"bypass\":%s,", node->bypass ? "true" : "false");
-                Shell_Printf("\"params\":{");
+                idx = 0;
+                buf[idx++] = 0xAA; // header
+                buf[idx++] = 0x55;
                 
-                // Type-specific parameters
+                // Type-specific binary data
                 switch (node->type) {
-                    case EFFECT_NODE_TYPE_EFFECT_EQ:
-                        Shell_Printf("\"eq\":{");
-                        Shell_Printf("\"band_count\":%d,", node->params.eq.band_count);
-                        Shell_Printf("\"pregain\":%d,", node->params.eq.pregain);
-                        Shell_Printf("\"bands\":[");
-                        {
-                            int i;
-                            for (i = 0; i < node->params.eq.band_count && i < 10; i++) {
-                                if (i > 0) Shell_Printf(",");
-                                Shell_Printf("{\"gain\":%d,\"f0\":%lu,\"Q\":%lu,\"type\":%d,\"enabled\":%s}",
-                                           node->params.eq.band_gains[i],
-                                           (unsigned long)node->params.eq.band_f0[i],
-                                           (unsigned long)node->params.eq.band_Q[i],
-                                           node->params.eq.band_types[i],
-                                           node->params.eq.band_enables[i] ? "true" : "false");
-                            }
-                        }
-                        Shell_Printf("]}");
-                        break;
-                        
                     case EFFECT_NODE_TYPE_EFFECT_DRC:
-                        Shell_Printf("\"drc\":{");
-                        Shell_Printf("\"threshold\":%d,", node->params.drc.threshold);
-                        Shell_Printf("\"ratio\":%d,", node->params.drc.ratio);
-                        Shell_Printf("\"attack\":%d,", node->params.drc.attack);
-                        Shell_Printf("\"release\":%d", node->params.drc.release);
-                        Shell_Printf("}");
+                        // DRC: threshold(2), ratio(2), attack(2), release(2) = 8 bytes
+                        buf[idx++] = 0x10; // type: effect_drc
+                        buf[idx++] = 8;    // length
+                        buf[idx++] = (uint8_t)(node->params.drc.threshold & 0xFF);
+                        buf[idx++] = (uint8_t)((node->params.drc.threshold >> 8) & 0xFF);
+                        buf[idx++] = (uint8_t)(node->params.drc.ratio & 0xFF);
+                        buf[idx++] = (uint8_t)((node->params.drc.ratio >> 8) & 0xFF);
+                        buf[idx++] = (uint8_t)(node->params.drc.attack & 0xFF);
+                        buf[idx++] = (uint8_t)((node->params.drc.attack >> 8) & 0xFF);
+                        buf[idx++] = (uint8_t)(node->params.drc.release & 0xFF);
+                        buf[idx++] = (uint8_t)((node->params.drc.release >> 8) & 0xFF);
                         break;
                         
                     case EFFECT_NODE_TYPE_EFFECT_REVERB:
-                        Shell_Printf("\"reverb\":{");
-                        Shell_Printf("\"room_size\":%d,", node->params.reverb.room_size);
-                        Shell_Printf("\"damping\":%d,", node->params.reverb.damping);
-                        Shell_Printf("\"wet_dry\":%d", node->params.reverb.wet_dry);
-                        Shell_Printf("}");
+                        // Reverb: room_size(1), damping(1), wet_dry(1) = 3 bytes
+                        buf[idx++] = 0x11; // type: effect_reverb
+                        buf[idx++] = 3;    // length
+                        buf[idx++] = (uint8_t)node->params.reverb.room_size;
+                        buf[idx++] = (uint8_t)node->params.reverb.damping;
+                        buf[idx++] = (uint8_t)node->params.reverb.wet_dry;
                         break;
                         
+                    case EFFECT_NODE_TYPE_EFFECT_EQ:
+                        // EQ: band_count(1), pregain(2), bands(5*band_count bytes) = variable
+                        // Each band: gain(2), f0(4), Q(2), type(1), enabled(1) = 10 bytes per band
+                        {
+                            int band_count = node->params.eq.band_count;
+                            int data_len = 3 + (band_count * 10); // band_count(1) + pregain(2) + bands
+                            
+                            if (idx + data_len + 4 > sizeof(buf)) { // Check buffer overflow
+                                Shell_Printf("{\"error\":\"EQ data too large for buffer\"}");
+                                return -1;
+                            }
+                            
+                            buf[idx++] = 0x12; // type: effect_eq
+                            buf[idx++] = (uint8_t)data_len; // length
+                            buf[idx++] = (uint8_t)band_count;
+                            buf[idx++] = (uint8_t)(node->params.eq.pregain & 0xFF);
+                            buf[idx++] = (uint8_t)((node->params.eq.pregain >> 8) & 0xFF);
+                            
+                            // Add band data (limit to 10 bands max)
+                            {
+                                int i;
+                                for (i = 0; i < band_count && i < 10; i++) {
+                                    buf[idx++] = (uint8_t)(node->params.eq.band_gains[i] & 0xFF);
+                                    buf[idx++] = (uint8_t)((node->params.eq.band_gains[i] >> 8) & 0xFF);
+                                    buf[idx++] = (uint8_t)(node->params.eq.band_f0[i] & 0xFF);
+                                    buf[idx++] = (uint8_t)((node->params.eq.band_f0[i] >> 8) & 0xFF);
+                                    buf[idx++] = (uint8_t)((node->params.eq.band_f0[i] >> 16) & 0xFF);
+                                    buf[idx++] = (uint8_t)((node->params.eq.band_f0[i] >> 24) & 0xFF);
+                                    buf[idx++] = (uint8_t)(node->params.eq.band_Q[i] & 0xFF);
+                                    buf[idx++] = (uint8_t)((node->params.eq.band_Q[i] >> 8) & 0xFF);
+                                    buf[idx++] = (uint8_t)node->params.eq.band_types[i];
+                                    buf[idx++] = (uint8_t)node->params.eq.band_enables[i];
+                                }
+                            }
+                            break; // 补充EQ分支的break
+                        } // 补充EQ分支的闭合大括号
+                        
                     case EFFECT_NODE_TYPE_EFFECT_DELAY:
-                        Shell_Printf("\"delay\":{");
-                        Shell_Printf("\"delay_ms\":%d,", node->params.delay.delay_ms);
-                        Shell_Printf("\"feedback\":%d,", node->params.delay.feedback);
-                        Shell_Printf("\"wet_dry\":%d", node->params.delay.wet_dry);
-                        Shell_Printf("}");
+                        // Delay: delay_ms(2), feedback(1), wet_dry(1) = 4 bytes
+                        buf[idx++] = 0x13; // type: effect_delay
+                        buf[idx++] = 4;    // length
+                        buf[idx++] = (uint8_t)(node->params.delay.delay_ms & 0xFF);
+                        buf[idx++] = (uint8_t)((node->params.delay.delay_ms >> 8) & 0xFF);
+                        buf[idx++] = (uint8_t)node->params.delay.feedback;
+                        buf[idx++] = (uint8_t)node->params.delay.wet_dry;
                         break;
                         
                     case EFFECT_NODE_TYPE_EFFECT_GAIN:
-                        Shell_Printf("\"gain\":{");
-                        Shell_Printf("\"gain_db\":%d", node->params.gain.gain_db);
-                        Shell_Printf("}");
+                        // Gain: gain_db(2) = 2 bytes
+                        buf[idx++] = 0x14; // type: effect_gain
+                        buf[idx++] = 2;    // length
+                        buf[idx++] = (uint8_t)(node->params.gain.gain_db & 0xFF);
+                        buf[idx++] = (uint8_t)((node->params.gain.gain_db >> 8) & 0xFF);
                         break;
                         
                     default:
-                        // No additional parameters
-                        break;
+                        Shell_Printf("{\"error\":\"Unsupported effect type %d\"}", node->type);
+                        return -1;
                 }
                 
-                Shell_Printf("}}}");
-                Shell_Printf("\n");
+                if (g_is_sync_command) {
+                    BLE_BufferSyncResponse((const char *)buf, idx);
+                } else {
+                    Shell_WriteRaw(buf, idx);
+                }
             } else {
                 Shell_Printf("{\"error\":\"Effect node with ID %d not found\"}", node_id);
-                Shell_Printf("\n");
+                return -1; // 补充返回值，避免语法警告
             }
         } else {
-            // List all effect nodes in JSON format
+            // List all effect nodes in JSON format (keep JSON for listing)
             Shell_Printf("{\"status\":\"ok\",\"effects\":[");
             
             // For demonstration, return some example nodes
-            // In a real implementation, you would iterate through all nodes in the graph
             extern EffectGraphRuntime_t* EffectGraph_GetInstance(void);
             EffectGraphRuntime_t* graph = EffectGraph_GetInstance();
             
             if (graph != NULL) {
-                // Simplified implementation - in practice you would enumerate all nodes
                 Shell_Printf("{\"id\":5,\"name\":\"eq_guitar_r\",\"type\":%d,\"enabled\":true}", EFFECT_NODE_TYPE_EFFECT_EQ);
                 Shell_Printf(",{\"id\":10,\"name\":\"drc\",\"type\":%d,\"enabled\":true}", EFFECT_NODE_TYPE_EFFECT_DRC);
                 Shell_Printf(",{\"id\":12,\"name\":\"reverb\",\"type\":%d,\"enabled\":true}", EFFECT_NODE_TYPE_EFFECT_REVERB);
             }
             
             Shell_Printf("]}");
-            Shell_Printf("\n");
         }
-    }
-    else if (strcmp(target, "metronome") == 0) {
-        Shell_Printf("{\"status\":\"ok\",\"metronome\":{");
-        Shell_Printf("\"enabled\":%s,", g_sys_param.looper.click_volume > 0 ? "true" : "false");
-        Shell_Printf("\"bpm\":%d,", g_sys_param.looper.tempo);
-        Shell_Printf("\"beats\":%d,", g_sys_param.looper.time_signature + 4);
-        Shell_Printf("\"volume\":%d", g_sys_param.looper.click_volume);
-        Shell_Printf("}}");
-        Shell_Printf("\n");
-    }
-    else if (strcmp(target, "lcd") == 0) {
-        Shell_Printf("{\"status\":\"ok\",\"lcd\":{" 
-                    "\"contrast\":%d," 
-                    "\"color_scheme\":%d," 
-                    "\"screen_saver\":%d," 
-                    "\"bg_color\":%d" 
-                    "}}",
-                    g_sys_param.lcd.contrast,
-                    g_sys_param.lcd.color_scheme,
-                    g_sys_param.lcd.screen_saver,
-                    g_sys_param.lcd.bg_color);
-        Shell_Printf("\n");
+        return 0; // 补充effect分支的返回值，修复else前缺少}的核心问题
     }
     else {
         Shell_Printf("{\"error\":\"Unknown target: %s\"}", target);
-        Shell_Printf("\n");
-        Shell_Printf("{\"hint\":\"Available: all, system, volume, looper, bluetooth, lcd, effect, metronome\"}");
-        Shell_Printf("\n");
         return -1;
     }
     
     return 0;
 }
-
 /*============================================================================
  * Module Definition
  *===========================================================================*/
@@ -385,7 +442,7 @@ static const ShellOpt_t param_opts[] = {
     OPT("d", "default", NULL,       "Reset to default params",      param_default),
     OPT("p", "print",   "[module]", "Print params (sys/audio/looper/bt/lcd)", param_print),
     OPT("i", "info",    NULL,       "Show param system info",       param_info),
-    OPT("q", "query",   "<target>", "Query params in JSON (system/volume/looper/bluetooth/lcd/effect/metronome)", param_query),
+    OPT("q", "query",   "<target>", "Query params in binary format (system/volume/looper/bluetooth/lcd/effect/metronome)", param_query),
     OPT("e", "erase",   NULL,       "Erase param sector (danger!)", param_erase),
     OPT("t", "test",    NULL,       "Test flash save/load",         param_test),
     OPT_END()

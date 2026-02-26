@@ -4,12 +4,12 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    GPIO HAL adaptation layer - Encapsulate SDK underlying GPIO driver
+ * @brief    GPIO HAL适配层 - 封装SDK底层GPIO驱动
  *****************************************************************************
  * @attention
  *
- * This file is the wrapper layer for SDK GPIO driver, providing unified HAL interface.
- * Actual driver implementation in MVsB1_Base_SDK/driver/driver/inc/gpio.h
+ * 本文件是SDK GPIO驱动的包装层，提供统一的HAL接口。
+ * 实际驱动实现在 MVsB1_Base_SDK/driver/driver/inc/gpio.h
  *
  *****************************************************************************
  */

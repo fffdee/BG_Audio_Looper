@@ -54,9 +54,8 @@ static const uint8_t profile_data_template[] =
     0x08, 0x00, 0x00, 0xf1, 0x08, 0x00, 0x02, 0xab,
     // 0x0009 CLIENT_CHARACTERISTIC_CONFIGURATION
     // READ_ANYBODY, WRITE_ANYBODY
-    // CRITICAL FIX: Changed from 0xf1 to 0xf0 to let ATT stack handle CCCD internally
-    // 0xf0 = ATT stack auto-handles without callback, 0xf1 = requires callback
-    0x0a, 0x00, 0x0e, 0xf0, 0x09, 0x00, 0x02, 0x29, 0x00, 0x00,
+    // Changed back to 0xf1 to handle CCCD in app
+    0x0a, 0x00, 0x0e, 0xf1, 0x09, 0x00, 0x02, 0x29, 0x00, 0x00,
     // 0x000a CHARACTERISTIC-AB03-NOTIFY | DYNAMIC
     0x0d, 0x00, 0x02, 0xf0, 0x0a, 0x00, 0x03, 0x28, 0x10, 0x0b, 0x00, 0x03, 0xab,
     // 0x000b VALUE-AB03-NOTIFY | DYNAMIC-''
@@ -372,15 +371,33 @@ int16_t att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t trans
 	}
     else if( (attribute_handle >= ATT_SERVICE_AB00_START_HANDLE) && (attribute_handle <= ATT_SERVICE_AB00_END_HANDLE))
 	{
-		/* With CCCD flags changed to 0xf0, ATT stack should handle CCCD internally */
-		/* This function should not receive CCCD writes anymore */
-		/* But keep safety check just in case */
+		/* With CCCD flags changed to 0xf1, we need to handle CCCD writes in app */
 		if (attribute_handle == ATT_CHARACTERISTIC_AB02_01_CLIENT_CONFIGURATION_HANDLE ||
 		    attribute_handle == ATT_CHARACTERISTIC_AB03_01_CLIENT_CONFIGURATION_HANDLE) {
-			BT_DBG("[ATT_WRITE] ERROR: CCCD handle 0x%02x reached att_write (should be handled by ATT stack!)\n", 
-			       attribute_handle);
-			/* This should not happen with 0xf0 flag, but return success anyway */
-			return buffer_size;
+			BT_DBG("[ATT_WRITE] CCCD handle 0x%02x write: ", attribute_handle);
+			int i;
+			for (i = 0; i < buffer_size; i++) {
+				BT_DBG("%02x ", buffer[i]);
+			}
+			BT_DBG("\n");
+			
+			// Update CCCD status
+			extern uint8_t g_BLE_CCCD_Enabled;
+			if (buffer_size >= 2) {
+				uint16_t cccd_value = (buffer[1] << 8) | buffer[0];
+				if (cccd_value & 0x0001) {
+					g_BLE_CCCD_Enabled = 1;
+					BT_DBG("[CCCD] ENABLED: Notifications enabled for handle 0x%02x\n", attribute_handle);
+					// Send a test notification to confirm
+					extern uint16_t BLE_Send(uint8_t *data, uint16_t len);
+					char test_msg[] = "[BLE_TEST] Notifications enabled!\r\n";
+					BLE_Send((uint8_t *)test_msg, strlen(test_msg));
+				} else {
+					g_BLE_CCCD_Enabled = 0;
+					BT_DBG("[CCCD] DISABLED: Notifications disabled for handle 0x%02x\n", attribute_handle);
+				}
+			}
+			return 0;  // ATT_SUCCESS (0x00) - correct response for successful write
 		}
 		/* Route non-CCCD handles to app_att_write */
     	return app_att_write(con_handle, attribute_handle, transaction_mode, offset, buffer, buffer_size);

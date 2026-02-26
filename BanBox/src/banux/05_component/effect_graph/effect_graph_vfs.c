@@ -17,6 +17,7 @@
 #include "effect_graph_config.h"
 #include "vfs.h"
 #include "debug.h"
+#include "sys_param.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,7 +133,15 @@ static int DrcThresholdSet(const char *value, void *userData)
 {
     EffectNode_t *node = (EffectNode_t *)userData;
     if (!node || !value) return -1;
-    node->params.drc.threshold = (int16_t)atoi(value);
+    int16_t new_value = (int16_t)atoi(value);
+    node->params.drc.threshold = new_value;
+    
+    // 同步到sys_param (假设DRC节点ID为10)
+    extern SysParam_t g_sys_param;
+    if (node->id < MAX_GRAPH_NODES) {
+        g_sys_param.audio_chain.node_pool[node->id].params[0] = new_value;
+        SysParam_MarkModified();
+    }
     return 0;
 }
 
@@ -147,7 +156,15 @@ static int DrcRatioSet(const char *value, void *userData)
 {
     EffectNode_t *node = (EffectNode_t *)userData;
     if (!node || !value) return -1;
-    node->params.drc.ratio = (uint8_t)atoi(value);
+    uint8_t new_value = (uint8_t)atoi(value);
+    node->params.drc.ratio = new_value;
+    
+    // 同步到sys_param
+    extern SysParam_t g_sys_param;
+    if (node->id < MAX_GRAPH_NODES) {
+        g_sys_param.audio_chain.node_pool[node->id].params[1] = new_value;
+        SysParam_MarkModified();
+    }
     return 0;
 }
 
@@ -162,7 +179,15 @@ static int DrcAttackSet(const char *value, void *userData)
 {
     EffectNode_t *node = (EffectNode_t *)userData;
     if (!node || !value) return -1;
-    node->params.drc.attack = (uint8_t)atoi(value);
+    uint8_t new_value = (uint8_t)atoi(value);
+    node->params.drc.attack = new_value;
+    
+    // 同步到sys_param
+    extern SysParam_t g_sys_param;
+    if (node->id < MAX_GRAPH_NODES) {
+        g_sys_param.audio_chain.node_pool[node->id].params[2] = new_value;
+        SysParam_MarkModified();
+    }
     return 0;
 }
 
@@ -177,7 +202,15 @@ static int DrcReleaseSet(const char *value, void *userData)
 {
     EffectNode_t *node = (EffectNode_t *)userData;
     if (!node || !value) return -1;
-    node->params.drc.release = (uint8_t)atoi(value);
+    uint8_t new_value = (uint8_t)atoi(value);
+    node->params.drc.release = new_value;
+    
+    // 同步到sys_param
+    extern SysParam_t g_sys_param;
+    if (node->id < MAX_GRAPH_NODES) {
+        g_sys_param.audio_chain.node_pool[node->id].params[3] = new_value;
+        SysParam_MarkModified();
+    }
     return 0;
 }
 
@@ -193,7 +226,15 @@ static int ReverbRoomSet(const char *value, void *userData)
 {
     EffectNode_t *node = (EffectNode_t *)userData;
     if (!node || !value) return -1;
-    node->params.reverb.room_size = (uint8_t)atoi(value);
+    uint8_t new_value = (uint8_t)atoi(value);
+    node->params.reverb.room_size = new_value;
+    
+    // 同步到sys_param
+    extern SysParam_t g_sys_param;
+    if (node->id < MAX_GRAPH_NODES) {
+        g_sys_param.audio_chain.node_pool[node->id].params[0] = new_value;
+        SysParam_MarkModified();
+    }
     return 0;
 }
 
@@ -208,7 +249,15 @@ static int ReverbDampSet(const char *value, void *userData)
 {
     EffectNode_t *node = (EffectNode_t *)userData;
     if (!node || !value) return -1;
-    node->params.reverb.damping = (uint8_t)atoi(value);
+    uint8_t new_value = (uint8_t)atoi(value);
+    node->params.reverb.damping = new_value;
+    
+    // 同步到sys_param
+    extern SysParam_t g_sys_param;
+    if (node->id < MAX_GRAPH_NODES) {
+        g_sys_param.audio_chain.node_pool[node->id].params[1] = new_value;
+        SysParam_MarkModified();
+    }
     return 0;
 }
 
@@ -223,7 +272,15 @@ static int ReverbWetSet(const char *value, void *userData)
 {
     EffectNode_t *node = (EffectNode_t *)userData;
     if (!node || !value) return -1;
-    node->params.reverb.wet_dry = (uint8_t)atoi(value);
+    uint8_t new_value = (uint8_t)atoi(value);
+    node->params.reverb.wet_dry = new_value;
+    
+    // 同步到sys_param
+    extern SysParam_t g_sys_param;
+    if (node->id < MAX_GRAPH_NODES) {
+        g_sys_param.audio_chain.node_pool[node->id].params[2] = new_value;
+        SysParam_MarkModified();
+    }
     return 0;
 }
 

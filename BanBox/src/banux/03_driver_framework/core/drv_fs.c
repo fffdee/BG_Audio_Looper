@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V2.0.0
  * @date     04-January-2026
- * @brief    Driver file system adaptation layer implementation - create /driver directory structure
+ * @brief    驱动文件系统适配层实现 - 创建/driver目录结构
  *****************************************************************************
  */
 
@@ -12,7 +12,7 @@
 #include "debug.h"
 
 /*******************************************************************************
- * Static variables - driver directory quick access pointers
+ * 静态变量 - 驱动目录快捷访问指针
  ******************************************************************************/
 static FsNode_t *g_DriverDir = NULL;
 static FsNode_t *g_SpiDir = NULL;
@@ -24,7 +24,7 @@ static FsNode_t *g_UsbDir = NULL;
 static bool      g_DrvFsInitialized = FALSE;
 
 /*******************************************************************************
- * Public API implementation
+ * 公共API实现
  ******************************************************************************/
 
 FsError_t DrvFs_Init(void)
@@ -39,14 +39,14 @@ FsError_t DrvFs_Init(void)
     
     DBG("[DrvFs] Creating /driver directory structure...\n");
     
-    /* Create /driver */
+    /* 创建 /driver */
     g_DriverDir = Vfs_CreateDir(root, "driver");
     if (!g_DriverDir) {
         DBG("[DrvFs] ERROR: Failed to create /driver\n");
         return FS_ERR_NO_MEMORY;
     }
     
-    /* Create subdirectories */
+    /* 创建子目录 */
     g_SpiDir = Vfs_CreateDir(g_DriverDir, "spi");
     if (!g_SpiDir) return FS_ERR_NO_MEMORY;
     

@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     04-January-2026
- * @brief    Virtual file system public implementation
+ * @brief    铏氭嫙鏂囦欢绯荤粺鏍稿績瀹炵幇
  *****************************************************************************
  */
 
@@ -14,7 +14,7 @@
 #include "debug.h"
 
 /*******************************************************************************
- * Global variables
+ * 闈欐�鍙橀噺
  ******************************************************************************/
 #ifdef VFS_EN
 static VfsNode_t g_NodePool[VFS_MAX_NODES];
@@ -31,7 +31,7 @@ static VfsNode_t *g_CwdNode = NULL;
 static bool       g_Initialized = FALSE;
 
 /*******************************************************************************
- * Internal function declarations
+ * 鍐呴儴鍑芥暟澹版槑
  ******************************************************************************/
 static VfsNode_t* AllocNode(void);
 static void FreeNode(VfsNode_t *node);
@@ -41,7 +41,7 @@ static int ParsePath(const char *path, char segments[][VFS_MAX_NAME_LEN], int ma
 static void BuildPath(VfsNode_t *node, char *buf, uint16_t maxLen);
 
 /*******************************************************************************
- * Memory management
+ * 鍐呭瓨绠＄悊
  ******************************************************************************/
 
 static VfsNode_t* AllocNode(void)
@@ -103,7 +103,7 @@ static int ParsePath(const char *path, char segments[][VFS_MAX_NAME_LEN], int ma
     
     if (!path || !segments) return -1;
     
-    /* Skip leading slashes */
+    /* 璺宠繃寮�ご鐨勬枩鏉�*/
     while (*p == '/') p++;
     start = p;
     
@@ -122,7 +122,7 @@ static int ParsePath(const char *path, char segments[][VFS_MAX_NAME_LEN], int ma
         }
     }
     
-    /* Handle the last segment */
+    /* 澶勭悊鏈�悗涓� */
     if (start < p) {
         len = p - start;
         if (len > 0 && len < VFS_MAX_NAME_LEN) {
@@ -200,7 +200,7 @@ VfsError_t Vfs_Init(void)
     memset(g_NodeUsed, 0, sizeof(g_NodeUsed));
     g_NodeCount = 0;
     
-    /* Create root node "/" */
+    /* 鍒涘缓鏍硅妭鐐�"/" */
     g_RootNode = AllocNode();
     if (!g_RootNode) {
         DBG("[VFS] ERROR: Failed to alloc root node!\n");
@@ -310,7 +310,7 @@ VfsNode_t* Vfs_FindNode(const char *path)
                 current = current->parent;
             }
         } else if (strcmp(segments[i], ".") == 0) {
-            /* Current directory */
+            /* 褰撳墠鐩綍 */
         } else {
             target = FindChildByName(current, segments[i]);
             if (!target) {
@@ -332,7 +332,7 @@ VfsNode_t* Vfs_CreateDir(VfsNode_t *parent, const char *name)
     if (strlen(name) >= VFS_MAX_NAME_LEN) return NULL;
     if (parent->childCount >= VFS_MAX_CHILDREN) return NULL;
     
-    /* Check if already exists */
+    /* 妫�煡鏄惁宸插瓨鍦�*/
     if (FindChildByName(parent, name)) return NULL;
     
     node = AllocNode();
@@ -510,7 +510,7 @@ VfsError_t Vfs_RemoveNode(VfsNode_t *node)
     if (!node) return VFS_ERR_NOT_FOUND;
     if (node == g_RootNode) return VFS_ERR_INVALID_PATH;
     
-    /* Recursively delete all child nodes */
+    /* 閫掑綊鍒犻櫎鎵�湁瀛愯妭鐐�*/
     for (i = 0; i < node->childCount; i++) {
         if (node->children[i]) {
             Vfs_RemoveNode(node->children[i]);

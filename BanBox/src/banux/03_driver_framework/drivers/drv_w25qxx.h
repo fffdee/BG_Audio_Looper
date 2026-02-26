@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    W25Qxx Flash driver framework adaptation layer header file
+ * @brief    W25Qxx Flash驱动框架适配层头文件
  *****************************************************************************
  */
 
@@ -18,22 +18,22 @@ extern "C" {
 #include "type.h"
 
 /*******************************************************************************
- * Function declarations
+ * 函数声明
  ******************************************************************************/
 
 /**
- * @brief  Register W25Qxx driver to driver framework
- * @retval 0-success, <0-failure
+ * @brief  注册W25Qxx驱动到驱动框架
+ * @retval 0-成功, <0-失败
  * 
- * @note   After registration, will create in file system:
+ * @note   注册后将在文件系统创建:
  *         /driver/spi/w25qxx/
- *         ├── name          (driver name)
- *         ├── capacity      (Flash capacity)
- *         ├── page_size     (page size)
- *         ├── sector_size   (sector size)
- *         ├── status        (initialization status)
- *         ├── device_id     (device ID)
- *         └── erase_chip    (chip erase command)
+ *         ├── name          (驱动名称)
+ *         ├── capacity      (Flash容量)
+ *         ├── page_size     (页大小)
+ *         ├── sector_size   (扇区大小)
+ *         ├── status        (初始化状态)
+ *         ├── device_id     (设备ID)
+ *         └── erase_chip    (全片擦除命令)
  */
 int W25qxx_DrvRegister(void);
 

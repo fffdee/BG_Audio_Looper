@@ -221,8 +221,14 @@ void Shell_Print(const char *str);
  */
 void Shell_Printf(const char *fmt, ...);
 
-/**
- * @brief  Output newline
+/** * @brief  Output raw binary data (for APP communication)
+ * @param  data: Binary data pointer
+ * @param  len: Data length
+ * @note   Bypasses string formatting, directly sends binary data
+ */
+void Shell_WriteRaw(const uint8_t *data, uint16_t len);
+
+/** * @brief  Output newline
  */
 void Shell_NewLine(void);
 

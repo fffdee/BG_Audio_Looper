@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     02-January-2026
- * @brief    ST7735 LCD driver framework adaptation layer header file
+ * @brief    ST7735 LCD驱动框架适配层头文件
  *****************************************************************************
  */
 
@@ -18,20 +18,20 @@ extern "C" {
 #include "type.h"
 
 /*******************************************************************************
- * Function declarations
+ * 函数声明
  ******************************************************************************/
 
 /**
- * @brief  Register ST7735 driver to driver framework
- * @retval 0-success, <0-failure
+ * @brief  注册ST7735驱动到驱动框架
+ * @retval 0-成功, <0-失败
  * 
- * @note   After registration, will create in file system:
+ * @note   注册后将在文件系统创建:
  *         /driver/spi/st7735/
- *         ├── name       (driver name)
- *         ├── width      (LCD width)
- *         ├── height     (LCD height)
- *         ├── status     (initialization status)
- *         └── brightness (brightness control)
+ *         ├── name       (驱动名称)
+ *         ├── width      (LCD宽度)
+ *         ├── height     (LCD高度)
+ *         ├── status     (初始化状态)
+ *         └── brightness (亮度控制)
  */
 int St7735_DrvRegister(void);
 

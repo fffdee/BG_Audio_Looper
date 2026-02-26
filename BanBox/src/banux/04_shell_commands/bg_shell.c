@@ -89,6 +89,19 @@ static void Console_AddLineWithColor(const char* str, uint16_t colorValue);
 static void Console_UpdateInputLine(const char* input, uint8_t len);
 static void Shell_SendRaw(const char *str);  /* Send to CDC only, no LCD */
 
+/**
+ * @brief  Send raw binary data
+ * @param  data: Binary data
+ * @param  len: Data length
+ */
+void Shell_WriteRaw(const uint8_t *data, uint16_t len)
+{
+    if(data && len > 0 && g_IO && g_IO->send)
+    {
+        g_IO->send((uint8_t*)data, len);
+    }
+}
+
 /*******************************************************************************
  * Internal command processing
  ******************************************************************************/

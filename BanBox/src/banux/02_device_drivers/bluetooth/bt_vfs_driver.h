@@ -23,31 +23,31 @@ extern "C" {
  * Definitions
  ******************************************************************************/
 
-/* BT VFS return codes */
+/* BT VFS返回码 */
 #define BT_VFS_OK     0
 #define BT_VFS_ERROR -1
 
-/* BT device parameters */
+/* BT设备参数 */
 typedef enum {
-    BT_PARAM_STATUS = 0,      /* Connection status (read-only) */
-    BT_PARAM_NAME,            /* Bluetooth name */
-    BT_PARAM_MAC,             /* MAC address (read-only) */
-    BT_PARAM_VOLUME,          /* Volume */
-    BT_PARAM_CONNECTED_DEV,   /* Connected device name (read-only) */
-    BT_PARAM_RSSI,            /* Signal strength (read-only) */
-    BT_PARAM_CODEC,           /* Codec (read-only) */
+    BT_PARAM_STATUS = 0,      /* 连接状态 (只读) */
+    BT_PARAM_NAME,            /* 蓝牙名称 */
+    BT_PARAM_MAC,             /* MAC地址 (只读) */
+    BT_PARAM_VOLUME,          /* 音量 */
+    BT_PARAM_CONNECTED_DEV,   /* 已连接设备名 (只读) */
+    BT_PARAM_RSSI,            /* 信号强度 (只读) */
+    BT_PARAM_CODEC,           /* 编解码器 (只读) */
     BT_PARAM_MAX
 } BtParamId_t;
 
-/* BLE device parameters */
+/* BLE设备参数 */
 typedef enum {
-    BLE_PARAM_STATUS = 0,     /* Connection status (read-only) */
-    BLE_PARAM_NAME,           /* BLE broadcast name */
-    BLE_PARAM_MAC,            /* MAC address (read-only) */
-    BLE_PARAM_ADVERTISING,    /* Advertising status */
-    BLE_PARAM_TX_POWER,       /* Transmit power */
-    BLE_PARAM_INTERVAL,       /* Connection interval (read-only) */
-    BLE_PARAM_MTU,            /* MTU size (read-only) */
+    BLE_PARAM_STATUS = 0,     /* 连接状态 (只读) */
+    BLE_PARAM_NAME,           /* BLE广播名称 */
+    BLE_PARAM_MAC,            /* MAC地址 (只读) */
+    BLE_PARAM_ADVERTISING,    /* 广播状态 */
+    BLE_PARAM_TX_POWER,       /* 发射功率 */
+    BLE_PARAM_INTERVAL,       /* 连接间隔 (只读) */
+    BLE_PARAM_MTU,            /* MTU大小 (只读) */
     BLE_PARAM_MAX
 } BleParamId_t;
 
@@ -56,46 +56,46 @@ typedef enum {
  ******************************************************************************/
 
 /**
- * @brief  Initialize BT device driver
- * @return 0 success, -1 failure
+ * @brief  初始化BT设备驱动
+ * @return 0 成功, -1 失败
  */
 int BtVfs_Init(void);
 
 /**
- * @brief  Initialize BLE device driver
- * @return 0 success, -1 failure
+ * @brief  初始化BLE设备驱动
+ * @return 0 成功, -1 失败
  */
 int BleVfs_Init(void);
 
 /**
- * @brief  Mount BT device to VFS
- * @param  parent: Parent node
- * @return VFS node pointer, NULL on failure
+ * @brief  将BT设备挂载到VFS
+ * @param  parent: 父节点
+ * @return VFS节点指针，失败返回NULL
  */
 VfsNode_t* BtVfs_Mount(VfsNode_t *parent);
 
 /**
- * @brief  Mount BLE device to VFS
- * @param  parent: Parent node
- * @return VFS node pointer, NULL on failure
+ * @brief  将BLE设备挂载到VFS
+ * @param  parent: 父节点
+ * @return VFS节点指针，失败返回NULL
  */
 VfsNode_t* BleVfs_Mount(VfsNode_t *parent);
 
 /**
- * @brief  Unmount BT device
- * @return 0 success, -1 failure
+ * @brief  卸载BT设备
+ * @return 0 成功, -1 失败
  */
 int BtVfs_Unmount(void);
 
 /**
- * @brief  Unmount BLE device
- * @return 0 success, -1 failure
+ * @brief  卸载BLE设备
+ * @return 0 成功, -1 失败
  */
 int BleVfs_Unmount(void);
 
 /**
- * @brief  Default mount BT/BLE to /driver directory (called during driver framework initialization)
- * @return BT_VFS_OK success, BT_VFS_ERROR failure
+ * @brief  默认挂载BT/BLE到/driver目录（驱动框架初始化时调用）
+ * @return BT_VFS_OK 成功, BT_VFS_ERROR 失败
  */
 int BtVfsDriver_MountDefault(void);
 

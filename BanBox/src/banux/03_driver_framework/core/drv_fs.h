@@ -4,16 +4,16 @@
  * @author   BG Card Team
  * @version  V2.0.0
  * @date     04-January-2026
- * @brief    Driver file system adaptation layer - VFS-based driver directory management
+ * @brief    驱动文件系统适配层 - 基于VFS的驱动目录管理
  *****************************************************************************
  * @attention
  *
- * This module is VFS driver layer adaptation, providing:
- * 1. /driver directory and subdirectory management
- * 2. Driver parameter node registration
- * 3. Backward compatible API (DrvFs_* maps to Vfs_*)
+ * 本模块是VFS的驱动层适配，提供：
+ * 1. /driver 目录及子目录管理
+ * 2. 驱动参数节点注册
+ * 3. 向后兼容的API（DrvFs_* 映射到 Vfs_*）
  *
- * Directory structure:
+ * 目录结构：
  *   /driver
  *       ├── spi
  *       │   ├── st7735
@@ -37,7 +37,7 @@ extern "C" {
 #include "vfs.h"
 
 /*******************************************************************************
- * Type definitions (backward compatible API)
+ * 类型定义（兼容旧API）
  ******************************************************************************/
 typedef VfsNode_t       FsNode_t;
 typedef VfsNodeType_t   FsNodeType_t;
@@ -46,12 +46,12 @@ typedef VfsParamGet_t   FsParamGet_t;
 typedef VfsParamSet_t   FsParamSet_t;
 typedef VfsListCallback_t FsListCallback_t;
 
-/* Node type compatibility definitions */
+/* 节点类型兼容定义 */
 #define FS_NODE_DIR     VFS_NODE_DIR
 #define FS_NODE_PARAM   VFS_NODE_PARAM
 #define FS_NODE_DEV     VFS_NODE_DEV
 
-/* Error code compatibility definitions */
+/* 错误码兼容定义 */
 #define FS_OK                   VFS_OK
 #define FS_ERR_NOT_FOUND        VFS_ERR_NOT_FOUND
 #define FS_ERR_NOT_DIR          VFS_ERR_NOT_DIR
@@ -63,7 +63,7 @@ typedef VfsListCallback_t FsListCallback_t;
 #define FS_ERR_ALREADY_EXISTS   VFS_ERR_ALREADY_EXISTS
 #define FS_ERR_INVALID_PATH     VFS_ERR_INVALID_PATH
 
-/* Configuration compatibility definitions */
+/* 配置兼容定义 */
 #define DRV_FS_MAX_PATH_LEN     VFS_MAX_PATH_LEN
 #define DRV_FS_MAX_NAME_LEN     VFS_MAX_NAME_LEN
 #define DRV_FS_MAX_CHILDREN     VFS_MAX_CHILDREN
@@ -71,7 +71,7 @@ typedef VfsListCallback_t FsListCallback_t;
 #define DRV_FS_MAX_NODES        VFS_MAX_NODES
 
 /*******************************************************************************
- * API compatibility macros (map to VFS)
+ * API兼容宏（映射到VFS）
  ******************************************************************************/
 #define DrvFs_GetRoot()             Vfs_GetRoot()
 #define DrvFs_GetCwd()              Vfs_GetCwd()
@@ -88,48 +88,48 @@ typedef VfsListCallback_t FsListCallback_t;
 #define DrvFs_GetTypeName(t)        Vfs_GetTypeName(t)
 
 /*******************************************************************************
- * Driver file system dedicated API
+ * 驱动文件系统专用API
  ******************************************************************************/
 
 /**
- * @brief  Initialize driver file system (create /driver and subdirectories)
- * @return FS_OK success, others failure
- * @note   Must call Vfs_Init() first
+ * @brief  初始化驱动文件系统（创建/driver及子目录）
+ * @return FS_OK成功，其他失败
+ * @note   必须先调用Vfs_Init()
  */
 FsError_t DrvFs_Init(void);
 
 /**
- * @brief  Get /driver directory node
+ * @brief  获取/driver目录节点
  */
 FsNode_t* DrvFs_GetDriverDir(void);
 
 /**
- * @brief  Get /driver/spi directory node
+ * @brief  获取/driver/spi目录节点
  */
 FsNode_t* DrvFs_GetSpiDir(void);
 
 /**
- * @brief  Get /driver/i2c directory node
+ * @brief  获取/driver/i2c目录节点
  */
 FsNode_t* DrvFs_GetI2cDir(void);
 
 /**
- * @brief  Get /driver/i2s directory node
+ * @brief  获取/driver/i2s目录节点
  */
 FsNode_t* DrvFs_GetI2sDir(void);
 
 /**
- * @brief  Get /driver/sdio directory node
+ * @brief  获取/driver/sdio目录节点
  */
 FsNode_t* DrvFs_GetSdioDir(void);
 
 /**
- * @brief  Get /driver/power directory node
+ * @brief  获取/driver/power目录节点
  */
 FsNode_t* DrvFs_GetPowerDir(void);
 
 /**
- * @brief  Get /driver/usb directory node
+ * @brief  获取/driver/usb目录节点
  */
 FsNode_t* DrvFs_GetUsbDir(void);
 

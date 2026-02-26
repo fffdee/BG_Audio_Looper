@@ -47,6 +47,8 @@ public class EqControlActivity extends AppCompatActivity {
     private Button btnAddBand;
     private Button btnRemoveBand;
     private ImageButton btnSave;
+    private ImageButton btnImportEq;
+    private ImageButton btnExportEq;
     private Button btnSyncEq;
     private ImageButton btnBack;
     private ImageButton btnOpenPresets;
@@ -322,6 +324,8 @@ public class EqControlActivity extends AppCompatActivity {
             btnAddBand = findViewById(R.id.btn_add_band);
             btnRemoveBand = findViewById(R.id.btn_remove_band);
             btnSave = findViewById(R.id.btn_save);
+            btnImportEq = findViewById(R.id.btn_import_eq);
+            btnExportEq = findViewById(R.id.btn_export_eq);
             btnBack = findViewById(R.id.btn_back);
             btnSyncEq = findViewById(R.id.btn_sync_eq);
             btnOpenPresets = findViewById(R.id.btn_open_presets);
@@ -394,6 +398,12 @@ public class EqControlActivity extends AppCompatActivity {
 
         // 保存按钮
         btnSave.setOnClickListener(v -> saveEqSettings());
+
+        // 导入EQ数据按钮
+        btnImportEq.setOnClickListener(v -> importEqData());
+
+        // 导出EQ数据按钮
+        btnExportEq.setOnClickListener(v -> exportEqData());
 
         // 节点选择
         spinnerNode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1068,6 +1078,37 @@ public class EqControlActivity extends AppCompatActivity {
             processNextCommand();
         });
     }
+
+    /**
+     * 导出EQ数据到下位机（使用原有的同步功能）
+     */
+    private void exportEqData() {
+        android.util.Log.d("EQ_EXPORT", "导出EQ数据到下位机 - 节点: " + NODE_NAMES[currentNode]);
+        syncCurrentNodeEq();
+    }
+
+    /**
+     * 从下位机导入EQ数据
+     */
+    private void importEqData() {
+        if (bluetoothHelper == null || !bluetoothHelper.isConnected()) {
+            Toast.makeText(this, "请先连接蓝牙设备", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        android.util.Log.d("EQ_IMPORT", "从下位机导入EQ数据 - 节点: " + NODE_NAMES[currentNode]);
+
+        // 发送查询命令获取当前节点的EQ参数
+        int effectId = EFFECT_IDS[currentNode];
+        String queryCmd = String.format("param effect %d -q\r\n", effectId);
+
+        Toast.makeText(this, "正在从下位机读取节点 " + NODE_NAMES[currentNode] + " 的EQ数据...", Toast.LENGTH_LONG).show();
+
+        // 发送查询命令
+        sendBleCommand(queryCmd);
+
+        android.util.Log.d("EQ_IMPORT", "发送查询命令: " + queryCmd);
+    }
     
     /**
      * 重置当前节点的EQ参数
@@ -1391,26 +1432,18 @@ public class EqControlActivity extends AppCompatActivity {
         if (bluetoothHelper != null) {
             bluetoothHelper.setBleNotifyListener(data -> {
                 android.util.Log.d("EqControl", "BLE notify received: " + data);
-                // 处理EQ查询响应
+                // 处理EQ查询响应 - 现在使用二进制格式而不是JSON
                 try {
-                    org.json.JSONObject json = new org.json.JSONObject(data);
-
-                    // 检查是否是完整的effect格式
-                    if (json.has("effect")) {
-                        org.json.JSONObject effectObj = json.getJSONObject("effect");
-                        android.util.Log.d("EqControl", "Parsed effect object: " + effectObj.toString());
-                        updateEqUI(effectObj);
-                    }
-                    // 检查是否是直接的eq格式（下位机简化格式）
-                    else if (json.has("eq")) {
-                        android.util.Log.d("EqControl", "Received EQ data in simplified format");
-                        updateEqParams(json.getJSONObject("eq"));
+                    // 尝试解析二进制数据
+                    if (parseBinaryEqData(data)) {
+                        android.util.Log.d("EqControl", "Successfully parsed binary EQ data");
                         Toast.makeText(this, "EQ参数已同步", Toast.LENGTH_SHORT).show();
+                    } else {
+                        android.util.Log.w("EqControl", "Failed to parse binary EQ data, trying JSON fallback");
+                        // 回退到JSON解析（用于兼容性）
+                        parseJsonEqData(data);
                     }
-                    else {
-                        android.util.Log.d("EqControl", "No recognized effect field in JSON");
-                    }
-                } catch (org.json.JSONException e) {
+                } catch (Exception e) {
                     android.util.Log.e("EqControl", "Failed to parse EQ data: " + data, e);
                 }
             });
@@ -1508,6 +1541,214 @@ public class EqControlActivity extends AppCompatActivity {
             }
         } catch (org.json.JSONException e) {
             android.util.Log.e("EqControl", "Failed to parse EQ params", e);
+        }
+    }
+
+    /**
+     * 解析二进制格式的EQ数据
+     * 格式: [type(1)][length(1)][band1_freq(2)][band1_gain(2)]...[bandN_freq(2)][bandN_gain(2)]
+     * type = 0x12 for EQ
+     */
+    private boolean parseBinaryEqData(String data) {
+        try {
+            // 将十六进制字符串转换为字节数组
+            if (data.startsWith("0x") || data.contains(" ")) {
+                // 如果是空格分隔的十六进制字符串
+                String[] hexParts = data.replace("0x", "").split("\\s+");
+                byte[] bytes = new byte[hexParts.length];
+                for (int i = 0; i < hexParts.length; i++) {
+                    bytes[i] = (byte) Integer.parseInt(hexParts[i], 16);
+                }
+                return parseBinaryEqData(bytes);
+            } else if (data.matches("[0-9A-Fa-f]+")) {
+                // 如果是连续的十六进制字符串（没有空格）
+                int len = data.length();
+                if (len % 2 != 0) {
+                    android.util.Log.w("EqControl", "Invalid hex string length: " + len);
+                    return false;
+                }
+                byte[] bytes = new byte[len / 2];
+                for (int i = 0; i < len; i += 2) {
+                    bytes[i / 2] = (byte) Integer.parseInt(data.substring(i, i + 2), 16);
+                }
+                return parseBinaryEqData(bytes);
+            } else {
+                // 如果是原始字符串，假设是字节数据
+                byte[] bytes = data.getBytes();
+                return parseBinaryEqData(bytes);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("EqControl", "Failed to convert data to bytes", e);
+            return false;
+        }
+    }
+
+    /**
+     * 解析二进制字节数组格式的EQ数据
+     * 支持解析多个连续的数据包
+     * 固件格式: [AA][55][12][length][band_count][pregain(2)][bands...]
+     * 每个band: gain(2), f0(4), Q(2), type(1), enabled(1) = 10字节
+     */
+    private boolean parseBinaryEqData(byte[] data) {
+        if (data == null || data.length < 8) { // 需要至少8字节: header(2) + type(1) + length(1) + band_count(1) + pregain(2) + 至少一个band的部分数据
+            return false;
+        }
+
+        int idx = 0;
+        boolean parsedAny = false;
+
+        // 循环解析所有数据包，直到数据处理完毕
+        while (idx < data.length) {
+            // 检查是否还有足够的数据用于一个完整的数据包
+            if (idx + 7 >= data.length) { // 需要至少header(2) + type(1) + length(1) + band_count(1) + pregain(2)
+                break;
+            }
+
+            // 检查header: 0xAA 0x55
+            if (data[idx] != (byte)0xAA || data[idx + 1] != (byte)0x55) {
+                android.util.Log.w("EqControl", "Invalid header at position " + idx + ": " +
+                    String.format("%02X %02X", data[idx], data[idx + 1]));
+                break; // 如果header不匹配，停止解析
+            }
+
+            byte type = data[idx + 2];
+            if (type != 0x12) { // EQ type
+                android.util.Log.w("EqControl", "Invalid type at position " + idx + ": " + String.format("%02X", type));
+                break; // 如果不是EQ类型，停止解析
+            }
+
+            byte length = data[idx + 3];
+
+            // 检查数据包长度是否合理
+            int packetLength = 4 + length; // header(2) + type(1) + length(1) + data(length)
+            if (idx + packetLength > data.length) {
+                android.util.Log.w("EqControl", "Incomplete EQ packet at position " + idx +
+                    ", need " + packetLength + " bytes, have " + (data.length - idx));
+                break;
+            }
+
+            // 解析EQ数据
+            int parseIdx = idx + 4; // 跳过header + type + length
+
+            // 读取band_count
+            int bandCount = data[parseIdx++] & 0xFF;
+
+            // 读取pregain (2 bytes, little endian, signed)
+            int pregain = (data[parseIdx++] & 0xFF) | ((data[parseIdx++] & 0xFF) << 8);
+            if (pregain > 32767) pregain -= 65536;
+            float pregainDb = pregain / 100.0f;
+
+            // 检查是否有足够的数据用于所有bands
+            int expectedDataLength = 3 + (bandCount * 10); // band_count(1) + pregain(2) + bands(10*band_count)
+            if (length != expectedDataLength) {
+                android.util.Log.w("EqControl", "Invalid EQ data length: expected " + expectedDataLength +
+                    " bytes for " + bandCount + " bands, got " + length + " bytes at position " + idx);
+                idx += packetLength; // 跳过这个包
+                continue;
+            }
+
+            // 检查是否还有足够的数据
+            if (parseIdx + (bandCount * 10) > idx + packetLength) {
+                android.util.Log.w("EqControl", "Not enough data for " + bandCount + " EQ bands at position " + idx);
+                idx += packetLength; // 跳过这个包
+                continue;
+            }
+
+            // 解析所有bands
+            final List<EqCurveView.EqBand> parsedBands = new ArrayList<>();
+            for (int i = 0; i < bandCount; i++) {
+                // 读取gain (2 bytes, little endian, signed)
+                int gain = (data[parseIdx++] & 0xFF) | ((data[parseIdx++] & 0xFF) << 8);
+                if (gain > 32767) gain -= 65536;
+                float gainDb = gain / 100.0f;
+
+                // 读取f0 (4 bytes, little endian)
+                int f0 = (data[parseIdx++] & 0xFF) |
+                        ((data[parseIdx++] & 0xFF) << 8) |
+                        ((data[parseIdx++] & 0xFF) << 16) |
+                        ((data[parseIdx++] & 0xFF) << 24);
+
+                // 读取Q (2 bytes, little endian)
+                int qRaw = (data[parseIdx++] & 0xFF) | ((data[parseIdx++] & 0xFF) << 8);
+                float q = qRaw / 100.0f;
+
+                // 读取type (1 byte)
+                int filterType = data[parseIdx++] & 0xFF;
+
+                // 读取enabled (1 byte)
+                boolean enabled = (data[parseIdx++] & 0xFF) != 0;
+
+                // 创建band对象
+                EqCurveView.EqBand band = new EqCurveView.EqBand(enabled, filterType, f0, q, gainDb);
+                parsedBands.add(band);
+
+                android.util.Log.d("EqControl", "Parsed band " + i + ": enabled=" + enabled +
+                    ", type=" + filterType + ", f0=" + f0 + "Hz, Q=" + q + ", gain=" + gainDb + "dB");
+            }
+
+            // 在UI线程中更新数据和UI
+            runOnUiThread(() -> {
+                try {
+                    // 更新当前节点的bands
+                    List<EqCurveView.EqBand> currentBands = nodesBands.get(currentNode);
+
+                    // 只更新解析到的bands数量
+                    for (int i = 0; i < parsedBands.size() && i < currentBands.size(); i++) {
+                        EqCurveView.EqBand sourceBand = parsedBands.get(i);
+                        EqCurveView.EqBand targetBand = currentBands.get(i);
+
+                        // 更新所有参数
+                        targetBand.enable = sourceBand.enable;
+                        targetBand.type = sourceBand.type;
+                        targetBand.f0 = sourceBand.f0;
+                        targetBand.Q = sourceBand.Q;
+                        targetBand.gain = sourceBand.gain;
+                    }
+
+                    // 刷新UI
+                    loadCurrentNodeBands();
+                    loadCurrentBandParameters();
+
+                    android.util.Log.d("EqControl", "Successfully updated EQ UI with " + parsedBands.size() + " bands");
+
+                } catch (Exception e) {
+                    android.util.Log.e("EqControl", "Error updating UI with binary EQ data", e);
+                }
+            });
+
+            parsedAny = true;
+
+            // 移动到下一个数据包
+            idx += packetLength;
+        }
+
+        return parsedAny;
+    }
+
+    /**
+     * 解析JSON格式的EQ数据（回退方法，用于兼容性）
+     */
+    private void parseJsonEqData(String data) {
+        try {
+            org.json.JSONObject json = new org.json.JSONObject(data);
+
+            // 检查是否是完整的effect格式
+            if (json.has("effect")) {
+                org.json.JSONObject effectObj = json.getJSONObject("effect");
+                android.util.Log.d("EqControl", "Parsed effect object: " + effectObj.toString());
+                updateEqUI(effectObj);
+            }
+            // 检查是否是直接的eq格式（下位机简化格式）
+            else if (json.has("eq")) {
+                android.util.Log.d("EqControl", "Received EQ data in simplified format");
+                updateEqParams(json.getJSONObject("eq"));
+                Toast.makeText(this, "EQ参数已同步", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                android.util.Log.d("EqControl", "No recognized effect field in JSON");
+            }
+        } catch (org.json.JSONException e) {
+            android.util.Log.e("EqControl", "Failed to parse JSON EQ data: " + data, e);
         }
     }
 }

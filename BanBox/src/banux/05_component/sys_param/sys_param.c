@@ -604,90 +604,144 @@ SysParam_Status_t SysParam_SaveModule(const char *module) {
 /**
  * @brief Print detailed effect parameters for a node
  * @param node Pointer to the graph node
+ * @param node_id Node ID for finding live parameters
  */
-static void SysParam_PrintEffectParams(GraphNode_t *node) {
-    switch (node->subtype) {
-        case EFFECT_TYPE_COMPRESSOR:  /* DRC */
-            Shell_Printf(" [threshold=%d(0-96) ratio=%d(1-20) attack=%d(0-100) release=%d(0-100)]",
-                        node->params[0], node->params[1], node->params[2], node->params[3]);
-            break;
+static void SysParam_PrintEffectParams(GraphNode_t *node, uint8_t node_id) {
+    // 从effect_graph获取实时参数，而不是sys_param的静态存储
+    extern EffectNode_t* EffectGraph_FindNodeById(uint8_t id);
+    EffectNode_t *live_node = EffectGraph_FindNodeById(node_id);
 
-        case EFFECT_TYPE_REVERB:
-            Shell_Printf(" [room=%d(0-100) damp=%d(0-100) wet=%d(0-100)]",
-                        node->params[0], node->params[1], node->params[2]);
-            break;
+    if (live_node != NULL) {
+        // 使用实时参数
+        switch (live_node->type) {
+            case EFFECT_NODE_TYPE_EFFECT_DRC:
+                Shell_Printf(" [threshold=%d(0-96) ratio=%d(1-20) attack=%d(0-100) release=%d(0-100)]",
+                            live_node->params.drc.threshold,
+                            live_node->params.drc.ratio,
+                            live_node->params.drc.attack,
+                            live_node->params.drc.release);
+                break;
 
-        case EFFECT_TYPE_EQ:
-            /* 从effect_graph获取实时EQ参数（如果节点ID有效） */
-            {
-                int band;
-                int active_count = 0;
-                EffectNode_t *live_node = NULL;
-                
-                /* 尝试从effect_graph获取实时节点数据 */
-                /* 注意：这里假设sys_param的node索引和effect_graph的node ID对应 */
-                /* 如果有映射关系，需要调整 */
-                
-                /* 简化版：直接从params数组解析（sys_param存储的静态数据） */
-                /* 统计启用的频段数 */
-                for (band = 0; band < 10; band++) {
-                    if (band + 80 < 88 && node->params[80 + band]) {
-                        active_count++;
+            case EFFECT_NODE_TYPE_EFFECT_REVERB:
+                Shell_Printf(" [room=%d(0-100) damp=%d(0-100) wet=%d(0-100)]",
+                            live_node->params.reverb.room_size,
+                            live_node->params.reverb.damping,
+                            live_node->params.reverb.wet_dry);
+                break;
+
+            case EFFECT_NODE_TYPE_EFFECT_EQ:
+                {
+                    int band;
+                    int active_count = live_node->params.eq.band_count;
+
+                    Shell_Printf(" [%d bands", active_count);
+
+                    /* 显示启用的频段详情（最多显示3个，避免输出过长） */
+                    int shown = 0;
+                    for (band = 0; band < active_count && shown < 3; band++) {
+                        if (live_node->params.eq.band_enables[band]) {
+                            int16_t gain = live_node->params.eq.band_gains[band];
+                            uint32_t freq = live_node->params.eq.band_f0[band];
+
+                            if (shown > 0) Shell_Printf(",");
+                            Shell_Printf(" b%d:%+ddB@%luHz", band, gain / 256, (unsigned long)freq);
+                            shown++;
+                        }
+                    }
+
+                    if (active_count > shown) {
+                        Shell_Printf(", +%d more", active_count - shown);
+                    }
+
+                    Shell_Printf("] *runtime");
+                }
+                break;
+
+            default:
+                /* For other effects, show hex values */
+                Shell_Printf(" [");
+                {
+                    int p;
+                    for (p = 0; p < 11 && live_node->params.raw[p] != 0; p++) {
+                        if (p > 0) Shell_Printf(" ");
+                        Shell_Printf("%02X", live_node->params.raw[p]);
                     }
                 }
-                
-                Shell_Printf(" [%d bands", active_count);
-                
-                /* 显示启用的频段详情（最多显示3个，避免输出过长） */
-                int shown = 0;
-                for (band = 0; band < 10 && shown < 3; band++) {
-                    if (band + 80 < 88 && node->params[80 + band]) {
-                        int8_t gain = (int8_t)node->params[band];
-                        uint32_t freq = 0;
-                        uint16_t q = 0;
-                        
-                        /* 提取频率（4字节，小端） */
-                        if (10 + band * 4 + 3 < 88) {
-                            freq = node->params[10 + band * 4] |
-                                   (node->params[10 + band * 4 + 1] << 8) |
-                                   (node->params[10 + band * 4 + 2] << 16) |
-                                   (node->params[10 + band * 4 + 3] << 24);
+                Shell_Printf("]");
+                break;
+        }
+    } else {
+        // 如果找不到实时节点，使用静态存储
+        switch (node->subtype) {
+            case EFFECT_TYPE_COMPRESSOR:  /* DRC */
+                Shell_Printf(" [threshold=%d(0-96) ratio=%d(1-20) attack=%d(0-100) release=%d(0-100)]",
+                            node->params[0], node->params[1], node->params[2], node->params[3]);
+                break;
+
+            case EFFECT_TYPE_REVERB:
+                Shell_Printf(" [room=%d(0-100) damp=%d(0-100) wet=%d(0-100)]",
+                            node->params[0], node->params[1], node->params[2]);
+                break;
+
+            case EFFECT_TYPE_EQ:
+                {
+                    int band;
+                    int active_count = 0;
+
+                    /* 统计启用的频段数 */
+                    for (band = 0; band < 10; band++) {
+                        if (band + 80 < 88 && node->params[80 + band]) {
+                            active_count++;
                         }
-                        
-                        /* 提取Q值（2字节，小端） */
-                        if (50 + band * 2 + 1 < 88) {
-                            q = node->params[50 + band * 2] |
-                                (node->params[50 + band * 2 + 1] << 8);
+                    }
+
+                    Shell_Printf(" [%d bands", active_count);
+
+                    /* 显示启用的频段详情（最多显示3个，避免输出过长） */
+                    int shown = 0;
+                    for (band = 0; band < 10 && shown < 3; band++) {
+                        if (band + 80 < 88 && node->params[80 + band]) {
+                            int8_t gain = (int8_t)node->params[band];
+                            uint32_t freq = 0;
+
+                            /* 提取频率（4字节，小端） */
+                            if (10 + band * 4 + 3 < 88) {
+                                freq = node->params[10 + band * 4] |
+                                       (node->params[10 + band * 4 + 1] << 8) |
+                                       (node->params[10 + band * 4 + 2] << 16) |
+                                       (node->params[10 + band * 4 + 3] << 24);
+                            }
+
+                            if (shown > 0) Shell_Printf(",");
+                            Shell_Printf(" b%d:%+ddB@%luHz", band, gain, (unsigned long)freq);
+                            shown++;
                         }
-                        
-                        if (shown > 0) Shell_Printf(",");
-                        Shell_Printf(" b%d:%+ddB@%luHz", band, gain, (unsigned long)freq);
-                        shown++;
+                    }
+
+                    if (active_count > shown) {
+                        Shell_Printf(", +%d more", active_count - shown);
+                    }
+
+                    Shell_Printf("] *static");
+                }
+                break;
+
+            default:
+                /* For other effects, show hex values */
+                Shell_Printf(" [");
+                {
+                    int p;
+                    for (p = 0; p < 11 && node->params[p] != 0; p++) {
+                        if (p > 0) Shell_Printf(" ");
+                        Shell_Printf("%02X", node->params[p]);
                     }
                 }
-                
-                if (active_count > shown) {
-                    Shell_Printf(", +%d more", active_count - shown);
-                }
-                
-                Shell_Printf("] *runtime");  /* 标记为运行时参数，sys_param可能不是最新 */
-            }
-            break;
-
-        default:
-            /* For other effects, show hex values */
-            Shell_Printf(" [");
-            {
-                int p;
-                for (p = 0; p < 11 && node->params[p] != 0; p++) {
-                    if (p > 0) Shell_Printf(" ");
-                    Shell_Printf("%02X", node->params[p]);
-                }
-            }
-            Shell_Printf("]");
-            break;
+                Shell_Printf("]");
+                break;
+        }
     }
 }
+
 
 void SysParam_Print(void) {
     Shell_Printf("=== System Parameters ===\n");
@@ -775,7 +829,7 @@ void SysParam_Print(void) {
 
                 if (node->node_type == NODE_TYPE_EFFECT) {
                     Shell_Printf(" P:%d", node->preset);
-                    SysParam_PrintEffectParams(node);
+                    SysParam_PrintEffectParams(node, (uint8_t)i);
                 }
                 Shell_Printf("\n");
             }

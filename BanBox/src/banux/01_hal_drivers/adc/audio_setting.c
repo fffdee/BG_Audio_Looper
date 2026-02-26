@@ -4,7 +4,7 @@
 #include "audio_adc.h"
 #include "debug.h"
 #include "sys_param.h"
-// dB table, index 0~31, unit dB, Mic is 21.14~-18.29, LineIn is 13.25~-16.3
+// dB表，索引0~31，单位dB，Mic为21.14~-18.29，LineIn为13.25~-16.3
 static const float mic_db_table[32] = {
     21.14, 19.76, 18.29, 17.04, 15.94, 14.67, 13.56, 12.12,
     10.89, 9.48, 7.98, 6.48, 5.19, 4.07, 2.78, 1.52,
@@ -12,35 +12,35 @@ static const float mic_db_table[32] = {
     -9.3, -10.56, -11.82, -13.08, -14.42, -15.7, -17.0, -18.29
 };
 
-// Hardware volume range definition (consistent with AudioADC_VolSetChannel documentation)
+// 硬件音量范围定义（与AudioADC_VolSetChannel文档一致）
 #define VOL_MIN        0x001  // -72dB
 #define VOL_MAX        0xFFF  // 0dB
-#define DB_HW_MAX      0.0f   // Hardware maximum volume corresponds to dB
-#define DB_HW_MIN      -72.0f // Hardware minimum volume corresponds to dB
+#define DB_HW_MAX      0.0f   // 硬件最大音量对应dB
+#define DB_HW_MIN      -72.0f // 硬件最小音量对应dB
 
 /**
- * @brief  Convert percentage to dB (0-100% → corresponding dB value in mic_db_table)
- * @param  percent volume percentage (0-100)
- * @return corresponding dB value
+ * @brief  百分比转dB（0-100% → 对应mic_db_table中的dB值）
+ * @param  percent 音量百分比(0-100)
+ * @return 对应的dB值
  */
 static float percent_to_db(uint8_t percent) {
     if (percent > 100) percent = 100;
-    // 0% corresponds to minimum dB in table (-18.29), 100% corresponds to maximum dB in table (21.14)
-    int idx = (percent * 31 + 50) / 100; // Round to nearest integer to calculate index
+    // 0%对应表中最小dB(-18.29), 100%对应表中最大dB(21.14)
+    int idx = (percent * 31 + 50) / 100; // 四舍五入计算索引
     idx = (idx < 0) ? 0 : (idx > 31) ? 31 : idx;
     return mic_db_table[idx];
 }
 
 /**
- * @brief  Convert dB to percentage (input dB → match mic_db_table then convert to 0-100%)
- * @param  db input dB value
- * @return corresponding volume percentage
+ * @brief  dB转百分比（输入dB → 匹配mic_db_table后转0-100%）
+ * @param  db 输入的dB值
+ * @return 对应的音量百分比
  */
 static uint8_t db_to_percent(float db) {
     int idx = 0;
     float min_diff = 100.0f;
     uint8_t i;
-    // Find the index corresponding to the closest dB value in the table
+    // 找到表中最接近的dB值对应的索引
     for (i = 0; i < 32; i++) {
         float diff = (db > mic_db_table[i]) ? (db - mic_db_table[i]) : (mic_db_table[i] - db);
         if (diff < min_diff) {
@@ -48,27 +48,27 @@ static uint8_t db_to_percent(float db) {
             idx = i;
         }
     }
-    // Convert index to percentage (unified rounding rule)
+    // 索引转百分比（统一四舍五入规则）
     return (uint8_t)((idx * 100 + 50) / 31);
 }
 
 /**
- * @brief  Convert dB value to hardware volume value (core mapping: dB → 0x001~0xFFF)
- * @param  db input dB value
- * @return corresponding hardware volume value (0x001~0xFFF)
+ * @brief  dB值转硬件音量值（核心映射：dB → 0x001~0xFFF）
+ * @param  db 输入的dB值
+ * @return 对应的硬件音量值(0x001~0xFFF)
  */
 static uint16_t db_to_vol(float db) {
-    // 1. First limit the input dB to the hardware supported range
+    // 1. 先将输入dB限制在硬件支持的范围内
     float clamped_db = db;
     if (clamped_db > DB_HW_MAX) clamped_db = DB_HW_MAX;
     if (clamped_db < DB_HW_MIN) clamped_db = DB_HW_MIN;
 
-    // 2. Linear mapping: dB value → hardware volume value
-    // Formula: vol = VOL_MIN + (db - DB_HW_MIN) * (VOL_MAX - VOL_MIN) / (DB_HW_MAX - DB_HW_MIN)
+    // 2. 线性映射：dB值 → 硬件音量值
+    // 公式：vol = VOL_MIN + (db - DB_HW_MIN) * (VOL_MAX - VOL_MIN) / (DB_HW_MAX - DB_HW_MIN)
     float vol_float = VOL_MIN + (clamped_db - DB_HW_MIN) * (VOL_MAX - VOL_MIN) / (DB_HW_MAX - DB_HW_MIN);
 
-    // 3. Convert to integer and do boundary protection
-    uint16_t vol = (uint16_t)(vol_float + 0.5f); // Round to nearest
+    // 3. 转整数并做边界保护
+    uint16_t vol = (uint16_t)(vol_float + 0.5f); // 四舍五入
     if (vol > VOL_MAX) vol = VOL_MAX;
     if (vol < VOL_MIN) vol = VOL_MIN;
 
@@ -76,38 +76,38 @@ static uint16_t db_to_vol(float db) {
 }
 
 /**
- * @brief  Convert hardware volume value to dB value (core reverse mapping: 0x001~0xFFF → dB)
- * @param  vol hardware volume value
- * @return corresponding dB value
+ * @brief  硬件音量值转dB值（核心反向映射：0x001~0xFFF → dB）
+ * @param  vol 硬件音量值
+ * @return 对应的dB值
  */
 static float vol_to_db(uint16_t vol) {
-    // 1. Boundary protection
+    // 1. 边界保护
     if (vol > VOL_MAX) vol = VOL_MAX;
     if (vol < VOL_MIN) vol = VOL_MIN;
 
-    // 2. Reverse mapping: vol → dB
-    // Formula: db = DB_HW_MIN + (vol - VOL_MIN) * (DB_HW_MAX - DB_HW_MIN) / (VOL_MAX - VOL_MIN)
+    // 2. 反向映射：vol → dB
+    // 公式：db = DB_HW_MIN + (vol - VOL_MIN) * (DB_HW_MAX - DB_HW_MIN) / (VOL_MAX - VOL_MIN)
     float db = DB_HW_MIN + (vol - VOL_MIN) * (DB_HW_MAX - DB_HW_MIN) / (VOL_MAX - VOL_MIN);
 
     return db;
 }
 
-// -------------------------- Basic volume setting/getting (directly operate hardware values) --------------------------
+// -------------------------- 基础音量设置/获取（直接操作硬件值） --------------------------
 /**
- * @brief  Set microphone 1 volume (ADC0 left)
- * @param  vol hardware volume value (0~0xFFF)
+ * @brief  设置麦克风1音量（ADC0左）
+ * @param  vol 硬件音量值(0~0xFFF)
  */
 void AudioSetting_SetMic1Volume(uint16_t vol) {
     if (vol > VOL_MAX) vol = VOL_MAX;
-    // Mute special handling: 0 is directly set to 0, otherwise set to ≥0x001 according to hardware rules
+    // 静音特殊处理：0直接设为0，否则按硬件规则设为≥0x001
     uint16_t actual_vol = (vol == 0) ? 0 : (vol < VOL_MIN) ? VOL_MIN : vol;
     //DBG("vol is %d\n", actual_vol);
     AudioADC_VolSetChannel(ADC0_MODULE, CHANNEL_LEFT, actual_vol);
 }
 
 /**
- * @brief  Get microphone 1 volume (ADC0 left)
- * @return hardware volume value (0~0xFFF)
+ * @brief  获取麦克风1音量（ADC0左）
+ * @return 硬件音量值(0~0xFFF)
  */
 uint16_t AudioSetting_GetMic1Volume(void) {
     uint16_t leftVol = 0, rightVol = 0;
@@ -116,8 +116,8 @@ uint16_t AudioSetting_GetMic1Volume(void) {
 }
 
 /**
- * @brief  Set microphone 2 volume (ADC0 right)
- * @param  vol hardware volume value (0~0xFFF)
+ * @brief  设置麦克风2音量（ADC0右）
+ * @param  vol 硬件音量值(0~0xFFF)
  */
 void AudioSetting_SetMic2Volume(uint16_t vol) {
     if (vol > VOL_MAX) vol = VOL_MAX;
@@ -126,8 +126,8 @@ void AudioSetting_SetMic2Volume(uint16_t vol) {
 }
 
 /**
- * @brief  Set guitar 1 volume (ADC1 left)
- * @param  vol hardware volume value (0~0xFFF)
+ * @brief  设置吉他1音量（ADC1左）
+ * @param  vol 硬件音量值(0~0xFFF)
  */
 void AudioSetting_SetGuitar1Volume(uint16_t vol) {
     if (vol > VOL_MAX) vol = VOL_MAX;
@@ -137,8 +137,8 @@ void AudioSetting_SetGuitar1Volume(uint16_t vol) {
 }
 
 /**
- * @brief  Set guitar 2 volume (ADC1 right)
- * @param  vol hardware volume value (0~0xFFF)
+ * @brief  设置吉他2音量（ADC1右）
+ * @param  vol 硬件音量值(0~0xFFF)
  */
 void AudioSetting_SetGuitar2Volume(uint16_t vol) {
     if (vol > VOL_MAX) vol = VOL_MAX;
