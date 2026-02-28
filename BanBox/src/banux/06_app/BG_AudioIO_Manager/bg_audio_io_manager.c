@@ -47,6 +47,11 @@
 #include "chain_graph_apply.h"
 #include "shell_cmd_graph.h"
 
+/* BanGTsynth 合成器源节点 */
+#ifdef BANGTSYNTH_EN
+#include "bangtsynth_node.h"
+#endif
+
 #include "otg_device_cdc.h"
 #include "product_def.h"
 
@@ -2091,6 +2096,16 @@ void BG_AudioIO_SetupEffectGraphCallbacks(void)
 		node->func.sink = LooperRecord_SinkCallback;
 		DBG("[Audio] Looper record sink callback registered\n");
 	}
+	
+#ifdef BANGTSYNTH_EN
+	/* BanGTsynth 合成器源节点 */
+	node = EffectGraph_FindNodeByName("synth_in");
+	if (node) {
+		node->func.source = BanGTsynth_SourceCallback;
+		node->avail_func = BanGTsynth_GetAvailCallback;
+		DBG("[Audio] BanGTsynth source callback registered\n");
+	}
+#endif
 	
 	DBG("[Audio] All Effect Graph callbacks setup completed\n");
 }

@@ -74,6 +74,9 @@ typedef enum {
     NODE_ID_METRONOME,       /* 节拍器源节点 */
     NODE_ID_LOOPER_PLAY,     /* Looper播放源节点 */
     NODE_ID_LOOPER_RECORD,   /* Looper录制输出节点 */
+#ifdef BANGTSYNTH_EN
+    NODE_ID_SYNTH,           /* BanGTsynth合成器源节点 */
+#endif
     
     /* 节点总数 */
     DEFAULT_NODE_COUNT
@@ -126,7 +129,22 @@ typedef enum {
     { NODE_ID_METRONOME,     EFFECT_NODE_TYPE_SOURCE_METRONOME,    "metronome",     true,  {{0}} }, \
     { NODE_ID_LOOPER_PLAY,   EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY,  "looper_play",   true,  {{0}} }, \
     { NODE_ID_LOOPER_RECORD, EFFECT_NODE_TYPE_SINK_LOOPER_RECORD,  "looper_record", true,  {{0}} }, \
+    /* ===== BanGTsynth合成器节点 (BANGTSYNTH_EN宏控制) ===== */ \
+    BANGTSYNTH_NODE_CONFIG_ENTRY \
 }
+
+/* BanGTsynth合成器节点配置宏 - 由 BANGTSYNTH_EN 控制是否编译 */
+#ifdef BANGTSYNTH_EN
+#define BANGTSYNTH_NODE_CONFIG_ENTRY \
+    { NODE_ID_SYNTH, EFFECT_NODE_TYPE_SOURCE_SYNTH, "synth_in", true, {{0}} },
+#define BANGTSYNTH_EDGE_CONFIG_ENTRIES \
+    { NODE_ID_SYNTH, NODE_ID_USB_BT_MIXER, 0, 3 },  /* Synth -> USB_BT_Mixer:3 */
+#define BANGTSYNTH_EDGE_EXTRA_COUNT  1
+#else
+#define BANGTSYNTH_NODE_CONFIG_ENTRY
+#define BANGTSYNTH_EDGE_CONFIG_ENTRIES
+#define BANGTSYNTH_EDGE_EXTRA_COUNT  0
+#endif
 
 /*******************************************************************************
  * 默认边(连接)配置表
@@ -197,9 +215,12 @@ typedef enum {
     \
     /* ADC混音器 → Looper录制 */ \
     { NODE_ID_ADC_MIXER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
+    \
+    /* BanGTsynth合成器 → USB_BT混音器 (BANGTSYNTH_EN宏控制) */ \
+    BANGTSYNTH_EDGE_CONFIG_ENTRIES \
 }
 
-#define DEFAULT_EDGE_COUNT  22
+#define DEFAULT_EDGE_COUNT  (22 + BANGTSYNTH_EDGE_EXTRA_COUNT)
 
 /*******************************************************************************
  * 效果器默认参数配置

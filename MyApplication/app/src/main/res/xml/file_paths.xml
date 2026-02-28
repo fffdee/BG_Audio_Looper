@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="export_cache" path="." />
+    <external-files-path name="export_files" path="Documents/ImageProjectExports" />
+    <external-files-path name="image_files" path="Pictures" />
+</paths>

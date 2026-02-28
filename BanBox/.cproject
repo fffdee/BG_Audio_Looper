@@ -18,7 +18,7 @@
 					<folderInfo id="config.nds32le-elf-mculib-v3s.exe.debug.825604417." name="/" resourcePath="">
 						<toolChain id="nds.nds32le-elf-mculib-v3s.exe.debug.588279773" name="nds32le-elf-mculib-v3s" superClass="nds.nds32le-elf-mculib-v3s.exe.debug">
 							<targetPlatform id="target.nds32le-elf-mculib-v3s.platform.exe.debug.1758018585" name="Debug Platform" superClass="target.nds32le-elf-mculib-v3s.platform.exe.debug"/>
-							<builder buildPath="${workspace_loc:/Demo_FreeRTOS}/Debug" id="target.nds32le-elf-mculib-v3s.builder.exe.debug.1451230818" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Andes Make Builder" superClass="target.nds32le-elf-mculib-v3s.builder.exe.debug"/>
+							<builder buildPath="${workspace_loc:/Demo_FreeRTOS}/Debug" enableAutoBuild="false" enableCleanBuild="false" id="target.nds32le-elf-mculib-v3s.builder.exe.debug.1451230818" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Andes Make Builder" superClass="target.nds32le-elf-mculib-v3s.builder.exe.debug"/>
 							<tool id="tool.nds32le-elf-mculib-v3s.archiver.base.2033518229" name="Andes Archiver" superClass="tool.nds32le-elf-mculib-v3s.archiver.base"/>
 							<tool id="tool.nds32le-elf-mculib-v3s.cpp.compiler.exe.debug.2128296330" name="Andes C++ Compiler" superClass="tool.nds32le-elf-mculib-v3s.cpp.compiler.exe.debug">
 								<option id="nds32le-elf-mculib-v3s.cpp.compiler.exe.debug.option.debugging.level.482363339" name="Debug Level" superClass="nds32le-elf-mculib-v3s.cpp.compiler.exe.debug.option.debugging.level" value="nds.cpp.compiler.debugging.level.max" valueType="enumerated"/>
@@ -79,6 +79,14 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/middleware/rtos/freertos/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/middleware/rtos/rtos_api}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/metronome}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_Audio_Processor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_Audio_Processor/effects}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_Envelope_Generator}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_err_handle}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_HAL}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_Midi_Controller}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_Soundbank}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth}&quot;"/>
 								</option>
 								<option id="nds.c.compiler.option.optimization.lto.934303171" name="Link Time Optimization (-flto)" superClass="nds.c.compiler.option.optimization.lto" value="false" valueType="boolean"/>
 								<option id="nds.c.compiler.option.optimization.removesections.function.489783750" name="Remove unused function sections (-ffunction-sections)" superClass="nds.c.compiler.option.optimization.removesections.function" value="true" valueType="boolean"/>

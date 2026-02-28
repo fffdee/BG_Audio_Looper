@@ -150,14 +150,15 @@ public class FileUtils {
 
     public static String getTempImportDir(Context context) {
         File dir = new File(context.getCacheDir(), "TempImports");
-        if (!dir.exists()) {
-            dir.mkdirs();
+        // 先清理旧内容，再重建目录
+        if (dir.exists()) {
+            deleteDir(dir);
         }
-        deleteDir(dir);
+        dir.mkdirs();
         return dir.getAbsolutePath();
     }
 
-    private static boolean deleteDir(File dir) {
+    public static boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
             File[] children = dir.listFiles();
             if (children != null) {

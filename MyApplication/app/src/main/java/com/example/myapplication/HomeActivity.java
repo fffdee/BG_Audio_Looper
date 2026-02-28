@@ -39,6 +39,8 @@ import android.provider.DocumentsContract;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+import androidx.core.content.FileProvider;
+import android.widget.EditText;
 
 public class HomeActivity extends AppCompatActivity {
     private boolean isMultiSelectMode = false; // 是否多选模式
@@ -132,6 +134,9 @@ public class HomeActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.menu_export_settings) {
                 startActivity(new Intent(HomeActivity.this, ExportSettingsActivity.class));
                 return true;
+            } else if (item.getItemId() == R.id.menu_import_wechat) {
+                openImportFromWechat();
+                return true;
             } else if (item.getItemId() == R.id.menu_bluetooth) {
                 showBluetoothStatusDialog();
                 return true;
@@ -148,6 +153,60 @@ public class HomeActivity extends AppCompatActivity {
             });
         }
         initImportLauncher();
+        
+        // 处理从微信等外部应用传入的ZIP文件
+        handleIncomingIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIncomingIntent(intent);
+    }
+
+    /**
+     * 处理从微信/其他应用分享过来的ZIP文件
+     */
+    private void handleIncomingIntent(Intent intent) {
+        if (intent == null) return;
+        
+        String action = intent.getAction();
+        String type = intent.getType();
+        
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            // 从微信"发送到其他应用"接收文件
+            Uri fileUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+            if (fileUri != null) {
+                Log.d("HomeActivity", "接收到分享文件: " + fileUri);
+                confirmAndImport(fileUri);
+            }
+        } else if (Intent.ACTION_VIEW.equals(action)) {
+            // 从文件管理器直接打开ZIP文件
+            Uri fileUri = intent.getData();
+            if (fileUri != null) {
+                Log.d("HomeActivity", "接收到打开文件: " + fileUri);
+                confirmAndImport(fileUri);
+            }
+        }
+    }
+
+    /**
+     * 确认并导入项目
+     */
+    private void confirmAndImport(Uri fileUri) {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("导入项目")
+                .setMessage("是否导入此项目文件？")
+                .setPositiveButton("导入", (dialog, which) -> {
+                    boolean success = importProjectFromUri(fileUri);
+                    Toast.makeText(this, success ? "导入成功" : "导入失败（可能不是有效的项目文件）", Toast.LENGTH_SHORT).show();
+                    if (success) {
+                        // 刷新列表
+                        initProjectList();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     /**
@@ -266,11 +325,11 @@ public class HomeActivity extends AppCompatActivity {
                     if (tempZipPath != null) {
                         // 使用MediaStore API导出到Downloads
                         String fileName = project.getProjectName() + "_export_" + 
-                                         System.currentTimeMillis() + ".zip";
+                                         System.currentTimeMillis() + ".gs";
                         
                         ContentValues values = new ContentValues();
                         values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-                        values.put(MediaStore.Downloads.MIME_TYPE, "application/zip");
+                        values.put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream");
                         values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
                         
                         Uri downloadUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
@@ -392,6 +451,13 @@ public class HomeActivity extends AppCompatActivity {
                 projectAdapter.notifyDataSetChanged();
                 Toast.makeText(HomeActivity.this, "项目已删除", Toast.LENGTH_SHORT).show();
                 return true;
+            } else if (item.getItemId() == R.id.menu_rename) {
+                int position = projectList.indexOf(project);
+                showRenameDialog(project, position);
+                return true;
+            } else if (item.getItemId() == R.id.menu_share_wechat) {
+                shareProjectToWechat(project);
+                return true;
             }
             return false;
         });
@@ -400,7 +466,8 @@ public class HomeActivity extends AppCompatActivity {
 
     private void openImportFileSelector() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.setType("application/zip");
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/octet-stream"});
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         importLauncher.launch(intent);
     }
@@ -427,22 +494,37 @@ public class HomeActivity extends AppCompatActivity {
 
     private boolean importProjectFromUri(Uri uri) {
         try {
-            String tempZipPath = FileUtils.getTempImportDir(this) + "/import_" + System.currentTimeMillis() + ".zip";
+            Log.d("HomeActivity", "开始从URI导入: " + uri);
+            String tempZipPath = FileUtils.getTempImportDir(this) + "/import_" + System.currentTimeMillis() + ".gs";
+            
+            // 确保临时目录存在
+            File tempZipFile = new File(tempZipPath);
+            File parentDir = tempZipFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
             
             try (InputStream is = getContentResolver().openInputStream(uri);
                  java.io.FileOutputStream fos = new java.io.FileOutputStream(tempZipPath)) {
                 
-                if (is == null) return false;
+                if (is == null) {
+                    Log.e("HomeActivity", "无法打开输入流: " + uri);
+                    return false;
+                }
                 
                 byte[] buffer = new byte[8192];
                 int len;
+                long total = 0;
                 while ((len = is.read(buffer)) != -1) {
                     fos.write(buffer, 0, len);
+                    total += len;
                 }
+                Log.d("HomeActivity", "文件复制完成, 大小: " + total + " bytes -> " + tempZipPath);
             }
             
             return ProjectManager.importProject(this, tempZipPath);
         } catch (Exception e) {
+            Log.e("HomeActivity", "从URI导入失败", e);
             e.printStackTrace();
             return false;
         }
@@ -566,17 +648,33 @@ public class HomeActivity extends AppCompatActivity {
             
             holder.itemView.setOnLongClickListener(v -> {
                 if (isSelectMode) return false;
+                String[] options = {"重命名", "分享到微信", "删除"};
                 new android.app.AlertDialog.Builder(HomeActivity.this)
-                        .setTitle("删除项目")
-                        .setMessage("确定要删除该项目吗？")
-                        .setPositiveButton("删除", (dialog, which) -> {
-                            ProjectManager.deleteProject(HomeActivity.this, project);
-                            projects.remove(position);
-                            notifyItemRemoved(position);
-                            notifyItemRangeChanged(position, projects.size());
-                            Toast.makeText(HomeActivity.this, "项目已删除", Toast.LENGTH_SHORT).show();
+                        .setTitle(project.getProjectName())
+                        .setItems(options, (dialog, which) -> {
+                            switch (which) {
+                                case 0: // 重命名
+                                    showRenameDialog(project, holder.getAdapterPosition());
+                                    break;
+                                case 1: // 分享到微信
+                                    shareProjectToWechat(project);
+                                    break;
+                                case 2: // 删除
+                                    new android.app.AlertDialog.Builder(HomeActivity.this)
+                                        .setTitle("删除项目")
+                                        .setMessage("确定要删除该项目吗？")
+                                        .setPositiveButton("删除", (d2, w2) -> {
+                                            ProjectManager.deleteProject(HomeActivity.this, project);
+                                            projects.remove(holder.getAdapterPosition());
+                                            notifyItemRemoved(holder.getAdapterPosition());
+                                            notifyItemRangeChanged(holder.getAdapterPosition(), projects.size());
+                                            Toast.makeText(HomeActivity.this, "项目已删除", Toast.LENGTH_SHORT).show();
+                                        })
+                                        .setNegativeButton("取消", null)
+                                        .show();
+                                    break;
+                            }
                         })
-                        .setNegativeButton("取消", null)
                         .show();
                 return true;
             });
@@ -699,6 +797,298 @@ public class HomeActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    // 显示重命名对话框
+    private void showRenameDialog(ImageProject project, int position) {
+        EditText editText = new EditText(this);
+        editText.setText(project.getProjectName());
+        editText.setSelectAllOnFocus(true);
+        editText.setPadding(60, 40, 60, 40);
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("重命名项目")
+                .setView(editText)
+                .setPositiveButton("确定", (dialog, which) -> {
+                    String newName = editText.getText().toString().trim();
+                    if (newName.isEmpty()) {
+                        Toast.makeText(this, "项目名不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (ProjectManager.renameProject(this, project, newName)) {
+                        project.setProjectName(newName);
+                        if (projectAdapter != null) {
+                            projectAdapter.notifyItemChanged(position);
+                        }
+                        Toast.makeText(this, "重命名成功", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "重命名失败", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 分享项目到微信
+     * 将项目导出为ZIP文件，然后通过系统分享发送到微信
+     */
+    private void shareProjectToWechat(ImageProject project) {
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("正在打包项目...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        new Thread(() -> {
+            try {
+                String zipPath = ProjectManager.exportProject(HomeActivity.this, project);
+                runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    if (zipPath != null) {
+                        File zipFile = new File(zipPath);
+                        Uri contentUri = FileProvider.getUriForFile(
+                                HomeActivity.this,
+                                getPackageName() + ".fileprovider",
+                                zipFile);
+
+                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                        shareIntent.setType("application/octet-stream");
+                        shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, project.getProjectName());
+                        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                        // 尝试直接定位微信，如果微信未安装则弹出通用分享器
+                        shareIntent.setPackage("com.tencent.mm");
+                        try {
+                            startActivity(shareIntent);
+                        } catch (android.content.ActivityNotFoundException e) {
+                            // 微信未安装，使用系统分享选择器
+                            shareIntent.setPackage(null);
+                            startActivity(Intent.createChooser(shareIntent, "分享项目到..."));
+                        }
+                    } else {
+                        Toast.makeText(HomeActivity.this, "项目打包失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("HomeActivity", "分享到微信失败", e);
+                runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(HomeActivity.this, "分享失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 从微信导入 — 扫描微信文件保存目录，列出可导入的ZIP项目文件。
+     * 微信在不同版本/设备上的文件保存路径:
+     *   - Download/            (Android 11+ 默认)
+     *   - tencent/MicroMsg/Download/  (旧版微信)
+     *   - Android/data/com.tencent.mm/MicroMsg/Download/ (部分设备)
+     */
+    private void openImportFromWechat() {
+        // 检查微信是否已安装
+        boolean wechatInstalled = isAppInstalled("com.tencent.mm");
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("从微信导入项目")
+                .setMessage(wechatInstalled
+                        ? "操作步骤：\n\n"
+                          + "1. 点击\"打开微信\"跳转到微信\n"
+                          + "2. 找到聊天中收到的项目文件(.gs)\n"
+                          + "3. 长按或点击该文件\n"
+                          + "4. 选择\"用其他应用打开\"\n"
+                          + "5. 选择本应用，即可自动导入\n\n"
+                          + "也可以选择\"扫描已下载\"查找已保存到本地的微信文件。"
+                        : "未检测到微信。\n\n"
+                          + "你可以选择\"扫描已下载\"查找本地的项目文件，\n"
+                          + "或\"手动选择\"从文件管理器中选择。")
+                .setPositiveButton(wechatInstalled ? "打开微信" : "扫描已下载", (d, w) -> {
+                    if (wechatInstalled) {
+                        launchWechat();
+                    } else {
+                        scanAndShowWechatFiles();
+                    }
+                })
+                .setNeutralButton(wechatInstalled ? "扫描已下载" : "手动选择", (d, w) -> {
+                    if (wechatInstalled) {
+                        scanAndShowWechatFiles();
+                    } else {
+                        openImportFileSelector();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 检查应用是否已安装
+     */
+    private boolean isAppInstalled(String packageName) {
+        try {
+            getPackageManager().getPackageInfo(packageName, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * 启动微信APP
+     */
+    private void launchWechat() {
+        try {
+            Intent launchIntent = getPackageManager().getLaunchIntentForPackage("com.tencent.mm");
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(launchIntent);
+                Toast.makeText(this,
+                        "请在微信中找到项目文件，点击后选择\"用其他应用打开\"",
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.e("HomeActivity", "启动微信失败", e);
+            Toast.makeText(this, "启动微信失败，请手动打开微信", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 扫描本地微信文件并显示选择对话框
+     */
+    private void scanAndShowWechatFiles() {
+        if (!checkStoragePermissions()) {
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("需要存储权限")
+                    .setMessage("扫描微信下载的文件需要存储权限。")
+                    .setPositiveButton("获取权限", (d, w) -> requestStoragePermissions())
+                    .setNeutralButton("手动选择", (d, w) -> openImportFileSelector())
+                    .setNegativeButton("取消", null)
+                    .show();
+            return;
+        }
+        new Thread(() -> {
+            List<File> zipFiles = scanWechatZipFiles();
+            runOnUiThread(() -> showWechatFilePickerDialog(zipFiles));
+        }).start();
+    }
+
+    /**
+     * 扫描微信接收文件常见目录中的 .gs 项目文件
+     */
+    private List<File> scanWechatZipFiles() {
+        List<File> result = new ArrayList<>();
+        File sdcard = Environment.getExternalStorageDirectory();
+
+        // 微信文件可能保存的目录列表
+        String[] wechatDirs = {
+            // Android 11+ 微信保存到公共 Download
+            sdcard + "/Download",
+            // 旧版微信
+            sdcard + "/tencent/MicroMsg/Download",
+            // 部分设备的微信路径
+            sdcard + "/Android/data/com.tencent.mm/MicroMsg/Download",
+            // 微信文件传输助手、企业微信等也可能存到这些位置
+            sdcard + "/Download/WeiXin",
+            sdcard + "/tencent/MicroMsg",
+        };
+
+        for (String dirPath : wechatDirs) {
+            File dir = new File(dirPath);
+            if (dir.exists() && dir.isDirectory()) {
+                scanZipFilesRecursive(dir, result, 2); // 最多递归2层
+            }
+        }
+
+        // 按修改时间降序排列（最新的在前）
+        result.sort((a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+        return result;
+    }
+
+    /**
+     * 递归扫描目录中的 .gs 项目文件
+     */
+    private void scanZipFilesRecursive(File dir, List<File> result, int maxDepth) {
+        if (maxDepth < 0 || dir == null || !dir.isDirectory()) return;
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            String name = f.getName().toLowerCase(Locale.ROOT);
+            if (f.isFile() && (name.endsWith(".gs") || name.endsWith(".zip"))) {
+                result.add(f);
+            } else if (f.isDirectory() && maxDepth > 0) {
+                scanZipFilesRecursive(f, result, maxDepth - 1);
+            }
+        }
+    }
+
+    /**
+     * 显示微信文件选择对话框
+     */
+    private void showWechatFilePickerDialog(List<File> zipFiles) {
+        if (zipFiles.isEmpty()) {
+            // 没有找到文件，提示用户并提供备选方案
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("从微信导入")
+                    .setMessage("未在微信文件目录中找到项目文件。\n\n"
+                            + "请先在微信中打开收到的项目文件（.gs格式），选择\"用其他应用打开\"即可自动导入。\n\n"
+                            + "或者点击下方按钮手动浏览文件。")
+                    .setPositiveButton("手动选择文件", (dialog, which) -> openImportFileSelector())
+                    .setNegativeButton("取消", null)
+                    .show();
+            return;
+        }
+
+        // 构建文件列表显示名
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        String[] displayItems = new String[zipFiles.size()];
+        for (int i = 0; i < zipFiles.size(); i++) {
+            File f = zipFiles.get(i);
+            String size = formatFileSize(f.length());
+            String date = sdf.format(f.lastModified());
+            // 显示: 文件名 (大小, 日期)
+            displayItems[i] = f.getName() + "\n" + size + "  " + date;
+        }
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("从微信导入 — 选择项目文件")
+                .setItems(displayItems, (dialog, which) -> {
+                    File selected = zipFiles.get(which);
+                    Log.d("HomeActivity", "选择微信文件: " + selected.getAbsolutePath());
+                    confirmAndImportFile(selected);
+                })
+                .setNeutralButton("手动选择", (dialog, which) -> openImportFileSelector())
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 确认并导入选中的文件
+     */
+    private void confirmAndImportFile(File zipFile) {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("导入项目")
+                .setMessage("是否导入项目文件？\n" + zipFile.getName())
+                .setPositiveButton("导入", (dialog, which) -> {
+                    boolean success = ProjectManager.importProject(HomeActivity.this, zipFile.getAbsolutePath());
+                    Toast.makeText(HomeActivity.this, success ? "导入成功" : "导入失败", Toast.LENGTH_SHORT).show();
+                    if (success) {
+                        projectList.clear();
+                        projectList.addAll(ProjectManager.getProjects(HomeActivity.this));
+                        projectAdapter.notifyDataSetChanged();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 格式化文件大小
+     */
+    private String formatFileSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format(Locale.getDefault(), "%.1f KB", bytes / 1024.0);
+        return String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024));
     }
 
     // 显示蓝牙连接状态对话框

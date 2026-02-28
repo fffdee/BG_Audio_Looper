@@ -25,6 +25,10 @@ extern "C" {
 #define VFS_EN
 #define EFFECT_GRAPHICS_EN
 #define USB_EN
+
+/* BanGTsynth MIDI 合成器模块 (注释掉此行可移除合成器功能) */
+#define BANGTSYNTH_EN
+
 #endif // BANBOX_1_0
 
 #ifdef BANBOX_1_1

@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "product_def.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,8 +57,13 @@ extern "C" {
  *   - EFFECT_GRAPH_BUFFER_SIZE: 256 → 节省大量RAM (21*384*4=32256 bytes)
  *   - 如需更大帧长可改为 512 (SBC最大帧595，但实际处理帧256)
  ******************************************************************************/
+#ifdef BANGTSYNTH_EN
+#define EFFECT_GRAPH_MAX_NODES      22   /* 21+1(合成器源节点) */
+#define EFFECT_GRAPH_MAX_EDGES      26   /* 22+2预留+2(合成器连接) */
+#else
 #define EFFECT_GRAPH_MAX_NODES      21   /* 精确节点数（不预留扩展，节省内存）*/
 #define EFFECT_GRAPH_MAX_EDGES      24   /* 精确边数（当前22条+2预留）节省 24*8=192 bytes */
+#endif
 #define EFFECT_GRAPH_MAX_INPUTS     4    /* 最大输入端口数 */
 #define EFFECT_GRAPH_MAX_OUTPUTS    4    /* 最大输出端口数 */
 #define EFFECT_GRAPH_NAME_LEN       16   /* 节点名称长度 */
@@ -75,6 +81,9 @@ typedef enum {
     EFFECT_NODE_TYPE_SOURCE_USB_IN,        /* USB音频输入 */
     EFFECT_NODE_TYPE_SOURCE_BT_IN,         /* 蓝牙音频输入 */
     EFFECT_NODE_TYPE_SOURCE_METRONOME,     /* 节拍器源节点 */
+#ifdef BANGTSYNTH_EN
+    EFFECT_NODE_TYPE_SOURCE_SYNTH,         /* BanGTsynth合成器源节点 */
+#endif
     EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY,   /* Looper播放源节点 */
     
     /* 输出节点 - 消费数据 */

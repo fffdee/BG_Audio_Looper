@@ -78,6 +78,11 @@
 
 #include "drv_init.h"           /* Driver Framework Initialization */
 
+/* BanGTsynth MIDI 合成器模块 */
+#ifdef BANGTSYNTH_EN
+#include "bangtsynth_node.h"
+#endif
+
 //#define UI_EN
 
 extern void SysTickInit(void);
@@ -338,6 +343,20 @@ void EffectTask() {
 	DBG("[Task] Initializing Audio Manager...\n");
 	/* Initialize Audio Manager (includes AudioLooper which needs Flash) */
 	BG_AudioManager.Audio_Init(44100);
+
+#ifdef BANGTSYNTH_EN
+	/*=====================================================
+	 * BanGTsynth MIDI 合成器初始化
+	 * 初始化 MIDI 控制器、音频处理流水线
+	 * 必须在 Audio_Init 之后调用 (Effect Graph 已创建)
+	 *====================================================*/
+	DBG("[Task] Initializing BanGTsynth...\n");
+	if (BanGTsynth_Node_Init() == 0) {
+		DBG("[Task] BanGTsynth initialized OK\n");
+	} else {
+		DBG("[Task] BanGTsynth init FAILED\n");
+	}
+#endif
 
 	DBG("[Task] Initializing UI System...\n");
 

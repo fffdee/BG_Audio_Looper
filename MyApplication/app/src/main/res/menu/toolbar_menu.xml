@@ -17,6 +17,10 @@
         android:title="导出项目"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/menu_import_wechat"
+        android:title="从微信导入"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_export_downloads"
         android:title="导出到Downloads"
         app:showAsAction="never" />
