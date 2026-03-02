@@ -21,3 +21,5 @@ encoding//src/banux/05_component/sys_param/sys_param.h=UTF-8
 encoding//src/banux/06_app/BG_AudioIO_Manager/bg_audio_io_manager.c=UTF-8
 encoding//src/banux/06_app/audio/ctrlvars.c=UTF-8
 encoding//src/main.c=UTF-8
+encoding//src/product_def.h=UTF-8
+separateDerivedEncodings=true

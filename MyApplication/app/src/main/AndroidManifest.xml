@@ -41,6 +41,7 @@
     <activity android:name=".EqControlActivity" />
     <activity android:name=".AudioChainDiagramActivity" />
     <activity android:name=".MetronomeActivity" />
+    <activity android:name=".DrumMachineActivity" />
 
         <!-- 欢迎页面设为启动页 -->
         <activity

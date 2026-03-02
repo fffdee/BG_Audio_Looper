@@ -34,7 +34,7 @@ extern "C" {
  * Configuration Definitions
  ******************************************************************************/
 #define SHELL_CMD_MAX_LEN       128     // Max command line length
-#define SHELL_CMD_MAX_ARGS      10      // Max argument count
+#define SHELL_CMD_MAX_ARGS      15      // Max argument count
 #define SHELL_MODULE_MAX        30     // Max module count (increased for sysmon + future modules)
 #define SHELL_OUT_BUF_SIZE      256     // Output buffer size
 
@@ -227,6 +227,15 @@ void Shell_Printf(const char *fmt, ...);
  * @note   Bypasses string formatting, directly sends binary data
  */
 void Shell_WriteRaw(const uint8_t *data, uint16_t len);
+
+/**
+ * @brief  Receive raw binary data from current IO interface
+ * @param  buf: Buffer to receive data
+ * @param  maxLen: Maximum bytes to receive
+ * @return Number of bytes actually received (0 if no data available)
+ * @note   Non-blocking, used by download protocol for packet reception
+ */
+uint16_t Shell_RecvRaw(uint8_t *buf, uint16_t maxLen);
 
 /** * @brief  Output newline
  */

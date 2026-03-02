@@ -80,11 +80,24 @@ void NoteOnHandle(uint8_t *data, uint8_t len)
             }
         }
     } else {
-        /* SF2 格式:处理单音模式 */
+        /* SF2 格式 */
+        uint8_t sf2_note = data[1];
+        uint8_t sf2_vel  = data[2];
+        uint8_t sf2_prog = BG_MIDI_data.BG_channel_info[channel].program_index;
+        
+        printf("[NoteOn-SF2] ch=%u note=%u vel=%u prog=%u\n", channel, sf2_note, sf2_vel, sf2_prog);
+        
+        /* 处理单音模式 */
         if(BG_MIDI_data.BG_channel_info[channel].mono_poly_onoff == 1){
+            /* 关闭上一个音符的声部 */
+            soundbank_manager.NoteOff(BG_MIDI_data.BG_channel_info[channel].last_note, sf2_prog);
             BG_MIDI_data.BG_channel_info[channel].Note_Map[BG_MIDI_data.BG_channel_info[channel].last_note] = 0;
             BG_MIDI_data.BG_channel_info[channel].NoteOn_count = 0;    
         }
+        
+        /* 调用 SF2 声部分配 (关键! 否则 sf2_callback 找不到活跃声部) */
+        soundbank_manager.NoteOn(sf2_note, sf2_vel, sf2_prog);
+        printf("[NoteOn-SF2] Voice allocated OK\n");
     }
 
     if (BG_MIDI_data.BG_channel_info[channel].NoteOn_count < 255 &&
@@ -180,7 +193,7 @@ void AllNoteOff(uint8_t *data, uint8_t len){
     soundbank_manager.AllNoteOff(program);
     
     /* 清除所有 Note Map */
-    memset(BG_MIDI_data.BG_channel_info[channel].Note_Map, 0x00, 
+    memset((void*)BG_MIDI_data.BG_channel_info[channel].Note_Map, 0x00, 
            sizeof(BG_MIDI_data.BG_channel_info[channel].Note_Map));
     BG_MIDI_data.BG_channel_info[channel].NoteOn_count = 0;
     printf("note off all \n");

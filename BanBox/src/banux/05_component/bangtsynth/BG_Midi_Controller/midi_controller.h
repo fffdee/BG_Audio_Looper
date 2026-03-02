@@ -16,6 +16,6 @@ typedef struct
 
 extern BG_MIDI_Controller BG_MIDI_controller;
 
-extern BG_MIDI_Data BG_MIDI_data;
+extern volatile BG_MIDI_Data BG_MIDI_data;
 
 #endif

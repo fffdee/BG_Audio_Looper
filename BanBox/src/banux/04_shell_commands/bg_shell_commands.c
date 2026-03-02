@@ -2417,6 +2417,8 @@ DEFINE_MODULE(ble_send, "Send string via BLE", MOD_CAT_SYSTEM, ble_send_opts);
  *===========================================================================*/
     /* 鍙傛暟淇濆瓨鍛戒护 */
     extern void ShellCmd_Param_Init(void);
+    /* 音源管理命令 */
+    extern int ShellCmdSoundbank_Register(void);
 void Shell_RegisterAllModules(void)
 {
     REGISTER_MODULE(sys);
@@ -2453,6 +2455,13 @@ void Shell_RegisterAllModules(void)
     
 
     ShellCmd_Param_Init();       /* param 鍛戒护 */
+
+    /* Soundbank management command (BANGTSYNTH_EN) */
+    ShellCmdSoundbank_Register();
+
+    /* 鼓机命令 (BANGTSYNTH_EN) */
+    extern int ShellCmdDrum_Register(void);
+    ShellCmdDrum_Register();
 
     /* 鍒濆鍖栭┍鍔ㄦ鏋�(鍖呭惈鎵�湁椹卞姩娉ㄥ唽) */
     /* 娉ㄦ剰锛氬凡鍦╩ain()涓垵濮嬪寲锛岃繖閲屼笉鍐嶉噸澶嶈皟鐢�*/

@@ -31,6 +31,18 @@ static bool                 g_WelcomeShown = FALSE;
 // Current IO interface
 static const ShellIO_t     *g_IO = NULL;
 
+/*******************************************************************************
+ * Command History
+ ******************************************************************************/
+#define SHELL_HISTORY_MAX       10      /* 最多记录 10 条命令 */
+static char     g_History[SHELL_HISTORY_MAX][SHELL_CMD_MAX_LEN];
+static uint8_t  g_HistoryCount = 0;     /* 已存储条数 (0..SHELL_HISTORY_MAX) */
+static uint8_t  g_HistoryHead  = 0;     /* 环形写入位置 */
+static int8_t   g_HistoryNav   = -1;    /* 上下键浏览位置 (-1=当前输入) */
+static char     g_SavedInput[SHELL_CMD_MAX_LEN]; /* 浏览历史时暂存当前输入 */
+/* ESC序列状态机: 0=正常, 1=收到ESC, 2=收到ESC[ */
+static uint8_t  g_EscState = 0;
+
 // LCD console related
 static const ShellLCD_t    *g_LCD = NULL;
 static bool                 g_ConsoleEnabled = FALSE;
@@ -83,6 +95,8 @@ static int  Shell_ParseArgs(char *line, char *argv[], int max);
 static void Shell_Prompt(void);
 static void Shell_Welcome(void);
 static void Shell_ShowModuleHelp(const ShellModule_t *mod);
+static void Shell_HistoryAdd(const char *cmd);
+static void Shell_HistoryRecall(int8_t direction);  /* +1=older, -1=newer */
 
 static void Console_AddLine(const char* str);
 static void Console_AddLineWithColor(const char* str, uint16_t colorValue);
@@ -102,6 +116,24 @@ void Shell_WriteRaw(const uint8_t *data, uint16_t len)
     }
 }
 
+/**
+ * @brief  Receive raw binary data from current IO interface (non-blocking)
+ */
+uint16_t Shell_RecvRaw(uint8_t *buf, uint16_t maxLen)
+{
+    if(!buf || maxLen == 0 || !g_IO || !g_IO->recv)
+        return 0;
+
+    /* Check if data is available first */
+    if(g_IO->available)
+    {
+        if(g_IO->available() == 0)
+            return 0;
+    }
+
+    return g_IO->recv(buf, maxLen);
+}
+
 /*******************************************************************************
  * Internal command processing
  ******************************************************************************/
@@ -111,6 +143,7 @@ static int Opt_List(int argc, char *argv[]);
 static int Opt_Version(int argc, char *argv[]);
 static int Opt_Clear(int argc, char *argv[]);
 static int Opt_IO(int argc, char *argv[]);
+static int Opt_History(int argc, char *argv[]);
 
 // Help module options
 static const ShellOpt_t g_HelpOpts[] = {
@@ -120,12 +153,13 @@ static const ShellOpt_t g_HelpOpts[] = {
     OPT("v", "version", NULL,       "Show version",         Opt_Version),
     OPT("c", "clear",   NULL,       "Clear screen",         Opt_Clear),
     OPT("i", "io",      NULL,       "Show current IO",      Opt_IO),
+    OPT("h", "history", NULL,       "Show command history",  Opt_History),
 
     OPT_END()
 };
 
 static const ShellModule_t g_HelpModule = {
-    "help", "Help and system info", MOD_CAT_SYSTEM, g_HelpOpts, 6
+    "help", "Help and system info", MOD_CAT_SYSTEM, g_HelpOpts, 7
 };
 
 /*******************************************************************************
@@ -445,12 +479,32 @@ void Shell_NewLine(void)
 
 static void Shell_ProcessChar(char c)
 {
+    /* ESC 序列状态机 (处理方向键: ESC [ A/B) */
+    if (g_EscState == 1) {
+        if (c == '[') { g_EscState = 2; return; }
+        g_EscState = 0;  /* 非 '[', 放弃 */
+        return;
+    }
+    if (g_EscState == 2) {
+        g_EscState = 0;
+        if (c == 'A') { Shell_HistoryRecall(1); return; }  /* Up: 更早的命令 */
+        if (c == 'B') { Shell_HistoryRecall(-1); return; } /* Down: 更近的命令 */
+        return;  /* 其他 ESC[ 序列忽略 */
+    }
+
     switch(c)
     {
+        case 0x1B:  /* ESC */
+            g_EscState = 1;
+            break;
+
         case '\r':
         case '\n':
             Shell_SendRaw("\r\n");
             if(g_CmdLen > 0) {
+                /* 保存到历史记录 */
+                Shell_HistoryAdd(g_CmdLine);
+                g_HistoryNav = -1;  /* 重置浏览位置 */
                 /* Add command to LCD console with command color before executing */
                 Console_AddLineWithColor(g_CmdLine, CONSOLE_CMD_COLOR);
                 /* Clear input line */
@@ -476,6 +530,7 @@ static void Shell_ProcessChar(char c)
             Shell_SendRaw("\r\n");
             g_CmdLen = 0;
             g_CmdLine[0] = '\0';
+            g_HistoryNav = -1;
             /* Clear LCD input line */
             Console_UpdateInputLine("", 0);
             Shell_Prompt();
@@ -757,6 +812,109 @@ static int Opt_IO(int argc, char *argv[])
     Shell_Printf("Current IO: %s\r\n", Shell_GetIOName());
     return 0;
 }
+
+static int Opt_History(int argc, char *argv[])
+{
+    uint8_t i, idx;
+    (void)argc; (void)argv;
+
+    if (g_HistoryCount == 0) {
+        Shell_Printf("(no history)\r\n");
+        return 0;
+    }
+
+    Shell_Printf("=== Command History (last %u) ===\r\n", g_HistoryCount);
+    for (i = 0; i < g_HistoryCount; i++) {
+        /* 从最早到最近输出 */
+        if (g_HistoryCount >= SHELL_HISTORY_MAX) {
+            idx = (g_HistoryHead + i) % SHELL_HISTORY_MAX;
+        } else {
+            idx = i;
+        }
+        Shell_Printf("  [%u] %s\r\n", (unsigned)(i + 1), g_History[idx]);
+    }
+    return 0;
+}
+
+/*******************************************************************************
+ * Command History Implementation
+ ******************************************************************************/
+
+/**
+ * @brief  将命令添加到历史记录 (环形缓冲区)
+ * @param  cmd: 命令字符串
+ */
+static void Shell_HistoryAdd(const char *cmd)
+{
+    if (!cmd || cmd[0] == '\0') return;
+
+    /* 跳过与最近一条完全相同的命令 (避免重复记录) */
+    if (g_HistoryCount > 0) {
+        uint8_t last = (g_HistoryHead + SHELL_HISTORY_MAX - 1) % SHELL_HISTORY_MAX;
+        if (strcmp(g_History[last], cmd) == 0) return;
+    }
+
+    strncpy(g_History[g_HistoryHead], cmd, SHELL_CMD_MAX_LEN - 1);
+    g_History[g_HistoryHead][SHELL_CMD_MAX_LEN - 1] = '\0';
+    g_HistoryHead = (g_HistoryHead + 1) % SHELL_HISTORY_MAX;
+    if (g_HistoryCount < SHELL_HISTORY_MAX) g_HistoryCount++;
+}
+
+/**
+ * @brief  通过上下方向键浏览命令历史
+ * @param  direction: +1=向更早的命令(Up), -1=向更近的命令(Down)
+ */
+static void Shell_HistoryRecall(int8_t direction)
+{
+    const char *recall;
+    uint16_t i;
+    uint8_t idx;
+
+    if (g_HistoryCount == 0) return;
+
+    if (direction > 0) {
+        /* Up: 向更早的命令 */
+        if (g_HistoryNav < 0) {
+            /* 首次按Up: 暂存当前输入, 跳到最近一条 */
+            strncpy(g_SavedInput, g_CmdLine, SHELL_CMD_MAX_LEN - 1);
+            g_SavedInput[SHELL_CMD_MAX_LEN - 1] = '\0';
+            g_HistoryNav = 0;
+        } else if (g_HistoryNav < (int8_t)(g_HistoryCount - 1)) {
+            g_HistoryNav++;
+        } else {
+            return;  /* 已到最早 */
+        }
+    } else {
+        /* Down: 向更近的命令 */
+        if (g_HistoryNav < 0) return;  /* 已在当前输入 */
+        g_HistoryNav--;
+    }
+
+    /* 获取要回显的内容 */
+    if (g_HistoryNav < 0) {
+        /* 回到用户原始输入 */
+        recall = g_SavedInput;
+    } else {
+        /* 从环形缓冲区取: nav=0 是最近, nav=count-1 是最早 */
+        idx = (g_HistoryHead + SHELL_HISTORY_MAX - 1 - (uint8_t)g_HistoryNav) % SHELL_HISTORY_MAX;
+        recall = g_History[idx];
+    }
+
+    /* 清除当前行显示 */
+    for (i = 0; i < g_CmdLen; i++) {
+        Shell_SendRaw("\b \b");
+    }
+
+    /* 设置新命令行 */
+    strncpy(g_CmdLine, recall, SHELL_CMD_MAX_LEN - 1);
+    g_CmdLine[SHELL_CMD_MAX_LEN - 1] = '\0';
+    g_CmdLen = (uint16_t)strlen(g_CmdLine);
+
+    /* 回显并更新 LCD */
+    Shell_SendRaw(g_CmdLine);
+    Console_UpdateInputLine(g_CmdLine, g_CmdLen);
+}
+
 /*******************************************************************************
  * LCD Console Implementation
  ******************************************************************************/

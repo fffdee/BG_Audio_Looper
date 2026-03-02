@@ -121,6 +121,16 @@ typedef struct {
     BG_ERR (*Download)(const char *data_source, uint32_t offset, size_t size,
                        soundbank_download_progress_cb_t progress_cb, void *user_data);
 
+    /**
+     * 读取所有活跃声部的混合音频 (跨任务安全)
+     * 遍历内部声部池, 为每个活跃声部读取采样并混合输出。
+     * 无需外部指定音符/程序号, 函数内部自动遍历。
+     * @param data   输出缓冲区 (int16_t PCM)
+     * @param count  采样帧数
+     * @return 活跃声部数量 (0 = 静音)
+     */
+    uint8_t (*ReadActiveSamples)(short *data, uint32_t count);
+
 } SoundBank_Manager;
 
 /* ============================================

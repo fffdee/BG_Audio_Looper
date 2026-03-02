@@ -7,6 +7,13 @@
 #include <math.h>
 #include <stdio.h>
 
+/*
+ * NDS32 数据同步屏障 (Data Synchronization Barrier)
+ * FreeRTOS NDS32 port 的 vPortYield 只用了 ISB 没有 DSB,
+ * 导致跨任务写入可能滞留在写缓冲区。必须手动插入 DSB。
+ */
+#define NDS32_DSB()  __asm__ volatile("dsb" ::: "memory")
+
 /**
  * SF2 解析器实�?
  * 当前版本: 框架代码，待实现完整功能
@@ -145,7 +152,7 @@ typedef struct {
 
 /* 声部 (Voice) — 替代原 g_playback_states[128][128] 节省 ~256KB RAM */
 typedef struct {
-    uint8_t  active;            // 是否活跃
+    volatile uint8_t  active;   // 是否活跃 (volatile: 跨任务可见)
     uint8_t  note;              // MIDI 音符号
     uint8_t  program;           // MIDI 程序号
     SF2_Playback_State state;   // 播放状态
@@ -272,6 +279,7 @@ static SF2_Voice* alloc_voice(void)
 void sf2_note_on(uint8_t note, uint8_t velocity, uint8_t program)
 {
     SF2_Voice *v;
+    int slot;
     if (note >= 128 || program >= SYNTH_MAX_PROGRAMS) return;
 
     /* 如果同一 note+program 已存在，重置播放位置 */
@@ -279,12 +287,16 @@ void sf2_note_on(uint8_t note, uint8_t velocity, uint8_t program)
     if (!v) {
         v = alloc_voice();
     }
+    slot = (int)(v - g_voices);
     v->note = note;
     v->program = program;
-    v->active = 1;
     v->state.current_pos = 0.0;
     v->state.target_note = note;
     v->state.sample = NULL;  /* 下次回调时重新查找 */
+    v->active = 1;
+
+    printf("[SF2] NoteOn: slot=%d note=%u prog=%u active=%u\n",
+           slot, note, program, v->active);
     (void)velocity;
 }
 
@@ -322,6 +334,79 @@ void sf2_reset_all_notes(uint8_t program)
             g_voices[i].state.sample = NULL;
         }
     }
+}
+
+/**
+ * 读取所有活跃声部的混合音频 (用于跨任务音频合成)
+ *
+ * 遍历 g_voices[], 对每个活跃声部调用 sf2_callback 读取采样,
+ * 混合到 out_buf。此函数可以从不同编译单元调用,
+ * 编译器无法缓存 g_voices 状态, 保证跨任务可见性。
+ *
+ * @param out_buf  输出缓冲区 (int16_t PCM, 将被清零后混合写入)
+ * @param count    采样帧数 (建议 <= 48)
+ * @return 活跃声部数量 (0 = 无活跃声部)
+ */
+uint8_t sf2_read_active_samples(short *out_buf, uint32_t count)
+{
+    uint8_t active_count = 0;
+    int i;
+    uint32_t j;
+    short voice_buf[48];  /* 最大帧长度 */
+
+    if (!g_initialized || !out_buf || count == 0) {
+        if (out_buf) memset(out_buf, 0, count * sizeof(short));
+        return 0;
+    }
+
+    /* 限制单次处理长度 */
+    if (count > 48) count = 48;
+
+    memset(out_buf, 0, count * sizeof(short));
+
+    /* 不再需要跨任务内存屏障 — NoteOn/Off 现在在同一任务(主任务)执行 */
+
+    for (i = 0; i < SYNTH_MAX_VOICES; i++) {
+        if (!g_voices[i].active) continue;
+
+        /* 诊断: 首次发现活跃声部 */
+        {
+            static uint32_t active_found_count = 0;
+            if (active_found_count < 10) {
+                printf("[SF2] RAS_ACTIVE: slot=%d note=%u prog=%u\n",
+                       i, g_voices[i].note, g_voices[i].program);
+                active_found_count++;
+            }
+        }
+
+        memset(voice_buf, 0, count * sizeof(short));
+        {
+            uint8_t cb_result = sf2_callback(voice_buf, g_voices[i].note, count, g_voices[i].program);
+
+            /* 诊断: 回调结果 */
+            {
+                static uint32_t ras_diag_count = 0;
+                if (ras_diag_count < 10) {
+                    printf("[SF2] RAS_CB: slot=%d note=%u cb_ret=%u buf[0]=%d\n",
+                        i, g_voices[i].note, cb_result, (int)voice_buf[0]);
+                    ras_diag_count++;
+                }
+            }
+
+            if (cb_result) {
+                /* 混入输出缓冲区 */
+                for (j = 0; j < count; j++) {
+                    int32_t mixed = (int32_t)out_buf[j] + (int32_t)voice_buf[j];
+                    if (mixed > 32767)  mixed = 32767;
+                    if (mixed < -32768) mixed = -32768;
+                    out_buf[j] = (short)mixed;
+                }
+                active_count++;
+            }
+        }
+    }
+
+    return active_count;
 }
 
 /**
@@ -462,6 +547,7 @@ static uint8_t sf2_callback(short *data, uint32_t note, uint32_t count, uint8_t 
     uint32_t i;
     
     if (!g_initialized || !data) {
+        printf("[SF2] cb: NOT_INIT g_init=%u data=%p\n", g_initialized, data);
         return 0;
     }
     
@@ -475,6 +561,20 @@ static uint8_t sf2_callback(short *data, uint32_t note, uint32_t count, uint8_t 
     SF2_Voice *v = find_voice((uint8_t)note, program);
     if (!v) {
         /* 无活跃声部, 返回静音 */
+        static uint32_t no_voice_count = 0;
+        if (++no_voice_count <= 5) {
+            BG_LOG_W(BG_LOG_TAG_SOUNDBANK, "sf2_callback: no active voice for note=%u prog=%u (#%u)\n",
+                   (unsigned)note, (unsigned)program, no_voice_count);
+        }
+        /* 确保通过 printf 也能看到 (前10次) */
+        if (no_voice_count <= 10) {
+            printf("[SF2] NO_VOICE: note=%u prog=%u voices=[%u,%u,%u,%u,%u,%u,%u,%u]\n",
+                (unsigned)note, (unsigned)program,
+                g_voices[0].active, g_voices[1].active,
+                g_voices[2].active, g_voices[3].active,
+                g_voices[4].active, g_voices[5].active,
+                g_voices[6].active, g_voices[7].active);
+        }
         memset(data, 0, count * sizeof(short));
         return 0;
     }
@@ -485,6 +585,10 @@ static uint8_t sf2_callback(short *data, uint32_t note, uint32_t count, uint8_t 
     if (!state->sample) {
         state->sample = find_sample(program, note, 64);
         if (!state->sample) {
+            BG_LOG_E(BG_LOG_TAG_SOUNDBANK, "sf2_callback: find_sample FAILED for note=%u prog=%u, killing voice\n",
+                   (unsigned)note, (unsigned)program);
+            printf("[SF2] FIND_SAMPLE_FAIL: note=%u prog=%u, voice killed\n",
+                (unsigned)note, (unsigned)program);
             memset(data, 0, count * sizeof(short));
             v->active = 0;
             return 0;
@@ -492,9 +596,14 @@ static uint8_t sf2_callback(short *data, uint32_t note, uint32_t count, uint8_t 
         state->current_pos = (double)state->sample->start;
         state->target_note = note;
         
-        BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "Note %d -> Sample: original_pitch=%d, sample_rate=%d, range=[%d-%d]\n",
+        printf("[SF2] SAMPLE_OK: note=%u prog=%u pitch=%d rate=%d start=%u end=%u\n",
+               (unsigned)note, (unsigned)program,
+               state->sample->original_pitch, state->sample->sample_rate,
+               state->sample->start, state->sample->end);
+        BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "Note %d -> Sample: pitch=%d, rate=%d, range=[%d-%d], start=%u end=%u\n",
                note, state->sample->original_pitch, state->sample->sample_rate,
-               state->sample->min_note, state->sample->max_note);
+               state->sample->min_note, state->sample->max_note,
+               state->sample->start, state->sample->end);
     }
     
     SF2_Sample_Info *sample = state->sample;
@@ -982,6 +1091,11 @@ static void build_sample_map(void)
                         sinfo->end_loop = shdr->end_loop;
                         sinfo->sample_rate = shdr->sample_rate;
                         
+                        BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "  Sample[%d]: id=%d pitch=%d range=[%d-%d] vel=[%d-%d] start=%u end=%u rate=%d\n",
+                               sample_idx, sample_id, shdr->original_pitch,
+                               ikey_lo, ikey_hi, vel_lo, vel_hi,
+                               shdr->start, shdr->end, shdr->sample_rate);
+                        
                         sample_idx++;
                     }
                 }
@@ -1056,8 +1170,25 @@ static SF2_Sample_Info* find_sample(uint8_t program, uint8_t note, uint8_t veloc
         return best_match;
     }
     
-    BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "No sample found for program %d, note %d, velocity %d\n", 
-           program, note, velocity);
+    /* 第三轮: 忽略音符范围和力度，选择音高最接近的任意采样 */
+    min_pitch_diff = 128;
+    for (i = 0; i < prog->sample_count; i++) {
+        SF2_Sample_Info *sample = &prog->samples[i];
+        int pitch_diff = abs((int)note - (int)sample->original_pitch);
+        if (pitch_diff < min_pitch_diff) {
+            min_pitch_diff = pitch_diff;
+            best_match = sample;
+        }
+    }
+    
+    if (best_match) {
+        BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "find_sample fallback: prog=%d note=%d -> sample pitch=%d range=[%d-%d]\n",
+               program, note, best_match->original_pitch, best_match->min_note, best_match->max_note);
+        return best_match;
+    }
+    
+    BG_LOG_E(BG_LOG_TAG_SOUNDBANK, "No sample found for program %d, note %d, velocity %d (count=%d)\n", 
+           program, note, velocity, prog->sample_count);
     return NULL;
 }
 

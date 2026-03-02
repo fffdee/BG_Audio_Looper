@@ -81,6 +81,8 @@
 /* BanGTsynth MIDI 合成器模块 */
 #ifdef BANGTSYNTH_EN
 #include "bangtsynth_node.h"
+#include "bg_storage.h"
+#include "soundbank_manager.h"
 #endif
 
 //#define UI_EN
@@ -353,6 +355,13 @@ void EffectTask() {
 	DBG("[Task] Initializing BanGTsynth...\n");
 	if (BanGTsynth_Node_Init() == 0) {
 		DBG("[Task] BanGTsynth initialized OK\n");
+		/* 设置内嵌 SF2 存储驱动并加载默认音源 */
+		BG_Storage.SetDriver(&bg_storage_driver_embedded);
+		if (soundbank_manager.Init(0) == SUCCESS) {
+			DBG("[Task] Embedded SF2 soundbank loaded OK\n");
+		} else {
+			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
+		}
 	} else {
 		DBG("[Task] BanGTsynth init FAILED\n");
 	}

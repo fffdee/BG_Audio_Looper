@@ -3,7 +3,7 @@
 
 #include<stdint.h>
 
-#define FUNC_COUNT 5
+#define FUNC_COUNT 4
 #define CC_COUNT 48      
 typedef struct 
 {

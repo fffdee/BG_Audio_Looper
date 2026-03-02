@@ -201,7 +201,7 @@ static BG_Channel_Info* bridge_get_channel_info(uint8_t channel)
         return NULL;
     }
     
-    return &BG_MIDI_data.BG_channel_info[channel];
+    return (BG_Channel_Info*)&BG_MIDI_data.BG_channel_info[channel];
 }
 
 /**
@@ -212,7 +212,7 @@ static void bridge_reset(void)
     uint8_t ch;
     
     /* 清空所有通道状态 */
-    memset(&BG_MIDI_data.BG_channel_info, 0, sizeof(BG_MIDI_data.BG_channel_info));
+    memset((void*)&BG_MIDI_data.BG_channel_info, 0, sizeof(BG_MIDI_data.BG_channel_info));
     
     /* 重新初始化默认值 */
     for (ch = 0; ch < 16; ch++) {

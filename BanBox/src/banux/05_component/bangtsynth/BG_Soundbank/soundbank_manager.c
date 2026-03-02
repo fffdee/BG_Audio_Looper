@@ -56,6 +56,7 @@ static void soundbank_note_off(uint8_t note, uint8_t program);
 static void soundbank_all_note_off(uint8_t program);
 static BG_ERR soundbank_download(const char *data_source, uint32_t offset, size_t size,
                                  soundbank_download_progress_cb_t progress_cb, void *user_data);
+static uint8_t soundbank_read_active_samples(short *data, uint32_t count);
 
 
 
@@ -71,6 +72,7 @@ SoundBank_Manager soundbank_manager = {
     .NoteOff = soundbank_note_off,
     .AllNoteOff = soundbank_all_note_off,
     .Download = soundbank_download,
+    .ReadActiveSamples = soundbank_read_active_samples,
 };
 
 /**
@@ -252,6 +254,11 @@ static BG_ERR soundbank_deinit(void)
 static uint8_t soundbank_read_samples(short *data, uint32_t note, uint32_t count, uint8_t program)
 {
     if (!g_initialized || !data) {
+        static uint8_t rs_uninit_cnt = 0;
+        if (++rs_uninit_cnt <= 3) {
+            printf("[SBM] RS_FAIL: g_init=%u data=%p note=%u prog=%u\n",
+                g_initialized, data, (unsigned)note, (unsigned)program);
+        }
         return 0;
     }
     
@@ -264,7 +271,8 @@ static uint8_t soundbank_read_samples(short *data, uint32_t note, uint32_t count
             return sf2_parser.Callback(data, note, count, program);
             
         default:
-            /* 未知格式，返回静�?*/
+            /* 未知格式，返回静音 */
+            printf("[SBM] RS_UNKNOWN_FMT: fmt=%d note=%u\n", g_current_format, (unsigned)note);
             memset(data, 0, count * sizeof(short));
             return 0;
     }
@@ -306,6 +314,8 @@ static BGS_Data* soundbank_get_bgs_data(void)
  */
 static void soundbank_note_on(uint8_t note, uint8_t velocity, uint8_t program)
 {
+    printf("[SBM] NoteOn: fmt=%d note=%u vel=%u prog=%u\n",
+           g_current_format, note, velocity, program);
     if (g_current_format == SOUNDBANK_FORMAT_BG) {
         bgs_note_on(note, velocity, program);
     } else if (g_current_format == SOUNDBANK_FORMAT_SF2) {
@@ -359,6 +369,28 @@ int soundbank_storage_read(uint32_t offset, void *buffer, size_t size)
     }
     
     return BG_Storage.Read(absolute_offset, buffer, size);
+}
+
+/**
+ * 读取所有活跃声部的混合音频 (统一接口)
+ * 注: 现在 NoteOn/Off 和 ReadActiveSamples 均在主任务回调中执行,
+ *     无跨任务共享内存问题
+ */
+static uint8_t soundbank_read_active_samples(short *data, uint32_t count)
+{
+    if (!g_initialized || !data) {
+        if (data) memset(data, 0, count * sizeof(short));
+        return 0;
+    }
+
+    switch (g_current_format) {
+        case SOUNDBANK_FORMAT_SF2:
+            return sf2_read_active_samples(data, count);
+
+        default:
+            memset(data, 0, count * sizeof(short));
+            return 0;
+    }
 }
 
 /**

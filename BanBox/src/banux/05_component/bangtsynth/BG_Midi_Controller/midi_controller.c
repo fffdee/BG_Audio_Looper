@@ -14,7 +14,7 @@
 #include "string.h"
 #include <math.h>
 
-BG_MIDI_Data BG_MIDI_data; 
+volatile BG_MIDI_Data BG_MIDI_data; 
 
 /* 内部函数声明 */
 void MIDI_UpdateState(void);      // 定时器调用:状态更新
@@ -50,7 +50,7 @@ int Re_Sample(int tone){
 
 
 void MIDI_Init(){
-    memset(BG_MIDI_data.BG_channel_info,0,sizeof(BG_MIDI_data.BG_channel_info));
+    memset((void*)BG_MIDI_data.BG_channel_info,0,sizeof(BG_MIDI_data.BG_channel_info));
     
 #if ENABLE_AUDIO_PROCESSOR
     {
@@ -190,12 +190,12 @@ void MIDI_Message_Handle(uint8_t *data, uint8_t len)
     uint8_t i;
     state = (data[0]>>4)&0x0F;
     
-    if(len<4)
+    if(len > 0 && len < 4)
     {
         for(i=0; i<FUNC_COUNT;i++){
 
             if((state==MIDI_funcstion[i].Funcstion_ID))
-                MIDI_funcstion[i].MIDI_FUNC(data,sizeof(data));               
+                MIDI_funcstion[i].MIDI_FUNC(data, len);
                 
         } 
         

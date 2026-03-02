@@ -22,9 +22,13 @@
 #include "bg_config.h"
 
 /* ============================================
- * 存储配置
+ * 存储配置 (按平台设置)
  * ============================================ */
-#define BG_STORAGE_SIZE         (64 * 1024 * 1024)  /* 32MB 音源数据区 (支持大型SF2文件) */
+#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
+#define BG_STORAGE_SIZE         (8 * 1024 * 1024)   /* BP10 Flash#1: 8MB */
+#else
+#define BG_STORAGE_SIZE         (64 * 1024 * 1024)  /* 其他平台: 64MB */
+#endif
 #define BG_STORAGE_SECTOR_SIZE  (4096)              /* 扇区大小 (4KB) */
 
 /* ============================================
@@ -194,5 +198,8 @@ extern const BG_Storage_Driver_t bg_storage_driver_esp32;
 #elif (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
 extern const BG_Storage_Driver_t bg_storage_driver_bp10;
 #endif
+
+/* 内嵌 SF2 音源存储驱动 (从 const 数组读取, 无需外部 Flash) */
+extern const BG_Storage_Driver_t bg_storage_driver_embedded;
 
 #endif /* _BG_STORAGE_H__ */

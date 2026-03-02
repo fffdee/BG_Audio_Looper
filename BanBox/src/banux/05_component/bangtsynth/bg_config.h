@@ -24,7 +24,8 @@
 /* ============================================
  * 平台配置
  * ============================================ */
-
+#include "product_def.h"
+#ifdef BANGTSYNTH_EN
 /**
  * 目标平台选择
  * 可选值: BG_PLATFORM_LINUX, BG_PLATFORM_STM32, BG_PLATFORM_ESP32, BG_PLATFORM_BP10
@@ -50,7 +51,7 @@
 #ifndef ENABLE_MIDI_CONTROLLER
 #define ENABLE_MIDI_CONTROLLER  1  // 1=启用, 0=禁用
 #endif
-
+#
 /**
  * 混音器模块
  * 功能: 多音轨混音、音量控制、声道平衡
@@ -146,6 +147,26 @@
  */
 #ifndef SYNTH_MAX_PROGRAMS
 #define SYNTH_MAX_PROGRAMS      16
+#endif
+
+/* ============================================
+ * 默认内嵌音源选择
+ * ============================================ */
+
+/**
+ * 默认音源选择
+ * 可选值:
+ *   BG_SOUNDBANK_4OPFM        - 4OPFM.SF2 (FM打击乐, 998KB) [待实现]
+ *   BG_SOUNDBANK_SOFT_PIANO   - Thrift Store Spinet Piano (钢琴音色, 391KB) [已实现]
+ * 
+ * 音源数据位于: BanBox/src/banux/05_component/bangtsynth/durm_data/sf2_source.c
+ */
+#define BG_SOUNDBANK_4OPFM        1
+#define BG_SOUNDBANK_SOFT_PIANO   2
+
+#ifndef BG_DEFAULT_SOUNDBANK
+//#define BG_DEFAULT_SOUNDBANK    BG_SOUNDBANK_4OPFM  // 默认使用 4OPFM (待实现)
+#define BG_DEFAULT_SOUNDBANK    BG_SOUNDBANK_SOFT_PIANO  // 默认使用 Thrift Store Spinet Piano (内嵌音源)
 #endif
 
 /**
@@ -512,3 +533,4 @@ typedef enum {
 } bg_status_t;
 
 #endif /* _BG_CONFIG_H__ */
+#endif

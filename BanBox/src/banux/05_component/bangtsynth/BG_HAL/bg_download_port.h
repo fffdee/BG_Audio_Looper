@@ -34,4 +34,29 @@
  */
 int bg_download_port_read(const char *source, void *buffer, size_t size, size_t *bytes_read);
 
+/* ============================================
+ * BP10 平台扩展: 下载会话管理 (用于数据包协议)
+ * ============================================ */
+#include "bg_config.h"
+#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
+#include "bg_soundbank_dl_protocol.h"
+
+/**
+ * 初始化下载会话 (在 Shell 命令启动下载时调用)
+ * @param total_size  预期总字节数 (0=未知大小)
+ */
+void bg_download_port_session_init(uint32_t total_size);
+
+/**
+ * 结束下载会话
+ */
+void bg_download_port_session_deinit(void);
+
+/**
+ * 获取下载会话状态 (只读)
+ */
+const DL_Session_t* bg_download_port_get_session(void);
+
+#endif /* BG_TARGET_PLATFORM == BG_PLATFORM_BP10 */
+
 #endif /* _BG_DOWNLOAD_PORT_H__ */

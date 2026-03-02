@@ -753,6 +753,7 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
         functions.add(new FunctionItem("", HardwareVolumeActivity.class));
         functions.add(new FunctionItem("", MetronomeActivity.class));
         functions.add(new FunctionItem("", AudioChainDiagramActivity.class));
+        functions.add(new FunctionItem("", DrumMachineActivity.class));
 
         // 创建适配器
         functionPagerAdapter = new FunctionPagerAdapter(this, functions);

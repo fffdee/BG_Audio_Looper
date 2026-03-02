@@ -14,16 +14,14 @@ import java.util.List;
  * 功能ViewPager适配器
  */
 public class FunctionPagerAdapter extends RecyclerView.Adapter<FunctionPagerAdapter.FunctionViewHolder> {
-    // 五个页面的背景图片资源
+    // 六个页面的背景图片资源
     private static final int[] BG_RES_IDS = {
-        R.drawable.reverb,
-        R.drawable.eq,        // 第1页
-         R.drawable.vol ,   // 第5页
-          R.drawable.metro,  
-        R.drawable.graph     // 第2页
-         
-          // 第4页
-       
+        R.drawable.reverb,      // FX Control
+        R.drawable.eq,          // EQ
+        R.drawable.vol,         // Volume
+        R.drawable.metro,       // Metronome
+        R.drawable.graph,       // Audio Chain
+        android.R.color.darker_gray  // Drum Machine (使用灰色作为暂时占位)
     };
 
     private Context context;

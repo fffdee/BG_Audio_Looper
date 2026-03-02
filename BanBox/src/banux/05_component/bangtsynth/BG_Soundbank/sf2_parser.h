@@ -81,6 +81,15 @@ void sf2_reset_note(uint8_t note, uint8_t program);
  */
 void sf2_reset_all_notes(uint8_t program);
 
+/**
+ * 读取所有活跃声部的混合音频
+ * 遍历内部声部池, 为每个活跃声部读取采样并混合输出
+ * @param out_buf  输出缓冲区 (int16_t PCM)
+ * @param count    采样帧数 (建议 <= 48)
+ * @return 活跃声部数量 (0 = 静音)
+ */
+uint8_t sf2_read_active_samples(short *out_buf, uint32_t count);
+
 #ifdef __cplusplus
 }
 #endif
