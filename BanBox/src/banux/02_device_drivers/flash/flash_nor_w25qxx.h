@@ -62,7 +62,8 @@ extern "C" {
 
 /* 超时设置 (ms) */
 #define W25QXX_TIMEOUT_WRITE_PAGE    5
-#define W25QXX_TIMEOUT_ERASE_SECTOR  100
+#define W25QXX_TIMEOUT_ERASE_SECTOR  500   /* W25Q64 sector erase max 400ms, +25% margin */
+
 #define W25QXX_TIMEOUT_ERASE_BLOCK   400
 #define W25QXX_TIMEOUT_ERASE_CHIP    100000
 
@@ -94,6 +95,27 @@ void W25Qxx_Destroy(FlashDevice_t *dev);
  * @return 操作表指针
  */
 const FlashOps_t* W25Qxx_GetOps(void);
+
+/**
+ * @brief 发送全片擦除命令后立即返回（非阻塞）
+ *
+ * 调用后需轮询 W25Qxx_IsBusy() 确认擦除结束，
+ * 擦除期间不得对 Flash 进行写/擦除操作。
+ *
+ * @param dev  设备指针
+ * @return FLASH_OK / FLASH_ERR_*
+ */
+FlashStatus_t W25Qxx_EraseChipStart(FlashDevice_t *dev);
+
+/**
+ * @brief 非阻塞忙状态查询
+ *
+ * 读取 SR1 BUSY 位，不产生任何等待延迟。
+ *
+ * @param dev  设备指针
+ * @return 1 = 仍在擦除；0 = 擦除完成（或设备无效）
+ */
+uint8_t W25Qxx_IsBusy(FlashDevice_t *dev);
 
 /*===========================================================================
  * IOCTL命令

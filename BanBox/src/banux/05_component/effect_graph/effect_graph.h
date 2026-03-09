@@ -327,10 +327,12 @@ struct EffectGraph {
     EffectNode_t       *process_order[EFFECT_GRAPH_MAX_NODES];
     uint8_t             process_count;
     
-    /* 源节点和输出节点快速访问 */
-    EffectNode_t       *source_nodes[4];
+    /* 源节点和输出节点快速访问
+     * 源节点：ADC0, ADC1, USB_IN, BT_IN, Metronome, Looper_Play (共 6 个, 预留 2)
+     * Sink节点：DAC0_Out, USB_Out, Looper_Record (共 3 个, 预留 1) */
+    EffectNode_t       *source_nodes[8];   /* 扩展到 8 (from 4)，容纳所有源节点 */
     uint8_t             source_count;
-    EffectNode_t       *sink_nodes[2];
+    EffectNode_t       *sink_nodes[4];     /* 扩展到 4 (from 2)，容纳 DAC/USB/Looper_Record */
     uint8_t             sink_count;
     
     /* 共享处理缓冲区 - 使用 uint32_t 与硬件接口统一 */

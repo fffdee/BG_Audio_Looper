@@ -213,8 +213,12 @@ typedef enum {
     { NODE_ID_DRC, NODE_ID_DAC0_OUT, 0, 0 }, \
     { NODE_ID_DRC, NODE_ID_USB_OUT,  0, 0 }, \
     \
-    /* ADC混音器 → Looper录制 */ \
-    { NODE_ID_ADC_MIXER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
+    /* Expander输出 → Looper录制
+     * 录制 Expander 处理后、未混入 Looper_Play 之前的纯吉他+麦克风信号。
+     * 这与 Pre_Reverb_Mixer 收到的 ADC 链信号完全一致，
+     * 避免录制时引入已有 Looper 层（防止叠录反馈循环）。
+     * 原来连 ADC_Mixer 跳过了 Expander 增益，现已修正。 */ \
+    { NODE_ID_EXPANDER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
     \
     /* BanGTsynth合成器 → USB_BT混音器 (BANGTSYNTH_EN宏控制) */ \
     BANGTSYNTH_EDGE_CONFIG_ENTRIES \

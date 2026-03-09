@@ -136,6 +136,7 @@ typedef struct {
     uint32_t play_position;
     uint8_t is_initialized;
     uint8_t is_new_recording;
+    volatile uint8_t chip_erase_pending;    /* 1=全片擦除进行中，写入须等待 */
     Paly_Mode_t play_mode;
     SegmentInfo_t segments[MAX_SEGMENTS];
     uint8_t current_segment;
@@ -216,6 +217,7 @@ extern AudioLooper_t AudioLooper;
 void loop_init(void);
 void loop_init_with_flash_type(FlashType_t flash_type);
 void loop_reset(void);
+void loop_flash_erase_reinit(void);  /* 全片擦除初始化：清除所有数据，擦除完成前阻塞录制/播放 */
 
 /* 按键处理函数 - 4个按键控制 */
 void loop_handle_button_press(int8_t segment_index);
@@ -238,6 +240,7 @@ void loop_reset_playback_position(void);
 
 /* 单段精细控制函数 */
 SegmentState_t loop_get_segment_state(uint8_t segment_index);
+uint32_t loop_get_segment_length_pages(uint8_t segment_index);
 void loop_set_segment_recording(uint8_t segment_index);
 void loop_set_segment_playing(uint8_t segment_index);
 void loop_set_segment_stopped(uint8_t segment_index);

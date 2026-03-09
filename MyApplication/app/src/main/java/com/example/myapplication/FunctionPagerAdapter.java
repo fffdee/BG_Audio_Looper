@@ -21,7 +21,8 @@ public class FunctionPagerAdapter extends RecyclerView.Adapter<FunctionPagerAdap
         R.drawable.vol,         // Volume
         R.drawable.metro,       // Metronome
         R.drawable.graph,       // Audio Chain
-        android.R.color.darker_gray  // Drum Machine (使用灰色作为暂时占位)
+        android.R.color.darker_gray, // Drum Machine (使用灰色作为暂时占位)
+        R.drawable.setting      // Looper Control
     };
 
     private Context context;

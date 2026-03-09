@@ -3,6 +3,7 @@
  */
 
 #include "flash_devices.h"
+#include "flash_nor_w25qxx.h"
 #include "debug.h"
 #include "gpio.h"
 #include <string.h>
@@ -211,7 +212,7 @@ FlashStatus_t FlashPartition_SystemEraseSector(uint32_t offset)
     return FlashDev_EraseSector(g_flash0, FLASH0_PARTITION_SYSTEM_START + offset);
 }
 
-/* Looper分区 (Flash#0 后7MB) */
+/* Looper分区 (Flash#0 全部8MB) */
 FlashStatus_t FlashPartition_LooperRead(uint32_t offset, uint8_t *buf, uint32_t len)
 {
     if (!g_flash0 || !g_flash0->initialized) {
@@ -254,6 +255,51 @@ FlashStatus_t FlashPartition_LooperEraseBlock(uint32_t offset)
         return FLASH_ERR_PARAM;
     }
     return FlashDev_EraseBlock(g_flash0, FLASH0_PARTITION_LOOPER_START + offset);
+}
+
+/* Looper整片擦除 - 录制前一次性擦除整颗Flash0 (~20s，建议在任务中异步执行) */
+FlashStatus_t FlashPartition_LooperEraseChip(void)
+{
+    if (!g_flash0 || !g_flash0->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    DBG("[Flash] Looper chip erase start (flash0 8MB)...\n");
+    FlashStatus_t ret = FlashDev_EraseChip(g_flash0);
+    if (ret == FLASH_OK) {
+        DBG("[Flash] Looper chip erase done\n");
+    } else {
+        DBG("[Flash] Looper chip erase FAILED: %d\n", ret);
+    }
+    return ret;
+}
+
+/**
+ * @brief 发送全片擦除命令后立即返回（非阻塞）
+ *
+ * 命令发出后芯片即开始内部擦除（典型 20~100 s）。
+ * 调用方须循环调用 FlashPartition_LooperIsErasing() 等待完成，
+ * 在此期间禁止对 flash0 做任何读写/擦除操作。
+ */
+FlashStatus_t FlashPartition_LooperEraseChipAsync(void)
+{
+    if (!g_flash0 || !g_flash0->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    DBG("[Flash] Looper async chip erase start\n");
+    return W25Qxx_EraseChipStart(g_flash0);
+}
+
+/**
+ * @brief 查询全片擦除是否仍在进行（非阻塞）
+ *
+ * @return 1 = 仍在擦除；0 = 擦除完成（或设备无效）
+ */
+uint8_t FlashPartition_LooperIsErasing(void)
+{
+    if (!g_flash0 || !g_flash0->initialized) {
+        return 0;
+    }
+    return W25Qxx_IsBusy(g_flash0);
 }
 
 /* 存储分区 (Flash#1 全部8MB) */

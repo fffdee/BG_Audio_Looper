@@ -1,10 +1,13 @@
 package com.example.myapplication;
 
+import android.app.Dialog;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
@@ -42,6 +45,11 @@ public class SelectedImageAdapter extends RecyclerView.Adapter<SelectedImageAdap
         if (thumbnail != null) {
             holder.ivThumbnail.setImageBitmap(thumbnail);
         }
+
+        // 设置图片点击事件 - 放大预览
+        holder.ivThumbnail.setOnClickListener(v -> {
+            showImagePreviewDialog(v.getContext(), imagePath);
+        });
 
         // 设置删除按钮
         holder.btnRemove.setOnClickListener(v -> {
@@ -88,6 +96,30 @@ public class SelectedImageAdapter extends RecyclerView.Adapter<SelectedImageAdap
             }
         }
         return inSampleSize;
+    }
+
+    /**
+     * 显示图片预览对话框
+     */
+    private void showImagePreviewDialog(Context context, String imagePath) {
+        Dialog dialog = new Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_image_preview);
+
+        ImageView ivPreview = dialog.findViewById(R.id.iv_preview);
+        ImageView ivClose = dialog.findViewById(R.id.iv_close);
+
+        // 加载高质量图片
+        Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+        if (bitmap != null) {
+            ivPreview.setImageBitmap(bitmap);
+        }
+
+        // 点击关闭
+        ivClose.setOnClickListener(v -> dialog.dismiss());
+        ivPreview.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

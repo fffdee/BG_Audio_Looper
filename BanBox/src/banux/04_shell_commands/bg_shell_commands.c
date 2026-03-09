@@ -1545,6 +1545,11 @@ static int looper_status_cmd(int argc, char *argv[])
     Shell_Printf("Recording:  %s\r\n", status.is_recording ? "YES" : "NO");
     Shell_Printf("Playing:    %s\r\n", status.is_playing ? "YES" : "NO");
     Shell_Printf("Flash:      %s\r\n", status.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
+    /* status 查询时也顺手 poll 一次，避免显示过时结果 */
+    if (g_loop_manager.chip_erase_pending && !FlashPartition_LooperIsErasing()) {
+        g_loop_manager.chip_erase_pending = 0;
+    }
+    Shell_Printf("ErasePend:  %s\r\n", g_loop_manager.chip_erase_pending ? "YES (blocked)" : "NO");
     Shell_Printf("Segments:   %d active\r\n", status.active_segments);
     Shell_Printf("Current:    Segment %d\r\n", status.current_segment);
     Shell_Printf("Recorded:   %lu bytes\r\n", (unsigned long)status.total_recorded_bytes);
@@ -1585,7 +1590,9 @@ static int looper_record_cmd(int argc, char *argv[])
 static int looper_play_cmd(int argc, char *argv[])
 {
     int seg = 0;
-    
+    SegmentState_t state_before;
+    SegmentState_t state_after;
+
     if (argc > 0) {
         seg = atoi(argv[0]);
         if (seg < 0 || seg >= MAX_SEGMENTS) {
@@ -1593,16 +1600,46 @@ static int looper_play_cmd(int argc, char *argv[])
             return -1;
         }
     }
-    
-    loop_set_segment_playing((uint8_t)seg);
-    Shell_Printf("Segment %d: PLAYING\r\n", seg);
+
+    state_before = loop_get_segment_state((uint8_t)seg);
+
+    if (state_before == SEGMENT_INACTIVE) {
+        Shell_Printf("Error: Segment %d has no recorded data (INACTIVE)\r\n", seg);
+        Shell_Print("  Use 'looper -r' to start recording first\r\n");
+        return -1;
+    }
+
+    /* 如果当前正在录制，先调用loop_stop_current_segment()结束录制 */
+    /* loop_stop_current_segment会写入尾部平滑数据并自动切换到PLAYING状态 */
+    if (state_before == SEGMENT_RECORDING) {
+        Shell_Printf("Segment %d: stopping recording and switching to PLAYING...\r\n", seg);
+        loop_stop_current_segment((uint8_t)seg);
+    } else {
+        /* 从STOPPED或其他状态切换到PLAYING */
+        loop_set_segment_playing((uint8_t)seg);
+    }
+
+    /* 验证实际状态 */
+    state_after = loop_get_segment_state((uint8_t)seg);
+    if (state_after == SEGMENT_PLAYING) {
+        Shell_Printf("Segment %d: PLAYING (length_pages=%lu)\r\n",
+                     seg, (unsigned long)loop_get_segment_length_pages((uint8_t)seg));
+    } else if (state_after == SEGMENT_INACTIVE) {
+        Shell_Printf("Error: Segment %d has no data to play (length=0), marked inactive\r\n", seg);
+        return -1;
+    } else {
+        Shell_Printf("Warning: Segment %d state is not PLAYING after play command (state=%d)\r\n",
+                     seg, (int)state_after);
+        return -1;
+    }
     return 0;
 }
 
 static int looper_stop_cmd(int argc, char *argv[])
 {
     int seg = 0;
-    
+    SegmentState_t state_before;
+
     if (argc > 0) {
         seg = atoi(argv[0]);
         if (seg < 0 || seg >= MAX_SEGMENTS) {
@@ -1610,9 +1647,22 @@ static int looper_stop_cmd(int argc, char *argv[])
             return -1;
         }
     }
-    
-    loop_set_segment_stopped((uint8_t)seg);
-    Shell_Printf("Segment %d: STOPPED\r\n", seg);
+
+    state_before = loop_get_segment_state((uint8_t)seg);
+
+    if (state_before == SEGMENT_RECORDING) {
+        /* 录制中：调用loop_stop_current_segment()正式结束录制（含尾部平滑拷贝） */
+        Shell_Printf("Segment %d: finalizing recording...\r\n", seg);
+        loop_stop_current_segment((uint8_t)seg);
+        Shell_Printf("Segment %d: recording finalized (pages=%lu), state=%s\r\n",
+                     seg,
+                     (unsigned long)loop_get_segment_length_pages((uint8_t)seg),
+                     loop_get_segment_state((uint8_t)seg) == SEGMENT_PLAYING ? "PLAYING" : "STOPPED/INACTIVE");
+    } else {
+        /* 其他状态：直接切换到STOPPED */
+        loop_set_segment_stopped((uint8_t)seg);
+        Shell_Printf("Segment %d: STOPPED\r\n", seg);
+    }
     return 0;
 }
 
@@ -1651,7 +1701,18 @@ static int looper_reset_cmd(int argc, char *argv[])
     (void)argc; (void)argv;
     
     AudioLooper.Reset();
-    Shell_Print("Looper reset\r\n");
+    Shell_Print("Looper reset (async chip erase started, REC/PLAY blocked until complete)\r\n");
+    return 0;
+}
+
+static int looper_erase_cmd(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+
+    Shell_Print("Starting Flash chip erase (async)...\r\n");
+    Shell_Print("REC/PLAY will be blocked until erase completes (~20s).\r\n");
+    loop_flash_erase_reinit();
+    Shell_Print("Erase command sent. Use 'looper -s' to check erase_pending status.\r\n");
     return 0;
 }
 
@@ -1742,7 +1803,8 @@ static const ShellOpt_t looper_opts[] = {
     OPT("t", "stop",    "[seg]",        "Stop segment",             looper_stop_cmd),
     OPT("b", "btn",     "<0-3>",        "Simulate button press",    looper_btn_cmd),
     OPT("c", "clear",   NULL,           "Clear all segments",       looper_clear_cmd),
-    OPT("R", "reset",   NULL,           "Reset looper",             looper_reset_cmd),
+    OPT("R", "reset",   NULL,           "Reset looper + erase flash", looper_reset_cmd),
+    OPT("e", "erase",   NULL,           "Flash chip erase (async)", looper_erase_cmd),
     OPT("m", "mode",    "[song|free]",  "Get/Set loop mode",        looper_mode_cmd),
     OPT("M", "metro",   "<cmd> [val]",  "Metronome control",        looper_metro_cmd),
     OPT("S", "save",    NULL,           "Save looper params",       looper_save_param),

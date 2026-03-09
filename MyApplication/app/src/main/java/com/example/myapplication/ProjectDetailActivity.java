@@ -5,13 +5,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,6 +31,8 @@ public class ProjectDetailActivity extends AppCompatActivity {
     private Timer autoScrollTimer;
     private boolean isPlaying = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private ItemTouchHelper itemTouchHelper;
+    private ImagePlayAdapter adapter;
     
     // 滚动参数
     private int scrollStep = 3; // 默认步长（像素）
@@ -79,10 +84,74 @@ public class ProjectDetailActivity extends AppCompatActivity {
         rvImages.setLayoutManager(layoutManager);
         
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        ImagePlayAdapter adapter = new ImagePlayAdapter(imagePaths, screenWidth);
+        adapter = new ImagePlayAdapter(imagePaths, screenWidth);
         rvImages.setAdapter(adapter);
         
+        // 设置拖拽功能
+        setupItemTouchHelper();
+        
         Log.d(TAG, "RecyclerView设置完成");
+    }
+
+    /**
+     * 设置拖拽排序功能
+     */
+    private void setupItemTouchHelper() {
+        ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                // 只在停止播放时允许拖拽
+                if (isPlaying) {
+                    return makeMovementFlags(0, 0);
+                }
+                int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+                return makeMovementFlags(dragFlags, 0);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, 
+                                @NonNull RecyclerView.ViewHolder viewHolder, 
+                                @NonNull RecyclerView.ViewHolder target) {
+                int fromPosition = viewHolder.getAdapterPosition();
+                int toPosition = target.getAdapterPosition();
+                
+                // 交换数据
+                Collections.swap(imagePaths, fromPosition, toPosition);
+                adapter.notifyItemMoved(fromPosition, toPosition);
+                
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                // 不支持滑动删除
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                // 只在停止播放时允许长按拖拽
+                return !isPlaying;
+            }
+
+            @Override
+            public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+                super.onSelectedChanged(viewHolder, actionState);
+                if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                    // 拖拽开始时的提示
+                    viewHolder.itemView.setAlpha(0.7f);
+                }
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                // 拖拽结束时恢复透明度
+                viewHolder.itemView.setAlpha(1.0f);
+            }
+        };
+        
+        itemTouchHelper = new ItemTouchHelper(callback);
+        itemTouchHelper.attachToRecyclerView(rvImages);
     }
 
     // 初始化速度调节（SeekBar实时控制）
@@ -91,7 +160,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (!fromUser) return;
-                scrollStep = 1 + (progress / 15); // 进度每增加15，步长+1
+                scrollStep = 1 + (progress / 10); // 进度每增加10，步长+1（最大速度提升1.5倍）
                 scrollDelay = 100 - (progress); // 进度每增加1，间隔-1（最低20ms）
                 scrollDelay = Math.max(scrollDelay, 20);
                 if (isPlaying) {
@@ -112,9 +181,11 @@ public class ProjectDetailActivity extends AppCompatActivity {
         if (isPlaying) {
             btnPlayPause.setText("暂停");
             startAutoScroll();
+            Toast.makeText(this, "播放中，无法调整图片顺序", Toast.LENGTH_SHORT).show();
         } else {
             btnPlayPause.setText("播放");
             stopAutoScroll();
+            Toast.makeText(this, "已停止，可长按图片调整顺序", Toast.LENGTH_SHORT).show();
         }
     }
 

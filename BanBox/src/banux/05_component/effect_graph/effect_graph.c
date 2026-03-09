@@ -295,11 +295,11 @@ EffectNode_t* EffectGraph_AddNode(EffectNodeType_t type, const char *name, bool 
     
     /* 分类存储 */
     if (IsSourceNode(type)) {
-        if (g->source_count < 4) {
+        if (g->source_count < 8) {   /* 最大 8 个源节点 (ADC0/1, USB, BT, Metro, LooperPlay + 预留) */
             g->source_nodes[g->source_count++] = node;
         }
     } else if (IsSinkNode(type)) {
-        if (g->sink_count < 2) {
+        if (g->sink_count < 4) {     /* 最大 4 个 sink（DAC0, USB_OUT, Looper_Record + 预留） */
             g->sink_nodes[g->sink_count++] = node;
         }
     }

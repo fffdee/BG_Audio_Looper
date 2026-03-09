@@ -102,6 +102,47 @@ public class ProjectManager {
     }
 
     /**
+     * 批量删除项目
+     */
+    public static void deleteProjects(Context context, List<ImageProject> toDelete) {
+        List<ImageProject> projects = getProjects(context);
+        for (ImageProject del : toDelete) {
+            projects.removeIf(p ->
+                p.getProjectName().equals(del.getProjectName()) &&
+                p.getCreateTime() == del.getCreateTime());
+        }
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(KEY_PROJECTS, new Gson().toJson(projects)).apply();
+        invalidateCache();
+    }
+
+    /**
+     * 保存整个项目列表（用于批量修改，如修改分类）
+     */
+    public static void saveAllProjects(Context context, List<ImageProject> projects) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(KEY_PROJECTS, new Gson().toJson(projects)).apply();
+        invalidateCache();
+    }
+
+    /**
+     * 将单个项目移动到指定分类
+     */
+    public static void moveProjectToCategory(Context context, ImageProject project, String categoryId) {
+        List<ImageProject> projects = getProjects(context);
+        for (ImageProject p : projects) {
+            if (p.getProjectName().equals(project.getProjectName()) &&
+                p.getCreateTime() == project.getCreateTime()) {
+                String oldCat = p.getCategoryId();
+                p.setCategoryId(categoryId);
+                android.util.Log.d("ProjectManager", "项目移动: " + p.getProjectName() + " (从 " + oldCat + " 到 " + categoryId + ")");
+                break;
+            }
+        }
+        saveAllProjects(context, projects);
+    }
+
+    /**
      * 重命名项目
      * @param context 上下文
      * @param project 要重命名的项目
@@ -166,7 +207,7 @@ public class ProjectManager {
             
             // 创建项目文件（.gs格式）
             String exportDir = FileUtils.getExportDir(context);
-            String zipFileName = project.getProjectName() + "_" + project.getCreateTime() + ".gs";
+            String zipFileName = project.getProjectName() + ".gs";
             String zipPath = exportDir + "/" + zipFileName;
             
             if (FileUtils.zipFiles(filesToZip.toArray(new File[0]), zipPath)) {
@@ -300,6 +341,22 @@ public class ProjectManager {
         }
     }
 
+    /**
+     * 删除项目的文件夹及所有内容
+     */
+    public static void deleteProjectFolder(Context context, ImageProject project) {
+        try {
+            String folderPath = getProjectImageDir(context, project);
+            File folder = new File(folderPath);
+            if (folder.exists()) {
+                FileUtils.deleteDir(folder);
+                android.util.Log.d("ProjectManager", "项目文件夹删除成功: " + folderPath);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("ProjectManager", "删除项目文件夹失败", e);
+        }
+    }
+
     private static void copyFile(File src, File dest) throws IOException {
         try (FileInputStream fis = new FileInputStream(src);
              FileOutputStream fos = new FileOutputStream(dest)) {
@@ -309,5 +366,129 @@ public class ProjectManager {
                 fos.write(buffer, 0, len);
             }
         }
+    }
+    
+    /**
+     * 检测ZIP文件是否为总包（包含多个.gs文件）
+     * @return 0=不是总包（单个项目）, >0=总包中的项目数量, -1=检测失败
+     */
+    public static int detectBundlePackage(String zipFilePath) {
+        try {
+            File zipFile = new File(zipFilePath);
+            if (!zipFile.exists()) {
+                return -1;
+            }
+            
+            // 创建临时目录检查ZIP内容
+            String tempCheckDir = zipFile.getParent() + "/check_" + System.currentTimeMillis();
+            File tempCheckDirFile = new File(tempCheckDir);
+            tempCheckDirFile.mkdirs();
+            
+            if (!FileUtils.unzipFile(zipFilePath, tempCheckDir)) {
+                FileUtils.deleteDir(tempCheckDirFile);
+                return -1;
+            }
+            
+            // 检查是否包含project_info.json（单个项目）
+            File jsonFile = new File(tempCheckDir + "/project_info.json");
+            if (jsonFile.exists()) {
+                // 是单个项目文件
+                FileUtils.deleteDir(tempCheckDirFile);
+                return 0;
+            }
+            
+            // 检查是否包含.gs文件（总包）
+            File[] files = tempCheckDirFile.listFiles();
+            int gsFileCount = 0;
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().endsWith(".gs")) {
+                        gsFileCount++;
+                    }
+                }
+            }
+            
+            FileUtils.deleteDir(tempCheckDirFile);
+            return gsFileCount;
+        } catch (Exception e) {
+            android.util.Log.e("ProjectManager", "检测总包失败", e);
+            return -1;
+        }
+    }
+    
+    /**
+     * 导入总包（包含多个.gs文件的ZIP）
+     * @param progressCallback 进度回调，参数为(当前进度, 总数, 项目名称)
+     * @return 返回成功导入的项目数量
+     */
+    public static int importBundlePackage(Context context, String bundleZipPath, BundleImportCallback progressCallback) {
+        try {
+            android.util.Log.d("ProjectManager", "开始导入总包: " + bundleZipPath);
+            
+            File bundleZipFile = new File(bundleZipPath);
+            if (!bundleZipFile.exists()) {
+                android.util.Log.e("ProjectManager", "总包文件不存在");
+                return 0;
+            }
+            
+            // 解压总包到临时目录
+            String tempBundleDir = context.getCacheDir() + "/bundle_" + System.currentTimeMillis();
+            File tempBundleDirFile = new File(tempBundleDir);
+            tempBundleDirFile.mkdirs();
+            
+            if (!FileUtils.unzipFile(bundleZipPath, tempBundleDir)) {
+                android.util.Log.e("ProjectManager", "解压总包失败");
+                FileUtils.deleteDir(tempBundleDirFile);
+                return 0;
+            }
+            
+            // 查找所有.gs文件
+            File[] files = tempBundleDirFile.listFiles();
+            List<File> gsFiles = new ArrayList<>();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().endsWith(".gs")) {
+                        gsFiles.add(file);
+                        android.util.Log.d("ProjectManager", "找到项目文件: " + file.getName());
+                    }
+                }
+            }
+            
+            // 逐个导入.gs文件
+            int successCount = 0;
+            int totalCount = gsFiles.size();
+            for (int i = 0; i < totalCount; i++) {
+                File gsFile = gsFiles.get(i);
+                String projectName = gsFile.getName().replace(".gs", "");
+                
+                if (progressCallback != null) {
+                    progressCallback.onProgress(i + 1, totalCount, projectName);
+                }
+                
+                android.util.Log.d("ProjectManager", "开始导入 (" + (i+1) + "/" + totalCount + "): " + gsFile.getName());
+                if (importProject(context, gsFile.getAbsolutePath())) {
+                    successCount++;
+                    android.util.Log.i("ProjectManager", "成功导入: " + gsFile.getName());
+                } else {
+                    android.util.Log.e("ProjectManager", "导入失败: " + gsFile.getName());
+                }
+            }
+            
+            // 清理临时目录
+            FileUtils.deleteDir(tempBundleDirFile);
+            
+            android.util.Log.i("ProjectManager", "总包导入完成: " + successCount + "/" + totalCount);
+            return successCount;
+        } catch (Exception e) {
+            android.util.Log.e("ProjectManager", "导入总包异常", e);
+            return 0;
+        }
+    }
+    
+    /**
+     * 总包导入进度回调接口
+     */
+    public interface BundleImportCallback {
+        void onProgress(int current, int total, String projectName);
     }
 }

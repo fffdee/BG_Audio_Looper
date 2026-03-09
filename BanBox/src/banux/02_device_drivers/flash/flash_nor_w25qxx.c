@@ -469,9 +469,19 @@ static FlashStatus_t W25Qxx_WaitReady(FlashDevice_t *dev, uint32_t timeout_ms)
             return FLASH_OK;
         }
         
-        vTaskDelay(1);  /* 让出CPU */
+        /* 【录音加速修复】
+         * 页写入 timeout=5ms，W25Q64 典型完成时间 0.7ms。
+         * 若此处调用 vTaskDelay(1)，音频任务将被挂起 ≥1ms，
+         * 导致录音有效帧率从 44100/48≈918帧/s 降为 ~478帧/s（约 2× 加速）。
+         * 解决方案：timeout_ms ≤ 10 时忙等待轮询 SPI 状态寄存器；
+         * 擦除等长操作（timeout_ms > 10）仍 vTaskDelay 让出 CPU。
+         */
+        if (timeout_ms > 10) {
+            vTaskDelay(1);  /* 长操作（擦除）：让出 CPU 给其他任务 */
+        }
+        /* 短操作（页写 ≤5ms）：忙等待，总耗时约 0.7ms，不产生任务调度延迟 */
         
-    } while ((xTaskGetTickCount() - start_tick) < (timeout_ms / portTICK_PERIOD_MS));
+    } while ((xTaskGetTickCount() - start_tick) < (timeout_ms / portTICK_PERIOD_MS + 1));
     
     W25QXX_LOG("Wait ready timeout!\n");
     return FLASH_ERR_TIMEOUT;
@@ -565,4 +575,68 @@ void W25Qxx_Destroy(FlashDevice_t *dev)
     
     W25QXX_LOG("Destroyed device: %s\n", dev->name);
     vPortFree(dev);
+}
+
+/*===========================================================================
+ * 非阻塞全片擦除 API（供 flash_devices.c 的异步接口调用）
+ *===========================================================================*/
+
+/**
+ * @brief 发送全片擦除命令后立即返回，不等待擦除完成
+ *
+ * 调用方须随后轮询 W25Qxx_IsBusy() 确认擦除结束，
+ * 在擦除完成前不得对 Flash 进行任何写/擦除操作。
+ *
+ * @param dev  FlashDevice_t 设备指针
+ * @return FLASH_OK        命令已发送
+ *         FLASH_ERR_PARAM 参数非法
+ *         FLASH_ERR_NOT_INIT 设备未初始化
+ *         FLASH_ERR_TIMEOUT 发送前等待就绪超时（芯片异常）
+ */
+FlashStatus_t W25Qxx_EraseChipStart(FlashDevice_t *dev)
+{
+    FlashStatus_t ret;
+
+    if (!dev) {
+        return FLASH_ERR_PARAM;
+    }
+
+    if (!dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+
+    /* 等待前序操作完成（最多 100ms，正常情况下芯片应已就绪） */
+    ret = W25Qxx_WaitReady(dev, 100);
+    if (ret != FLASH_OK) {
+        return ret;
+    }
+
+    /* 写使能 */
+    w25qxx_write_enable(dev);
+
+    /* 发送全片擦除命令，不等待完成 */
+    w25qxx_send_cmd(dev, W25QXX_CMD_CHIP_ERASE);
+
+    W25QXX_LOG("Chip erase command sent (async, will poll busy)\n");
+
+    return FLASH_OK;
+}
+
+/**
+ * @brief 非阻塞忙状态查询 —— 读 SR1 BUSY 位
+ *
+ * @param dev  FlashDevice_t 设备指针
+ * @return 1 = 仍在擦除（BUSY=1）；0 = 擦除完成或设备异常返回就绪
+ */
+uint8_t W25Qxx_IsBusy(FlashDevice_t *dev)
+{
+    uint8_t sr = 0;
+
+    if (!dev || !dev->initialized) {
+        return 0;  /* 设备无效，视为不忙（安全降级） */
+    }
+
+    w25qxx_cmd_read(dev, W25QXX_CMD_READ_STATUS_REG1, &sr, 1);
+
+    return (sr & W25QXX_SR1_BUSY) ? 1 : 0;
 }

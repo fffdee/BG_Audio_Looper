@@ -40,7 +40,7 @@
             android:id="@+id/btn_export_selected"
             android:layout_width="match_parent"
             android:layout_height="@dimen/button_height_medium"
-            android:text="导出选中项目"
+            android:text="导出到微信"
             android:textSize="@dimen/text_size_large"
             android:background="@drawable/button_glow"
             android:textColor="@color/text_primary"/>

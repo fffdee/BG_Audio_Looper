@@ -7,27 +7,10 @@
         android:title="创建项目"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/menu_import"
-        android:icon="@drawable/ic_import"
-        android:title="导入项目"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/menu_export"
+        android:id="@+id/menu_wechat_export"
         android:icon="@drawable/ic_export"
-        android:title="导出项目"
+        android:title="微信导出"
         app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/menu_import_wechat"
-        android:title="从微信导入"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_export_downloads"
-        android:title="导出到Downloads"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_export_settings"
-        android:title="导出设置"
-        app:showAsAction="never" />
     <item
         android:id="@+id/menu_bluetooth"
         android:icon="@android:drawable/ic_menu_manage"

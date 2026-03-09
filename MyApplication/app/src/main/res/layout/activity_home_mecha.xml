@@ -1,93 +1,224 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/gradient_background">
+    android:fitsSystemWindows="true">
 
-    <!-- 顶部工具栏 -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
-        android:elevation="4dp"
-        app:titleTextColor="#00FFA3"
-        app:title="项目列表" />
-
-    <!-- 蓝牙连接状态卡片 -->
+    <!-- ===== 主内容区域 ===== -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:background="@drawable/card_background"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:elevation="6dp"
-        android:gravity="center_vertical">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/gradient_background">
 
-        <View
-            android:id="@+id/status_indicator"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:background="@drawable/slider_thumb" />
-
-        <TextView
-            android:id="@+id/tv_bluetooth_status"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="12dp"
-            android:text="● 蓝牙未连接"
-            android:textColor="#FF4444"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tv_device_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="BanBox 设备"
-            android:textColor="#AAAAAA"
-            android:textSize="12sp"
-            android:fontFamily="monospace" />
-    </LinearLayout>
-
-    <!-- 项目列表 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_project_list"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:background="#0F1419"
-        android:padding="8dp"
-        android:clipToPadding="false" />
-
-    <!-- 底部导出按钮面板 -->
-    <LinearLayout
-        android:id="@+id/export_panel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:visibility="gone"
-        android:background="@drawable/card_background"
-        android:elevation="8dp"
-        android:layout_gravity="bottom">
-
-        <Button
-            android:id="@+id/btn_export_selected"
+        <!-- 顶部工具栏 -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="导出选中项目"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:background="@drawable/button_glow"
-            android:elevation="4dp" />
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            android:elevation="4dp"
+            app:titleTextColor="#00FFA3"
+            app:title="项目列表" />
+
+        <!-- 蓝牙连接状态卡片 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:background="@drawable/card_background"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:elevation="6dp"
+            android:gravity="center_vertical">
+
+            <View
+                android:id="@+id/status_indicator"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@drawable/slider_thumb" />
+
+            <TextView
+                android:id="@+id/tv_bluetooth_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:text="● 蓝牙未连接"
+                android:textColor="#FF4444"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_device_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BanBox 设备"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+
+        <!-- 当前分类标题条 -->
+        <LinearLayout
+            android:id="@+id/category_header"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="8dp"
+            android:background="#0D00FFA3">
+
+            <TextView
+                android:id="@+id/tv_current_category"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📁 默认分类"
+                android:textColor="#00FFA3"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
+
+            <Button
+                android:id="@+id/btn_toggle_drawer"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:minWidth="60dp"
+                android:text="≡ 分类"
+                android:textColor="#00FFA3"
+                android:textSize="12sp"
+                android:background="@android:color/transparent"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"/>
+        </LinearLayout>
+
+        <!-- 项目列表 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_project_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="#0F1419"
+            android:padding="8dp"
+            android:clipToPadding="false" />
+
+        <!-- 底部导出/删除按钮面板 -->
+        <LinearLayout
+            android:id="@+id/export_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:background="@drawable/card_background"
+            android:elevation="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <Button
+                android:id="@+id/btn_export_selected"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="导出到微信"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/button_glow"
+                android:elevation="4dp"
+                android:layout_marginEnd="6dp"/>
+
+            <Button
+                android:id="@+id/btn_move_selected"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="0.75"
+                android:text="移至分类"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#2255AA"
+                android:elevation="4dp"
+                android:layout_marginEnd="6dp"/>
+
+            <Button
+                android:id="@+id/btn_delete_selected"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="0.55"
+                android:text="删除"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#CC3333"
+                android:elevation="4dp"/>
+        </LinearLayout>
+
     </LinearLayout>
 
-</LinearLayout>
+    <!-- ===== 左侧侧边栏（分类管理）===== -->
+    <LinearLayout
+        android:id="@+id/nav_drawer"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="#1A1F2E">
+
+        <!-- 侧边栏标题 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="6dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:background="#141820">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="项目分类"
+                android:textColor="#00FFA3"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:includeFontPadding="false" />
+
+            <Button
+                android:id="@+id/btn_add_category"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:minWidth="36dp"
+                android:text="＋"
+                android:textColor="#00FFA3"
+                android:textSize="18sp"
+                android:background="@android:color/transparent"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"/>
+        </LinearLayout>
+
+        <!-- 分类列表 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_categories"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp" />
+
+    </LinearLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>
+

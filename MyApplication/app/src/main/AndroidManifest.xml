@@ -42,6 +42,7 @@
     <activity android:name=".AudioChainDiagramActivity" />
     <activity android:name=".MetronomeActivity" />
     <activity android:name=".DrumMachineActivity" />
+    <activity android:name=".LooperControlActivity" />
 
         <!-- 欢迎页面设为启动页 -->
         <activity

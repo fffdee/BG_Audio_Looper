@@ -152,6 +152,7 @@ void loop_init_with_flash_type(FlashType_t flash_type)
     g_loop_manager.play_position = 0;
     g_loop_manager.is_initialized = 1;
     g_loop_manager.is_new_recording = 0;
+    g_loop_manager.chip_erase_pending = 0;
     
     // 初始化多段录音参数
     g_loop_manager.current_segment = 0;
@@ -184,23 +185,90 @@ void loop_init_with_flash_type(FlashType_t flash_type)
 }
 
 /**
- * @brief 重置Loop管理器
+ * @brief 重置Loop管理器（包括擦除Flash数据）
  */
 void loop_reset(void)
 {
-    g_loop_manager.state = LOOP_STATE_IDLE;
-    g_loop_manager.sector_address = 0;
-    g_loop_manager.record_length = 0;
-    g_loop_manager.play_position = 0;
-    g_loop_manager.is_new_recording = 0;
-    
-    // 重置统计信息
+    /* 1. 将所有正在录制/播放的段重置为未激活状态 */
+    uint8_t i;
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        g_loop_manager.segments[i].start_address = 0;
+        g_loop_manager.segments[i].length_pages  = 0;
+        g_loop_manager.segments[i].length_bytes  = 0;
+        g_loop_manager.segments[i].play_position = 0;
+        g_loop_manager.segments[i].state         = SEGMENT_INACTIVE;
+        g_loop_manager.segments[i].is_active     = 0;
+    }
+
+    /* 2. 重置管理器状态变量 */
+    g_loop_manager.state              = LOOP_STATE_IDLE;
+    g_loop_manager.sector_address     = 0;
+    g_loop_manager.record_length      = 0;
+    g_loop_manager.play_position      = 0;
+    g_loop_manager.is_new_recording   = 0;
+    g_loop_manager.current_segment    = 0;
+    g_loop_manager.active_segments    = 0;
+
+    /* 3. 清空统计信息 */
     g_loop_stats.recording_sample_count = 0;
-    g_loop_stats.playback_sample_count = 0;
-    g_loop_stats.last_recorded_sample = 0;
-    g_loop_stats.first_playback_sample = 0;
-    
-    DBG("Loop manager reset\n");
+    g_loop_stats.playback_sample_count  = 0;
+    g_loop_stats.last_recorded_sample   = 0;
+    g_loop_stats.first_playback_sample  = 0;
+
+    /* 4. 异步全片擦除 Flash0，擦除完成前阻止录制和播放 */
+    FlashStatus_t ret = FlashPartition_LooperEraseChipAsync();
+    if (ret == FLASH_OK) {
+        g_loop_manager.chip_erase_pending = 1;
+        DBG("[Looper] Reset: async chip erase started, REC/PLAY blocked\n");
+    } else {
+        g_loop_manager.chip_erase_pending = 0;
+        DBG("[Looper] Reset: Flash erase failed (%d), proceeding without erase\n", ret);
+    }
+}
+
+/**
+ * @brief Flash全片擦除初始化（清除所有Looper数据并重新准备录制）
+ *
+ * 调用后 chip_erase_pending 置 1，在 Flash 擦除完成前
+ * 所有录制和播放操作均被阻塞。
+ * 每个音频帧自动轮询 BUSY 位，擦除完成后自动解除阻塞。
+ */
+void loop_flash_erase_reinit(void)
+{
+    if (!g_loop_manager.is_initialized) {
+        DBG("[Looper] Not initialized, call loop_init() first\n");
+        return;
+    }
+
+    /* 1. 立即停止所有活动 */
+    g_loop_manager.state = LOOP_STATE_IDLE;
+
+    /* 2. 清空所有段信息 */
+    uint8_t i;
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        g_loop_manager.segments[i].start_address = 0;
+        g_loop_manager.segments[i].length_pages  = 0;
+        g_loop_manager.segments[i].length_bytes  = 0;
+        g_loop_manager.segments[i].play_position = 0;
+        g_loop_manager.segments[i].state         = SEGMENT_INACTIVE;
+        g_loop_manager.segments[i].is_active     = 0;
+    }
+    g_loop_manager.current_segment  = 0;
+    g_loop_manager.active_segments  = 0;
+    g_loop_manager.sector_address   = 0;
+    g_loop_manager.record_length    = 0;
+    g_loop_manager.play_position    = 0;
+    g_loop_manager.is_new_recording = 0;
+
+    /* 3. 发出异步全片擦除命令 */
+    FlashStatus_t ret = FlashPartition_LooperEraseChipAsync();
+    if (ret != FLASH_OK) {
+        DBG("[Looper] Flash erase reinit failed: %d\n", ret);
+        return;
+    }
+
+    g_loop_manager.chip_erase_pending = 1;
+    DBG("[Looper] Flash chip erase started, REC/PLAY blocked until complete\n");
 }
 
 /**
@@ -215,6 +283,16 @@ void loop_handle_button_press(int8_t segment_index)
     if (!g_loop_manager.is_initialized) {
         DBG("Loop manager not initialized\n");
         return;
+    }
+
+    /* Flash擦除：先主动 poll 一次 BUSY，已完成则清零放行 */
+    if (g_loop_manager.chip_erase_pending) {
+        if (FlashPartition_LooperIsErasing()) {
+            DBG("[Looper] Flash erase in progress, input ignored\n");
+            return;
+        }
+        g_loop_manager.chip_erase_pending = 0;
+        DBG("[Looper] Chip erase done (detected on button), unblocked\n");
     }
     
     // 如果指定了段索引，使用新的段控制
@@ -759,8 +837,8 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
     convertUint32ArrayToUint8Array(audio_data, write_buffer, length);
     uint32_t write_offset = segment->start_address + 
                             segment->length_pages * g_loop_manager.page_size;
-    
-    // Debug: 每100次打印一次录音状态
+
+    // 直接使用底层Flash API写入
     rec_call_count++;
     if (rec_call_count % 100 == 1) {
         // 检查音频数据是否有非零值
@@ -802,6 +880,16 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
  */
 void loop_process_recording_uint32(uint32_t* audio_data, uint8_t* buffer, uint16_t length)
 {
+    /* 全片擦除轮询：每帧检测一次 BUSY 位
+     * BUSY=1 跳过本帧；BUSY=0 则解除阻塞并继续处理 */
+    if (g_loop_manager.chip_erase_pending) {
+        if (FlashPartition_LooperIsErasing()) {
+            return;
+        }
+        g_loop_manager.chip_erase_pending = 0;
+        DBG("[Looper] Chip erase complete, REC/PLAY unblocked\n");
+    }
+
     // 处理所有正在录制的段
     uint8_t i;
     for (i = 0; i < MAX_SEGMENTS; i++) {
@@ -931,6 +1019,18 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
  */
 void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16_t length)
 {
+    /* 全片擦除轮询（与 recording 对称，以防只有播放任务在运行）
+     * BUSY=0 时解除阻塞并正常播放（此时各段均为 INACTIVE，输出静音即可） */
+    if (g_loop_manager.chip_erase_pending) {
+        if (FlashPartition_LooperIsErasing()) {
+            uint16_t k;
+            for (k = 0; k < length; k++) output_data[k] = 0;
+            return;
+        }
+        g_loop_manager.chip_erase_pending = 0;
+        DBG("[Looper] Chip erase complete (detected in playback), REC/PLAY unblocked\n");
+    }
+
     // 清零输出缓冲区
     uint16_t i;
     for (i = 0; i < length; i++) {
@@ -969,8 +1069,9 @@ void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16
         // DBG("Mixed %d segments playback\n", playing_count);
     }
     
-    // 处理节拍器音频（无论是否有段在播放）
-    metronome_process_audio(output_data, length);
+    /* 注意：Effect Graph 模式下节拍器由图的 Metronome 源节点单独处理，
+     * 此处不再调用 metronome_process_audio，避免重复叠加。
+     * 传统模式 (AudioLoopMinimal) 会在调用本函数后显式调用 metronome_process_audio。 */
 }
 
 /**
@@ -993,62 +1094,29 @@ void loop_start_new_segment(void)
         return;
     }
     
-    // 计算新段的起始地址 - 动态分配，接在所有已用空间之后
-    uint32_t max_end_address = 0x40000;  // 基地址
+    // Flash0 全片归 Looper，段 0 固定从地址 0 开始，后续段紧接已用空间
+    uint32_t max_end_address = 0x000000;  // 基地址：Flash0 起始
     for (i = 0; i < MAX_SEGMENTS; i++) {
         if (g_loop_manager.segments[i].is_active && g_loop_manager.segments[i].length_pages > 0) {
-            uint32_t end_addr = g_loop_manager.segments[i].start_address + 
+            uint32_t end_addr = g_loop_manager.segments[i].start_address +
                                g_loop_manager.segments[i].length_pages * g_loop_manager.page_size;
             if (end_addr > max_end_address) {
                 max_end_address = end_addr;
             }
         }
     }
-    
+
     // 页对齐
     if (max_end_address % g_loop_manager.page_size != 0) {
         max_end_address = ((max_end_address / g_loop_manager.page_size) + 1) * g_loop_manager.page_size;
     }
-    
+
     uint32_t start_address = max_end_address;
-    
-    DBG("Segment %d: dynamic start_address = 0x%08lX (after all used space)\n",
-        new_segment, (unsigned long)start_address);
-    
-    // 重要: 在录制前擦除Flash扇区，否则会导致写入失败
-    // NOR Flash扇区大小通常为4KB (0x1000)
-    // 为新段擦除足够的空间 (预分配1MB空间)
-    uint32_t erase_size = 1024 * 1024;  // 1MB
-    uint32_t sector_size = 4096;  // 4KB扇区
-    uint32_t sectors_to_erase = (erase_size + sector_size - 1) / sector_size;
-    uint32_t erase_offset = start_address;
-    
-    DBG("Erasing %lu sectors (%lu KB) at offset 0x%08lX for segment %d\n",
-        (unsigned long)sectors_to_erase, (unsigned long)(erase_size / 1024),
-        (unsigned long)erase_offset, new_segment);
-    
-    // 擦除扇区 - 直接使用底层Flash API（绕过BG_FlashMgr）
-    uint32_t sector_idx;
-    for (sector_idx = 0; sector_idx < sectors_to_erase; sector_idx++) {
-        uint32_t current_offset = erase_offset + (sector_idx * sector_size);
-        FlashStatus_t erase_result = FlashPartition_LooperEraseSector(current_offset);
-        
-        if (erase_result != FLASH_OK) {
-            DBG("Flash erase failed at offset 0x%08lX: %d\n",
-                (unsigned long)current_offset, erase_result);
-            // 擦除失败，停止准备
-            return;
-        }
-        
-        // 每擦除64个扇区打印一次进度，避免日志过多
-        if (sector_idx % 64 == 0 || sector_idx == sectors_to_erase - 1) {
-            DBG("Erasing progress: %lu/%lu sectors\n",
-                (unsigned long)(sector_idx + 1), (unsigned long)sectors_to_erase);
-        }
-    }
-    
-    DBG("Flash erase completed for segment %d\n", new_segment);
-    
+
+    DBG("Segment %d: start_address = 0x%08lX\n", new_segment, (unsigned long)start_address);
+
+    // 擦除由 loop_flash_erase_reinit() 或 loop_reset() 在录制前显式触发，此处不再重复擦除
+
     // 初始化新段
     g_loop_manager.segments[new_segment].start_address = start_address;
     g_loop_manager.segments[new_segment].length_pages = 0;  // 从0开始，正常录制
@@ -1094,7 +1162,12 @@ void loop_stop_current_segment(uint8_t segment_index)
     
     // 确保有数据可以复制
     if (segment->length_pages == 0) {
-        DBG("Warning: No data to copy for segment %d\n", segment_index);
+        DBG("Warning: No data recorded for segment %d, marking inactive\n", segment_index);
+        segment->state = SEGMENT_INACTIVE;
+        segment->is_active = 0;
+        g_loop_manager.active_segments = (g_loop_manager.active_segments > 0)
+                                         ? g_loop_manager.active_segments - 1 : 0;
+        loop_update_global_state();
         return;
     }
     
@@ -1203,6 +1276,16 @@ void loop_handle_segment_button(uint8_t segment_index)
         return;
     }
 
+    /* Flash擦除：先主动 poll 一次 BUSY，已完成则清零放行 */
+    if (g_loop_manager.chip_erase_pending) {
+        if (FlashPartition_LooperIsErasing()) {
+            DBG("[Looper] Flash erase in progress, input ignored\n");
+            return;
+        }
+        g_loop_manager.chip_erase_pending = 0;
+        DBG("[Looper] Chip erase done (detected on segment button), unblocked\n");
+    }
+
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
     switch (segment->state) {
@@ -1245,6 +1328,19 @@ SegmentState_t loop_get_segment_state(uint8_t segment_index)
         return SEGMENT_INACTIVE;
     }
     return g_loop_manager.segments[segment_index].state;
+}
+
+/**
+ * @brief 获取指定段已录制的页数
+ * @param segment_index 段索引 (0-3)
+ * @return 已录制页数（0 表示没有数据）
+ */
+uint32_t loop_get_segment_length_pages(uint8_t segment_index)
+{
+    if (segment_index >= MAX_SEGMENTS) {
+        return 0;
+    }
+    return g_loop_manager.segments[segment_index].length_pages;
 }
 
 /**

@@ -41,6 +41,8 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import androidx.core.content.FileProvider;
 import android.widget.EditText;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.core.view.GravityCompat;
 
 public class HomeActivity extends AppCompatActivity {
     private boolean isMultiSelectMode = false; // 是否多选模式
@@ -48,13 +50,20 @@ public class HomeActivity extends AppCompatActivity {
     private ExportConfigManager exportConfigManager; // 导出配置管理器
     private BluetoothHelper bluetoothHelper; // 蓝牙助手
 
+    // 侧边栏相关
+    private DrawerLayout drawerLayout;
+    private RecyclerView rvCategories;
+    private CategoryAdapter categoryAdapter;
+    private List<CategoryManager.Category> categoryList;
+    private String currentCategoryId = CategoryManager.DEFAULT_CATEGORY_ID;
+    private TextView tvCurrentCategory;
+
     private static final int REQUEST_NOTIFICATION_PERMISSION = 100;
     private static final int REQUEST_STORAGE_PERMISSION = 101;
 
     private RecyclerView projectRecyclerView;
     private List<ImageProject> projectList;
     private ProjectAdapter projectAdapter;
-    private ActivityResultLauncher<Intent> importLauncher;
 
     // 蓝牙状态UI组件
     private TextView tvBluetoothStatus;
@@ -95,6 +104,21 @@ public class HomeActivity extends AppCompatActivity {
         exportPanel = findViewById(R.id.export_panel);
         if (exportPanel != null) exportPanel.setVisibility(View.GONE);
 
+        // 初始化当前分类标签
+        tvCurrentCategory = findViewById(R.id.tv_current_category);
+
+        // 初始化 DrawerLayout 和侧边栏
+        drawerLayout = findViewById(R.id.drawer_layout);
+        initSidebar();
+
+        // "分类"按钮打开侧边栏
+        View btnToggleDrawer = findViewById(R.id.btn_toggle_drawer);
+        if (btnToggleDrawer != null) {
+            btnToggleDrawer.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.openDrawer(GravityCompat.START);
+            });
+        }
+
         // 监听蓝牙连接状态变化
         bluetoothHelper.setOnConnectionChangedListener(new BluetoothHelper.OnConnectionChangedListener() {
             @Override
@@ -122,20 +146,8 @@ public class HomeActivity extends AppCompatActivity {
             if (item.getItemId() == R.id.menu_create) {
                 startActivity(new Intent(HomeActivity.this, CreateProjectActivity.class));
                 return true;
-            } else if (item.getItemId() == R.id.menu_import) {
-                openImportFileSelector();
-                return true;
-            } else if (item.getItemId() == R.id.menu_export) {
+            } else if (item.getItemId() == R.id.menu_wechat_export) {
                 toggleMultiSelectMode();
-                return true;
-            } else if (item.getItemId() == R.id.menu_export_downloads) {
-                exportToDownloads();
-                return true;
-            } else if (item.getItemId() == R.id.menu_export_settings) {
-                startActivity(new Intent(HomeActivity.this, ExportSettingsActivity.class));
-                return true;
-            } else if (item.getItemId() == R.id.menu_import_wechat) {
-                openImportFromWechat();
                 return true;
             } else if (item.getItemId() == R.id.menu_bluetooth) {
                 showBluetoothStatusDialog();
@@ -149,10 +161,21 @@ public class HomeActivity extends AppCompatActivity {
         if (btnExportSelected != null) {
             btnExportSelected.setOnClickListener(v -> {
                 android.util.Log.d("ExportDebug", "点击导出按钮");
-                exportAllSelectedProjects();
+                showWechatExportDialog();
             });
         }
-        initImportLauncher();
+
+        // 初始化移至分类按钮点击事件
+        View btnMoveSelected = findViewById(R.id.btn_move_selected);
+        if (btnMoveSelected != null) {
+            btnMoveSelected.setOnClickListener(v -> showMoveSelectedToCategory());
+        }
+
+        // 初始化删除按钮点击事件
+        View btnDeleteSelected = findViewById(R.id.btn_delete_selected);
+        if (btnDeleteSelected != null) {
+            btnDeleteSelected.setOnClickListener(v -> showDeleteSelectedDialog());
+        }
         
         // 处理从微信等外部应用传入的ZIP文件
         handleIncomingIntent(getIntent());
@@ -194,19 +217,120 @@ public class HomeActivity extends AppCompatActivity {
      * 确认并导入项目
      */
     private void confirmAndImport(Uri fileUri) {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("导入项目")
-                .setMessage("是否导入此项目文件？")
-                .setPositiveButton("导入", (dialog, which) -> {
-                    boolean success = importProjectFromUri(fileUri);
-                    Toast.makeText(this, success ? "导入成功" : "导入失败（可能不是有效的项目文件）", Toast.LENGTH_SHORT).show();
-                    if (success) {
-                        // 刷新列表
-                        initProjectList();
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
+        // 先复制到临时文件以便检测
+        String tempZipPath = FileUtils.getTempImportDir(this) + "/detect_" + System.currentTimeMillis() + ".tmp";
+        try {
+            File tempZipFile = new File(tempZipPath);
+            File parentDir = tempZipFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            
+            try (InputStream is = getContentResolver().openInputStream(fileUri);
+                 java.io.FileOutputStream fos = new java.io.FileOutputStream(tempZipPath)) {
+                
+                if (is == null) {
+                    Toast.makeText(this, "无法读取文件", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, len);
+                }
+            }
+            
+            // 检测是否为总包
+            final int projectCount = ProjectManager.detectBundlePackage(tempZipPath);
+            final String finalTempPath = tempZipPath;
+            
+            if (projectCount > 0) {
+                // 是总包，显示批量导入确认
+                new android.app.AlertDialog.Builder(this)
+                        .setTitle("导入总包")
+                        .setMessage("检测到总包文件，包含 " + projectCount + " 个项目，是否导入？")
+                        .setPositiveButton("导入", (dialog, which) -> {
+                            importBundlePackage(finalTempPath, projectCount);
+                        })
+                        .setNegativeButton("取消", (dialog, which) -> {
+                            new File(finalTempPath).delete();
+                        })
+                        .show();
+            } else if (projectCount == 0) {
+                // 是单个项目文件
+                new android.app.AlertDialog.Builder(this)
+                        .setTitle("导入项目")
+                        .setMessage("是否导入此项目文件？")
+                        .setPositiveButton("导入", (dialog, which) -> {
+                            boolean success = ProjectManager.importProject(this, finalTempPath);
+                            Toast.makeText(this, success ? "导入成功" : "导入失败（可能不是有效的项目文件）", Toast.LENGTH_SHORT).show();
+                            if (success) {
+                                initProjectList();
+                            }
+                            new File(finalTempPath).delete();
+                        })
+                        .setNegativeButton("取消", (dialog, which) -> {
+                            new File(finalTempPath).delete();
+                        })
+                        .show();
+            } else {
+                // 检测失败
+                Toast.makeText(this, "无法识别文件格式", Toast.LENGTH_SHORT).show();
+                new File(finalTempPath).delete();
+            }
+            
+        } catch (Exception e) {
+            Log.e("HomeActivity", "检测文件失败", e);
+            Toast.makeText(this, "文件读取失败", Toast.LENGTH_SHORT).show();
+            new File(tempZipPath).delete();
+        }
+    }
+    
+    /**
+     * 导入总包
+     */
+    private void importBundlePackage(String bundleZipPath, int totalCount) {
+        // 显示进度对话框
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setTitle("导入总包");
+        progressDialog.setMessage("正在导入项目...");
+        progressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setMax(totalCount);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        // 异步导入
+        new Thread(() -> {
+            int successCount = ProjectManager.importBundlePackage(this, bundleZipPath, 
+                (current, total, projectName) -> {
+                    // 更新进度对话框
+                    runOnUiThread(() -> {
+                        progressDialog.setProgress(current);
+                        progressDialog.setMessage("正在导入: " + projectName + " (" + current + "/" + total + ")");
+                    });
+                });
+            
+            runOnUiThread(() -> {
+                progressDialog.dismiss();
+                new File(bundleZipPath).delete();
+                
+                String message = "成功导入 " + successCount + " 个项目";
+                if (successCount < totalCount) {
+                    message += "，失败 " + (totalCount - successCount) + " 个";
+                }
+                
+                new android.app.AlertDialog.Builder(this)
+                        .setTitle("导入完成")
+                        .setMessage(message)
+                        .setPositiveButton("确定", null)
+                        .show();
+                
+                if (successCount > 0) {
+                    initProjectList();
+                }
+            });
+        }).start();
     }
 
     /**
@@ -241,6 +365,205 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    // ===================== 侧边栏 & 分类管理 =====================
+
+    /** 初始化侧边栏 */
+    private void initSidebar() {
+        rvCategories = findViewById(R.id.rv_categories);
+        if (rvCategories == null) return;
+        rvCategories.setLayoutManager(new LinearLayoutManager(this));
+
+        categoryList = CategoryManager.getCategories(this);
+        categoryAdapter = new CategoryAdapter(categoryList);
+        rvCategories.setAdapter(categoryAdapter);
+
+        // 添加分类按钮
+        View btnAddCategory = findViewById(R.id.btn_add_category);
+        if (btnAddCategory != null) {
+            btnAddCategory.setOnClickListener(v -> showAddCategoryDialog());
+        }
+
+        refreshCategoryHeader();
+    }
+
+    /** 刷新顶部分类标题 */
+    private void refreshCategoryHeader() {
+        if (tvCurrentCategory == null) return;
+        String name = CategoryManager.getCategoryName(this, currentCategoryId);
+        tvCurrentCategory.setText("📁 " + name);
+    }
+
+    /** 弹出新增分类输入框 */
+    private void showAddCategoryDialog() {
+        EditText et = new EditText(this);
+        et.setHint("分类名称");
+        et.setPadding(60, 40, 60, 40);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("新建分类")
+                .setView(et)
+                .setPositiveButton("确定", (d, w) -> {
+                    String name = et.getText().toString().trim();
+                    if (name.isEmpty()) {
+                        Toast.makeText(this, "名称不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    CategoryManager.addCategory(this, name);
+                    refreshSidebar();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 弹出重命名分类输入框 */
+    private void showRenameCategoryDialog(CategoryManager.Category category, int position) {
+        EditText et = new EditText(this);
+        et.setText(category.getName());
+        et.setSelectAllOnFocus(true);
+        et.setPadding(60, 40, 60, 40);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("重命名分类")
+                .setView(et)
+                .setPositiveButton("确定", (d, w) -> {
+                    String name = et.getText().toString().trim();
+                    if (name.isEmpty()) {
+                        Toast.makeText(this, "名称不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    CategoryManager.renameCategory(this, category.getId(), name);
+                    refreshSidebar();
+                    refreshCategoryHeader();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 删除分类确认 */
+    private void confirmDeleteCategory(CategoryManager.Category category, int position) {
+        if (CategoryManager.DEFAULT_CATEGORY_ID.equals(category.getId())) {
+            Toast.makeText(this, "默认分类不可删除", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // 计算该分类下的项目数
+        List<ImageProject> categoryProjects = new ArrayList<>();
+        for (ImageProject p : ProjectManager.getProjects(this)) {
+            if (category.getId().equals(p.getCategoryId())) {
+                categoryProjects.add(p);
+            }
+        }
+        
+        String message = "确定要删除分类「" + category.getName() + "」及其下的所有项目吗？\n";
+        if (categoryProjects.size() > 0) {
+            message += "\n即将删除 " + categoryProjects.size() + " 个项目，此操作不可撤销。";
+        } else {
+            message += "\n该分类下没有项目。";
+        }
+        
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("删除分类")
+                .setMessage(message)
+                .setPositiveButton("确认删除", (d, w) -> {
+                    // 先将当前分类切换到默认分类（如果当前正在看被删除的分类）
+                    if (currentCategoryId.equals(category.getId())) {
+                        currentCategoryId = CategoryManager.DEFAULT_CATEGORY_ID;
+                        refreshCategoryHeader();
+                    }
+                    // 执行删除（会删除分类和其下的所有项目及文件夹）
+                    CategoryManager.deleteCategory(this, category.getId());
+                    // 刷新UI
+                    refreshSidebar();
+                    initProjectList();
+                    Toast.makeText(this, "分类及其项目已删除", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 刷新侧边栏分类列表 */
+    private void refreshSidebar() {
+        categoryList = CategoryManager.getCategories(this);
+        if (categoryAdapter != null) {
+            categoryAdapter.updateData(categoryList);
+        }
+    }
+
+    /** 弹出移至分类对话框 */
+    private void showMoveToCategory(ImageProject project) {
+        List<CategoryManager.Category> cats = CategoryManager.getCategories(this);
+        String[] names = new String[cats.size()];
+        for (int i = 0; i < cats.size(); i++) names[i] = cats.get(i).getName();
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("移至分类")
+                .setItems(names, (d, which) -> {
+                    String targetId = cats.get(which).getId();
+                    ProjectManager.moveProjectToCategory(this, project, targetId);
+                    project.setCategoryId(targetId);
+                    // 如果当前显示的不是目标分类，则从列表移除
+                    if (!targetId.equals(currentCategoryId)) {
+                        projectList.remove(project);
+                        if (projectAdapter != null) projectAdapter.notifyDataSetChanged();
+                    }
+                    Toast.makeText(this, "已移至「" + cats.get(which).getName() + "」", Toast.LENGTH_SHORT).show();
+                    refreshSidebar();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 批量移动选中项目到指定分类 */
+    private void showMoveSelectedToCategory() {
+        if (projectAdapter == null) return;
+        List<ImageProject> selected = projectAdapter.getSelectedProjects();
+        if (selected.isEmpty()) {
+            Toast.makeText(this, "请先选择要移动的项目", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<CategoryManager.Category> cats = CategoryManager.getCategories(this);
+        String[] names = new String[cats.size()];
+        for (int i = 0; i < cats.size(); i++) names[i] = cats.get(i).getName();
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("将 " + selected.size() + " 个项目移至分类")
+                .setItems(names, (d, which) -> {
+                    String targetId = cats.get(which).getId();
+                    String targetName = cats.get(which).getName();
+                    for (ImageProject project : selected) {
+                        ProjectManager.moveProjectToCategory(this, project, targetId);
+                    }
+                    // 刷新项目列表
+                    initProjectList();
+                    // 退出多选模式
+                    toggleMultiSelectMode();
+                    refreshSidebar();
+                    Toast.makeText(this, "已将 " + selected.size() + " 个项目移至「" + targetName + "」", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 删除选中项目（带二次确认）*/
+    private void showDeleteSelectedDialog() {
+        if (projectAdapter == null) return;
+        List<ImageProject> selected = projectAdapter.getSelectedProjects();
+        if (selected.isEmpty()) {
+            Toast.makeText(this, "请先选择要删除的项目", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("删除项目")
+                .setMessage("确定要删除选中的 " + selected.size() + " 个项目吗？\n此操作不可撤销。")
+                .setPositiveButton("删除", (d, w) -> {
+                    ProjectManager.deleteProjects(this, selected);
+                    initProjectList();
+                    toggleMultiSelectMode(); // 退出多选模式
+                    Toast.makeText(this, "已删除 " + selected.size() + " 个项目", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
     // 切换多选模式
     private void toggleMultiSelectMode() {
         isMultiSelectMode = !isMultiSelectMode;
@@ -251,7 +574,7 @@ public class HomeActivity extends AppCompatActivity {
             }
             if (projectAdapter != null) projectAdapter.setSelectMode(true);
             Toolbar toolbar = findViewById(R.id.toolbar);
-            toolbar.setTitle("选择项目（可多选）");
+            toolbar.setTitle("选择要导出到微信的项目");
         } else {
             if (exportPanel != null) {
                 exportPanel.setVisibility(View.GONE);
@@ -261,41 +584,250 @@ public class HomeActivity extends AppCompatActivity {
                 projectAdapter.clearSelections();
             }
             Toolbar toolbar = findViewById(R.id.toolbar);
-            toolbar.setTitle("我的项目");
+            toolbar.setTitle("项目列表");
         }
     }
 
-    // 批量导出选中项目到Downloads目录
-    private void exportAllSelectedProjects() {
-        android.util.Log.d("ExportDebug", "开始导出流程");
+    // 显示微信导出选择对话框
+    private void showWechatExportDialog() {
+        android.util.Log.d("ExportDebug", "显示导出选择对话框");
         
         if (projectAdapter == null) {
             Toast.makeText(this, "适配器未初始化", Toast.LENGTH_SHORT).show();
-            android.util.Log.e("ExportDebug", "projectAdapter为null");
-            return;
-        }
-        
-        // 检查存储权限
-        if (!checkStoragePermissions()) {
-            android.util.Log.d("ExportDebug", "需要请求存储权限");
-            requestStoragePermissions();
             return;
         }
         
         List<ImageProject> selectedProjects = projectAdapter.getSelectedProjects();
-        android.util.Log.d("ExportDebug", "getSelectedProjects()返回数量：" + selectedProjects.size());
+        android.util.Log.d("ExportDebug", "选中项目数量：" + selectedProjects.size());
         
         if (selectedProjects.isEmpty()) {
             Toast.makeText(this, "请先选择要导出的项目", Toast.LENGTH_SHORT).show();
-            android.util.Log.w("ExportDebug", "没有选中的项目");
             return;
         }
         
-        // 直接导出到Downloads目录
-        batchExportToDownloads(selectedProjects);
+        // 显示导出方式选择对话框
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("选择导出方式")
+            .setMessage("已选择 " + selectedProjects.size() + " 个项目")
+            .setPositiveButton("逐个导出", (dialog, which) -> {
+                exportProjectsIndividually(selectedProjects);
+            })
+            .setNegativeButton("总包导出", (dialog, which) -> {
+                exportProjectsAsBundle(selectedProjects);
+            })
+            .setNeutralButton("取消", null)
+            .show();
+    }
+    
+    // 逐个导出项目到微信
+    private void exportProjectsIndividually(List<ImageProject> projects) {
+        android.util.Log.d("ExportDebug", "开始逐个导出，共" + projects.size() + "个项目");
+        
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("导出项目");
+        progressDialog.setMessage("正在导出项目...");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setMax(projects.size());
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        new Thread(() -> {
+            int successCount = 0;
+            StringBuilder errorLog = new StringBuilder();
+            java.util.List<String> exportedFiles = new java.util.ArrayList<>();
+            
+            for (int i = 0; i < projects.size(); i++) {
+                ImageProject project = projects.get(i);
+                final int currentIndex = i;
+                
+                runOnUiThread(() -> {
+                    progressDialog.setProgress(currentIndex);
+                    progressDialog.setMessage("正在导出: " + project.getProjectName());
+                });
+                
+                try {
+                    String zipPath = ProjectManager.exportProject(HomeActivity.this, project);
+                    if (zipPath != null) {
+                        exportedFiles.add(zipPath);
+                        successCount++;
+                        android.util.Log.d("ExportDebug", "成功导出：" + zipPath);
+                    } else {
+                        errorLog.append(project.getProjectName()).append(": 导出失败\n");
+                    }
+                } catch (Exception e) {
+                    android.util.Log.e("ExportDebug", "导出异常: " + project.getProjectName(), e);
+                    errorLog.append(project.getProjectName()).append(": ").append(e.getMessage()).append("\n");
+                }
+            }
+            
+            final int finalSuccessCount = successCount;
+            final String finalErrorLog = errorLog.toString();
+            final int finalTotal = projects.size();
+            final java.util.List<String> finalExportedFiles = new java.util.ArrayList<>(exportedFiles);
+            
+            runOnUiThread(() -> {
+                progressDialog.dismiss();
+                
+                if (finalSuccessCount == 0) {
+                    new android.app.AlertDialog.Builder(this)
+                        .setTitle("导出失败")
+                        .setMessage("无法导出项目\n\n错误详情：\n" + finalErrorLog)
+                        .setPositiveButton("确定", null)
+                        .show();
+                } else if (finalSuccessCount < finalTotal) {
+                    String message = String.format("导出完成：成功%d个，失败%d个\n\n失败详情：\n%s", 
+                        finalSuccessCount, finalTotal - finalSuccessCount, finalErrorLog);
+                    new android.app.AlertDialog.Builder(this)
+                        .setTitle("部分导出成功")
+                        .setMessage(message)
+                        .setPositiveButton("分享到微信", (d, w) -> shareFilesToWechat(finalExportedFiles))
+                        .setNegativeButton("取消", null)
+                        .show();
+                } else {
+                    // 全部成功，直接分享
+                    shareFilesToWechat(finalExportedFiles);
+                }
+                
+                // 导出完成后退出多选模式
+                toggleMultiSelectMode();
+            });
+        }).start();
+    }
+    
+    // 总包导出项目到微信
+    private void exportProjectsAsBundle(List<ImageProject> projects) {
+        android.util.Log.d("ExportDebug", "开始总包导出，共" + projects.size() + "个项目");
+        
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("总包导出");
+        progressDialog.setMessage("正在打包项目...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        
+        new Thread(() -> {
+            try {
+                // 1. 先导出每个项目为.gs文件
+                java.util.List<File> gsFiles = new java.util.ArrayList<>();
+                for (ImageProject project : projects) {
+                    String gsPath = ProjectManager.exportProject(HomeActivity.this, project);
+                    if (gsPath != null) {
+                        gsFiles.add(new File(gsPath));
+                    }
+                }
+                
+                if (gsFiles.isEmpty()) {
+                    runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        Toast.makeText(this, "导出失败：无法生成项目文件", Toast.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
+                
+                // 2. 将所有.gs文件打包成一个zip
+                String bundleFileName = "项目合集_" + System.currentTimeMillis() + ".zip";
+                String bundlePath = FileUtils.getExportDir(this) + "/" + bundleFileName;
+                
+                boolean success = FileUtils.zipFiles(gsFiles.toArray(new File[0]), bundlePath);
+                
+                // 3. 清理临时的.gs文件
+                for (File gsFile : gsFiles) {
+                    gsFile.delete();
+                }
+                
+                if (success) {
+                    File bundleFile = new File(bundlePath);
+                    runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        // 分享总包文件
+                        java.util.List<String> bundleList = new java.util.ArrayList<>();
+                        bundleList.add(bundlePath);
+                        shareFilesToWechat(bundleList);
+                        toggleMultiSelectMode();
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        Toast.makeText(this, "总包导出失败", Toast.LENGTH_SHORT).show();
+                    });
+                }
+                
+            } catch (Exception e) {
+                android.util.Log.e("ExportDebug", "总包导出异常", e);
+                runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(this, "总包导出失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+    
+    // 分享文件列表到微信
+    private void shareFilesToWechat(java.util.List<String> filePaths) {
+        if (filePaths == null || filePaths.isEmpty()) {
+            Toast.makeText(this, "没有可分享的文件", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        try {
+            if (filePaths.size() == 1) {
+                // 单个文件，直接分享
+                File file = new File(filePaths.get(0));
+                Uri contentUri = FileProvider.getUriForFile(
+                    HomeActivity.this,
+                    getPackageName() + ".fileprovider",
+                    file);
+                
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("application/octet-stream");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                shareIntent.setPackage("com.tencent.mm");
+                
+                try {
+                    startActivity(shareIntent);
+                } catch (android.content.ActivityNotFoundException e) {
+                    shareIntent.setPackage(null);
+                    startActivity(Intent.createChooser(shareIntent, "分享到..."));
+                }
+            } else {
+                // 多个文件，使用ACTION_SEND_MULTIPLE
+                java.util.ArrayList<Uri> uris = new java.util.ArrayList<>();
+                for (String path : filePaths) {
+                    File file = new File(path);
+                    Uri uri = FileProvider.getUriForFile(
+                        HomeActivity.this,
+                        getPackageName() + ".fileprovider",
+                        file);
+                    uris.add(uri);
+                }
+                
+                Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                shareIntent.setType("application/octet-stream");
+                shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                shareIntent.setPackage("com.tencent.mm");
+                
+                try {
+                    startActivity(shareIntent);
+                } catch (android.content.ActivityNotFoundException e) {
+                    shareIntent.setPackage(null);
+                    startActivity(Intent.createChooser(shareIntent, "分享到..."));
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.e("ExportDebug", "分享失败", e);
+            Toast.makeText(this, "分享失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
-    // 批量导出到Downloads目录的方法
+    // 批量导出选中项目（已废弃，保留用于兼容）
+    @Deprecated
+    private void exportAllSelectedProjects() {
+        showWechatExportDialog();
+    }
+
+    // 批量导出到Downloads目录的方法（已废弃，保留用于兼容）
+    @Deprecated
     private void batchExportToDownloads(List<ImageProject> projects) {
         // 显示进度对话框
         ProgressDialog progressDialog = new ProgressDialog(this);
@@ -397,23 +929,6 @@ public class HomeActivity extends AppCompatActivity {
         }).start();
     }
 
-    // 直接导出到Downloads目录
-    private void exportToDownloads() {
-        if (projectList == null || projectList.isEmpty()) {
-            Toast.makeText(this, "没有项目可以导出", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("导出到Downloads")
-            .setMessage("将所有项目导出到Downloads目录")
-            .setPositiveButton("确定", (dialog, which) -> {
-                batchExportToDownloads(projectList);
-            })
-            .setNegativeButton("取消", null)
-            .show();
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.toolbar_menu, menu);
@@ -422,10 +937,20 @@ public class HomeActivity extends AppCompatActivity {
 
     private void initProjectList() {
         projectRecyclerView = findViewById(R.id.rv_project_list);
-        projectList = ProjectManager.getProjects(this);
+        
+        // 加载全部项目后按当前分类过滤
+        List<ImageProject> allProjects = ProjectManager.getProjects(this);
+        List<ImageProject> filtered = new ArrayList<>();
+        for (ImageProject p : allProjects) {
+            if (currentCategoryId.equals(p.getCategoryId())) {
+                filtered.add(p);
+            }
+        }
+        
+        if (projectList == null) projectList = new ArrayList<>();
         
         if (projectAdapter == null) {
-            // 首次初始化RecyclerView和Adapter
+            projectList = filtered;
             projectRecyclerView.setLayoutManager(new LinearLayoutManager(this));
             projectAdapter = new ProjectAdapter(projectList, new OnItemLongClickListener() {
                 @Override
@@ -435,9 +960,12 @@ public class HomeActivity extends AppCompatActivity {
             });
             projectRecyclerView.setAdapter(projectAdapter);
         } else {
-            // 仅更新数据，避免重新创建adapter
-            projectAdapter.updateProjects(projectList);
+            projectAdapter.updateProjects(filtered);
+            projectList = filtered;
         }
+        
+        // 刷新侧边栏数量
+        refreshSidebar();
     }
 
     private void showProjectPopupMenu(ImageProject project, View anchorView) {
@@ -464,34 +992,9 @@ public class HomeActivity extends AppCompatActivity {
         popup.show();
     }
 
-    private void openImportFileSelector() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.setType("*/*");
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/octet-stream"});
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        importLauncher.launch(intent);
-    }
-
-    private void initImportLauncher() {
-        importLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        Uri importUri = result.getData().getData();
-                        if (importUri != null) {
-                            boolean success = importProjectFromUri(importUri);
-                            Toast.makeText(this, success ? "导入成功" : "导入失败", Toast.LENGTH_SHORT).show();
-                            if (success) {
-                                projectList.clear();
-                                projectList.addAll(ProjectManager.getProjects(this));
-                                projectAdapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-                }
-        );
-    }
-
+    /**
+     * 确认并导入项目（从外部应用接收）
+     */
     private boolean importProjectFromUri(Uri uri) {
         try {
             Log.d("HomeActivity", "开始从URI导入: " + uri);
@@ -648,7 +1151,7 @@ public class HomeActivity extends AppCompatActivity {
             
             holder.itemView.setOnLongClickListener(v -> {
                 if (isSelectMode) return false;
-                String[] options = {"重命名", "分享到微信", "删除"};
+                String[] options = {"重命名", "分享到微信", "移至分类"};
                 new android.app.AlertDialog.Builder(HomeActivity.this)
                         .setTitle(project.getProjectName())
                         .setItems(options, (dialog, which) -> {
@@ -659,19 +1162,8 @@ public class HomeActivity extends AppCompatActivity {
                                 case 1: // 分享到微信
                                     shareProjectToWechat(project);
                                     break;
-                                case 2: // 删除
-                                    new android.app.AlertDialog.Builder(HomeActivity.this)
-                                        .setTitle("删除项目")
-                                        .setMessage("确定要删除该项目吗？")
-                                        .setPositiveButton("删除", (d2, w2) -> {
-                                            ProjectManager.deleteProject(HomeActivity.this, project);
-                                            projects.remove(holder.getAdapterPosition());
-                                            notifyItemRemoved(holder.getAdapterPosition());
-                                            notifyItemRangeChanged(holder.getAdapterPosition(), projects.size());
-                                            Toast.makeText(HomeActivity.this, "项目已删除", Toast.LENGTH_SHORT).show();
-                                        })
-                                        .setNegativeButton("取消", null)
-                                        .show();
+                                case 2: // 移至分类
+                                    showMoveToCategory(project);
                                     break;
                             }
                         })
@@ -698,6 +1190,90 @@ public class HomeActivity extends AppCompatActivity {
 
     interface OnItemLongClickListener {
         void onItemLongClick(ImageProject project, View view);
+    }
+
+    // ===================== 分类侧边栏 Adapter =====================
+    class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
+        private List<CategoryManager.Category> categories;
+
+        CategoryAdapter(List<CategoryManager.Category> categories) {
+            this.categories = new ArrayList<>(categories);
+        }
+
+        void updateData(List<CategoryManager.Category> newList) {
+            this.categories = new ArrayList<>(newList);
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View v = getLayoutInflater().inflate(R.layout.item_category, parent, false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            CategoryManager.Category cat = categories.get(position);
+            holder.tvName.setText(cat.getName());
+
+            // 计算该分类下的项目数
+            int count = 0;
+            List<ImageProject> all = ProjectManager.getProjects(HomeActivity.this);
+            for (ImageProject p : all) {
+                if (cat.getId().equals(p.getCategoryId())) count++;
+            }
+            holder.tvCount.setText(count > 0 ? String.valueOf(count) : "");
+
+            // 选中态
+            boolean isSelected = cat.getId().equals(currentCategoryId);
+            holder.selectedBar.setVisibility(isSelected ? View.VISIBLE : View.INVISIBLE);
+            holder.tvName.setTextColor(isSelected ? 0xFF00FFA3 : 0xFFCCCCCC);
+            holder.itemView.setActivated(isSelected);
+
+            // 点击切换分类
+            holder.itemView.setOnClickListener(v -> {
+                currentCategoryId = cat.getId();
+                notifyDataSetChanged();
+                refreshCategoryHeader();
+                initProjectList();
+                if (drawerLayout != null) drawerLayout.closeDrawers();
+            });
+
+            // 长按：重命名或删除
+            holder.itemView.setOnLongClickListener(v -> {
+                String[] options;
+                if (CategoryManager.DEFAULT_CATEGORY_ID.equals(cat.getId())) {
+                    options = new String[]{"重命名"};
+                } else {
+                    options = new String[]{"重命名", "删除分类"};
+                }
+                new android.app.AlertDialog.Builder(HomeActivity.this)
+                        .setTitle(cat.getName())
+                        .setItems(options, (d, which) -> {
+                            if (which == 0) {
+                                showRenameCategoryDialog(cat, holder.getAdapterPosition());
+                            } else if (which == 1) {
+                                confirmDeleteCategory(cat, holder.getAdapterPosition());
+                            }
+                        })
+                        .show();
+                return true;
+            });
+        }
+
+        @Override
+        public int getItemCount() { return categories.size(); }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView tvName, tvCount;
+            View selectedBar;
+            ViewHolder(View itemView) {
+                super(itemView);
+                tvName = itemView.findViewById(R.id.tv_category_name);
+                tvCount = itemView.findViewById(R.id.tv_category_count);
+                selectedBar = itemView.findViewById(R.id.category_selected_bar);
+            }
+        }
     }
 
     private void requestNotificationPermission() {
@@ -790,6 +1366,10 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
+            if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawers();
+                return true;
+            }
             // 返回到主页面
             Intent intent = new Intent(HomeActivity.this, WelcomeActivity.class);
             startActivity(intent);
@@ -797,6 +1377,17 @@ public class HomeActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawers();
+        } else if (isMultiSelectMode) {
+            toggleMultiSelectMode();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     // 显示重命名对话框
@@ -878,217 +1469,6 @@ public class HomeActivity extends AppCompatActivity {
                 });
             }
         }).start();
-    }
-
-    /**
-     * 从微信导入 — 扫描微信文件保存目录，列出可导入的ZIP项目文件。
-     * 微信在不同版本/设备上的文件保存路径:
-     *   - Download/            (Android 11+ 默认)
-     *   - tencent/MicroMsg/Download/  (旧版微信)
-     *   - Android/data/com.tencent.mm/MicroMsg/Download/ (部分设备)
-     */
-    private void openImportFromWechat() {
-        // 检查微信是否已安装
-        boolean wechatInstalled = isAppInstalled("com.tencent.mm");
-
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("从微信导入项目")
-                .setMessage(wechatInstalled
-                        ? "操作步骤：\n\n"
-                          + "1. 点击\"打开微信\"跳转到微信\n"
-                          + "2. 找到聊天中收到的项目文件(.gs)\n"
-                          + "3. 长按或点击该文件\n"
-                          + "4. 选择\"用其他应用打开\"\n"
-                          + "5. 选择本应用，即可自动导入\n\n"
-                          + "也可以选择\"扫描已下载\"查找已保存到本地的微信文件。"
-                        : "未检测到微信。\n\n"
-                          + "你可以选择\"扫描已下载\"查找本地的项目文件，\n"
-                          + "或\"手动选择\"从文件管理器中选择。")
-                .setPositiveButton(wechatInstalled ? "打开微信" : "扫描已下载", (d, w) -> {
-                    if (wechatInstalled) {
-                        launchWechat();
-                    } else {
-                        scanAndShowWechatFiles();
-                    }
-                })
-                .setNeutralButton(wechatInstalled ? "扫描已下载" : "手动选择", (d, w) -> {
-                    if (wechatInstalled) {
-                        scanAndShowWechatFiles();
-                    } else {
-                        openImportFileSelector();
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
-    }
-
-    /**
-     * 检查应用是否已安装
-     */
-    private boolean isAppInstalled(String packageName) {
-        try {
-            getPackageManager().getPackageInfo(packageName, 0);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
-        }
-    }
-
-    /**
-     * 启动微信APP
-     */
-    private void launchWechat() {
-        try {
-            Intent launchIntent = getPackageManager().getLaunchIntentForPackage("com.tencent.mm");
-            if (launchIntent != null) {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(launchIntent);
-                Toast.makeText(this,
-                        "请在微信中找到项目文件，点击后选择\"用其他应用打开\"",
-                        Toast.LENGTH_LONG).show();
-            }
-        } catch (Exception e) {
-            Log.e("HomeActivity", "启动微信失败", e);
-            Toast.makeText(this, "启动微信失败，请手动打开微信", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * 扫描本地微信文件并显示选择对话框
-     */
-    private void scanAndShowWechatFiles() {
-        if (!checkStoragePermissions()) {
-            new android.app.AlertDialog.Builder(this)
-                    .setTitle("需要存储权限")
-                    .setMessage("扫描微信下载的文件需要存储权限。")
-                    .setPositiveButton("获取权限", (d, w) -> requestStoragePermissions())
-                    .setNeutralButton("手动选择", (d, w) -> openImportFileSelector())
-                    .setNegativeButton("取消", null)
-                    .show();
-            return;
-        }
-        new Thread(() -> {
-            List<File> zipFiles = scanWechatZipFiles();
-            runOnUiThread(() -> showWechatFilePickerDialog(zipFiles));
-        }).start();
-    }
-
-    /**
-     * 扫描微信接收文件常见目录中的 .gs 项目文件
-     */
-    private List<File> scanWechatZipFiles() {
-        List<File> result = new ArrayList<>();
-        File sdcard = Environment.getExternalStorageDirectory();
-
-        // 微信文件可能保存的目录列表
-        String[] wechatDirs = {
-            // Android 11+ 微信保存到公共 Download
-            sdcard + "/Download",
-            // 旧版微信
-            sdcard + "/tencent/MicroMsg/Download",
-            // 部分设备的微信路径
-            sdcard + "/Android/data/com.tencent.mm/MicroMsg/Download",
-            // 微信文件传输助手、企业微信等也可能存到这些位置
-            sdcard + "/Download/WeiXin",
-            sdcard + "/tencent/MicroMsg",
-        };
-
-        for (String dirPath : wechatDirs) {
-            File dir = new File(dirPath);
-            if (dir.exists() && dir.isDirectory()) {
-                scanZipFilesRecursive(dir, result, 2); // 最多递归2层
-            }
-        }
-
-        // 按修改时间降序排列（最新的在前）
-        result.sort((a, b) -> Long.compare(b.lastModified(), a.lastModified()));
-        return result;
-    }
-
-    /**
-     * 递归扫描目录中的 .gs 项目文件
-     */
-    private void scanZipFilesRecursive(File dir, List<File> result, int maxDepth) {
-        if (maxDepth < 0 || dir == null || !dir.isDirectory()) return;
-        File[] files = dir.listFiles();
-        if (files == null) return;
-        for (File f : files) {
-            String name = f.getName().toLowerCase(Locale.ROOT);
-            if (f.isFile() && (name.endsWith(".gs") || name.endsWith(".zip"))) {
-                result.add(f);
-            } else if (f.isDirectory() && maxDepth > 0) {
-                scanZipFilesRecursive(f, result, maxDepth - 1);
-            }
-        }
-    }
-
-    /**
-     * 显示微信文件选择对话框
-     */
-    private void showWechatFilePickerDialog(List<File> zipFiles) {
-        if (zipFiles.isEmpty()) {
-            // 没有找到文件，提示用户并提供备选方案
-            new android.app.AlertDialog.Builder(this)
-                    .setTitle("从微信导入")
-                    .setMessage("未在微信文件目录中找到项目文件。\n\n"
-                            + "请先在微信中打开收到的项目文件（.gs格式），选择\"用其他应用打开\"即可自动导入。\n\n"
-                            + "或者点击下方按钮手动浏览文件。")
-                    .setPositiveButton("手动选择文件", (dialog, which) -> openImportFileSelector())
-                    .setNegativeButton("取消", null)
-                    .show();
-            return;
-        }
-
-        // 构建文件列表显示名
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-        String[] displayItems = new String[zipFiles.size()];
-        for (int i = 0; i < zipFiles.size(); i++) {
-            File f = zipFiles.get(i);
-            String size = formatFileSize(f.length());
-            String date = sdf.format(f.lastModified());
-            // 显示: 文件名 (大小, 日期)
-            displayItems[i] = f.getName() + "\n" + size + "  " + date;
-        }
-
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("从微信导入 — 选择项目文件")
-                .setItems(displayItems, (dialog, which) -> {
-                    File selected = zipFiles.get(which);
-                    Log.d("HomeActivity", "选择微信文件: " + selected.getAbsolutePath());
-                    confirmAndImportFile(selected);
-                })
-                .setNeutralButton("手动选择", (dialog, which) -> openImportFileSelector())
-                .setNegativeButton("取消", null)
-                .show();
-    }
-
-    /**
-     * 确认并导入选中的文件
-     */
-    private void confirmAndImportFile(File zipFile) {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("导入项目")
-                .setMessage("是否导入项目文件？\n" + zipFile.getName())
-                .setPositiveButton("导入", (dialog, which) -> {
-                    boolean success = ProjectManager.importProject(HomeActivity.this, zipFile.getAbsolutePath());
-                    Toast.makeText(HomeActivity.this, success ? "导入成功" : "导入失败", Toast.LENGTH_SHORT).show();
-                    if (success) {
-                        projectList.clear();
-                        projectList.addAll(ProjectManager.getProjects(HomeActivity.this));
-                        projectAdapter.notifyDataSetChanged();
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
-    }
-
-    /**
-     * 格式化文件大小
-     */
-    private String formatFileSize(long bytes) {
-        if (bytes < 1024) return bytes + " B";
-        if (bytes < 1024 * 1024) return String.format(Locale.getDefault(), "%.1f KB", bytes / 1024.0);
-        return String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024));
     }
 
     // 显示蓝牙连接状态对话框

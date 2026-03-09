@@ -835,10 +835,12 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 		ProcessMicOutput();
 		ProcessSpeakerSwitch();
 
-		/* Looper录制处理 - 使用mic_buf_in（麦克风输入）*/
+		/* Looper录制处理 - 录制效果处理后的吉他信号（guitar_buf_out）
+		 * guitar_buf_out 是 ApplyAudioEffects + ProcessGuitarOutput 之后的信号，
+		 * 与实际听到的声音一致，是典型踏板式 Looper 的录制源。 */
 		if (AudioLooper.IsRecording())
 		{
-			AudioLooper.ProcessRecording32(BG_AudioManager.Audio_data.mic_buf_in,
+			AudioLooper.ProcessRecording32(BG_AudioManager.Audio_data.guitar_buf_out,
 			                               looper_flash_buffer, RealLen);
 		}
 
@@ -887,21 +889,38 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 			}
 			for (i = 0; i < RealLen; i++)
 			{
+				/* 逐声道饱和加法：guitar_out + USB + looper */
+				int32_t acc_l = (int16_t)(BG_AudioManager.Audio_data.guitar_buf_out[i] & 0xFFFF)
+				              + (int16_t)(BG_AudioManager.Audio_data.USB_dac_buf[i]    & 0xFFFF)
+				              + (int16_t)(looper_playback_buffer[i]                    & 0xFFFF);
+				int32_t acc_r = (int16_t)((BG_AudioManager.Audio_data.guitar_buf_out[i] >> 16) & 0xFFFF)
+				              + (int16_t)((BG_AudioManager.Audio_data.USB_dac_buf[i]    >> 16) & 0xFFFF)
+				              + (int16_t)((looper_playback_buffer[i]                    >> 16) & 0xFFFF);
+				if (acc_l >  32767) acc_l =  32767;
+				if (acc_l < -32768) acc_l = -32768;
+				if (acc_r >  32767) acc_r =  32767;
+				if (acc_r < -32768) acc_r = -32768;
 				BG_AudioManager.Audio_data.OutPut_buf[i] =
-					BG_AudioManager.Audio_data.guitar_buf_out[i] +
-					BG_AudioManager.Audio_data.USB_dac_buf[i] +
-					BG_AudioManager.Audio_data.mic_buf_in[i] +
-					looper_playback_buffer[i];
+					((uint32_t)(uint16_t)(int16_t)acc_r << 16) | ((uint16_t)(int16_t)acc_l & 0xFFFF);
 			}
 		}
 		else
 		{
 			for (i = 0; i < RealLen; i++)
 			{
+				/* 逐声道饱和加法：guitar_out + mic + looper */
+				int32_t acc_l = (int16_t)(BG_AudioManager.Audio_data.guitar_buf_out[i] & 0xFFFF)
+				              + (int16_t)(BG_AudioManager.Audio_data.mic_buf_in[i]    & 0xFFFF)
+				              + (int16_t)(looper_playback_buffer[i]                  & 0xFFFF);
+				int32_t acc_r = (int16_t)((BG_AudioManager.Audio_data.guitar_buf_out[i] >> 16) & 0xFFFF)
+				              + (int16_t)((BG_AudioManager.Audio_data.mic_buf_in[i]    >> 16) & 0xFFFF)
+				              + (int16_t)((looper_playback_buffer[i]                  >> 16) & 0xFFFF);
+				if (acc_l >  32767) acc_l =  32767;
+				if (acc_l < -32768) acc_l = -32768;
+				if (acc_r >  32767) acc_r =  32767;
+				if (acc_r < -32768) acc_r = -32768;
 				BG_AudioManager.Audio_data.OutPut_buf[i] =
-					BG_AudioManager.Audio_data.guitar_buf_out[i] +
-					BG_AudioManager.Audio_data.mic_buf_in[i] +
-					looper_playback_buffer[i];
+					((uint32_t)(uint16_t)(int16_t)acc_r << 16) | ((uint16_t)(int16_t)acc_l & 0xFFFF);
 			}
 		}
 		handle_usb_record(RealLen);
@@ -911,10 +930,12 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 
 // ==================== 主音频循环 ====================
 
-/* Effect Graph 处理模式开关 (1=使用Effect Graph, 0=使用传统模式) */
-#ifndef USE_EFFECT_GRAPH_MODE
-#define USE_EFFECT_GRAPH_MODE  1
+/* Effect Graph 处理模式开关 (1=使用Effect Graph, 0=使用传统模式)
+ * 当前强制设为 0，使用传统 AudioLoopMinimal 路径验证 Looper 正确性 */
+#ifdef USE_EFFECT_GRAPH_MODE
+#undef USE_EFFECT_GRAPH_MODE
 #endif
+#define USE_EFFECT_GRAPH_MODE  1
 
 /**
  * Effect Graph 驱动的音频处理循环 (修正版 v4)
@@ -1038,7 +1059,20 @@ static void AudioLoopWithGraph(void)
 		graph->drive_mode = DRIVE_MODE_ADC;
 	}
 	
-	/* 6. 调用 Effect Graph 处理 */
+	/* 6. 【修复加速Bug】Looper 录制/播放时强制 frame_size=48
+	 * 原因：每个 Flash 页固定存储 48 个采样。若 frame_size>48：
+	 *   - 录制端只保存前 48 个采样（丢弃剩余），但时间消耗了 frame_size 个采样
+	 *   - 播放端每次 play_position++ 固定推进 1 页(48采样)，但时间轴走了 frame_size
+	 *   二者均导致音频时间压缩 → 播放加速
+	 * 强制 frame_size=48 使录制和播放速率完全匹配 Flash 页大小
+	 */
+	if (AudioLooper.IsRecording() || AudioLooper.IsPlaying()) {
+		if (frame_size > 48) {
+			frame_size = 48;
+		}
+	}
+
+	/* 调用 Effect Graph 处理 */
 	processed_samples = EffectGraph_Process(frame_size);
 	
 	if (processed_samples > 0) {
@@ -1552,11 +1586,25 @@ static void Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_cou
 		out_buf[i] = 0;
 	}
 	
-	/* 累加所有输入 */
+	/* 【修复】逐声道饱和累加，避免 uint32_t 直接相加时 LOW16 溢出的进位污染 HIGH16
+	 * 格式约定（与 ADC_Mixer_Process 一致）:
+	 *   bits[15: 0] = LEFT  声道 (int16_t)
+	 *   bits[31:16] = RIGHT 声道 (int16_t)
+	 */
 	for (j = 0; j < in_count; j++) {
 		if (in_bufs[j]) {
 			for (i = 0; i < len; i++) {
-				out_buf[i] += in_bufs[j][i];
+				int32_t acc_left  = (int16_t)(out_buf[i] & 0xFFFF)
+				                  + (int16_t)(in_bufs[j][i] & 0xFFFF);
+				int32_t acc_right = (int16_t)((out_buf[i] >> 16) & 0xFFFF)
+				                  + (int16_t)((in_bufs[j][i] >> 16) & 0xFFFF);
+				/* 饱和到 16 位有符号范围 */
+				if (acc_left  >  32767) acc_left  =  32767;
+				if (acc_left  < -32768) acc_left  = -32768;
+				if (acc_right >  32767) acc_right =  32767;
+				if (acc_right < -32768) acc_right = -32768;
+				out_buf[i] = ((uint32_t)(uint16_t)(int16_t)acc_right << 16)
+				           | ((uint16_t)(int16_t)acc_left & 0xFFFF);
 			}
 		}
 	}
@@ -1612,43 +1660,27 @@ static uint16_t Metronome_GetAvailCallback(EffectNode_t *node)
  */
 static uint16_t LooperPlay_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
 {
-	static uint32_t call_count = 0;
 	uint16_t i;
 	uint16_t samples_filled = 0;
-	uint16_t samples_per_page = 48;  /* 每页固定 48 个样本 */
+	const uint16_t samples_per_page = 48;  /* 每页固定 48 个样本，必须与录音保持一致 */
 	
 	(void)node;
 	
-	call_count++;
-	
-	/* 限制最大长度 */
-	if (max_len > 256) {
-		max_len = 256;
-	}
-	
-	/* 先清零缓冲区 */
-	for (i = 0; i < max_len; i++) {
+	/* 先清零缓冲区（samples_per_page 大小，不能超） */
+	for (i = 0; i < max_len && i < samples_per_page; i++) {
 		out_buf[i] = 0;
 	}
 	
-	/* 如果Looper正在播放，循环读取数据直到填满请求的长度 */
+	/* 如果Looper正在播放，每次只读取固定的 samples_per_page(48) 个样本
+	 * 播放速率必须与录音速率一致：每次回调 48 个样本，不能多。 */
 	if (AudioLooper.IsPlaying()) {
-		while (samples_filled < max_len) {
-			uint16_t samples_to_read = max_len - samples_filled;
-			if (samples_to_read > samples_per_page) {
-				samples_to_read = samples_per_page;
-			}
-			
-			/* 读取一页数据 */
-			AudioLooper.ProcessPlayback32(&out_buf[samples_filled], looper_flash_buffer, samples_to_read);
-			samples_filled += samples_to_read;
-		}
+		samples_filled = (max_len < samples_per_page) ? max_len : samples_per_page;
 		
-		/* 每100次打印一次，确认回调被调用 */
-		if (call_count % 100 == 1) {
-			DBG("[LooperPlay] Called: count=%lu len=%d filled=%d isPlaying=%d\n", 
-				(unsigned long)call_count, max_len, samples_filled, AudioLooper.IsPlaying());
-		}
+		/* 读取一页数据（固定 48 样本），填充到 out_buf */
+		AudioLooper.ProcessPlayback32(out_buf, looper_flash_buffer, samples_filled);
+	} else {
+		/* 未播放时返回 0，pre_reverb_mixer 中 looper 贡献为静音（正确行为） */
+		samples_filled = 0;
 	}
 	
 	return samples_filled;
@@ -1669,7 +1701,6 @@ static uint16_t LooperPlay_GetAvailCallback(EffectNode_t *node)
  */
 static void LooperRecord_SinkCallback(EffectNode_t *node, uint32_t *in_buf, uint16_t len)
 {
-	static uint32_t call_count = 0;
 	(void)node;
 	
 	/* 安全检查：确保输入缓冲区有效 */
@@ -1677,20 +1708,13 @@ static void LooperRecord_SinkCallback(EffectNode_t *node, uint32_t *in_buf, uint
 		return;
 	}
 	
-	/* 限制最大长度，避免缓冲区溢出 */
+	/* 限制最大长度，避免缓冲区溢出 (每页固定48采样) */
 	if (len > 48) {
 		len = 48;
 	}
 	
-	call_count++;
-	
 	/* 如果Looper正在录制，写入数据 */
 	if (AudioLooper.IsRecording()) {
-		/* 每100次打印一次，确认回调被调用 */
-		if (call_count % 100 == 1) {
-			DBG("[LooperRec] Called: count=%lu len=%d isRec=%d\n", 
-				(unsigned long)call_count, len, AudioLooper.IsRecording());
-		}
 		AudioLooper.ProcessRecording32(in_buf, looper_flash_buffer, len);
 	}
 }
@@ -1732,16 +1756,32 @@ static void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 		return;
 	}
 
-	/* 同步EffectGraph参数到全局DRC单元 */
-	gCtrlVars.mic_drc_unit.threshold[0] = node->params.drc.threshold;
-	gCtrlVars.mic_drc_unit.ratio[0] = node->params.drc.ratio;
-	gCtrlVars.mic_drc_unit.attack_tc[0] = node->params.drc.attack;
-	gCtrlVars.mic_drc_unit.release_tc[0] = node->params.drc.release;
-
-	/* 应用参数配置到SDK */
-	#if CFG_AUDIO_EFFECT_MIC_DRC_EN
-	AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 48000);
-	#endif
+	/* 同步EffectGraph参数到全局DRC单元，只在参数实际变化时才重新配置 SDK
+	 * （避免每帧都调用 AudioEffectDRCConfig 导致 CPU 超载 / 帧丢失 / 升调） */
+	{
+		static int8_t  last_threshold = 0x7f;
+		static uint8_t last_ratio     = 0xff;
+		static uint8_t last_attack    = 0xff;
+		static uint8_t last_release   = 0xff;
+		int8_t  cur_thr = node->params.drc.threshold;
+		uint8_t cur_rat = node->params.drc.ratio;
+		uint8_t cur_atk = node->params.drc.attack;
+		uint8_t cur_rel = node->params.drc.release;
+		if (cur_thr != last_threshold || cur_rat != last_ratio ||
+		    cur_atk != last_attack    || cur_rel != last_release) {
+			gCtrlVars.mic_drc_unit.threshold[0] = cur_thr;
+			gCtrlVars.mic_drc_unit.ratio[0]     = cur_rat;
+			gCtrlVars.mic_drc_unit.attack_tc[0] = cur_atk;
+			gCtrlVars.mic_drc_unit.release_tc[0]= cur_rel;
+			#if CFG_AUDIO_EFFECT_MIC_DRC_EN
+			AudioEffectDRCConfig(&gCtrlVars.mic_drc_unit, 2, 44100);
+			#endif
+			last_threshold = cur_thr;
+			last_ratio     = cur_rat;
+			last_attack    = cur_atk;
+			last_release   = cur_rel;
+		}
+	}
 
 	#if CFG_AUDIO_EFFECT_MIC_DRC_EN
 	if (gCtrlVars.mic_drc_unit.enable) {
@@ -1777,7 +1817,6 @@ static void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 static void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
 {
 	EQUnit *target_eq;
-	static uint32_t eq_debug_counter = 0;
 	uint16_t i;
 	int16_t *temp_buf_mono;
 	uint8_t src_port;
@@ -1859,22 +1898,24 @@ static void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count,
 	} else
 	#endif
 	{
-		/* 旁路：直接复制 */
+		/* 旁路：根据节点类型正确提取数据 */
 		uint16_t i;
-		
-		/* 额外的调试信息：打印旁路原因 */
-		if ((eq_debug_counter & 0x1FFF) == 0) {
-			if (!target_eq->enable) {
-				DBG("[EQ_Process] BYPASS: EQ disabled (enable=0)\n");
-			} else if (target_eq->filter_count == 0) {
-				DBG("[EQ_Process] BYPASS: No filters (filter_count=0)\n");
-			} else if (target_eq->ct == NULL) {
-				DBG("[EQ_Process] BYPASS: Context not initialized (ct=NULL)\n");
+		if (src_port == 255) {
+			/* USB/BT EQ 旁路：直接复制立体声输入 */
+			for (i = 0; i < len; i++) {
+				out_buf[i] = in_bufs[0][i];
 			}
-		}
-		
-		for (i = 0; i < len; i++) {
-			out_buf[i] = in_bufs[0][i];
+		} else {
+			/* ADC 单声道 EQ 旁路：必须正确提取对应声道，
+			 * 否则 ADC_Mixer_Process 读到的是交错的 L/R 样本而非单声道。
+			 * in_bufs[0] 是 uint32_t 立体声包 [L|R]，
+			 * src_port=0 → L 声道 (偶数 int16 位置)
+			 * src_port=1 → R 声道 (奇数 int16 位置) */
+			for (i = 0; i < len; i++) {
+				int16_t mono_sample =
+					((int16_t *)in_bufs[0])[i * 2 + src_port];
+				((int16_t *)out_buf)[i] = mono_sample;
+			}
 		}
 	}
 }
@@ -1913,21 +1954,32 @@ static void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_co
 		return;
 	}
 
-	/* 同步EffectGraph参数到SDK音效单元 */
-	gCtrlVars.reverb_unit.dry_scale = 100;  /* 干声始终100% */
-	gCtrlVars.reverb_unit.wet_scale = node->params.reverb.wet_dry;
-	gCtrlVars.reverb_unit.roomsize_scale = node->params.reverb.room_size;
-	gCtrlVars.reverb_unit.damping_scale = node->params.reverb.damping;
-	gCtrlVars.reverb_unit.width_scale = 50;  /* 立体声分离度固定50% */
-
-	/* 应用参数配置到SDK */
-	if (gCtrlVars.reverb_unit.ct) {
-		reverb_configure(gCtrlVars.reverb_unit.ct,
-		                gCtrlVars.reverb_unit.dry_scale,
-		                gCtrlVars.reverb_unit.wet_scale,
-		                gCtrlVars.reverb_unit.width_scale,
-		                gCtrlVars.reverb_unit.roomsize_scale,
-		                gCtrlVars.reverb_unit.damping_scale);
+	/* 只在参数实际变化时才重新配置 Reverb，避免每帧调用 reverb_configure 导致 CPU 超载 */
+	{
+		static uint8_t last_room_size = 0xff;
+		static uint8_t last_damping   = 0xff;
+		static uint8_t last_wet_dry   = 0xff;
+		uint8_t cur_rs  = node->params.reverb.room_size;
+		uint8_t cur_dmp = node->params.reverb.damping;
+		uint8_t cur_wet = node->params.reverb.wet_dry;
+		if (cur_rs != last_room_size || cur_dmp != last_damping || cur_wet != last_wet_dry) {
+			gCtrlVars.reverb_unit.dry_scale      = 100;
+			gCtrlVars.reverb_unit.wet_scale      = cur_wet;
+			gCtrlVars.reverb_unit.roomsize_scale = cur_rs;
+			gCtrlVars.reverb_unit.damping_scale  = cur_dmp;
+			gCtrlVars.reverb_unit.width_scale    = 50;
+			if (gCtrlVars.reverb_unit.ct) {
+				reverb_configure(gCtrlVars.reverb_unit.ct,
+				                gCtrlVars.reverb_unit.dry_scale,
+				                gCtrlVars.reverb_unit.wet_scale,
+				                gCtrlVars.reverb_unit.width_scale,
+				                gCtrlVars.reverb_unit.roomsize_scale,
+				                gCtrlVars.reverb_unit.damping_scale);
+			}
+			last_room_size = cur_rs;
+			last_damping   = cur_dmp;
+			last_wet_dry   = cur_wet;
+		}
 	}
 
 	if (gCtrlVars.reverb_unit.enable && gCtrlVars.reverb_unit.wet_scale > 0) {
