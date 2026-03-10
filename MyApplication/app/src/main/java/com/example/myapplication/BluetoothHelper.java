@@ -289,7 +289,8 @@ public class BluetoothHelper {
                     int typeByte = rawData[2] & 0xFF;
 
                     if (firstByte == 0xAA && secondByte == 0x55 &&
-                        (typeByte == 0x01 || typeByte == 0x10 || typeByte == 0x11 || typeByte == 0x12)) {
+                        (typeByte == 0x01 || typeByte == 0x10 || typeByte == 0x11 ||
+                         typeByte == 0x12 || typeByte == 0x20)) {
                         // 这是带有header的二进制数据，直接转换为十六进制字符串传递
                         StringBuilder hexString = new StringBuilder();
                         for (byte b : rawData) {

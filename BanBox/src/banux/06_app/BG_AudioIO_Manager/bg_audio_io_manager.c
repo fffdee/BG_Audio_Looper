@@ -1089,11 +1089,40 @@ static void AudioLoopWithGraph(void)
 /**
  * 音频主循环处理函数
  */
+/**
+ * @brief USB 热插拔检测与重初始化（与 UI 系统解耦，直接在音频循环中处理）
+ *
+ * 每次 Audio_loop 调用时通过计数器限速，约每 100ms 轮询一次 USB 连接状态。
+ * 状态变化时立即调用 UsbDeviceEnable / UsbDeviceDisable，无需依赖 UI 更新路径。
+ */
+static void USB_HotplugCheck(void)
+{
+	static bool last_usb_connected = false;
+	static uint32_t check_counter   = 0;
+
+	/* 限速：不需要每次音频循环都轮询，每 ~100ms 检查一次即可 */
+	if (++check_counter < 100)
+		return;
+	check_counter = 0;
+
+	bool now_connected = OTG_PortDeviceIsLink();
+	if (now_connected == last_usb_connected)
+		return;
+
+	last_usb_connected = now_connected;
+	if (now_connected) {
+		DBG("[USB] Device connected - re-enabling USB device\n");
+		UsbDeviceEnable();
+	} else {
+		DBG("[USB] Device disconnected - disabling USB device\n");
+		UsbDeviceDisable();
+	}
+}
+
 void Audio_loop(void)
 {
 #if USE_EFFECT_GRAPH_MODE
 	/* ==== 混合模式：蓝牙用老方案，非蓝牙用 Effect Graph ==== */
-
 
 	BtStackServiceRun();
 	SetVolume();
@@ -1101,6 +1130,9 @@ void Audio_loop(void)
 
 	/* CDC串口任务处理 - 必须周期性调用以接收数据 */
 	OTG_DeviceCDC_Task();
+
+	/* USB 热插拔检测（与 UI 解耦，直接在音频系统处理） */
+	USB_HotplugCheck();
 
 	AudioLoopWithGraph();
 	/* CDC串口应用处理 - 使用Shell IO管理器（自动切换CDC/BLE） */
@@ -1113,9 +1145,12 @@ void Audio_loop(void)
 	BtStackServiceRun();
 	SetVolume();
 	OTG_DeviceRequestProcess();
-	
+
 	/* CDC串口任务处理 - 必须周期性调用以接收数据 */
 	OTG_DeviceCDC_Task();
+
+	/* USB 热插拔检测（与 UI 解耦，直接在音频系统处理） */
+	USB_HotplugCheck();
 
 	/* 检查是否有蓝牙音频数据要处理 */
 	if (GetA2dpState() == BT_A2DP_STATE_STREAMING)
@@ -1127,7 +1162,7 @@ void Audio_loop(void)
 	{
 		AudioLoopMinimal(bt_audio_buffer);
 	}
-	
+
 	/* CDC串口应用处理 - 使用Shell IO管理器（自动切换CDC/BLE） */
 	ShellIOManager_Process();
 #endif

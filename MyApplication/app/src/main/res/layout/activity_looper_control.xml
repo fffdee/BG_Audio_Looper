@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@color/bg_dark">
+
+    <!-- ===================== 主内容区 ===================== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
@@ -14,6 +19,122 @@
         android:background="@color/primary_darker"
         app:titleTextColor="@color/text_primary"
         app:title="🎛 Looper 控制" />
+
+    <!-- ===== 顶部信息栏：BPM / 节拍 / 节拍器模式 / 硬件状态 ===== -->
+    <LinearLayout
+        android:id="@+id/layout_top_info"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:background="@color/primary_darker"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="4dp">
+
+        <!-- BPM 卡片 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@color/bg_card"
+            android:layout_marginEnd="3dp"
+            android:layout_marginStart="4dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BPM"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_top_bpm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="120"
+                android:textColor="@color/primary_accent"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 节拍卡片 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@color/bg_card"
+            android:layout_marginEnd="3dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="节拍"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_top_beats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4/4"
+                android:textColor="@color/primary_accent_glow"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 节拍器模式卡片 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@color/bg_card"
+            android:layout_marginEnd="3dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="节拍器"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_top_metro_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="倒数"
+                android:textColor="@color/text_warning"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- 硬件状态卡片 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@color/bg_card"
+            android:layout_marginEnd="4dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="硬件"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp" />
+            <TextView
+                android:id="@+id/tv_top_hw_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="未连接"
+                android:textColor="@color/status_disconnected"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+        </LinearLayout>
+
+    </LinearLayout>
 
     <!-- 状态栏 -->
     <LinearLayout
@@ -94,80 +215,138 @@
                 android:layout_marginBottom="10dp">
 
                 <!-- 段0 -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/card_seg0"
                     android:layout_width="0dp"
-                    android:layout_height="120dp"
+                    android:layout_height="130dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="5dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/button_looper_seg"
-                    android:clickable="true"
-                    android:focusable="true">
-                    <TextView
-                        android:id="@+id/tv_seg0_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="LOOP 1"
-                        android:textColor="@color/primary_accent"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/tv_seg0_state"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="未录制"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
-                    <TextView
-                        android:id="@+id/tv_seg0_hint"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="点击 → 开始录制"
-                        android:textColor="@color/text_tertiary"
-                        android:textSize="10sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+                    android:background="@drawable/button_looper_seg">
+
+                    <!-- 主点击区 -->
+                    <LinearLayout
+                        android:id="@+id/card_seg0_main"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingTop="8dp">
+                        <TextView
+                            android:id="@+id/tv_seg0_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LOOP 1"
+                            android:textColor="@color/primary_accent"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tv_seg0_state"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="未录制"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="4dp" />
+                        <TextView
+                            android:id="@+id/tv_seg0_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="点击 → 开始录制"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp" />
+                        <TextView
+                            android:id="@+id/tv_seg0_cfg_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="∞  ► 播放"
+                            android:textColor="#60B0C0"
+                            android:textSize="9sp"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <!-- 右上角配置按钮 -->
+                    <ImageButton
+                        android:id="@+id/btn_seg0_config"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="3dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_menu_manage"
+                        android:tint="#70FFFFFF"
+                        android:scaleType="fitCenter"
+                        android:padding="5dp"
+                        android:contentDescription="段录制设置" />
+                </FrameLayout>
 
                 <!-- 段1 -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/card_seg1"
                     android:layout_width="0dp"
-                    android:layout_height="120dp"
+                    android:layout_height="130dp"
                     android:layout_weight="1"
                     android:layout_marginStart="5dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/button_looper_seg"
-                    android:clickable="true"
-                    android:focusable="true">
-                    <TextView
-                        android:id="@+id/tv_seg1_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="LOOP 2"
-                        android:textColor="@color/primary_accent"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/tv_seg1_state"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="未录制"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
-                    <TextView
-                        android:id="@+id/tv_seg1_hint"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="点击 → 开始录制"
-                        android:textColor="@color/text_tertiary"
-                        android:textSize="10sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+                    android:background="@drawable/button_looper_seg">
+
+                    <LinearLayout
+                        android:id="@+id/card_seg1_main"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingTop="8dp">
+                        <TextView
+                            android:id="@+id/tv_seg1_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LOOP 2"
+                            android:textColor="@color/primary_accent"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tv_seg1_state"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="未录制"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="4dp" />
+                        <TextView
+                            android:id="@+id/tv_seg1_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="点击 → 开始录制"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp" />
+                        <TextView
+                            android:id="@+id/tv_seg1_cfg_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="∞  ► 播放"
+                            android:textColor="#60B0C0"
+                            android:textSize="9sp"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/btn_seg1_config"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="3dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_menu_manage"
+                        android:tint="#70FFFFFF"
+                        android:scaleType="fitCenter"
+                        android:padding="5dp"
+                        android:contentDescription="段录制设置" />
+                </FrameLayout>
             </LinearLayout>
 
             <!-- 第二行：段2 + 段3 -->
@@ -178,80 +357,136 @@
                 android:layout_marginBottom="24dp">
 
                 <!-- 段2 -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/card_seg2"
                     android:layout_width="0dp"
-                    android:layout_height="120dp"
+                    android:layout_height="130dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="5dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/button_looper_seg"
-                    android:clickable="true"
-                    android:focusable="true">
-                    <TextView
-                        android:id="@+id/tv_seg2_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="LOOP 3"
-                        android:textColor="@color/primary_accent"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/tv_seg2_state"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="未录制"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
-                    <TextView
-                        android:id="@+id/tv_seg2_hint"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="点击 → 开始录制"
-                        android:textColor="@color/text_tertiary"
-                        android:textSize="10sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+                    android:background="@drawable/button_looper_seg">
+
+                    <LinearLayout
+                        android:id="@+id/card_seg2_main"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingTop="8dp">
+                        <TextView
+                            android:id="@+id/tv_seg2_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LOOP 3"
+                            android:textColor="@color/primary_accent"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tv_seg2_state"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="未录制"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="4dp" />
+                        <TextView
+                            android:id="@+id/tv_seg2_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="点击 → 开始录制"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp" />
+                        <TextView
+                            android:id="@+id/tv_seg2_cfg_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="∞  ► 播放"
+                            android:textColor="#60B0C0"
+                            android:textSize="9sp"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/btn_seg2_config"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="3dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_menu_manage"
+                        android:tint="#70FFFFFF"
+                        android:scaleType="fitCenter"
+                        android:padding="5dp"
+                        android:contentDescription="段录制设置" />
+                </FrameLayout>
 
                 <!-- 段3 -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/card_seg3"
                     android:layout_width="0dp"
-                    android:layout_height="120dp"
+                    android:layout_height="130dp"
                     android:layout_weight="1"
                     android:layout_marginStart="5dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/button_looper_seg"
-                    android:clickable="true"
-                    android:focusable="true">
-                    <TextView
-                        android:id="@+id/tv_seg3_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="LOOP 4"
-                        android:textColor="@color/primary_accent"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/tv_seg3_state"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="未录制"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
-                    <TextView
-                        android:id="@+id/tv_seg3_hint"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="点击 → 开始录制"
-                        android:textColor="@color/text_tertiary"
-                        android:textSize="10sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+                    android:background="@drawable/button_looper_seg">
+
+                    <LinearLayout
+                        android:id="@+id/card_seg3_main"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingTop="8dp">
+                        <TextView
+                            android:id="@+id/tv_seg3_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LOOP 4"
+                            android:textColor="@color/primary_accent"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tv_seg3_state"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="未录制"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="4dp" />
+                        <TextView
+                            android:id="@+id/tv_seg3_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="点击 → 开始录制"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp" />
+                        <TextView
+                            android:id="@+id/tv_seg3_cfg_hint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="∞  ► 播放"
+                            android:textColor="#60B0C0"
+                            android:textSize="9sp"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/btn_seg3_config"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="3dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_menu_manage"
+                        android:tint="#70FFFFFF"
+                        android:scaleType="fitCenter"
+                        android:padding="5dp"
+                        android:contentDescription="段录制设置" />
+                </FrameLayout>
             </LinearLayout>
 
             <!-- 分割线 -->
@@ -303,5 +538,21 @@
         </LinearLayout>
     </ScrollView>
 
-</LinearLayout>
+    </LinearLayout>
+    <!-- ===================== /主内容区 ===================== -->
+
+    <!-- 侧边栏：Looper 全局设置 -->
+    <include layout="@layout/drawer_looper_settings" />
+
+    <!-- 半透明遮罩（点击关闭侧边栏） -->
+    <View
+        android:id="@+id/looper_drawer_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true" />
+
+</FrameLayout>
 

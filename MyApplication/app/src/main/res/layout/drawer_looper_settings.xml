@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Looper 全局设置侧边栏 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_looper_settings"
+    android:layout_width="300dp"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_card"
+    android:elevation="12dp"
+    android:layout_gravity="end"
+    android:visibility="gone">
+
+    <!-- 侧边栏标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/toolbar_height"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/primary_darker"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⚙ Looper 全局设置"
+            android:textSize="16sp"
+            android:textColor="@color/text_accent"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_close_looper_drawer"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:tint="@color/text_primary"
+            android:contentDescription="关闭设置" />
+    </LinearLayout>
+
+    <!-- 顶部强调线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/primary_accent"
+        android:alpha="0.5" />
+
+    <!-- 可滚动内容 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbarStyle="outsideOverlay">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- ============ 节拍器模式 ============ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_dark"
+                android:padding="14dp"
+                android:layout_marginBottom="14dp">
+
+                <!-- 标题 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="♩ 节拍器模式"
+                        android:textSize="15sp"
+                        android:textColor="@color/text_accent"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- RadioGroup：三种模式 -->
+                <RadioGroup
+                    android:id="@+id/rg_metronome_mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- 全程关闭 -->
+                    <RadioButton
+                        android:id="@+id/rb_metro_off"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="全程关闭节拍器"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:buttonTint="@color/primary_accent"
+                        android:gravity="center_vertical"
+                        android:paddingStart="8dp"
+                        android:layout_marginBottom="2dp" />
+
+                    <!-- 全程开启 -->
+                    <RadioButton
+                        android:id="@+id/rb_metro_always"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="全程开启节拍器"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:buttonTint="@color/primary_accent"
+                        android:gravity="center_vertical"
+                        android:paddingStart="8dp"
+                        android:layout_marginBottom="2dp" />
+
+                    <!-- 倒数N拍后录制 -->
+                    <RadioButton
+                        android:id="@+id/rb_metro_countdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="倒数拍后开始录制"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:buttonTint="@color/primary_accent"
+                        android:gravity="center_vertical"
+                        android:paddingStart="8dp"
+                        android:checked="true" />
+                </RadioGroup>
+
+                <!-- 倒数拍数（仅限 countdown 模式可见） -->
+                <LinearLayout
+                    android:id="@+id/layout_countdown_beats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/bg_card_light"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="倒数拍数"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btn_countdown_dec"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:text="−"
+                        android:textSize="18sp"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp" />
+
+                    <TextView
+                        android:id="@+id/tv_countdown_value"
+                        android:layout_width="48dp"
+                        android:layout_height="wrap_content"
+                        android:text="4"
+                        android:textColor="@color/primary_accent"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:gravity="center" />
+
+                    <Button
+                        android:id="@+id/btn_countdown_inc"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:text="+"
+                        android:textSize="18sp"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ============ 节拍（拍号分子） ============ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_dark"
+                android:padding="14dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="♪ 每小节拍数（拍号）"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_accent"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:background="@color/bg_card_light"
+                    android:padding="10dp">
+
+                    <Button
+                        android:id="@+id/btn_beats_dec"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:text="−"
+                        android:textSize="22sp"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/tv_beats_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="4"
+                            android:textColor="@color/primary_accent_glow"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:layout_gravity="center" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="拍/小节"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:gravity="center"
+                            android:layout_gravity="center" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btn_beats_inc"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:text="+"
+                        android:textSize="22sp"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="范围：2 ~ 8 拍"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="11sp"
+                    android:gravity="center"
+                    android:layout_marginTop="6dp" />
+            </LinearLayout>
+
+            <!-- ============ BPM ============ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_dark"
+                android:padding="14dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎚 BPM（速度）"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_accent"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- BPM 大数字 + +/- -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:background="@color/bg_card_light"
+                    android:padding="10dp">
+
+                    <!-- 大幅减少 -->
+                    <Button
+                        android:id="@+id/btn_bpm_dec_big"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="−5"
+                        android:textSize="11sp"
+                        android:textColor="@color/text_secondary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp"
+                        android:layout_marginEnd="4dp" />
+
+                    <Button
+                        android:id="@+id/btn_bpm_dec"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:text="−"
+                        android:textSize="22sp"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/tv_bpm_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="120"
+                            android:textColor="@color/primary_accent"
+                            android:textSize="36sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:layout_gravity="center" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="BPM"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:gravity="center"
+                            android:layout_gravity="center" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btn_bpm_inc"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:text="+"
+                        android:textSize="22sp"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp" />
+
+                    <!-- 大幅增加 -->
+                    <Button
+                        android:id="@+id/btn_bpm_inc_big"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="+5"
+                        android:textSize="11sp"
+                        android:textColor="@color/text_secondary"
+                        android:background="@drawable/button_secondary"
+                        android:padding="0dp"
+                        android:layout_marginStart="4dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="范围：60 ~ 200 BPM"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="11sp"
+                    android:gravity="center"
+                    android:layout_marginTop="6dp" />
+            </LinearLayout>
+
+            <!-- ============ 应用按钮 ============ -->
+            <Button
+                android:id="@+id/btn_apply_looper_settings"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:text="✔ 应用并发送到硬件"
+                android:textColor="@color/bg_dark"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/button_primary"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

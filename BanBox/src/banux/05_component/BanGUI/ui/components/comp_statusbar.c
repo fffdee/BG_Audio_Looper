@@ -200,11 +200,10 @@ static void draw_usb_icon(void)
     /* Clear icon area */
     BG_lcd.Box(UI_ICON_USB_X, y, UI_ICON_SIZE, UI_ICON_SIZE, UI_STATUSBAR_BG_COLOR);
     
+    /* 仅负责 UI 显示；UsbDeviceEnable/Disable 已由音频系统的 USB_HotplugCheck() 处理，
+     * 此处不再调用硬件接口，避免与音频系统产生重入竞争。 */
     if (statusbar_data.usb_connected) {
         draw_icon(UI_ICON_USB_X, y, icon_usb, UI_COLOR_GREEN);
-        UsbDeviceEnable();
-    } else {
-        UsbDeviceDisable();
     }
 }
 

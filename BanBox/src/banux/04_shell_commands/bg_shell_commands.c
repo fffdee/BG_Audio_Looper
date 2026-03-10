@@ -1545,10 +1545,6 @@ static int looper_status_cmd(int argc, char *argv[])
     Shell_Printf("Recording:  %s\r\n", status.is_recording ? "YES" : "NO");
     Shell_Printf("Playing:    %s\r\n", status.is_playing ? "YES" : "NO");
     Shell_Printf("Flash:      %s\r\n", status.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
-    /* status 查询时也顺手 poll 一次，避免显示过时结果 */
-    if (g_loop_manager.chip_erase_pending && !FlashPartition_LooperIsErasing()) {
-        g_loop_manager.chip_erase_pending = 0;
-    }
     Shell_Printf("ErasePend:  %s\r\n", g_loop_manager.chip_erase_pending ? "YES (blocked)" : "NO");
     Shell_Printf("Segments:   %d active\r\n", status.active_segments);
     Shell_Printf("Current:    Segment %d\r\n", status.current_segment);
@@ -2523,9 +2519,11 @@ void Shell_RegisterAllModules(void)
 
     /* 鼓机命令 (BANGTSYNTH_EN) */
     extern int ShellCmdDrum_Register(void);
+
+
+    ShellCmdMetronome_Register();
+
     ShellCmdDrum_Register();
 
-    /* 鍒濆鍖栭┍鍔ㄦ鏋�(鍖呭惈鎵�湁椹卞姩娉ㄥ唽) */
-    /* 娉ㄦ剰锛氬凡鍦╩ain()涓垵濮嬪寲锛岃繖閲屼笉鍐嶉噸澶嶈皟鐢�*/
-    /* DrvFramework_FullInit(); */
+
 }

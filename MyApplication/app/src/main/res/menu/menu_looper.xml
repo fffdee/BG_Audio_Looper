@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- 打开 Looper 全局设置侧边栏 -->
+    <item
+        android:id="@+id/menu_looper_settings"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="全局设置"
+        app:showAsAction="always" />
+
+</menu>
