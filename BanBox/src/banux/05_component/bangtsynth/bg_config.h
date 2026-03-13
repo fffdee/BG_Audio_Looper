@@ -67,7 +67,7 @@
  * 资源占用: ~8KB RAM, ~10KB Flash
  */
 #ifndef ENABLE_AUDIO_PROCESSOR
-#define ENABLE_AUDIO_PROCESSOR  1  // 1=启用, 0=禁用
+#define ENABLE_AUDIO_PROCESSOR  0  // 0=禁用（Effect Graph已管理所有EQ/DRC，避免重复分配堆内存）
 #endif
 
 /**

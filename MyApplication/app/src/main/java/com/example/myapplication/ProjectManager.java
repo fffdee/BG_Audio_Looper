@@ -299,7 +299,7 @@ public class ProjectManager {
                     importedProject.getImagePaths(),
                     newMergedPath
             );
-            
+
             // 复制原始图片
             List<String> newImagePaths = new ArrayList<>();
             if (importedProject.getImagePaths() != null) {

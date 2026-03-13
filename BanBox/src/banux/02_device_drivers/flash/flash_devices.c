@@ -161,6 +161,15 @@ FlashDevice_t* FlashDevices_GetStorageFlash(void)
     return g_flash1;
 }
 
+FlashDevice_t* FlashDevices_GetDevice(uint8_t dev_id)
+{
+    switch (dev_id) {
+        case 0: return g_flash0;
+        case 1: return g_flash1;
+        default: return NULL;
+    }
+}
+
 /*===========================================================================
  * Shell命令
  *===========================================================================*/
@@ -345,4 +354,74 @@ FlashStatus_t FlashPartition_StorageEraseBlock(uint32_t offset)
         return FLASH_ERR_PARAM;
     }
     return FlashDev_EraseBlock(g_flash1, FLASH1_PARTITION_STORAGE_START + offset);
+}
+/*===========================================================================
+ * 多Flash Looper分区操作实现 (按dev_id)
+ *===========================================================================*/
+
+FlashStatus_t FlashPartition_LooperReadByDev(uint8_t dev_id, uint32_t offset, uint8_t *buf, uint32_t len)
+{
+    FlashDevice_t *dev = FlashDevices_GetDevice(dev_id);
+    if (!dev || !dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    if (offset + len > LOOPER_FLASH_DEV_SIZE) {
+        return FLASH_ERR_PARAM;
+    }
+    return FlashDev_Read(dev, offset, buf, len);
+}
+
+FlashStatus_t FlashPartition_LooperWriteByDev(uint8_t dev_id, uint32_t offset, const uint8_t *buf, uint32_t len)
+{
+    FlashDevice_t *dev = FlashDevices_GetDevice(dev_id);
+    if (!dev || !dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    if (offset + len > LOOPER_FLASH_DEV_SIZE) {
+        return FLASH_ERR_PARAM;
+    }
+    return FlashDev_Write(dev, offset, buf, len);
+}
+
+FlashStatus_t FlashPartition_LooperEraseSectorByDev(uint8_t dev_id, uint32_t offset)
+{
+    FlashDevice_t *dev = FlashDevices_GetDevice(dev_id);
+    if (!dev || !dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    if (offset >= LOOPER_FLASH_DEV_SIZE) {
+        return FLASH_ERR_PARAM;
+    }
+    return FlashDev_EraseSector(dev, offset);
+}
+
+FlashStatus_t FlashPartition_LooperEraseChipByDev(uint8_t dev_id)
+{
+    FlashDevice_t *dev = FlashDevices_GetDevice(dev_id);
+    if (!dev || !dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    DBG("[Flash] Looper chip erase start (dev%d)...\n", dev_id);
+    FlashStatus_t ret = FlashDev_EraseChip(dev);
+    DBG("[Flash] Looper chip erase %s (dev%d)\n", ret == FLASH_OK ? "done" : "FAILED", dev_id);
+    return ret;
+}
+
+FlashStatus_t FlashPartition_LooperEraseChipAsyncByDev(uint8_t dev_id)
+{
+    FlashDevice_t *dev = FlashDevices_GetDevice(dev_id);
+    if (!dev || !dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    DBG("[Flash] Looper async chip erase start (dev%d)\n", dev_id);
+    return W25Qxx_EraseChipStart(dev);
+}
+
+uint8_t FlashPartition_LooperIsErasingByDev(uint8_t dev_id)
+{
+    FlashDevice_t *dev = FlashDevices_GetDevice(dev_id);
+    if (!dev || !dev->initialized) {
+        return 0;
+    }
+    return W25Qxx_IsBusy(dev);
 }

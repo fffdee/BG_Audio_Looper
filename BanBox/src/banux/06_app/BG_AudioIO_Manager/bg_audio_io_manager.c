@@ -925,6 +925,12 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 		}
 		handle_usb_record(RealLen);
 		OutputAudioData(RealLen);
+
+#if LOOPER_IO_BUFFER_ENABLE
+		/* 音频已输出到DAC，现在安全执行Flash IO（刷写缓冲 + 填读缓存）
+		 * 即使Flash写入耗时较长(~0.8ms)也不影响当帧音频输出 */
+		looper_flush_io();
+#endif
 	}
 }
 
@@ -1084,6 +1090,13 @@ static void AudioLoopWithGraph(void)
 		BG_AudioManager.Audio_data.guitar_count++;
 		BG_AudioManager.Audio_data.mic_count++;
 	}
+
+#if LOOPER_IO_BUFFER_ENABLE
+	/* Effect Graph已处理完毕（含 DAC 输出），现在安全执行Flash IO */
+	if (processed_samples > 0) {
+		looper_flush_io();
+	}
+#endif
 }
 
 /**

@@ -39,6 +39,71 @@ typedef enum {
 /* Multi-segment recording support */
 #define MAX_SEGMENTS 4          /* Support up to 4 segments */
 
+/* ============================================================================
+ * 多Flash支持宏开关
+ *   1 = 启用多Flash：每段绑定独立CS引脚/Flash芯片，播放段A(读Flash#0)
+ *       的同时可录制段B(写Flash#1)，彻底解决W25Q64不能边读边写的问题
+ *   0 = 单Flash模式（向后兼容旧代码，所有段共用Flash#0）
+ * ============================================================================ */
+#ifndef LOOPER_MULTI_FLASH_ENABLE
+#define LOOPER_MULTI_FLASH_ENABLE  0
+#endif
+
+/* ============================================================================
+ * IO缓冲区宏开关 (解决 SPI Flash 页写入忙等待导致音频帧超时的问题)
+ *
+ * 原理：将Flash读写与音频回调解耦
+ *   录制 → 音频回调仅向 RAM 写缓冲区追加数据 (~1μs)
+ *   播放 → 音频回调仅从 RAM 读缓存取数据 (~1μs)
+ *   Flash IO → 在 DAC 输出之后调用 looper_flush_io() 统一执行
+ *
+ *   1 = 启用：音频回调只操作RAM，Flash IO延迟到帧末尾
+ *   0 = 禁用：录制/播放直接操作Flash（旧行为）
+ * ============================================================================ */
+#ifndef LOOPER_IO_BUFFER_ENABLE
+#define LOOPER_IO_BUFFER_ENABLE  1
+#endif
+
+#if LOOPER_IO_BUFFER_ENABLE
+
+/* 每页数据大小 (48采样 × 4字节/采样 = 192字节) */
+#define LOOPER_PAGE_DATA_SIZE      192
+
+/* 录制写缓冲深度（页数）
+ * 值越大可吸收越多的Flash写入延迟抖动（W25Q64页写最差可达3ms）
+ * 每段 RAM 占用 = LOOPER_WRITE_BUF_PAGES × 192 字节
+ * 推荐值: 8 (1.5KB/段), 最小: 2 */
+#ifndef LOOPER_WRITE_BUF_PAGES
+#define LOOPER_WRITE_BUF_PAGES    8
+#endif
+
+/* 播放读缓存深度（页数）
+ * 值越大容许更长的Flash IO延迟而不产生播放缺数据
+ * 每段 RAM 占用 = LOOPER_READ_CACHE_PAGES × 192 字节
+ * 推荐值: 8 (1.5KB/段), 最小: 2 */
+#ifndef LOOPER_READ_CACHE_PAGES
+#define LOOPER_READ_CACHE_PAGES    8
+#endif
+
+/* ----- 录制写环形缓冲区 (每段一个) ----- */
+typedef struct {
+    uint8_t  buf[LOOPER_WRITE_BUF_PAGES][LOOPER_PAGE_DATA_SIZE];
+    uint8_t  head;              /* 下一个写入槽位 (音频回调生产) */
+    uint8_t  tail;              /* 下一个刷出槽位 (Flash消费)   */
+    uint32_t flush_page;        /* Flash端已刷出页计数          */
+} LooperWriteRing_t;
+
+/* ----- 播放读环形缓存 (每段一个) ----- */
+typedef struct {
+    uint8_t  buf[LOOPER_READ_CACHE_PAGES][LOOPER_PAGE_DATA_SIZE];
+    uint8_t  head;              /* 下一个填入槽位 (从Flash预读) */
+    uint8_t  tail;              /* 下一个消费槽位 (音频回调读取) */
+    uint32_t prefetch_page;     /* Flash端下一个待预读的页号     */
+    uint8_t  active;            /* 1 = 缓存已初始化并追踪本段   */
+} LooperReadCache_t;
+
+#endif /* LOOPER_IO_BUFFER_ENABLE */
+
 /* Metronome constant definitions */
 #define METRONOME_MIN_BPM 60
 #define METRONOME_MAX_BPM 200
@@ -94,12 +159,15 @@ typedef enum {
 
 /* Segment info structure */
 typedef struct {
-    uint32_t start_address;
+    uint32_t start_address;  /* 相对于所绑定Flash起始地址的偏移 */
     uint32_t length_pages;
     uint32_t length_bytes;
     uint32_t play_position;
     SegmentState_t state;
-    uint8_t is_active;
+    uint8_t  is_active;
+#if LOOPER_MULTI_FLASH_ENABLE
+    uint8_t  flash_dev_id;   /* 绑定的Flash设备号 (0=Flash#0, 1=Flash#1, ...) */
+#endif
 } SegmentInfo_t;
 
 /* Metronome config structure */
@@ -136,7 +204,12 @@ typedef struct {
     uint32_t play_position;
     uint8_t is_initialized;
     uint8_t is_new_recording;
+#if LOOPER_MULTI_FLASH_ENABLE
+    volatile uint8_t chip_erase_pending_mask; /* 位掩码：bit N=1 表示 Flash#N 全片擦除进行中
+                                               * 允许对未擦除的Flash独立读写，实现边播边录 */
+#else
     volatile uint8_t chip_erase_pending;    /* 1=全片擦除进行中，写入须等待 */
+#endif
     Paly_Mode_t play_mode;
     SegmentInfo_t segments[MAX_SEGMENTS];
     uint8_t current_segment;
@@ -147,6 +220,7 @@ typedef struct {
     uint32_t loop_boundary_samples[48];
     uint8_t boundary_samples_valid;
     MetronomeState_Runtime_t metronome;
+    uint8_t segment_volume[MAX_SEGMENTS]; /* 各段播放音量 0-100，默认100 */
 } LoopManager_t;
 
 /* Global Loop manager */
@@ -204,6 +278,21 @@ typedef struct {
     uint8_t (*MetronomeIsEnabled)(void);
     uint16_t (*MetronomeGetBPM)(void);
     uint8_t (*MetronomeGetBeatsPerMeasure)(void);
+    /* 段音量控制 */
+    void (*SetSegmentVolume)(uint8_t segment_index, uint8_t volume); /* 设置指定段音量 0-100 */
+    uint8_t (*GetSegmentVolume)(uint8_t segment_index);              /* 获取指定段音量 */
+#if LOOPER_MULTI_FLASH_ENABLE
+    /* 段Flash绑定控制 (仅多Flash模式) */
+    void (*SetSegmentFlash)(uint8_t segment_index, uint8_t flash_dev_id); /* 绑定段到指定Flash */
+    uint8_t (*GetSegmentFlash)(uint8_t segment_index);                    /* 获取段绑定的Flash */
+#endif /* LOOPER_MULTI_FLASH_ENABLE */
+    /* Looper Flash 生命周期 */
+    void (*CheckFlashInitOnBoot)(void); /* 开机检查Flash是否已初始化 */
+    void (*OnAppExit)(void);            /* 退出Looper界面时调用 */
+#if LOOPER_IO_BUFFER_ENABLE
+    /* IO缓冲区刷新 (每帧DAC输出后调用) */
+    void (*FlushIO)(void);              /* 将写缓冲刷入Flash + 预读数据填充读缓存 */
+#endif
 } AudioLooper_t;
 
 /* Global Audio Looper module instance */
@@ -236,6 +325,7 @@ void loop_stop_current_segment(uint8_t segment_index);
 void loop_update_global_state(void);
 uint8_t loop_get_segment_count(void);
 void loop_clear_all_segments(void);
+void loop_clear_segment(uint8_t segment_index);  /* 仅重置单段状态为INACTIVE（不擦Flash） */
 void loop_reset_playback_position(void);
 
 /* 单段精细控制函数 */
@@ -303,5 +393,32 @@ BeatType_t metronome_get_current_beat_type(void);
 uint8_t metronome_is_beat_active(void);
 void metronome_process_audio(uint32_t* output_data, uint16_t length);
 void metronome_mix_audio(uint32_t* output_data, uint16_t length);
+
+/* ============================================================================
+ * Looper 段音量控制
+ * ============================================================================ */
+void loop_set_segment_volume(uint8_t segment_index, uint8_t volume); /* 设置段播放音量 0-100 */
+uint8_t loop_get_segment_volume(uint8_t segment_index);              /* 获取段播放音量 */
+
+/* 段与Flash绑定控制 (仅多Flash模式) */
+#if LOOPER_MULTI_FLASH_ENABLE
+void    loop_set_segment_flash(uint8_t segment_index, uint8_t flash_dev_id); /* 将指定段绑定到某颗Flash (须在录制前设置) */
+uint8_t loop_get_segment_flash(uint8_t segment_index);                       /* 获取指定段当前绑定的Flash设备号 */
+#endif /* LOOPER_MULTI_FLASH_ENABLE */
+
+/* ============================================================================
+ * Looper Flash 状态管理
+ * ============================================================================ */
+void loop_check_flash_init_on_boot(void); /* 开机检查Flash是否已初始化，否则触发全片擦除 */
+void loop_on_app_exit(void);              /* 退出Looper界面时调用，如果Flash已使用则触发擦除 */
+
+/* ============================================================================
+ * IO缓冲区管理 (仅 LOOPER_IO_BUFFER_ENABLE=1 时可用)
+ * ============================================================================ */
+#if LOOPER_IO_BUFFER_ENABLE
+void looper_flush_io(void);                            /* 每帧调用：刷写缓冲 + 填读缓存 */
+void looper_init_read_cache(uint8_t segment_index);    /* 初始化/重填段的播放读缓存 */
+void looper_flush_write_all(uint8_t segment_index);    /* 将段的写缓冲全部刷入Flash（阻塞） */
+#endif /* LOOPER_IO_BUFFER_ENABLE */
 
 #endif /* __AUDIO_LOOPER_H__ */

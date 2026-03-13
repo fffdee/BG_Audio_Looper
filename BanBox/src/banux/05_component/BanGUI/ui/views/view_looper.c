@@ -9,6 +9,7 @@
 #include "../components/comp_statusbar.h"
 #include "bg_lcd.h"
 #include "gui_tool.h"
+#include "audio_looper.h"  /* loop_on_app_exit */
 #include <string.h>
 
 /*===========================================================================
@@ -130,6 +131,8 @@ static void looper_on_enter(void)
 static void looper_on_exit(void)
 {
     s_looper_view.visible = false;
+    /* 退出Looper界面：如果Flash被使用过，触发全片擦除 */
+    loop_on_app_exit();
 }
 
 static void looper_on_update(uint16_t delta_ms)

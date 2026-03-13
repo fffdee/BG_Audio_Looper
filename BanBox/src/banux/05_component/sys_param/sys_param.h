@@ -59,6 +59,10 @@ typedef struct __attribute__((packed)) {
     uint8_t  output_volume;
 } SysParam_Volume_t;
 
+/* Looper Flash status definitions */
+#define LOOPER_FLASH_STATUS_CLEAN   0   /* Flash已全片擦除，可直接录制 */
+#define LOOPER_FLASH_STATUS_USED    1   /* Flash已被录音使用，下次开机需重新初始化 */
+
 /* Looper parameters structure */
 typedef struct __attribute__((packed)) {
     uint8_t  loop_count;        /* Loop count 1-4 */
@@ -69,6 +73,8 @@ typedef struct __attribute__((packed)) {
     uint8_t  time_signature;    /* Time signature 0:4/4 1:3/4 2:6/8 */
     uint8_t  fade_time;         /* Fade in/out time (10ms units) */
     uint32_t max_loop_time;     /* Max loop time (ms) */
+    uint8_t  flash_status;      /* Looper Flash状态: LOOPER_FLASH_STATUS_CLEAN/USED */
+    uint8_t  segment_volume[4]; /* 各段播放音量 0-100，默认100 */
 } SysParam_Looper_t;
 
 /* Bluetooth parameters structure */

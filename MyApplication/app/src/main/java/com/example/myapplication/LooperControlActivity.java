@@ -12,7 +12,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RadioGroup;
+import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -33,12 +34,17 @@ import java.util.regex.Pattern;
 public class LooperControlActivity extends AppCompatActivity {
 
     private static final String BLE_UUID = "0000ab01-0000-1000-8000-00805f9b34fb";
-    private static final int SEG_COUNT = 4;
+    private static final int SEG_COUNT = 2;
 
-    // -------- 节拍器模式常量 --------
-    private static final int METRO_OFF       = 0;   // 全程关闭
-    private static final int METRO_ALWAYS    = 1;   // 全程开启
-    private static final int METRO_COUNTDOWN = 2;   // 倒数N拍后开始录制
+    // -------- 节拍器独立开关 --------
+    // true = 录制中开启节拍器；false = 录制中静音
+    private boolean metroOnDuringRec   = false;
+    // true = 录制前先倒数拍；false = 直接开始录制
+    private boolean countdownBeforeRec = true;
+    // true = LOOP 2 等待 LOOP 1 循环到头再开始录制
+    private boolean seg1FollowSeg0     = false;
+    // true = LOOP 2 录制时自动对齐 LOOP 1 的录制长度
+    private boolean seg1MatchDuration  = false;
 
     // Segment state enum
     private enum SegState { INACTIVE, RECORDING, PLAYING, STOPPED }
@@ -48,14 +54,13 @@ public class LooperControlActivity extends AppCompatActivity {
 
     // App-side state tracking
     private final SegState[] segStates = {
-        SegState.INACTIVE, SegState.INACTIVE, SegState.INACTIVE, SegState.INACTIVE
+        SegState.INACTIVE, SegState.INACTIVE
     };
 
     // -------- 全局设置状态 --------
-    private int currentBpm        = 120;
-    private int currentBeats      = 4;   // 每小节拍数
-    private int metronomeMode     = METRO_COUNTDOWN;
-    private int countdownBeats    = 4;   // 倒数拍数
+    private int currentBpm     = 120;
+    private int currentBeats   = 4;   // 每小节拍数
+    private int countdownBeats = 4;   // 倒数拍数
 
     // Color constants
     private static final int COLOR_INACTIVE  = Color.parseColor("#00D9FF");
@@ -70,9 +75,11 @@ public class LooperControlActivity extends AppCompatActivity {
 
     // -------- 每段独立配置 --------
     /** 录制小节数，0 = 手动停止（无限） */
-    private final int[]     segMeasures = {0, 0, 0, 0};
+    private final int[]     segMeasures = {0, 0};
     /** 录制结束后是否自动播放 */
-    private final boolean[] segAutoPlay = {true, true, true, true};
+    private final boolean[] segAutoPlay = {true, true};
+    /** 每段播放音量 0-100，默认 100 */
+    private final int[]     segVolumes  = {100, 100};
 
     // -------- UI：循环段卡片 --------
     // segCards 指向外层 FrameLayout（负责背景着色）
@@ -98,11 +105,24 @@ public class LooperControlActivity extends AppCompatActivity {
     private final Runnable[] countdownRunnables = new Runnable[SEG_COUNT];
     /** 该段是否正在节拍器倒计时中（尚未开始录制） */
     private final boolean[]  segInCountdown     = new boolean[SEG_COUNT];
+    /** 该段是否处于 LOOP 跟随同步等待（区别于节拍器倒数） */
+    private final boolean[]  segInSyncWait      = new boolean[SEG_COUNT];
+
+    // -------- 循环时长追踪（用于 LOOP 2 跟随 LOOP 1 精确对齐） --------
+    /** 每段录制开始的系统时间戳（ms）*/
+    private final long[] segRecordStartTime = new long[SEG_COUNT];
+    /** 每段的实际循环时长（ms），录制结束时计算 */
+    private final long[] segLoopDurationMs  = new long[SEG_COUNT];
+    /** 每段最近一次进入 PLAYING 状态的系统时间戳（ms）*/
+    private final long[] segPlayStartTime   = new long[SEG_COUNT];
 
     // -------- UI：Flash 管理按钮 --------
-    private Button btnLooperClear;
-    private Button btnLooperErase;
-    private Button btnLooperReset;
+    private Button btnLooperEraseAndReset;
+
+    // -------- UI：循环同步信息面板 --------
+    private View     layoutLoopSyncInfo;
+    private TextView tvLoopSyncInfo;
+    private TextView tvLoopSyncTitle;
 
     // -------- UI：顶部信息栏 --------
     private TextView tvTopBpm;
@@ -115,8 +135,13 @@ public class LooperControlActivity extends AppCompatActivity {
     private View      looperDrawerOverlay;
     private ImageButton btnCloseLooperDrawer;
 
-    // 侧边栏：节拍器模式 RadioGroup
-    private RadioGroup rgMetronomeMode;
+    // 侧边栏：节拍器开关
+    private Switch swMetroDuringRec;
+    private Switch swCountdownBeforeRec;
+
+    // 侧边栏：Looper 设置
+    private Switch swSeg1FollowSeg0;
+    private Switch swSeg1MatchDuration;
 
     // 侧边栏：倒数拍数
     private LinearLayout layoutCountdownBeats;
@@ -130,11 +155,10 @@ public class LooperControlActivity extends AppCompatActivity {
     private Button    btnBeatsInc;
 
     // 侧边栏：BPM
+    private LinearLayout layoutBpmValue;
     private TextView  tvBpmValue;
     private Button    btnBpmDec;
     private Button    btnBpmInc;
-    private Button    btnBpmDecBig;
-    private Button    btnBpmIncBig;
 
     // 侧边栏：应用按钮
     private Button btnApplyLooperSettings;
@@ -166,6 +190,12 @@ public class LooperControlActivity extends AppCompatActivity {
         setupBleListener();
         // 刷新硬件连接状态
         updateHwStatusIndicator();
+        // 查询Looper参数（延迟200ms等待BLE稳定）
+        handler.postDelayed(() -> {
+            if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
+                sendCommand("looper -q", null);
+            }
+        }, 200);
     }
 
     @Override
@@ -210,22 +240,18 @@ public class LooperControlActivity extends AppCompatActivity {
     private void initViews() {
         // 外层 FrameLayout（背景着色用）
         int[] cardIds = {
-            R.id.card_seg0, R.id.card_seg1, R.id.card_seg2, R.id.card_seg3
+            R.id.card_seg0, R.id.card_seg1
         };
         // 内层 LinearLayout（点击交互用）
         int[] mainAreaIds = {
-            R.id.card_seg0_main, R.id.card_seg1_main,
-            R.id.card_seg2_main, R.id.card_seg3_main
+            R.id.card_seg0_main, R.id.card_seg1_main
         };
         int[][] subIds = {
             {R.id.tv_seg0_name, R.id.tv_seg0_state, R.id.tv_seg0_hint, R.id.tv_seg0_cfg_hint},
-            {R.id.tv_seg1_name, R.id.tv_seg1_state, R.id.tv_seg1_hint, R.id.tv_seg1_cfg_hint},
-            {R.id.tv_seg2_name, R.id.tv_seg2_state, R.id.tv_seg2_hint, R.id.tv_seg2_cfg_hint},
-            {R.id.tv_seg3_name, R.id.tv_seg3_state, R.id.tv_seg3_hint, R.id.tv_seg3_cfg_hint},
+            {R.id.tv_seg1_name, R.id.tv_seg1_state, R.id.tv_seg1_hint, R.id.tv_seg1_cfg_hint}
         };
         int[] configBtnIds = {
-            R.id.btn_seg0_config, R.id.btn_seg1_config,
-            R.id.btn_seg2_config, R.id.btn_seg3_config
+            R.id.btn_seg0_config, R.id.btn_seg1_config
         };
         for (int i = 0; i < SEG_COUNT; i++) {
             segCards[i]     = findViewById(cardIds[i]);
@@ -236,9 +262,12 @@ public class LooperControlActivity extends AppCompatActivity {
             tvSegCfgHint[i] = findViewById(subIds[i][3]);
             btnSegConfig[i] = findViewById(configBtnIds[i]);
         }
-        btnLooperClear = findViewById(R.id.btn_looper_clear);
-        btnLooperErase = findViewById(R.id.btn_looper_erase);
-        btnLooperReset = findViewById(R.id.btn_looper_reset);
+        btnLooperEraseAndReset = findViewById(R.id.btn_looper_erase_and_reset);
+
+        // 循环同步信息面板
+        layoutLoopSyncInfo = findViewById(R.id.layout_loop_sync_info);
+        tvLoopSyncInfo     = findViewById(R.id.tv_loop_sync_info);
+        tvLoopSyncTitle    = findViewById(R.id.tv_loop_sync_title);
 
         // 顶部信息栏
         tvTopBpm       = findViewById(R.id.tv_top_bpm);
@@ -258,8 +287,13 @@ public class LooperControlActivity extends AppCompatActivity {
         looperDrawerOverlay  = findViewById(R.id.looper_drawer_overlay);
         btnCloseLooperDrawer = findViewById(R.id.btn_close_looper_drawer);
 
-        // 节拍器模式
-        rgMetronomeMode     = findViewById(R.id.rg_metronome_mode);
+        // 节拍器开关
+        swMetroDuringRec    = findViewById(R.id.sw_metro_during_rec);
+        swCountdownBeforeRec = findViewById(R.id.sw_countdown_before_rec);
+        // Looper 设置
+        swSeg1FollowSeg0    = findViewById(R.id.sw_seg1_follow_seg0);
+        swSeg1MatchDuration = findViewById(R.id.sw_seg1_match_duration);
+        // 倒数拍数控件
         layoutCountdownBeats = findViewById(R.id.layout_countdown_beats);
         tvCountdownValue    = findViewById(R.id.tv_countdown_value);
         btnCountdownDec     = findViewById(R.id.btn_countdown_dec);
@@ -271,11 +305,10 @@ public class LooperControlActivity extends AppCompatActivity {
         btnBeatsInc  = findViewById(R.id.btn_beats_inc);
 
         // BPM
+        layoutBpmValue = findViewById(R.id.layout_bpm_value);
         tvBpmValue   = findViewById(R.id.tv_bpm_value);
         btnBpmDec    = findViewById(R.id.btn_bpm_dec);
         btnBpmInc    = findViewById(R.id.btn_bpm_inc);
-        btnBpmDecBig = findViewById(R.id.btn_bpm_dec_big);
-        btnBpmIncBig = findViewById(R.id.btn_bpm_inc_big);
 
         // 应用按钮
         btnApplyLooperSettings = findViewById(R.id.btn_apply_looper_settings);
@@ -286,14 +319,15 @@ public class LooperControlActivity extends AppCompatActivity {
 
     /** 将当前状态同步到侧边栏 UI */
     private void syncDrawerUiFromState() {
-        // RadioGroup
-        switch (metronomeMode) {
-            case METRO_OFF:       rgMetronomeMode.check(R.id.rb_metro_off);       break;
-            case METRO_ALWAYS:    rgMetronomeMode.check(R.id.rb_metro_always);    break;
-            case METRO_COUNTDOWN: rgMetronomeMode.check(R.id.rb_metro_countdown); break;
-        }
+        // 节拍器开关
+        swMetroDuringRec.setChecked(metroOnDuringRec);
+        swCountdownBeforeRec.setChecked(countdownBeforeRec);
+        // Looper设置
+        swSeg1FollowSeg0.setChecked(seg1FollowSeg0);
+        swSeg1MatchDuration.setChecked(seg1MatchDuration);
+        // 倒数拍数行根据倒数开关显示/隐藏
         layoutCountdownBeats.setVisibility(
-            metronomeMode == METRO_COUNTDOWN ? View.VISIBLE : View.GONE);
+            countdownBeforeRec ? View.VISIBLE : View.GONE);
 
         tvCountdownValue.setText(String.valueOf(countdownBeats));
         tvBeatsValue.setText(String.valueOf(currentBeats));
@@ -306,17 +340,26 @@ public class LooperControlActivity extends AppCompatActivity {
         btnCloseLooperDrawer.setOnClickListener(v -> closeDrawer());
         looperDrawerOverlay.setOnClickListener(v -> closeDrawer());
 
-        // 节拍器模式切换
-        rgMetronomeMode.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.rb_metro_off) {
-                metronomeMode = METRO_OFF;
-            } else if (checkedId == R.id.rb_metro_always) {
-                metronomeMode = METRO_ALWAYS;
-            } else if (checkedId == R.id.rb_metro_countdown) {
-                metronomeMode = METRO_COUNTDOWN;
-            }
+        // 节拍器开关：录制中是否开启节拍器
+        swMetroDuringRec.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            metroOnDuringRec = isChecked;
+        });
+
+        // 节拍器开关：录制前是否倒数拍
+        swCountdownBeforeRec.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            countdownBeforeRec = isChecked;
             layoutCountdownBeats.setVisibility(
-                metronomeMode == METRO_COUNTDOWN ? View.VISIBLE : View.GONE);
+                countdownBeforeRec ? View.VISIBLE : View.GONE);
+        });
+
+        // Looper设置：第二段跟随第一段
+        swSeg1FollowSeg0.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            seg1FollowSeg0 = isChecked;
+        });
+
+        // Looper设置：LOOP 2 和 LOOP 1 录制等长
+        swSeg1MatchDuration.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            seg1MatchDuration = isChecked;
         });
 
         // 倒数拍数 +/-
@@ -350,9 +393,8 @@ public class LooperControlActivity extends AppCompatActivity {
         // BPM单步 +/-
         btnBpmDec.setOnClickListener(v -> adjustBpm(-1));
         btnBpmInc.setOnClickListener(v -> adjustBpm(+1));
-        // BPM大步 ±5
-        btnBpmDecBig.setOnClickListener(v -> adjustBpm(-5));
-        btnBpmIncBig.setOnClickListener(v -> adjustBpm(+5));
+        // BPM点击编辑
+        layoutBpmValue.setOnClickListener(v -> showBpmEditDialog());
 
         // 应用并发送
         btnApplyLooperSettings.setOnClickListener(v -> applyMetronomeSettings());
@@ -365,6 +407,57 @@ public class LooperControlActivity extends AppCompatActivity {
         if (newBpm > 200) newBpm = 200;
         currentBpm = newBpm;
         tvBpmValue.setText(String.valueOf(currentBpm));
+    }
+
+    /** 弹出BPM编辑对话框 */
+    private void showBpmEditDialog() {
+        final android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        input.setText(String.valueOf(currentBpm));
+        input.setTextColor(Color.WHITE);
+        input.setTextSize(18);
+        input.setGravity(android.view.Gravity.CENTER);
+        input.setSelection(input.getText().length());
+        
+        android.widget.LinearLayout container = new android.widget.LinearLayout(this);
+        container.setOrientation(android.widget.LinearLayout.VERTICAL);
+        container.setPadding(50, 20, 50, 10);
+        container.addView(input);
+        
+        TextView hint = new TextView(this);
+        hint.setText("范围：60 ~ 200 BPM");
+        hint.setTextColor(Color.parseColor("#888888"));
+        hint.setTextSize(12);
+        hint.setGravity(android.view.Gravity.CENTER);
+        hint.setPadding(0, 10, 0, 0);
+        container.addView(hint);
+
+        new AlertDialog.Builder(this)
+            .setTitle("设置 BPM")
+            .setView(container)
+            .setPositiveButton("确定", (d, w) -> {
+                try {
+                    int newBpm = Integer.parseInt(input.getText().toString().trim());
+                    if (newBpm < 60 || newBpm > 200) {
+                        Toast.makeText(this, "BPM 范围必须在 60-200 之间", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    currentBpm = newBpm;
+                    tvBpmValue.setText(String.valueOf(currentBpm));
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "请输入有效数字", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+        
+        // 自动弹出键盘
+        input.requestFocus();
+        handler.postDelayed(() -> {
+            android.view.inputmethod.InputMethodManager imm = 
+                (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+        }, 100);
     }
 
     /** 打开侧边栏（带滑入动画） */
@@ -393,20 +486,9 @@ public class LooperControlActivity extends AppCompatActivity {
         sendCommand("metro bpm " + currentBpm, null);
         // 发送每小节拍数
         sendCommand("metro beats " + currentBeats, null);
-        // 发送节拍器模式
-        switch (metronomeMode) {
-            case METRO_OFF:
-                sendCommand("metro off", null);
-                break;
-            case METRO_ALWAYS:
-                sendCommand("metro on", null);
-                break;
-            case METRO_COUNTDOWN:
-                // 倒数逻辑由 App 侧控制，硬件保持关闭状态，
-                // 录制时再动态发送 metro on/off
-                sendCommand("metro off", null);
-                break;
-        }
+        // 节拍器开/关由 App 側在录制时动态控制，这里先关闭
+        sendCommand("metro off", null);
+        
         refreshTopInfoBar();
         closeDrawer();
         Toast.makeText(this, "设置已应用并发送", Toast.LENGTH_SHORT).show();
@@ -417,20 +499,26 @@ public class LooperControlActivity extends AppCompatActivity {
         if (tvTopBpm == null) return;
         tvTopBpm.setText(String.valueOf(currentBpm));
         tvTopBeats.setText(currentBeats + "/4");
-        switch (metronomeMode) {
-            case METRO_OFF:
-                tvTopMetroMode.setText("关闭");
-                tvTopMetroMode.setTextColor(Color.parseColor("#888888"));
-                break;
-            case METRO_ALWAYS:
-                tvTopMetroMode.setText("全程");
-                tvTopMetroMode.setTextColor(Color.parseColor("#00FFA3"));
-                break;
-            case METRO_COUNTDOWN:
-                tvTopMetroMode.setText("倒数" + countdownBeats);
-                tvTopMetroMode.setTextColor(Color.parseColor("#FFB800"));
-                break;
+        
+        // 节拍器显示逻辑：
+        String metroLabel;
+        int metroColor;
+        if (metroOnDuringRec && countdownBeforeRec) {
+            metroLabel = "倒数+录制";
+            metroColor = Color.parseColor("#FFB800");
+        } else if (metroOnDuringRec) {
+            metroLabel = "录制中";
+            metroColor = Color.parseColor("#00FFA3");
+        } else if (countdownBeforeRec) {
+            metroLabel = "倒数" + countdownBeats;
+            metroColor = Color.parseColor("#FFB800");
+        } else {
+            metroLabel = "关闭";
+            metroColor = Color.parseColor("#888888");
         }
+        tvTopMetroMode.setText(metroLabel);
+        tvTopMetroMode.setTextColor(metroColor);
+        
         updateHwStatusIndicator();
     }
 
@@ -476,31 +564,10 @@ public class LooperControlActivity extends AppCompatActivity {
             btnSegConfig[i].setOnClickListener(v -> showSegConfigDialog(idx));
         }
 
-        btnLooperClear.setOnClickListener(v -> {
-            sendCommand("looper -c", "Sent: Clear all segments");
-            for (int i = 0; i < SEG_COUNT; i++) {
-                cancelAutoStop(i);
-                segStates[i] = SegState.INACTIVE;
-                refreshSegUI(i);
-            }
-        });
-
-        btnLooperErase.setOnClickListener(v -> showConfirmDialog(
-            "Erase Flash",
-            "This will erase all recorded data (~20s). Continue?",
-            () -> {
-                sendCommand("looper -e", "Sent: Erase chip");
-                for (int i = 0; i < SEG_COUNT; i++) {
-                    cancelAutoStop(i);
-                    segStates[i] = SegState.INACTIVE;
-                    refreshSegUI(i);
-                }
-            }
-        ));
-
-        btnLooperReset.setOnClickListener(v -> showConfirmDialog(
-            "Looper Reset",
-            "This will reset all states and erase Flash. Continue?",
+        // 擦除Flash & 重置Looper
+        btnLooperEraseAndReset.setOnClickListener(v -> showConfirmDialog(
+            "擦除 Flash & 重置 Looper",
+            "这将擦除所有录制数据并重置状态（约20秒），是否继续？",
             () -> {
                 sendCommand("looper -R", "Sent: Reset");
                 for (int i = 0; i < SEG_COUNT; i++) {
@@ -552,55 +619,74 @@ public class LooperControlActivity extends AppCompatActivity {
                 break;
         }
 
+        final SegState prevState = current;
         sendCommandWithCallback(cmd, success -> {
             if (!success) return;
             segStates[idx] = nextState;
+            if (nextState == SegState.PLAYING) {
+                onSegmentEnteredPlaying(idx, prevState == SegState.RECORDING);
+            }
             refreshSegUI(idx);
         });
     }
 
     /**
-     * 根据侧边栏节拍器模式，决定是否先倒数拍子再开始录制。
+     * 根据侧边栏节拍器设置，决定是否先倒数拍子再开始录制。
      *
-     * METRO_OFF:       直接开始录制，不发节拍器指令
-     * METRO_ALWAYS:    先发 metronome -on，再立即开始录制（节拍器全程响）
-     * METRO_COUNTDOWN: 先发 metronome -on 倒数 N 拍，等待后关节拍器再开始录制
+     * metroOnDuringRec=false & countdownBeforeRec=false: 直接录制，不开节拍器
+     * metroOnDuringRec=true  & countdownBeforeRec=false: 先开节拍器，立即录制（节拍器全程响）
+     * metroOnDuringRec=any   & countdownBeforeRec=true:  先开节拍器倒数N拍，等待后根据metroOnDuringRec决定是否关闭
+     *
+     * 倒数拍仅在有其他段正在播放时生效（避免第一个loop录制时的无意义等待）
      */
     private void startRecordingWithMetronome(int idx) {
-        switch (metronomeMode) {
+        // 特殊逻辑：LOOP 2 跟随 LOOP 1 开头录制（仅在 LOOP 1 播放状态下生效）
+        if (idx == 1 && seg1FollowSeg0 && segStates[0] == SegState.PLAYING) {
+            waitForLoop0BoundaryThenRecord(idx);
+            return;
+        }
 
-            case METRO_OFF:
-                // 不动节拍器，直接录制
-                doStartRecording(idx);
-                break;
-
-            case METRO_ALWAYS:
-                // 打开节拍器，等写入完成后再开始录制
-                refreshTopInfoBar();
-                sendCommandWithCallback("metro on", onSuccess -> doStartRecording(idx));
-                break;
-
-            case METRO_COUNTDOWN: {
-                // 先打开节拍器，倒数 countdownBeats 拍后，关节拍器再开始录制
-                sendCommand("metro on", null);
-                refreshTopInfoBar();
-
-                long msPerBeat = (long)(60000.0 / currentBpm);
-                long waitMs    = msPerBeat * countdownBeats;
-
-                segInCountdown[idx] = true;
-                showCountdownHint(idx, countdownBeats, msPerBeat);
-
-                countdownRunnables[idx] = () -> {
-                    countdownRunnables[idx] = null;
-                    segInCountdown[idx] = false;
-                    refreshTopInfoBar();
-                    // 等 metro off 写入完成后，再发送录制命令，避免 BLE 并发写入被拒绝
-                    sendCommandWithCallback("metro off", offSuccess -> doStartRecording(idx));
-                };
-                handler.postDelayed(countdownRunnables[idx], waitMs);
+        // 检查是否有其他段正在播放
+        boolean hasPlayingSegment = false;
+        for (int i = 0; i < SEG_COUNT; i++) {
+            if (i != idx && segStates[i] == SegState.PLAYING) {
+                hasPlayingSegment = true;
                 break;
             }
+        }
+
+        // 正常逻辑：无播放段时才倒数（建立节奏基准）；有播放时直接录制（节奏已有参考）
+        if (countdownBeforeRec && !hasPlayingSegment) {
+            // 无任何段在播放 → 倒数拍，帮助建立节奏
+            sendCommand("metro on", null);
+            refreshTopInfoBar();
+
+            long msPerBeat = (long)(60000.0 / currentBpm);
+            long waitMs    = msPerBeat * countdownBeats;
+
+            segInCountdown[idx] = true;
+            showCountdownHint(idx, countdownBeats, msPerBeat);
+
+            countdownRunnables[idx] = () -> {
+                countdownRunnables[idx] = null;
+                segInCountdown[idx] = false;
+                refreshTopInfoBar();
+                // 倒数结束后：如果录制中不需要节拍器，就关闭
+                if (!metroOnDuringRec) {
+                    sendCommandWithCallback("metro off", offSuccess -> doStartRecording(idx));
+                } else {
+                    // 录制中要节拍器，保持开启
+                    doStartRecording(idx);
+                }
+            };
+            handler.postDelayed(countdownRunnables[idx], waitMs);
+        } else if (metroOnDuringRec) {
+            // 有播放段或不倒数，但录制中要节拍器
+            refreshTopInfoBar();
+            sendCommandWithCallback("metro on", onSuccess -> doStartRecording(idx));
+        } else {
+            // 有播放段，也不需要节拍器 → 直接录制
+            doStartRecording(idx);
         }
     }
 
@@ -609,50 +695,170 @@ public class LooperControlActivity extends AppCompatActivity {
         sendCommandWithCallback("looper -r " + idx, success -> {
             if (!success) return;
             segStates[idx] = SegState.RECORDING;
+            segRecordStartTime[idx] = System.currentTimeMillis();
+            segInSyncWait[idx] = false;
+            hideSyncInfoPanel();
             refreshSegUI(idx);
-            // 配置了小节数 → 启动自动停止计时
-            if (segMeasures[idx] > 0) {
+            // LOOP 2 跟随录制时长：若开关开启且 LOOP 1 时长已知，自动按相同时长停止
+            if (idx == 1 && seg1MatchDuration && segLoopDurationMs[0] > 0) {
+                long dur = segLoopDurationMs[0];
+                autoStopRunnables[idx] = () -> autoStopSegment(idx);
+                handler.postDelayed(autoStopRunnables[idx], dur);
+                // 信息面板显示倒计时
+                showMatchDurationCountdown(idx, System.currentTimeMillis() + dur);
+            } else if (segMeasures[idx] > 0) {
                 scheduleAutoStop(idx);
             }
         });
     }
 
+    /** 在信息面板显示 LOOP 2 录制半长倒计时（每100ms刷新） */
+    private void showMatchDurationCountdown(int idx, long endMs) {
+        if (segStates[idx] != SegState.RECORDING) {
+            hideSyncInfoPanel();
+            return;
+        }
+        long remaining = endMs - System.currentTimeMillis();
+        if (remaining < 0) remaining = 0;
+        long secs   = remaining / 1000;
+        long tenths = (remaining % 1000) / 100;
+        tvLoopSyncTitle.setText("⏱ LOOP " + (idx + 1) + " 录制中（跟随 LOOP 1 长度）");
+        tvLoopSyncInfo.setText(
+            "LOOP 1 循环时长: " + String.format("%.2f", segLoopDurationMs[0] / 1000.0) + "s" +
+            "\n完成倒计时: " + secs + "." + tenths + "s"
+        );
+        layoutLoopSyncInfo.setVisibility(View.VISIBLE);
+        if (remaining > 80) {
+            handler.postDelayed(() -> showMatchDurationCountdown(idx, endMs), 100);
+        }
+    }
+
+    /**
+     * 记录段进入 PLAYING 状态时的时间，计算循环时长。
+     * fromRecording=true 表示从 RECORDING 直接转播放（此时可计算准确时长）
+     */
+    private void onSegmentEnteredPlaying(int idx, boolean fromRecording) {
+        long now = System.currentTimeMillis();
+        if (fromRecording && segRecordStartTime[idx] > 0) {
+            segLoopDurationMs[idx] = now - segRecordStartTime[idx];
+        }
+        segPlayStartTime[idx] = now;
+    }
+
+    /**
+     * 等待 LOOP 1 当前循环结束后再开始 LOOP 2 录制。
+     * 利用录制时长 + 已播放时长精确计算剩余等待时间。
+     * 倒计时显示在按钮下方信息面板，不影响卡片显示。
+     */
+    private void waitForLoop0BoundaryThenRecord(int idx) {
+        long loopDuration = segLoopDurationMs[0];
+        if (loopDuration <= 0) {
+            Toast.makeText(this, "LOOP 1 时长未知（未录制），直接开始", Toast.LENGTH_SHORT).show();
+            doStartRecordingAfterSync(idx);
+            return;
+        }
+        long now = System.currentTimeMillis();
+        // 计算 LOOP 1 已播放了多少 ms（取模得到当前循环内偏移）
+        long elapsed   = (now - segPlayStartTime[0]) % loopDuration;
+        long remaining = loopDuration - elapsed;
+        long targetMs  = now + remaining;
+
+        segInCountdown[idx] = true;
+        segInSyncWait[idx]  = true;
+
+        // 在信息面板显示 LOOP 1 时长 + 当前等待
+        showSyncInfoPanel(idx, loopDuration, targetMs);
+
+        countdownRunnables[idx] = () -> {
+            countdownRunnables[idx] = null;
+            segInCountdown[idx]    = false;
+            segInSyncWait[idx]     = false;
+            hideSyncInfoPanel();
+            doStartRecordingAfterSync(idx);
+        };
+        handler.postDelayed(countdownRunnables[idx], remaining);
+    }
+
+    /** 在按钮下方信息面板显示 LOOP 同步信息（每 100ms 刷新） */
+    private void showSyncInfoPanel(int idx, long loopDuration, long targetMs) {
+        if (!segInSyncWait[idx]) return;
+        long remaining = targetMs - System.currentTimeMillis();
+        if (remaining < 0) remaining = 0;
+        long secs   = remaining / 1000;
+        long tenths = (remaining % 1000) / 100;
+
+        tvLoopSyncTitle.setText("🔁 跟随录制 — LOOP " + (idx + 1) + " 等待同步");
+        tvLoopSyncInfo.setText(
+            "LOOP 1 循环时长: " + String.format("%.2f", loopDuration / 1000.0) + "s" +
+            "\n⏳ 距下一循环头: " + secs + "." + tenths + "s\n" +
+            "点击 LOOP " + (idx + 1) + " 卡片可取消等待"
+        );
+        layoutLoopSyncInfo.setVisibility(View.VISIBLE);
+
+        if (remaining > 80) {
+            handler.postDelayed(() -> showSyncInfoPanel(idx, loopDuration, targetMs), 100);
+        }
+    }
+
+    /** 隐藏同步信息面板 */
+    private void hideSyncInfoPanel() {
+        if (layoutLoopSyncInfo != null) {
+            layoutLoopSyncInfo.setVisibility(View.GONE);
+        }
+    }
+
+    /** 同步等待结束后启动录制（可选开启节拍器） */
+    private void doStartRecordingAfterSync(int idx) {
+        if (metroOnDuringRec) {
+            sendCommandWithCallback("metro on", ok -> doStartRecording(idx));
+        } else {
+            doStartRecording(idx);
+        }
+    }
+
     /**
      * 取消正在进行的倒计时（用户重新点击卡片时调用）。
-     * 同时关闭节拍器并恢复卡片显示。
      */
     private void cancelCountdown(int idx) {
         if (countdownRunnables[idx] != null) {
             handler.removeCallbacks(countdownRunnables[idx]);
             countdownRunnables[idx] = null;
         }
-        if (segInCountdown[idx]) {
+        if (segInSyncWait[idx]) {
+            // 取消 LOOP 跟随同步等待 → 隐藏信息面板
+            segInSyncWait[idx]  = false;
+            segInCountdown[idx] = false;
+            hideSyncInfoPanel();
+            refreshSegUI(idx);
+        } else if (segInCountdown[idx]) {
+            // 取消节拍器倒数 → 关节拍器，隐藏信息面板，恢复卡片
             segInCountdown[idx] = false;
             sendCommand("metro off", null);
             refreshTopInfoBar();
+            hideSyncInfoPanel();
             refreshSegUI(idx);
         }
     }
 
     /**
-     * 在卡片上显示倒计时提示（每拍更新一次，直到倒计时结束或被取消）。
+     * 在信息面板显示节拍器倒计时（每拍更新，不修改卡片本身）。
      */
     private void showCountdownHint(int idx, int remaining, long msPerBeat) {
+        if (!segInCountdown[idx] || segInSyncWait[idx]) return;
         if (remaining > 0) {
-            // 倒计时进行中：如已被取消则停止更新
-            if (!segInCountdown[idx]) return;
-            tvSegState[idx].setText("READY");
-            tvSegState[idx].setTextColor(COLOR_INACTIVE);
-            tvSegHint[idx].setText("🎵 准备... " + remaining + " 拍");
-            tvSegHint[idx].setTextColor(Color.parseColor("#FFB800"));
+            tvLoopSyncTitle.setText("🎵 LOOP " + (idx + 1) + " 录制准备");
+            tvLoopSyncInfo.setText(
+                "节拍器倒数中... 还剩 " + remaining + " 拍\n" +
+                "BPM: " + currentBpm + "  ·  " + countdownBeats + "拍后开始录制\n" +
+                "点击 LOOP " + (idx + 1) + " 卡片可取消"
+            );
+            layoutLoopSyncInfo.setVisibility(View.VISIBLE);
             final int r = remaining;
             handler.postDelayed(() -> showCountdownHint(idx, r - 1, msPerBeat), msPerBeat);
         } else {
-            // 倒计时结束瞬间：无论 segInCountdown 是否已被 countdownRunnable 清除，
-            // 只要卡片仍在 INACTIVE（尚未进入 RECORDING）就显示"开始!"提示
-            if (segStates[idx] == SegState.INACTIVE) {
-                tvSegHint[idx].setText("🎵 开始!");
-                tvSegHint[idx].setTextColor(Color.parseColor("#FFB800"));
+            // 倒计时结束瞬间短暂提示"开始!"
+            if (segStates[idx] == SegState.INACTIVE && segInCountdown[idx]) {
+                tvLoopSyncInfo.setText("🎵 开始录制！");
             }
         }
     }
@@ -687,12 +893,14 @@ public class LooperControlActivity extends AppCompatActivity {
     private void autoStopSegment(int idx) {
         autoStopRunnables[idx] = null;
         if (segStates[idx] != SegState.RECORDING) return;
+        hideSyncInfoPanel();
 
         if (segAutoPlay[idx]) {
             // 停止录制并自动播放
             sendCommandWithCallback("looper -p " + idx, success -> {
                 if (!success) return;
                 segStates[idx] = SegState.PLAYING;
+                onSegmentEnteredPlaying(idx, true);
                 refreshSegUI(idx);
                 refreshSegCfgHint(idx);
             });
@@ -728,6 +936,18 @@ public class LooperControlActivity extends AppCompatActivity {
             .start();
         sendCommandWithCallback("looper -c " + idx, success -> {
             segStates[idx] = SegState.INACTIVE;
+            segLoopDurationMs[idx]  = 0;
+            segRecordStartTime[idx] = 0;
+            segPlayStartTime[idx]   = 0;
+            // 如果有其他段在等待同步，且它在等 idx 段，取消等待
+            for (int j = 0; j < SEG_COUNT; j++) {
+                if (j != idx && segInSyncWait[j]) {
+                    cancelCountdown(j);
+                    Toast.makeText(this,
+                        "LOOP " + (idx+1) + " 已删除，LOOP " + (j+1) + " 跟随等待已取消",
+                        Toast.LENGTH_SHORT).show();
+                }
+            }
             refreshSegUI(idx);
             refreshSegCfgHint(idx);
             Toast.makeText(this, "LOOP " + (idx + 1) + " 录音已删除", Toast.LENGTH_SHORT).show();
@@ -788,6 +1008,13 @@ public class LooperControlActivity extends AppCompatActivity {
                 String upper = data.toUpperCase();
                 if (upper.startsWith("AA5520") && upper.length() >= 36) {
                     parseLooperStatusBinary(upper);
+                    accum.setLength(0);
+                    return;
+                }
+
+                // ── 二进制包路径：AA 55 21 09 ... (looper params, type=0x21) ──
+                if (upper.startsWith("AA5521") && upper.length() >= 26) {
+                    parseLooperParamsBinary(upper);
                     accum.setLength(0);
                     return;
                 }
@@ -904,6 +1131,75 @@ public class LooperControlActivity extends AppCompatActivity {
         refreshTopInfoBar();
     }
 
+    /**
+     * 解析 looper -q 返回的参数二进制包 (type=0x21)
+     * 格式 (hex 字符串, 大写无空格):
+     *   AA5521 09 [vol0][vol1][vol2][vol3][flash_status][bpm_lo][bpm_hi][beats][mode]
+     * 偏移 (chars): 0  2  4  6   8   10  12  14  16          18     20    22     24
+     * flash_status: 0=CLEAN(已初始化), 1=USED(需要擦除)
+     */
+    private void parseLooperParamsBinary(String hex) {
+        try {
+            if (hex.length() < 26) return;
+
+            // 段音量 [offset 8..15]
+            for (int i = 0; i < SEG_COUNT; i++) {
+                int off = 8 + i * 2;
+                segVolumes[i] = Integer.parseInt(hex.substring(off, off + 2), 16);
+                refreshSegCfgHint(i);
+            }
+
+            // flash_status [offset 16]
+            int flashStatus = Integer.parseInt(hex.substring(16, 18), 16);
+
+            // BPM [offset 18..21]
+            int bpmLo = Integer.parseInt(hex.substring(18, 20), 16);
+            int bpmHi = Integer.parseInt(hex.substring(20, 22), 16);
+            int bpm   = bpmLo | (bpmHi << 8);
+
+            // beats [offset 22]
+            int beats = Integer.parseInt(hex.substring(22, 24), 16);
+
+            // 更新 BPM / beats
+            if (bpm >= 60 && bpm <= 200) currentBpm = bpm;
+            if (beats >= 2 && beats <= 8)  currentBeats = beats;
+            refreshTopInfoBar();
+
+            // 同步成功提示
+            Toast.makeText(this,
+                String.format("Looper 已同步: BPM=%d  Beats=%d", currentBpm, currentBeats),
+                Toast.LENGTH_SHORT).show();
+
+            // Flash 状态检查：如果不是 CLEAN，提示擦除
+            if (flashStatus != 0) {
+                checkAndPromptFlashErase();
+            }
+        } catch (NumberFormatException e) {
+            android.util.Log.e("Looper", "parseLooperParamsBinary error: " + hex, e);
+        }
+    }
+
+    /**
+     * Flash 未初始化时弹对话框询问是否擦除
+     */
+    private void checkAndPromptFlashErase() {
+        new AlertDialog.Builder(this)
+            .setTitle("Flash 需要初始化")
+            .setMessage("Looper Flash 尚未初始化（上次退出前有录音数据）。\n\n" +
+                        "需要全片擦除 (~20s) 才能正常录音。\n是否立即擦除？")
+            .setPositiveButton("立即擦除", (d, w) -> {
+                sendCommand("looper -e", null);
+                Toast.makeText(this, "Flash 擦除中，请稍等约20秒...", Toast.LENGTH_LONG).show();
+                for (int i = 0; i < SEG_COUNT; i++) {
+                    cancelAutoStop(i);
+                    segStates[i] = SegState.INACTIVE;
+                    refreshSegUI(i);
+                }
+            })
+            .setNegativeButton("稍后", null)
+            .show();
+    }
+
     private boolean checkConnection() {
         if (!bluetoothHelper.isConnected()) {
             Toast.makeText(this, "Connect Bluetooth first", Toast.LENGTH_SHORT).show();
@@ -946,6 +1242,7 @@ public class LooperControlActivity extends AppCompatActivity {
         // 用可变数组模拟 "局部 final" 变量
         final int[]     tmpMeasures = {segMeasures[idx]};
         final boolean[] tmpAutoPlay = {segAutoPlay[idx]};
+        final int[]     tmpVolume   = {segVolumes[idx]};
 
         // ---- 构建弹窗主体布局 ----
         android.widget.LinearLayout root = new android.widget.LinearLayout(this);
@@ -1086,6 +1383,66 @@ public class LooperControlActivity extends AppCompatActivity {
         rowPlay.addView(rgPlay);
         root.addView(rowPlay);
 
+        // -- 音量区域 --
+        android.widget.LinearLayout rowVolume = new android.widget.LinearLayout(this);
+        rowVolume.setOrientation(android.widget.LinearLayout.VERTICAL);
+        rowVolume.setBackgroundColor(Color.parseColor("#0F1419"));
+        rowVolume.setPadding(24, 20, 24, 20);
+        android.widget.LinearLayout.LayoutParams blockVolParams =
+            new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        blockVolParams.setMargins(0, 0, 0, 8);
+        rowVolume.setLayoutParams(blockVolParams);
+
+        // 标题行：标签 + 当前数值
+        android.widget.LinearLayout volTitleRow = new android.widget.LinearLayout(this);
+        volTitleRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        volTitleRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        TextView lblVolume = new TextView(this);
+        lblVolume.setText("播放音量");
+        lblVolume.setTextColor(Color.parseColor("#00D9FF"));
+        lblVolume.setTextSize(14);
+        lblVolume.setTypeface(null, android.graphics.Typeface.BOLD);
+        android.widget.LinearLayout.LayoutParams lblVolP =
+            new android.widget.LinearLayout.LayoutParams(0,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        lblVolume.setLayoutParams(lblVolP);
+
+        final TextView tvVolValue = new TextView(this);
+        tvVolValue.setText(tmpVolume[0] + "%");
+        tvVolValue.setTextColor(Color.parseColor("#00FFA3"));
+        tvVolValue.setTextSize(16);
+        tvVolValue.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvVolValue.setGravity(android.view.Gravity.END);
+
+        volTitleRow.addView(lblVolume);
+        volTitleRow.addView(tvVolValue);
+        rowVolume.addView(volTitleRow);
+
+        // SeekBar 0-100
+        final SeekBar sbVolume = new SeekBar(this);
+        sbVolume.setMax(100);
+        sbVolume.setProgress(tmpVolume[0]);
+        android.widget.LinearLayout.LayoutParams sbP =
+            new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        sbP.setMargins(0, 12, 0, 4);
+        sbVolume.setLayoutParams(sbP);
+        sbVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
+                tmpVolume[0] = progress;
+                tvVolValue.setText(progress + "%");
+            }
+            @Override public void onStartTrackingTouch(SeekBar sb) {}
+            @Override public void onStopTrackingTouch(SeekBar sb) {}
+        });
+        rowVolume.addView(sbVolume);
+
+        root.addView(rowVolume);
+
         // ---- 显示对话框 ----
         new AlertDialog.Builder(this)
             .setTitle("LOOP " + (idx + 1) + " 录制配置")
@@ -1093,17 +1450,20 @@ public class LooperControlActivity extends AppCompatActivity {
             .setPositiveButton("确定", (d, w) -> {
                 segMeasures[idx] = tmpMeasures[0];
                 segAutoPlay[idx] = tmpAutoPlay[0];
+                segVolumes[idx]  = tmpVolume[0];
                 refreshSegCfgHint(idx);
-                // 发送配置到硬件
-                if (segMeasures[idx] == 0) {
-                    sendCommand("looper -cfg " + idx + " measures 0", null);
-                } else {
-                    sendCommand("looper -cfg " + idx + " measures " + segMeasures[idx], null);
-                }
-                sendCommand(
-                    "looper -cfg " + idx + " autoplay " + (segAutoPlay[idx] ? "1" : "0"), null);
+                // 串行发送：先发小节配置，再发音量（避免 BLE 并发写入被拒绝）
+                final String volCmd = "looper -V " + idx + " " + segVolumes[idx];
+                sendCommandWithCallback(
+                    "looper -cfg " + idx + " autoplay " + (segAutoPlay[idx] ? "1" : "0"),
+                    autoplaySent -> {
+                        // 等上一条写完再发音量
+                        handler.postDelayed(
+                            () -> sendCommand(volCmd, null),
+                            150);
+                    });
                 Toast.makeText(this,
-                    "LOOP " + (idx+1) + " 配置已保存", Toast.LENGTH_SHORT).show();
+                    "LOOP " + (idx+1) + " 音量 " + segVolumes[idx] + "% 已保存", Toast.LENGTH_SHORT).show();
             })
             .setNegativeButton("取消", null)
             .show();
@@ -1117,7 +1477,8 @@ public class LooperControlActivity extends AppCompatActivity {
         if (tvSegCfgHint == null || tvSegCfgHint[idx] == null) return;
         String measures = (segMeasures[idx] == 0) ? "∞" : (segMeasures[idx] + "小节");
         String action   = segAutoPlay[idx] ? "► 播放" : "■ 停止";
-        tvSegCfgHint[idx].setText(measures + "  " + action);
+        String vol      = "🔊" + segVolumes[idx] + "%";
+        tvSegCfgHint[idx].setText(measures + "  " + action + "  " + vol);
         tvSegCfgHint[idx].setTextColor(
             segAutoPlay[idx]
                 ? Color.parseColor("#50C8D8")

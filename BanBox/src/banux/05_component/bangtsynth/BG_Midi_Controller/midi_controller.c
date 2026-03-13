@@ -5,6 +5,7 @@
 
 #include "midi_info.h"
 #include "soundbank_manager.h"  // 使用统一音源管理器
+#include "drum_machine.h"       // 鼓机模块
 #if ENABLE_AUDIO_PROCESSOR
 #include "bg_audio_processor.h"  // 音频处理器流水线
 #include "effects/bg_effect_drc.h"  // DRC 效果
@@ -52,6 +53,9 @@ int Re_Sample(int tone){
 void MIDI_Init(){
     memset((void*)BG_MIDI_data.BG_channel_info,0,sizeof(BG_MIDI_data.BG_channel_info));
     
+    /* 初始化鼓机模块 */
+    DrumMachine_Init();
+    
 #if ENABLE_AUDIO_PROCESSOR
     {
         BG_EQ_Effect_t *eq;
@@ -64,6 +68,10 @@ void MIDI_Init(){
         
         /* 创建并注册 EQ 效果 (使用流行音乐预设) */
         eq = bg_effect_eq_create();
+        if (eq == NULL) {
+            printf("[MIDI] ERROR: bg_effect_eq_create() failed (OOM), skipping EQ\n");
+            goto audio_proc_done;
+        }
         bg_effect_eq_preset_pop(eq);  // 默认使用流行音乐预设
         
         eq_id = BG_AudioProcessor.RegisterEffect(
@@ -82,6 +90,10 @@ void MIDI_Init(){
             1.0f,   // attack: 1ms
             50.0f   // release: 50ms
         );
+        if (drc == NULL) {
+            printf("[MIDI] ERROR: bg_effect_drc_create() failed (OOM), skipping DRC\n");
+            goto audio_proc_done;
+        }
         
         drc_id = BG_AudioProcessor.RegisterEffect(
             "DRC",
@@ -93,6 +105,7 @@ void MIDI_Init(){
         );
         
         printf("[MIDI] Audio pipeline initialized: EQ(ID=%d) -> DRC(ID=%d)\n", eq_id, drc_id);
+        audio_proc_done:;
     }
 #endif /* ENABLE_AUDIO_PROCESSOR */
 }

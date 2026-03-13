@@ -2,7 +2,7 @@
 #define __PARAM_DEF_H__
 
 // Version and Magic
-#define SYS_PARAM_VERSION       0x0102      /* Parameter structure version, changes require firmware update */
+#define SYS_PARAM_VERSION       0x0103      /* Parameter structure version, changes require firmware update */
 #define SYS_PARAM_MAGIC         0x50415241  /* "PARA" Magic number*/
 
 // Flash Storage Configuration

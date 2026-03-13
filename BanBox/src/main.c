@@ -353,6 +353,10 @@ void EffectTask() {
 	 * 必须在 Audio_Init 之后调用 (Effect Graph 已创建)
 	 *====================================================*/
 	DBG("[Task] Initializing BanGTsynth...\n");
+	{
+		extern int osPortRemainMem(void);
+		DBG("[Task] Heap before BanGTsynth: %d bytes\n", osPortRemainMem());
+	}
 	if (BanGTsynth_Node_Init() == 0) {
 		DBG("[Task] BanGTsynth initialized OK\n");
 		/* 设置内嵌 SF2 存储驱动并加载默认音源 */

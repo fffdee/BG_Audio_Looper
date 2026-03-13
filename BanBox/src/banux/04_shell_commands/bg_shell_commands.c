@@ -66,6 +66,7 @@ static int audio_save_param(int argc, char *argv[])
     return -1;
 }
 
+#if 0 /* LOOPER_SHELL_COMMANDS_DISABLED */
 static int looper_save_param(int argc, char *argv[])
 {
     (void)argc; (void)argv;
@@ -77,6 +78,7 @@ static int looper_save_param(int argc, char *argv[])
     Shell_Print("Save failed!\r\n");
     return -1;
 }
+#endif /* LOOPER_SHELL_COMMANDS_DISABLED */
 
 static int bt_save_param(int argc, char *argv[])
 {
@@ -1545,7 +1547,11 @@ static int looper_status_cmd(int argc, char *argv[])
     Shell_Printf("Recording:  %s\r\n", status.is_recording ? "YES" : "NO");
     Shell_Printf("Playing:    %s\r\n", status.is_playing ? "YES" : "NO");
     Shell_Printf("Flash:      %s\r\n", status.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
+#if LOOPER_MULTI_FLASH_ENABLE
+    Shell_Printf("ErasePend:  %s\r\n", g_loop_manager.chip_erase_pending_mask ? "YES (blocked)" : "NO");
+#else
     Shell_Printf("ErasePend:  %s\r\n", g_loop_manager.chip_erase_pending ? "YES (blocked)" : "NO");
+#endif /* LOOPER_MULTI_FLASH_ENABLE */
     Shell_Printf("Segments:   %d active\r\n", status.active_segments);
     Shell_Printf("Current:    Segment %d\r\n", status.current_segment);
     Shell_Printf("Recorded:   %lu bytes\r\n", (unsigned long)status.total_recorded_bytes);
@@ -1662,6 +1668,7 @@ static int looper_stop_cmd(int argc, char *argv[])
     return 0;
 }
 
+#if 0 /* LOOPER_BTN_CMD_DISABLED */
 static int looper_btn_cmd(int argc, char *argv[])
 {
     int seg;
@@ -1682,11 +1689,23 @@ static int looper_btn_cmd(int argc, char *argv[])
     Shell_Printf("Button %d pressed\r\n", seg);
     return 0;
 }
+#endif /* LOOPER_BTN_CMD_DISABLED */
 
 static int looper_clear_cmd(int argc, char *argv[])
 {
-    (void)argc; (void)argv;
-    
+    if (argc > 0) {
+        /* 带段号参数：仅重置该段状态，不擦 Flash */
+        int seg = atoi(argv[0]);
+        if (seg < 0 || seg >= MAX_SEGMENTS) {
+            Shell_Print("Error: segment must be 0-3\r\n");
+            return -1;
+        }
+        loop_clear_segment((uint8_t)seg);
+        Shell_Printf("Segment %d cleared (INACTIVE, flash data overwritten on next REC)\r\n", seg);
+        return 0;
+    }
+
+    /* 无参数：清除全部段 + 擦 Flash（原有行为） */
     loop_clear_all_segments();
     Shell_Print("All segments cleared\r\n");
     return 0;
@@ -1791,19 +1810,194 @@ static int looper_metro_cmd(int argc, char *argv[])
     return 0;
 }
 
+/* -----------------------------------------------------------------------
+ * looper -cfg <idx> autoplay <0|1>  — 设置指定段录制结束后是否自动播放
+ * 该配置由 App 端追踪，固件仅作存储，不主动触发播放。
+ * 示例：looper -cfg 0 autoplay 1
+ * ---------------------------------------------------------------------- */
+static uint8_t g_seg_autoplay[MAX_SEGMENTS] = {0};  /* 各段自动播放标志 */
+
+static int looper_cfg_cmd(int argc, char *argv[])
+{
+    int seg;
+
+    if (argc < 3) {
+        Shell_Print("Usage: looper -cfg <seg> autoplay <0|1>\r\n");
+        return -1;
+    }
+
+    seg = atoi(argv[0]);
+    if (seg < 0 || seg >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment must be 0-3\r\n");
+        return -1;
+    }
+
+    if (strcmp(argv[1], "autoplay") == 0) {
+        int val = atoi(argv[2]);
+        g_seg_autoplay[seg] = (uint8_t)(val ? 1 : 0);
+        Shell_Printf("Seg%d autoplay: %s\r\n", seg, val ? "ON" : "OFF");
+    } else {
+        Shell_Printf("Unknown cfg key: %s\r\n", argv[1]);
+        return -1;
+    }
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -V [seg] [vol]  — 查询或设置指定段的播放音量
+ * seg: 0-3，vol: 0-100
+ * 不带参数：打印全部4段音量
+ * 带1参数：打印该段音量
+ * 带2参数：设置该段音量并持久化
+ * ---------------------------------------------------------------------- */
+static int looper_vol_cmd(int argc, char *argv[])
+{
+    int seg, vol;
+
+    /* 无参数：打印所有段音量 */
+    if (argc < 1) {
+        uint8_t i;
+        Shell_Print("\r\n=== Looper Segment Volume ===\r\n");
+        for (i = 0; i < MAX_SEGMENTS; i++) {
+            Shell_Printf("  Seg%d: %3d%%\r\n", i, (int)loop_get_segment_volume(i));
+        }
+        Shell_Printf("  Flash status: %s\r\n",
+            SYSPARAM_LOOPER()->flash_status == LOOPER_FLASH_STATUS_CLEAN ? "CLEAN" : "USED");
+        Shell_Print("\r\n");
+        return 0;
+    }
+
+    seg = atoi(argv[0]);
+    if (seg < 0 || seg >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment must be 0-3\r\n");
+        return -1;
+    }
+
+    /* 只带段号：查询 */
+    if (argc < 2) {
+        Shell_Printf("Seg%d volume: %d%%\r\n", seg, (int)loop_get_segment_volume((uint8_t)seg));
+        return 0;
+    }
+
+    /* 带段号和音量：设置 */
+    vol = atoi(argv[1]);
+    if (vol < 0 || vol > 100) {
+        Shell_Print("Error: volume must be 0-100\r\n");
+        return -1;
+    }
+
+    loop_set_segment_volume((uint8_t)seg, (uint8_t)vol);
+    Shell_Printf("Seg%d volume set to %d%% (saved)\r\n", seg, vol);
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -F [clean|used]  — 查询/手动设置Flash初始化状态标志
+ * 不带参数：显示当前状态
+ * clean：强制标记为已初始化（已全片擦除）
+ * used ：强制标记为已使用（下次开机会触发擦除）
+ * ---------------------------------------------------------------------- */
+static int looper_flash_status_cmd(int argc, char *argv[])
+{
+    uint8_t st;
+
+    if (argc < 1) {
+        st = SYSPARAM_LOOPER()->flash_status;
+        Shell_Printf("Looper Flash status: %s (%d)\r\n",
+            st == LOOPER_FLASH_STATUS_CLEAN ? "CLEAN (initialized)" : "USED (needs init on next boot)",
+            (int)st);
+#if LOOPER_MULTI_FLASH_ENABLE
+        Shell_Printf("Erase pending: %s\r\n",
+            g_loop_manager.chip_erase_pending_mask ? "YES (erase in progress)" : "NO");
+#else
+        Shell_Printf("Erase pending: %s\r\n",
+            g_loop_manager.chip_erase_pending ? "YES (erase in progress)" : "NO");
+#endif /* LOOPER_MULTI_FLASH_ENABLE */
+        return 0;
+    }
+
+    if (strcmp(argv[0], "clean") == 0) {
+        SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_CLEAN;
+        SysParam_Save();
+        Shell_Print("Flash status set to CLEAN (saved)\r\n");
+    } else if (strcmp(argv[0], "used") == 0) {
+        SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
+        SysParam_Save();
+        Shell_Print("Flash status set to USED (saved)\r\n");
+    } else {
+        Shell_Print("Usage: looper -F [clean|used]\r\n");
+        return -1;
+    }
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -q  — App专用：以二进制格式返回Looper参数（用于APP读取）
+ * 响应格式: [0xAA][0x55][0x21][0x09]
+ *           [vol0][vol1][vol2][vol3]  — 段音量 0-100 (4字节)
+ *           [flash_status]            — 0=CLEAN, 1=USED (1字节)
+ *           [bpm_lo][bpm_hi]          — BPM 小端序 (2字节)
+ *           [beats]                   — 每小节拍数 (1字节)
+ *           [mode]                    — 0=SONG, 1=FREE (1字节)
+ * 共 13 字节 (4字节头部 + 9字节数据)
+ * ---------------------------------------------------------------------- */
+static int looper_query_cmd(int argc, char *argv[])
+{
+    uint16_t bpm;
+    uint8_t  beats;
+    uint8_t  buf[13];
+
+    (void)argc; (void)argv;
+
+    bpm   = AudioLooper.MetronomeGetBPM();
+    beats = AudioLooper.MetronomeGetBeatsPerMeasure();
+
+    /* 头部 */
+    buf[0]  = 0xAA;
+    buf[1]  = 0x55;
+    buf[2]  = 0x21;  /* type: looper params */
+    buf[3]  = 0x09;  /* length: 9 bytes payload */
+
+    /* 4段音量 */
+    buf[4]  = loop_get_segment_volume(0);
+    buf[5]  = loop_get_segment_volume(1);
+    buf[6]  = loop_get_segment_volume(2);
+    buf[7]  = loop_get_segment_volume(3);
+
+    /* Flash状态 */
+    buf[8]  = SYSPARAM_LOOPER()->flash_status;
+
+    /* BPM 小端序 */
+    buf[9]  = (uint8_t)(bpm & 0xFF);
+    buf[10] = (uint8_t)((bpm >> 8) & 0xFF);
+
+    /* 每小节拍数 */
+    buf[11] = beats;
+
+    /* 模式 */
+    buf[12] = (AudioLooper.GetMode() == LOOP_MODE_SONG) ? 0 : 1;
+
+    Shell_WriteRaw(buf, sizeof(buf));
+    return 0;
+}
+
 static const ShellOpt_t looper_opts[] = {
-    OPT("i", "init",    "[0|1]",        "Init (0=NOR, 1=NAND)",     looper_init_cmd),
-    OPT("s", "status",  NULL,           "Show looper status",       looper_status_cmd),
-    OPT("r", "record",  "[seg]",        "Start recording segment",  looper_record_cmd),
-    OPT("p", "play",    "[seg]",        "Play segment",             looper_play_cmd),
-    OPT("t", "stop",    "[seg]",        "Stop segment",             looper_stop_cmd),
-    OPT("b", "btn",     "<0-3>",        "Simulate button press",    looper_btn_cmd),
-    OPT("c", "clear",   NULL,           "Clear all segments",       looper_clear_cmd),
-    OPT("R", "reset",   NULL,           "Reset looper + erase flash", looper_reset_cmd),
-    OPT("e", "erase",   NULL,           "Flash chip erase (async)", looper_erase_cmd),
-    OPT("m", "mode",    "[song|free]",  "Get/Set loop mode",        looper_mode_cmd),
-    OPT("M", "metro",   "<cmd> [val]",  "Metronome control",        looper_metro_cmd),
-    OPT("S", "save",    NULL,           "Save looper params",       looper_save_param),
+    OPT("i", "init",    "[0|1]",        "Init (0=NOR, 1=NAND)",         looper_init_cmd),
+    OPT("s", "status",  NULL,           "Show looper status",           looper_status_cmd),
+    OPT("r", "record",  "[seg]",        "Start recording segment",      looper_record_cmd),
+    OPT("p", "play",    "[seg]",        "Play segment",                 looper_play_cmd),
+    OPT("t", "stop",    "[seg]",        "Stop segment",                 looper_stop_cmd),
+    /* OPT("b", "btn",     "<0-3>",        "Simulate button press",        looper_btn_cmd), -- BUTTON CMD DISABLED */
+    OPT("c", "clear",   "[seg]",        "Clear seg (no idx=all+erase)", looper_clear_cmd),
+    OPT("R", "reset",   NULL,           "Reset looper + erase flash",   looper_reset_cmd),
+    OPT("e", "erase",   NULL,           "Flash chip erase (async)",     looper_erase_cmd),
+    OPT("m", "mode",    "[song|free]",  "Get/Set loop mode",            looper_mode_cmd),
+    OPT("M", "metro",   "<cmd> [val]",  "Metronome control",            looper_metro_cmd),
+    OPT("q", "query",   NULL,           "Query looper params (binary, for APP use)", looper_query_cmd),
+    OPT("V", "vol",     "[seg] [0-100]","Get/Set segment volume",       looper_vol_cmd),
+    OPT("cfg", "cfg",   "<seg> autoplay <0|1>", "Set seg config",       looper_cfg_cmd),
+    OPT("F", "flash",   "[clean|used]", "Query/Set Flash init status",  looper_flash_status_cmd),
+    /* OPT("S", "save",    NULL,           "Save looper params",           looper_save_param), -- SAVE CMD COMMENTED OUT */
     OPT_END()
 };
 

@@ -499,6 +499,12 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.looper.time_signature = 0;  /* 4/4 */
     g_sys_param.looper.fade_time = 10;      /* 100ms */
     g_sys_param.looper.max_loop_time = 60000; /* 60 seconds */
+    /* 默认假设Flash未初始化，首次开机触发全片擦除 */
+    g_sys_param.looper.flash_status = LOOPER_FLASH_STATUS_USED;
+    g_sys_param.looper.segment_volume[0] = 0xFF;  /* 0xFF = 未初始化，开机默认 100% */
+    g_sys_param.looper.segment_volume[1] = 0xFF;
+    g_sys_param.looper.segment_volume[2] = 0xFF;
+    g_sys_param.looper.segment_volume[3] = 0xFF;
 
     /* Bluetooth defaults */
     g_sys_param.bluetooth.enabled = 1;
