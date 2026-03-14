@@ -108,6 +108,18 @@ const FlashOps_t* W25Qxx_GetOps(void);
 FlashStatus_t W25Qxx_EraseChipStart(FlashDevice_t *dev);
 
 /**
+ * @brief 发送 64KB 块擦除命令后立即返回（非阻塞）
+ *
+ * 调用后需轮询 W25Qxx_IsBusy() 确认擦除结束。
+ * addr 会自动对齐到 64KB 块边界。
+ *
+ * @param dev   设备指针
+ * @param addr  块起始地址（绝对地址，自动对齐）
+ * @return FLASH_OK / FLASH_ERR_*
+ */
+FlashStatus_t W25Qxx_EraseBlockStart(FlashDevice_t *dev, uint32_t addr);
+
+/**
  * @brief 非阻塞忙状态查询
  *
  * 读取 SR1 BUSY 位，不产生任何等待延迟。

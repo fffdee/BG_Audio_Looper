@@ -421,4 +421,42 @@ void looper_init_read_cache(uint8_t segment_index);    /* 初始化/重填段的
 void looper_flush_write_all(uint8_t segment_index);    /* 将段的写缓冲全部刷入Flash（阻塞） */
 #endif /* LOOPER_IO_BUFFER_ENABLE */
 
+/* ============================================================================
+ * 分段按时长初始化（局部擦除，取代全片擦除）
+ *
+ * Flash 固定平分两段：
+ *   Seg0 → 0x000000 ~ 0x3FFFFF (4MB)
+ *   Seg1 → 0x400000 ~ 0x7FFFFF (4MB)
+ *
+ * loop_init_segment_region(seg_idx, max_sec):
+ *   1. 将该段 start_address 固定为 LOOPER_SEG_FLASH_START[seg_idx]
+ *   2. 计算 max_sec 对应的字节数，向上对齐到 64KB Block
+ *   3. 逐块异步擦除（在 looper_flush_io 里轮询推进）
+ *   4. 擦除完成前置 partial_erase_pending，录制被阻塞
+ *
+ * 常量：
+ *   LOOPER_AUDIO_BYTES_PER_SEC = 48000 * 4 = 192000 B/s (双声道 32-bit)
+ *   LOOPER_SEG_FLASH_SIZE      = 4MB
+ *   LOOPER_FLASH_BLOCK_SIZE    = 64KB
+ * ============================================================================ */
+
+#define LOOPER_SEG0_FLASH_START   0x000000UL  /* Seg0 固定起始地址 */
+#define LOOPER_SEG1_FLASH_START   0x400000UL  /* Seg1 固定起始地址 */
+#define LOOPER_SEG_FLASH_SIZE     0x400000UL  /* 每段 Flash 大小 (4MB) */
+#define LOOPER_FLASH_BLOCK_SIZE   0x010000UL  /* 64KB 块擦除 */
+#define LOOPER_AUDIO_BYTES_PER_SEC 192000UL   /* 48kHz × 4B/sample (双声道32bit) */
+
+/**
+ * @brief 对指定段执行局部块擦除并固定 start_address（在 looper_flush_io 里推进）
+ * @param seg_idx  段索引 0 或 1
+ * @param max_sec  最大录制秒数（10 / 30 / 60），决定需要擦除的块数
+ */
+void loop_init_segment_region(uint8_t seg_idx, uint16_t max_sec);
+
+/**
+ * @brief 查询指定段的局部擦除是否仍在进行
+ * @return 1 = 正在擦除（录制被阻塞）；0 = 擦除完成或未启动
+ */
+uint8_t loop_segment_partial_erase_pending(uint8_t seg_idx);
+
 #endif /* __AUDIO_LOOPER_H__ */

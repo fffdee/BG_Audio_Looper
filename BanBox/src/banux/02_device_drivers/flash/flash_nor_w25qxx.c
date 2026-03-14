@@ -640,3 +640,40 @@ uint8_t W25Qxx_IsBusy(FlashDevice_t *dev)
 
     return (sr & W25QXX_SR1_BUSY) ? 1 : 0;
 }
+
+FlashStatus_t W25Qxx_EraseBlockStart(FlashDevice_t *dev, uint32_t addr)
+{
+    FlashStatus_t ret;
+
+    if (!dev) {
+        return FLASH_ERR_PARAM;
+    }
+    if (!dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+
+    /* 地址对齐到 64KB 块边界 */
+    addr &= ~(W25QXX_BLOCK_SIZE_64K - 1);
+
+    if (addr >= dev->info.total_size) {
+        return FLASH_ERR_PARAM;
+    }
+
+    /* 确保前序操作已完成（正常情况下芯片应已就绪） */
+    ret = W25Qxx_WaitReady(dev, 100);
+    if (ret != FLASH_OK) {
+        return ret;
+    }
+
+    /* 写使能 */
+    w25qxx_write_enable(dev);
+
+    /* 发送 64KB 块擦除命令，不等待完成 */
+    dev->cs.select();
+    w25qxx_cmd_addr(dev, W25QXX_CMD_BLOCK_ERASE_64K, addr);
+    dev->cs.deselect();
+
+    W25QXX_LOG("Block erase cmd sent addr=0x%lX (async, poll IsBusy)\n", (unsigned long)addr);
+
+    return FLASH_OK;
+}

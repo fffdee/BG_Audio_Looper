@@ -11,8 +11,9 @@
 
 #include "audio_looper.h"
 #include "debug.h"
-#include "flash_devices.h"  /* 直接使用底层Flash API */
-#include "BG_FlashMgr.h"  /* 兼容性保留 */
+#include "flash_devices.h"    /* 直接使用底层Flash API */
+#include "flash_nor_w25qxx.h" /* W25Qxx_EraseBlockStart (多Flash路径) */
+#include "BG_FlashMgr.h"      /* 兼容性保留 */
 #include "sys_param.h"    /* 系统参数持久化存储 */
 #include "type.h"
 #include <nds32_intrinsic.h>
@@ -457,6 +458,181 @@ void loop_flash_erase_reinit(void)
     }
     DBG("[Looper] Flash chip erase started, REC/PLAY blocked until complete\n");
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
+}
+
+/* ============================================================================
+ * 分段局部擦除（按最大录制时长）
+ *
+ * 每段 Flash 区域固定平分：
+ *   Seg0 → LOOPER_SEG0_FLASH_START ~ LOOPER_SEG0_FLASH_START + LOOPER_SEG_FLASH_SIZE - 1
+ *   Seg1 → LOOPER_SEG1_FLASH_START ~ LOOPER_SEG1_FLASH_START + LOOPER_SEG_FLASH_SIZE - 1
+ *
+ * 状态机由 looper_flush_io() 每帧推进：
+ *   s_partial_erase.pending  = 1：正在擦除
+ *   s_partial_erase.cur_addr ：当前等待擦除的块起始地址（相对于 Flash 起始）
+ *   s_partial_erase.end_addr ：擦除区域末尾（不含）
+ *   s_partial_erase.seg_idx  ：段索引
+ * ============================================================================ */
+
+typedef struct {
+    volatile uint8_t  pending;      /* 1 = 某块正在等待擦除完成 / 待发起下一块 */
+    uint8_t  seg_idx;               /* 正在擦除的段索引 */
+    uint32_t cur_addr;              /* 当前块起始地址（相对于该段Flash的绝对偏移） */
+    uint32_t end_addr;              /* 擦除区域末尾（exclusive，相对偏移） */
+    uint8_t  block_issued;          /* 1 = 当前块擦除命令已发出，待轮询完成 */
+} LooperPartialErase_t;
+
+static LooperPartialErase_t s_partial_erase[2]; /* 每段独立 */
+
+/**
+ * @brief 启动指定段的局部块擦除
+ * @param seg_idx  段索引（0 或 1），仅支持单 Flash 模式
+ * @param max_sec  最大录制秒数，决定需要擦除的字节数
+ */
+void loop_init_segment_region(uint8_t seg_idx, uint16_t max_sec)
+{
+    uint32_t seg_flash_start;
+    uint32_t bytes_needed;
+    uint32_t end_addr;
+    LooperPartialErase_t *pe;
+
+    if (seg_idx >= 2) {
+        DBG("[Looper] loop_init_segment_region: invalid seg_idx %d\n", (int)seg_idx);
+        return;
+    }
+    if (!g_loop_manager.is_initialized) {
+        DBG("[Looper] loop_init_segment_region: not initialized\n");
+        return;
+    }
+
+    /* 固定段起始地址 */
+    seg_flash_start = (seg_idx == 0) ? LOOPER_SEG0_FLASH_START : LOOPER_SEG1_FLASH_START;
+
+    /* 计算需要擦除的字节数，向上对齐到 64KB 块边界 */
+    bytes_needed = (uint32_t)max_sec * LOOPER_AUDIO_BYTES_PER_SEC;
+    if (bytes_needed > LOOPER_SEG_FLASH_SIZE) {
+        bytes_needed = LOOPER_SEG_FLASH_SIZE;
+    }
+    /* 向上对齐到块大小 */
+    end_addr = seg_flash_start +
+               ((bytes_needed + LOOPER_FLASH_BLOCK_SIZE - 1u) / LOOPER_FLASH_BLOCK_SIZE)
+               * LOOPER_FLASH_BLOCK_SIZE;
+    if (end_addr > seg_flash_start + LOOPER_SEG_FLASH_SIZE) {
+        end_addr = seg_flash_start + LOOPER_SEG_FLASH_SIZE;
+    }
+
+    DBG("[Looper] PartialErase seg%d: start=0x%06lX end=0x%06lX (max_sec=%d)\n",
+        (int)seg_idx,
+        (unsigned long)seg_flash_start,
+        (unsigned long)end_addr,
+        (int)max_sec);
+
+    /* 停止该段的活动 */
+#if LOOPER_IO_BUFFER_ENABLE
+    looper_reset_write_ring(seg_idx);
+    looper_reset_read_cache_internal(seg_idx);
+#endif
+    g_loop_manager.segments[seg_idx].start_address = seg_flash_start;
+    g_loop_manager.segments[seg_idx].length_pages  = 0;
+    g_loop_manager.segments[seg_idx].length_bytes  = 0;
+    g_loop_manager.segments[seg_idx].play_position = 0;
+    g_loop_manager.segments[seg_idx].state         = SEGMENT_INACTIVE;
+    g_loop_manager.segments[seg_idx].is_active      = 0;
+
+    /* 标记 Flash 已使用 */
+    SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
+    SysParam_MarkModified();
+
+    /* 设置局部擦除状态机 */
+    pe = &s_partial_erase[seg_idx];
+    pe->seg_idx      = seg_idx;
+    pe->cur_addr     = seg_flash_start;
+    pe->end_addr     = end_addr;
+    pe->block_issued = 0;
+    pe->pending      = 1;
+
+    DBG("[Looper] PartialErase seg%d started, %lu blocks to erase\n",
+        (int)seg_idx,
+        (unsigned long)((end_addr - seg_flash_start) / LOOPER_FLASH_BLOCK_SIZE));
+}
+
+/**
+ * @brief 推进局部擦除状态机（在 looper_flush_io 里每帧调用）
+ *        每次：若当前块擦除发出，轮询完成后推进到下一块；否则发出当前块擦除命令。
+ */
+static void looper_advance_partial_erase(uint8_t seg_idx)
+{
+    LooperPartialErase_t *pe = &s_partial_erase[seg_idx];
+    FlashStatus_t ret;
+
+    if (!pe->pending) return;
+
+    if (pe->cur_addr >= pe->end_addr) {
+        /* 全部块擦除完成 */
+        pe->pending = 0;
+        g_loop_manager.segments[seg_idx].start_address =
+            (seg_idx == 0) ? LOOPER_SEG0_FLASH_START : LOOPER_SEG1_FLASH_START;
+        SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_CLEAN;
+        SysParam_Save();
+        DBG("[Looper] PartialErase seg%d complete, status=CLEAN\n", (int)seg_idx);
+        return;
+    }
+
+    if (pe->block_issued) {
+        /* 等待当前块擦除完成 */
+#if LOOPER_MULTI_FLASH_ENABLE
+        uint8_t dev_id = (uint8_t)(seg_idx % LOOPER_FLASH_DEV_COUNT);
+        if (FlashPartition_LooperIsErasingByDev(dev_id)) {
+            return;  /* 仍在擦除，下帧再查 */
+        }
+#else
+        if (FlashPartition_LooperIsErasing()) {
+            return;  /* 仍在擦除 */
+        }
+#endif
+        /* 本块完成，推进到下一块 */
+        pe->cur_addr     += LOOPER_FLASH_BLOCK_SIZE;
+        pe->block_issued  = 0;
+        if (pe->cur_addr >= pe->end_addr) {
+            /* 刚完成最后一块 */
+            pe->pending = 0;
+            SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_CLEAN;
+            SysParam_Save();
+            DBG("[Looper] PartialErase seg%d complete\n", (int)seg_idx);
+            return;
+        }
+    }
+
+    /* 发出下一块擦除命令（非阻塞：发完立即返回，通过 IsBusy 轮询完成）*/
+#if LOOPER_MULTI_FLASH_ENABLE
+    {
+        uint8_t dev_id = (uint8_t)(seg_idx % LOOPER_FLASH_DEV_COUNT);
+        /* 多 Flash 路径：复用 EraseChipStart 通道——先发块擦除命令，IsBusy 轮询完成 */
+        FlashDevice_t *dev = FlashDevices_GetDevice(dev_id);
+        if (dev && dev->initialized) {
+            ret = W25Qxx_EraseBlockStart(dev, pe->cur_addr);
+        } else {
+            ret = FLASH_ERR_NOT_INIT;
+        }
+    }
+#else
+    ret = FlashPartition_LooperEraseBlockAsync(pe->cur_addr);
+#endif
+    if (ret == FLASH_OK) {
+        pe->block_issued = 1;
+        DBG("[Looper] PartialErase seg%d: erasing block 0x%06lX\n",
+            (int)seg_idx, (unsigned long)pe->cur_addr);
+    } else {
+        DBG("[Looper] PartialErase seg%d: block erase failed at 0x%06lX, skip\n",
+            (int)seg_idx, (unsigned long)pe->cur_addr);
+        pe->cur_addr += LOOPER_FLASH_BLOCK_SIZE;  /* 跳过出错块继续 */
+    }
+}
+
+uint8_t loop_segment_partial_erase_pending(uint8_t seg_idx)
+{
+    if (seg_idx >= 2) return 0;
+    return s_partial_erase[seg_idx].pending;
 }
 
 /**
@@ -1440,7 +1616,20 @@ void loop_start_new_segment(void)
         max_end_address = ((max_end_address / g_loop_manager.page_size) + 1) * g_loop_manager.page_size;
     }
 
-    uint32_t start_address = max_end_address;
+    /* 固定分区方案：seg0→LOOPER_SEG0_FLASH_START, seg1→LOOPER_SEG1_FLASH_START
+     * 不使用动态连续分配，避免与 loop_init_segment_region 的固定地址方案冲突 */
+    uint32_t start_address;
+#if !LOOPER_MULTI_FLASH_ENABLE
+    if (new_segment == 0) {
+        start_address = LOOPER_SEG0_FLASH_START;
+    } else if (new_segment == 1) {
+        start_address = LOOPER_SEG1_FLASH_START;
+    } else {
+        start_address = max_end_address; /* >=2段: 兼容旧动态分配 */
+    }
+#else
+    start_address = max_end_address; /* 多Flash模式保持原逻辑 */
+#endif
 
 #if LOOPER_MULTI_FLASH_ENABLE
     DBG("Segment %d: Flash dev%d, start_address = 0x%08lX (CS%d)\n",
@@ -1726,6 +1915,12 @@ void loop_handle_segment_button(uint8_t segment_index)
     
     switch (segment->state) {
         case SEGMENT_INACTIVE:
+            /* 局部擦除进行中时，拒绝新的录制请求，避免数据损坏 */
+            if (loop_segment_partial_erase_pending(segment_index)) {
+                DBG("[Looper] Segment %d: partial erase in progress, recording blocked\n",
+                    segment_index);
+                return;
+            }
             // 段未激活：开始录制
             loop_set_segment_recording(segment_index);
             DBG("Segment %d: INACTIVE -> RECORDING\n", segment_index);
@@ -1826,13 +2021,54 @@ void loop_set_segment_recording(uint8_t segment_index)
     
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
-    // 如果段未激活，需要先调用loop_start_new_segment()来初始化并擦除Flash
     if (segment->state == SEGMENT_INACTIVE) {
-        // 调用loop_start_new_segment()来正确初始化段（包括Flash擦除）
+#if !LOOPER_MULTI_FLASH_ENABLE
+        /* 固定分区方案：直接使用该段对应的固定起始地址，
+         * 不通过 loop_start_new_segment()，否则它会找「第一个未激活段」
+         * 而忽略 segment_index，导致先录 seg1 时实际写入 seg0 地址 */
+        uint32_t seg_flash_start;
+        if (segment_index == 0) {
+            seg_flash_start = LOOPER_SEG0_FLASH_START;
+        } else if (segment_index == 1) {
+            seg_flash_start = LOOPER_SEG1_FLASH_START;
+        } else {
+            /* >=2 段使用旧的动态分配路径 */
+            loop_start_new_segment();
+            return;
+        }
+
+        segment->start_address = seg_flash_start;
+        segment->length_pages  = 0;
+        segment->length_bytes  = 0;
+        segment->is_active     = 1;
+        segment->state         = SEGMENT_RECORDING;
+        segment->play_position = 0;
+
+        if (g_loop_manager.active_segments == 0) {
+            SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
+            SysParam_Save();
+            DBG("[Looper] Flash status saved as USED (seg%d first recording)\n", segment_index);
+        }
+        g_loop_manager.active_segments++;
+
+        loop_update_global_state();
+        g_loop_manager.is_new_recording = 1;
+        g_loop_stats.recording_sample_count = 0;
+
+#if LOOPER_IO_BUFFER_ENABLE
+        looper_reset_write_ring(segment_index);
+#endif
+        DBG("[Looper] Segment %d: INACTIVE->RECORDING at 0x%06lX (fixed region)\n",
+            segment_index, (unsigned long)seg_flash_start);
+        return;
+#else
+        /* 多Flash模式：保留原来的 loop_start_new_segment() 逻辑 */
         loop_start_new_segment();
-        return;  // loop_start_new_segment()已经设置了状态
+        return;
+#endif
     }
-    
+
+    /* 段已激活但不是 RECORDING 时，直接切换到 RECORDING 状态 */
     segment->state = SEGMENT_RECORDING;
     
 #if LOOPER_IO_BUFFER_ENABLE
@@ -2691,6 +2927,8 @@ void looper_flush_io(void)
         if (looper_poll_erase_pending(seg->flash_dev_id)) continue;
 #else
         if (g_loop_manager.chip_erase_pending) continue;
+        /* 局部擦除进行中时同样阻塞写入 */
+        if (i < 2 && s_partial_erase[i].pending) continue;
 #endif
 
         {
@@ -2721,6 +2959,7 @@ void looper_flush_io(void)
         if (looper_poll_erase_pending(seg->flash_dev_id)) continue;
 #else
         if (g_loop_manager.chip_erase_pending) continue;
+        if (i < 2 && s_partial_erase[i].pending) continue;
 #endif
 
         {
@@ -2739,6 +2978,17 @@ void looper_flush_io(void)
         if (cache->prefetch_page >= seg->length_pages) {
             cache->prefetch_page = 0;
         }
+        }
+    }
+
+    /* ---- 局部擦除状态机推进（每帧最多推进一步） ---- */
+    {
+        uint8_t seg_idx;
+        for (seg_idx = 0; seg_idx < 2; seg_idx++) {
+            if (s_partial_erase[seg_idx].pending) {
+                looper_advance_partial_erase(seg_idx);
+                break;  /* 每帧只推进一个段，减少 CPU 占用 */
+            }
         }
     }
 }

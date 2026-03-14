@@ -218,53 +218,111 @@
                 <FrameLayout
                     android:id="@+id/card_seg0"
                     android:layout_width="0dp"
-                    android:layout_height="150dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     android:background="@drawable/button_looper_seg">
 
-                    <!-- 主点击区 -->
                     <LinearLayout
-                        android:id="@+id/card_seg0_main"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:paddingTop="8dp">
-                        <TextView
-                            android:id="@+id/tv_seg0_name"
-                            android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- 主点击区 -->
+                        <LinearLayout
+                            android:id="@+id/card_seg0_main"
+                            android:layout_width="match_parent"
+                            android:layout_height="150dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingTop="8dp">
+                            <TextView
+                                android:id="@+id/tv_seg0_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="LOOP 1"
+                                android:textColor="@color/primary_accent"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+                            <TextView
+                                android:id="@+id/tv_seg0_state"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="未录制"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                android:layout_marginTop="4dp" />
+                            <TextView
+                                android:id="@+id/tv_seg0_hint"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="点击 → 开始录制"
+                                android:textColor="@color/text_tertiary"
+                                android:textSize="10sp"
+                                android:layout_marginTop="2dp" />
+                            <TextView
+                                android:id="@+id/tv_seg0_cfg_hint"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="∞  ► 播放"
+                                android:textColor="#60B0C0"
+                                android:textSize="9sp"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+
+                        <!-- 底部重置行 -->
+                        <!-- 分隔线 -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#30FFFFFF" />
+                        <!-- 底部工具行：⏱ 最大时长选择 chip  +  🗑 删除按钮 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="LOOP 1"
-                            android:textColor="@color/primary_accent"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-                        <TextView
-                            android:id="@+id/tv_seg0_state"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="未录制"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp"
-                            android:layout_marginTop="4dp" />
-                        <TextView
-                            android:id="@+id/tv_seg0_hint"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="点击 → 开始录制"
-                            android:textColor="@color/text_tertiary"
-                            android:textSize="10sp"
-                            android:layout_marginTop="2dp" />
-                        <TextView
-                            android:id="@+id/tv_seg0_cfg_hint"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="∞  ► 播放"
-                            android:textColor="#60B0C0"
-                            android:textSize="9sp"
-                            android:layout_marginTop="4dp" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:background="#1A2535"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="4dp"
+                            android:paddingTop="6dp"
+                            android:paddingBottom="6dp">
+                            <!-- 最大录制时长选择器 chip -->
+                            <TextView
+                                android:id="@+id/tv_seg0_max_rec"
+                                android:layout_width="0dp"
+                                android:layout_height="30dp"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:text="⏱ 10s"
+                                android:textColor="#CCA030"
+                                android:textSize="11sp"
+                                android:background="@drawable/chip_max_rec"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:contentDescription="设置最大录制时长" />
+                            <!-- 弹性间隔，将删除按钮推至右端 -->
+                            <Space
+                                android:layout_width="0dp"
+                                android:layout_height="1dp"
+                                android:layout_weight="1" />
+                            <!-- 删除按钮：更大（44dp）+ 红色 -->
+                            <ImageButton
+                                android:id="@+id/btn_seg0_reset"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@android:drawable/ic_menu_delete"
+                                android:tint="#E05050"
+                                android:scaleType="fitCenter"
+                                android:padding="6dp"
+                                android:contentDescription="删除 LOOP 1" />
+                        </LinearLayout>
+
                     </LinearLayout>
 
                     <!-- 右上角配置按钮 -->
@@ -286,52 +344,111 @@
                 <FrameLayout
                     android:id="@+id/card_seg1"
                     android:layout_width="0dp"
-                    android:layout_height="150dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     android:background="@drawable/button_looper_seg">
 
                     <LinearLayout
-                        android:id="@+id/card_seg1_main"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:paddingTop="8dp">
-                        <TextView
-                            android:id="@+id/tv_seg1_name"
-                            android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- 主点击区 -->
+                        <LinearLayout
+                            android:id="@+id/card_seg1_main"
+                            android:layout_width="match_parent"
+                            android:layout_height="150dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingTop="8dp">
+                            <TextView
+                                android:id="@+id/tv_seg1_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="LOOP 2"
+                                android:textColor="@color/primary_accent"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+                            <TextView
+                                android:id="@+id/tv_seg1_state"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="未录制"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                android:layout_marginTop="4dp" />
+                            <TextView
+                                android:id="@+id/tv_seg1_hint"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="点击 → 开始录制"
+                                android:textColor="@color/text_tertiary"
+                                android:textSize="10sp"
+                                android:layout_marginTop="2dp" />
+                            <TextView
+                                android:id="@+id/tv_seg1_cfg_hint"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="∞  ► 播放"
+                                android:textColor="#60B0C0"
+                                android:textSize="9sp"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+
+                        <!-- 底部重置行 -->
+                        <!-- 分隔线 -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#30FFFFFF" />
+                        <!-- 底部工具行：⏱ 最大时长选择 chip  +  🗑 删除按钮 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="LOOP 2"
-                            android:textColor="@color/primary_accent"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-                        <TextView
-                            android:id="@+id/tv_seg1_state"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="未录制"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp"
-                            android:layout_marginTop="4dp" />
-                        <TextView
-                            android:id="@+id/tv_seg1_hint"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="点击 → 开始录制"
-                            android:textColor="@color/text_tertiary"
-                            android:textSize="10sp"
-                            android:layout_marginTop="2dp" />
-                        <TextView
-                            android:id="@+id/tv_seg1_cfg_hint"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="∞  ► 播放"
-                            android:textColor="#60B0C0"
-                            android:textSize="9sp"
-                            android:layout_marginTop="4dp" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:background="#1A2535"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="4dp"
+                            android:paddingTop="6dp"
+                            android:paddingBottom="6dp">
+                            <!-- 最大录制时长选择器 chip -->
+                            <TextView
+                                android:id="@+id/tv_seg1_max_rec"
+                                android:layout_width="0dp"
+                                android:layout_height="30dp"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:text="⏱ 10s"
+                                android:textColor="#CCA030"
+                                android:textSize="11sp"
+                                android:background="@drawable/chip_max_rec"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:contentDescription="设置最大录制时长" />
+                            <!-- 弹性间隔，将删除按钮推至右端 -->
+                            <Space
+                                android:layout_width="0dp"
+                                android:layout_height="1dp"
+                                android:layout_weight="1" />
+                            <!-- 删除按钮：更大（44dp）+ 红色 -->
+                            <ImageButton
+                                android:id="@+id/btn_seg1_reset"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@android:drawable/ic_menu_delete"
+                                android:tint="#E05050"
+                                android:scaleType="fitCenter"
+                                android:padding="6dp"
+                                android:contentDescription="删除 LOOP 2" />
+                        </LinearLayout>
+
                     </LinearLayout>
 
                     <ImageButton
@@ -383,32 +500,10 @@
                     android:lineSpacingExtra="3dp" />
             </LinearLayout>
 
-            <!-- 分割线 -->
+            <!-- 底部占位 -->
             <View
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/bg_card_light"
-                android:layout_marginBottom="16dp" />
-
-            <!-- Flash 管理 -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⚡ Flash 管理"
-                android:textColor="@color/text_warning"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
-
-            <Button
-                android:id="@+id/btn_looper_erase_and_reset"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="⚠ 擦除 Flash &amp; 重置 Looper"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:background="@drawable/button_danger" />
+                android:layout_height="16dp" />
 
         </LinearLayout>
     </ScrollView>

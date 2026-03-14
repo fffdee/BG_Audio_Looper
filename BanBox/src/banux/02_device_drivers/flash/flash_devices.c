@@ -425,3 +425,15 @@ uint8_t FlashPartition_LooperIsErasingByDev(uint8_t dev_id)
     }
     return W25Qxx_IsBusy(dev);
 }
+
+/* Looper 分区 — 64KB 块非阻塞擦除（单 Flash#0） */
+FlashStatus_t FlashPartition_LooperEraseBlockAsync(uint32_t offset)
+{
+    if (!g_flash0 || !g_flash0->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+    if (offset >= FLASH0_PARTITION_LOOPER_SIZE) {
+        return FLASH_ERR_PARAM;
+    }
+    return W25Qxx_EraseBlockStart(g_flash0, FLASH0_PARTITION_LOOPER_START + offset);
+}

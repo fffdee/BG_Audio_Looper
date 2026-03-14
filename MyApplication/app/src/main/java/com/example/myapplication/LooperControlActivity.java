@@ -80,6 +80,8 @@ public class LooperControlActivity extends AppCompatActivity {
     private final boolean[] segAutoPlay = {true, true};
     /** 每段播放音量 0-100，默认 100 */
     private final int[]     segVolumes  = {100, 100};
+    /** 每段最大录制秒数：10 / 30 / 60 */
+    private final int[]     segMaxRecSec = {10, 10};
 
     // -------- UI：循环段卡片 --------
     // segCards 指向外层 FrameLayout（负责背景着色）
@@ -93,6 +95,10 @@ public class LooperControlActivity extends AppCompatActivity {
     private TextView[]     tvSegCfgHint = new TextView[SEG_COUNT];
     /** 右上角配置（齿轮）按钮 */
     private ImageButton[]  btnSegConfig = new ImageButton[SEG_COUNT];
+    /** 卡片底部重置图标按钮 */
+    private ImageButton[]  btnSegReset  = new ImageButton[SEG_COUNT];
+    /** 卡片底部最大录制时长显示 */
+    private TextView[]     tvSegMaxRec  = new TextView[SEG_COUNT];
 
     // -------- 自动停止定时器 --------
     /** 每个段的自动停止录制 Runnable，可用于取消 */
@@ -115,9 +121,6 @@ public class LooperControlActivity extends AppCompatActivity {
     private final long[] segLoopDurationMs  = new long[SEG_COUNT];
     /** 每段最近一次进入 PLAYING 状态的系统时间戳（ms）*/
     private final long[] segPlayStartTime   = new long[SEG_COUNT];
-
-    // -------- UI：Flash 管理按钮 --------
-    private Button btnLooperEraseAndReset;
 
     // -------- UI：循环同步信息面板 --------
     private View     layoutLoopSyncInfo;
@@ -253,6 +256,12 @@ public class LooperControlActivity extends AppCompatActivity {
         int[] configBtnIds = {
             R.id.btn_seg0_config, R.id.btn_seg1_config
         };
+        int[] resetBtnIds = {
+            R.id.btn_seg0_reset, R.id.btn_seg1_reset
+        };
+        int[] maxRecTvIds = {
+            R.id.tv_seg0_max_rec, R.id.tv_seg1_max_rec
+        };
         for (int i = 0; i < SEG_COUNT; i++) {
             segCards[i]     = findViewById(cardIds[i]);
             segMainAreas[i] = findViewById(mainAreaIds[i]);
@@ -261,8 +270,9 @@ public class LooperControlActivity extends AppCompatActivity {
             tvSegHint[i]    = findViewById(subIds[i][2]);
             tvSegCfgHint[i] = findViewById(subIds[i][3]);
             btnSegConfig[i] = findViewById(configBtnIds[i]);
+            btnSegReset[i]  = findViewById(resetBtnIds[i]);
+            tvSegMaxRec[i]  = findViewById(maxRecTvIds[i]);
         }
-        btnLooperEraseAndReset = findViewById(R.id.btn_looper_erase_and_reset);
 
         // 循环同步信息面板
         layoutLoopSyncInfo = findViewById(R.id.layout_loop_sync_info);
@@ -562,21 +572,11 @@ public class LooperControlActivity extends AppCompatActivity {
             });
             // 右上角齿轮按钮打开配置弹窗
             btnSegConfig[i].setOnClickListener(v -> showSegConfigDialog(idx));
+            // 底部时长 chip：仅修改最大录制时长，不触发擦除
+            tvSegMaxRec[i].setOnClickListener(v -> showMaxRecDialog(idx));
+            // 底部删除按钮：确认后擦除对应 Flash 区域
+            btnSegReset[i].setOnClickListener(v -> showSegDeleteDialog(idx));
         }
-
-        // 擦除Flash & 重置Looper
-        btnLooperEraseAndReset.setOnClickListener(v -> showConfirmDialog(
-            "擦除 Flash & 重置 Looper",
-            "这将擦除所有录制数据并重置状态（约20秒），是否继续？",
-            () -> {
-                sendCommand("looper -R", "Sent: Reset");
-                for (int i = 0; i < SEG_COUNT; i++) {
-                    cancelAutoStop(i);
-                    segStates[i] = SegState.INACTIVE;
-                    refreshSegUI(i);
-                }
-            }
-        ));
     }
 
     private void onSegmentCardClick(int idx) {
@@ -1299,7 +1299,9 @@ public class LooperControlActivity extends AppCompatActivity {
         android.widget.LinearLayout.LayoutParams valP =
             new android.widget.LinearLayout.LayoutParams(0,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        tvVal.setLayoutParams(valP);
+
+
+                tvVal.setLayoutParams(valP);
         tvVal.setText(tmpMeasures[0] == 0 ? "∞" : String.valueOf(tmpMeasures[0]));
 
         Button btnInc = new Button(this);
@@ -1483,6 +1485,75 @@ public class LooperControlActivity extends AppCompatActivity {
             segAutoPlay[idx]
                 ? Color.parseColor("#50C8D8")
                 : Color.parseColor("#909090"));
+        // 同步底部最大录制时长 chip 标签
+        if (tvSegMaxRec != null && tvSegMaxRec[idx] != null) {
+            tvSegMaxRec[idx].setText("⏱ " + segMaxRecSec[idx] + "s");
+        }
+    }
+
+    /** 仅修改最大录制时长（chip 点击），不触发擦除 */
+    private void showMaxRecDialog(int idx) {
+        final int[] options   = {10, 30, 60};
+        final String[] labels = {"10 秒", "30 秒", "60 秒"};
+        int initSel = 1;
+        for (int k = 0; k < options.length; k++) {
+            if (options[k] == segMaxRecSec[idx]) { initSel = k; break; }
+        }
+        final int[] checkedItem = {initSel};
+        new AlertDialog.Builder(this)
+            .setTitle("⏱ LOOP " + (idx + 1) + " 最大录制时长")
+            .setSingleChoiceItems(labels, initSel, (dialog, which) ->
+                checkedItem[0] = which)
+            .setPositiveButton("确定", (d, w) -> {
+                segMaxRecSec[idx] = options[checkedItem[0]];
+                refreshSegCfgHint(idx);
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    /** 删除 LOOP 段：确认后按当前时长擦除对应 Flash 区域 */
+    private void showSegDeleteDialog(int idx) {
+        // 检查是否有任何段在播放中
+        boolean hasPlayingSegment = false;
+        for (int i = 0; i < SEG_COUNT; i++) {
+            if (segStates[i] == SegState.PLAYING) {
+                hasPlayingSegment = true;
+                break;
+            }
+        }
+        
+        // 如果有段在播放，禁止删除
+        if (hasPlayingSegment) {
+            Toast.makeText(this,
+                "播放中不允许删除段。请先停止播放。",
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int sec    = segMaxRecSec[idx];
+        int blocks = (int) Math.ceil((sec * 192000.0) / (64 * 1024));
+        int estSec = (int) Math.ceil(blocks * 0.15);
+        new AlertDialog.Builder(this)
+            .setTitle("🗑 删除 LOOP " + (idx + 1))
+            .setMessage("将按当前最大录制时长 " + sec + "s (约 " + blocks +
+                " 个 64KB 块）擦除对应 Flash 区域，预计约 " + estSec + "s。\n\n确认删除？")
+            .setPositiveButton("确认删除", (d, w) -> {
+                cancelAutoStop(idx);
+                cancelCountdown(idx);
+                segStates[idx]         = SegState.INACTIVE;
+                segLoopDurationMs[idx]  = 0;
+                segRecordStartTime[idx] = 0;
+                segPlayStartTime[idx]   = 0;
+                refreshSegUI(idx);
+                refreshSegCfgHint(idx);
+                sendCommand("looper -I " + idx + " " + sec, null);
+                Toast.makeText(this,
+                    "LOOP " + (idx + 1) + " 删除中，擦除 Flash 区域（" + sec + "s / " + blocks + " 块）...",
+                    Toast.LENGTH_LONG).show();
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
 
     interface SuccessCallback { void onResult(boolean success); }

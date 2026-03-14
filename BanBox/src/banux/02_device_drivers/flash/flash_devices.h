@@ -122,6 +122,7 @@ FlashStatus_t FlashPartition_LooperRead(uint32_t offset, uint8_t *buf, uint32_t 
 FlashStatus_t FlashPartition_LooperWrite(uint32_t offset, const uint8_t *buf, uint32_t len);
 FlashStatus_t FlashPartition_LooperEraseSector(uint32_t offset);
 FlashStatus_t FlashPartition_LooperEraseBlock(uint32_t offset);
+FlashStatus_t FlashPartition_LooperEraseBlockAsync(uint32_t offset); /* 块擦除命令发出后立即返回（非阻塞） */
 FlashStatus_t FlashPartition_LooperEraseChip(void);         /* 整片擦除（阻塞，录制前调用） */
 FlashStatus_t FlashPartition_LooperEraseChipAsync(void);    /* 整片擦除命令发出后立即返回（非阻塞） */
 uint8_t       FlashPartition_LooperIsErasing(void);         /* 轮询 BUSY 位：1=仍在擦除，0=完成 */

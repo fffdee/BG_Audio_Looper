@@ -1731,6 +1731,65 @@ static int looper_erase_cmd(int argc, char *argv[])
     return 0;
 }
 
+/* -----------------------------------------------------------------------
+ * looper -I <seg> <max_sec>  — 按最大录制时长局部初始化指定段 Flash
+ *
+ * 设计：Flash固定平分两段
+ *   Seg0 → 0x000000 ~ 0x3FFFFF (4MB)
+ *   Seg1 → 0x400000 ~ 0x7FFFFF (4MB)
+ * 只擦除该段所需的块（64KB/块），远快于全片擦除（~20s）。
+ *   10s →  ~30块 × 150ms ≈  4.5s
+ *   30s →  ~90块 × 150ms ≈ 13.5s
+ *   60s → ~128块 × 150ms ≈  19s  (接近4MB上限)
+ * 擦除由 looper_flush_io() 每音频帧推进，录制被阻塞直到完成。
+ * ---------------------------------------------------------------------- */
+static int looper_init_seg_cmd(int argc, char *argv[])
+{
+    int seg, max_sec;
+    uint32_t bytes_needed, blocks;
+
+    if (argc < 2) {
+        Shell_Print("Usage: looper -I <seg> <max_sec>\r\n");
+        Shell_Print("  seg    : 0 or 1\r\n");
+        Shell_Print("  max_sec: 10 / 30 / 60 (seconds)\r\n");
+        Shell_Print("  Effect : Partial-erase flash for seg (only needed blocks)\r\n");
+        Shell_Print("  Layout : Seg0=0x000000~0x3FFFFF  Seg1=0x400000~0x7FFFFF\r\n");
+        return -1;
+    }
+
+    seg     = atoi(argv[0]);
+    max_sec = atoi(argv[1]);
+
+    if (seg < 0 || seg > 1) {
+        Shell_Print("Error: seg must be 0 or 1\r\n");
+        return -1;
+    }
+    if (max_sec <= 0 || max_sec > 300) {
+        Shell_Print("Error: max_sec must be 1-300\r\n");
+        return -1;
+    }
+
+    bytes_needed = (uint32_t)max_sec * LOOPER_AUDIO_BYTES_PER_SEC;
+    if (bytes_needed > LOOPER_SEG_FLASH_SIZE) bytes_needed = LOOPER_SEG_FLASH_SIZE;
+    blocks = (bytes_needed + LOOPER_FLASH_BLOCK_SIZE - 1u) / LOOPER_FLASH_BLOCK_SIZE;
+
+    Shell_Printf("Init Seg%d: max_rec=%ds, erase %lu blocks x 64KB (~%lu ms)\r\n",
+        seg, max_sec,
+        (unsigned long)blocks,
+        (unsigned long)(blocks * 150UL));
+    Shell_Printf("  Seg%d flash region: 0x%06lX ~ 0x%06lX\r\n",
+        seg,
+        (unsigned long)((seg == 0) ? LOOPER_SEG0_FLASH_START : LOOPER_SEG1_FLASH_START),
+        (unsigned long)(((seg == 0) ? LOOPER_SEG0_FLASH_START : LOOPER_SEG1_FLASH_START)
+                        + LOOPER_SEG_FLASH_SIZE - 1u));
+
+    loop_init_segment_region((uint8_t)seg, (uint16_t)max_sec);
+
+    Shell_Print("Partial erase started (async). REC on this seg blocked until done.\r\n");
+    Shell_Print("Use 'looper -s' to monitor erase_pending status.\r\n");
+    return 0;
+}
+
 static int looper_mode_cmd(int argc, char *argv[])
 {
     LoopMode_t mode;
@@ -1997,6 +2056,7 @@ static const ShellOpt_t looper_opts[] = {
     OPT("V", "vol",     "[seg] [0-100]","Get/Set segment volume",       looper_vol_cmd),
     OPT("cfg", "cfg",   "<seg> autoplay <0|1>", "Set seg config",       looper_cfg_cmd),
     OPT("F", "flash",   "[clean|used]", "Query/Set Flash init status",  looper_flash_status_cmd),
+    OPT("I", "init-seg","<seg> <sec>",  "Init seg with partial erase (10/30/60s)", looper_init_seg_cmd),
     /* OPT("S", "save",    NULL,           "Save looper params",           looper_save_param), -- SAVE CMD COMMENTED OUT */
     OPT_END()
 };
