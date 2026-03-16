@@ -1660,6 +1660,15 @@ static int looper_stop_cmd(int argc, char *argv[])
                      seg,
                      (unsigned long)loop_get_segment_length_pages((uint8_t)seg),
                      loop_get_segment_state((uint8_t)seg) == SEGMENT_PLAYING ? "PLAYING" : "STOPPED/INACTIVE");
+    } else if (g_looper_timed_ops.wait_finish_mask & (1u << (uint8_t)seg)) {
+        /* wait_finish 偏好启用：延迟到本轮结束再停 */
+        if (loop_get_segment_state((uint8_t)seg) == SEGMENT_PLAYING) {
+            g_looper_timed_ops.deferred_stop_mask |= (1u << (uint8_t)seg);
+            Shell_Printf("Segment %d: stop deferred until end of loop (wait-finish mode)\r\n", seg);
+        } else {
+            loop_set_segment_stopped((uint8_t)seg);
+            Shell_Printf("Segment %d: STOPPED\r\n", seg);
+        }
     } else {
         /* 其他状态：直接切换到STOPPED */
         loop_set_segment_stopped((uint8_t)seg);
@@ -1991,6 +2000,219 @@ static int looper_flash_status_cmd(int argc, char *argv[])
 }
 
 /* -----------------------------------------------------------------------
+ * looper -T  — 读/写段的循环裁剪起止点
+ *
+ * 用法：
+ *   looper -T <seg>                  查询指定段的裁剪点（二进制响应）
+ *   looper -T <seg> <start> <end>    设置裁剪页（start/end 均为页号，end=0 表示到末尾）
+ *   looper -T <seg> 0 0              清除裁剪点，恢复全段循环
+ *
+ * 查询响应格式 (13字节):
+ *   [0xAA][0x55][0x22][0x09]         4字节头部（type=0x22 trim, len=9）
+ *   [seg]                            1字节：段索引
+ *   [start_lo][start_hi2][start_hi3][start_hi4]  4字节 start_page 小端序
+ *   [end_lo][end_hi2][end_hi3][end_hi4]          4字节 end_page 小端序
+ * ---------------------------------------------------------------------- */
+static int looper_trim_cmd(int argc, char *argv[])
+{
+    if (argc < 1) {
+        Shell_Print("Usage: looper -T <seg> [start end]\r\n");
+        return -1;
+    }
+
+    int seg = atoi(argv[0]);
+    if (seg < 0 || seg >= MAX_SEGMENTS) {
+        Shell_Printf("Invalid segment index: %d (max=%d)\r\n", seg, MAX_SEGMENTS - 1);
+        return -1;
+    }
+
+    if (argc >= 3) {
+        /* 设置裁剪点 */
+        uint32_t start_page = (uint32_t)atoi(argv[1]);
+        uint32_t end_page   = (uint32_t)atoi(argv[2]);
+        loop_set_segment_trim((uint8_t)seg, start_page, end_page);
+        Shell_Printf("Segment %d trim set: start=%lu end=%lu\r\n",
+                     seg, (unsigned long)start_page, (unsigned long)end_page);
+    }
+
+    /* 查询并返回二进制响应（设置后也立即返回当前值） */
+    {
+        uint32_t start_page = 0, end_page = 0;
+        uint8_t  buf[13];
+        loop_get_segment_trim((uint8_t)seg, &start_page, &end_page);
+
+        buf[0]  = 0xAA;
+        buf[1]  = 0x55;
+        buf[2]  = 0x22;  /* type: trim params */
+        buf[3]  = 0x09;  /* length: 9 bytes payload */
+        buf[4]  = (uint8_t)seg;
+        buf[5]  = (uint8_t)(start_page & 0xFF);
+        buf[6]  = (uint8_t)((start_page >>  8) & 0xFF);
+        buf[7]  = (uint8_t)((start_page >> 16) & 0xFF);
+        buf[8]  = (uint8_t)((start_page >> 24) & 0xFF);
+        buf[9]  = (uint8_t)(end_page & 0xFF);
+        buf[10] = (uint8_t)((end_page >>  8) & 0xFF);
+        buf[11] = (uint8_t)((end_page >> 16) & 0xFF);
+        buf[12] = (uint8_t)((end_page >> 24) & 0xFF);
+
+        Shell_WriteRaw(buf, sizeof(buf));
+    }
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -C  — 衔接播放（Chain Play）
+ *
+ * 用法：
+ *   looper -C <stop_seg> <start_seg>   激活衔接：stop_seg 本轮结束后停止，start_seg 开始
+ *   looper -C cancel                   取消已激活的衔接
+ *
+ * 下位机在 stop_seg 的回绕点触发，精度：音频帧级（约 1ms@48kHz）。
+ * ---------------------------------------------------------------------- */
+static int looper_chain_cmd(int argc, char *argv[])
+{
+    if (argc >= 1 && strcmp(argv[0], "cancel") == 0) {
+        g_looper_timed_ops.chain_armed   = 0;
+        g_looper_timed_ops.pending_chain = 0;
+        Shell_Print("Chain play cancelled\r\n");
+        return 0;
+    }
+    if (argc < 2) {
+        Shell_Print("Usage: looper -C <stop_seg> <start_seg>  OR  looper -C cancel\r\n");
+        return -1;
+    }
+    int stop_seg  = atoi(argv[0]);
+    int start_seg = atoi(argv[1]);
+    if (stop_seg  < 0 || stop_seg  >= MAX_SEGMENTS ||
+        start_seg < 0 || start_seg >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment index out of range\r\n");
+        return -1;
+    }
+    if (loop_get_segment_state((uint8_t)stop_seg) != SEGMENT_PLAYING) {
+        Shell_Printf("Error: seg%d is not PLAYING\r\n", stop_seg);
+        return -1;
+    }
+    /* 与接入互斥 */
+    g_looper_timed_ops.join_armed        = 0;
+    g_looper_timed_ops.pending_join      = 0;
+    g_looper_timed_ops.chain_stop_seg    = (uint8_t)stop_seg;
+    g_looper_timed_ops.chain_start_seg   = (uint8_t)start_seg;
+    g_looper_timed_ops.chain_armed       = 1;
+    Shell_Printf("Chain armed: seg%d → stop at wrap, seg%d → start\r\n",
+                 stop_seg, start_seg);
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -J  — 接入播放（Join Play）
+ *
+ * 用法：
+ *   looper -J <start_seg>   激活接入：下次任意 PLAYING 段回绕时，start_seg 加入播放
+ *   looper -J cancel        取消已激活的接入
+ * ---------------------------------------------------------------------- */
+static int looper_join_cmd(int argc, char *argv[])
+{
+    if (argc >= 1 && strcmp(argv[0], "cancel") == 0) {
+        g_looper_timed_ops.join_armed   = 0;
+        g_looper_timed_ops.pending_join = 0;
+        Shell_Print("Join play cancelled\r\n");
+        return 0;
+    }
+    if (argc < 1) {
+        Shell_Print("Usage: looper -J <start_seg>  OR  looper -J cancel\r\n");
+        return -1;
+    }
+    int start_seg = atoi(argv[0]);
+    if (start_seg < 0 || start_seg >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment index out of range\r\n");
+        return -1;
+    }
+    /* 与衔接互斥 */
+    g_looper_timed_ops.chain_armed       = 0;
+    g_looper_timed_ops.pending_chain     = 0;
+    g_looper_timed_ops.join_start_seg    = (uint8_t)start_seg;
+    g_looper_timed_ops.join_armed        = 1;
+    Shell_Printf("Join armed: seg%d will start at next PLAYING-seg wrap\r\n", start_seg);
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -W  — 切换「等待本轮播完再停止」偏好（Wait-Finish toggle）
+ *
+ * 用法：
+ *   looper -W <seg>   切换指定段的 wait-finish 开关（0→1 或 1→0）
+ *   looper -W         查询当前 wait_finish_mask
+ * ---------------------------------------------------------------------- */
+static int looper_wf_cmd(int argc, char *argv[])
+{
+    if (argc < 1) {
+        Shell_Printf("wait_finish_mask = 0x%02X\r\n",
+                     g_looper_timed_ops.wait_finish_mask);
+        return 0;
+    }
+    int seg = atoi(argv[0]);
+    if (seg < 0 || seg >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment index out of range\r\n");
+        return -1;
+    }
+    g_looper_timed_ops.wait_finish_mask ^= (uint8_t)(1u << (uint8_t)seg);
+    Shell_Printf("Segment %d wait-finish: %s (mask=0x%02X)\r\n",
+                 seg,
+                 (g_looper_timed_ops.wait_finish_mask & (1u << (uint8_t)seg)) ? "ON" : "OFF",
+                 g_looper_timed_ops.wait_finish_mask);
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -SR  — 同步录制（Sync Record）
+ *
+ * 用法：
+ *   looper -SR <trigger_seg> <rec_seg>   激活：trigger_seg 下次回绕时开始录制 rec_seg
+ *   looper -SR cancel                    取消已激活的同步录制
+ * ---------------------------------------------------------------------- */
+static int looper_sr_cmd(int argc, char *argv[])
+{
+    if (argc >= 1 && strcmp(argv[0], "cancel") == 0) {
+        g_looper_timed_ops.sr_armed          = 0;
+        g_looper_timed_ops.pending_sr        = 0;
+        g_looper_timed_ops.sr_autostop_armed = 0;
+        g_looper_timed_ops.pending_sr_stop   = 0;
+        Shell_Print("SyncRec cancelled\r\n");
+        return 0;
+    }
+    if (argc < 2) {
+        Shell_Print("Usage: looper -SR <trig> <rec> [match]  OR  looper -SR cancel\r\n");
+        return -1;
+    }
+    int trig = atoi(argv[0]);
+    int rec  = atoi(argv[1]);
+    if (trig < 0 || trig >= MAX_SEGMENTS || rec < 0 || rec >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment index out of range\r\n");
+        return -1;
+    }
+    if (loop_get_segment_state((uint8_t)trig) != SEGMENT_PLAYING) {
+        Shell_Printf("Error: seg%d is not PLAYING\r\n", trig);
+        return -1;
+    }
+    /* 与衔接/接入互斥 */
+    g_looper_timed_ops.chain_armed   = 0;
+    g_looper_timed_ops.pending_chain = 0;
+    g_looper_timed_ops.join_armed    = 0;
+    g_looper_timed_ops.pending_join  = 0;
+    /* 可选第3参数 "match"：录制开始后在 trigger_seg 下次回绕时自动停止（等长模式） */
+    g_looper_timed_ops.sr_match          = (argc >= 3 && strcmp(argv[2], "match") == 0) ? 1u : 0u;
+    g_looper_timed_ops.sr_autostop_armed = 0;
+    g_looper_timed_ops.pending_sr_stop   = 0;
+    g_looper_timed_ops.sr_trigger_seg    = (uint8_t)trig;
+    g_looper_timed_ops.sr_record_seg     = (uint8_t)rec;
+    g_looper_timed_ops.sr_armed          = 1;
+    g_looper_timed_ops.pending_sr        = 0;
+    Shell_Printf("SyncRec armed: seg%d wraps -> seg%d starts recording (match=%d)\r\n",
+                 trig, rec, g_looper_timed_ops.sr_match);
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
  * looper -q  — App专用：以二进制格式返回Looper参数（用于APP读取）
  * 响应格式: [0xAA][0x55][0x21][0x09]
  *           [vol0][vol1][vol2][vol3]  — 段音量 0-100 (4字节)
@@ -2054,9 +2276,14 @@ static const ShellOpt_t looper_opts[] = {
     OPT("M", "metro",   "<cmd> [val]",  "Metronome control",            looper_metro_cmd),
     OPT("q", "query",   NULL,           "Query looper params (binary, for APP use)", looper_query_cmd),
     OPT("V", "vol",     "[seg] [0-100]","Get/Set segment volume",       looper_vol_cmd),
+    OPT("T", "trim",    "<seg> [start end]", "Get/Set loop trim points (pages, 0=full)", looper_trim_cmd),
     OPT("cfg", "cfg",   "<seg> autoplay <0|1>", "Set seg config",       looper_cfg_cmd),
     OPT("F", "flash",   "[clean|used]", "Query/Set Flash init status",  looper_flash_status_cmd),
     OPT("I", "init-seg","<seg> <sec>",  "Init seg with partial erase (10/30/60s)", looper_init_seg_cmd),
+    OPT("C", "chain",   "<stop> <start>|cancel", "Chain play at loop boundary (fw-timed)", looper_chain_cmd),
+    OPT("J", "join",    "<start>|cancel",        "Join play at loop boundary (fw-timed)",  looper_join_cmd),
+    OPT("W", "wf",      "[seg]",                 "Toggle wait-finish-before-stop for seg", looper_wf_cmd),
+    OPT("SR", "sync-rec", "<trig> <rec>|cancel", "Sync-record at boundary (fw-timed)",    looper_sr_cmd),
     /* OPT("S", "save",    NULL,           "Save looper params",           looper_save_param), -- SAVE CMD COMMENTED OUT */
     OPT_END()
 };
@@ -2076,24 +2303,181 @@ static int flash_info_cmd(int argc, char *argv[])
 
 static int flash_test_cmd(int argc, char *argv[])
 {
-    int32_t ret;
-    uint8_t dev_id = 0;
-    
+    FlashDevice_t  *dev;
+    FlashDevInfo_t  info;
+    FlashStatus_t   ret;
+    uint8_t  dev_id = 0;
+    uint8_t  write_buf[256];
+    uint8_t  read_buf[256];
+    uint32_t test_addr;
+    uint32_t cp_addr;   /* cross-page test address */
+    int      i;
+    int      pass_count = 0;
+    int      fail_at;
+
     if (argc >= 1) {
         dev_id = (uint8_t)atoi(argv[0]);
     }
-    
-    Shell_Printf("Testing device %d...\r\n", dev_id);
 
-    //FlashNewDriver_Test();
-    // ret = BG_FlashMgr.TestDevice(dev_id);
-    
-    // if (ret == BG_FLASH_OK) {
-    //     Shell_Print("Test PASSED\r\n");
-    // } else {
-    //     Shell_Printf("Test FAILED: %d\r\n", ret);
-    // }
-    return 0;
+    Shell_Printf("Testing device %d...\r\n\r\n", dev_id);
+
+    /* ---- 前置检查 ------------------------------------------- */
+    if (!BG_FlashMgr.IsReady()) {
+        Shell_Print("  ERROR: FlashMgr not ready!\r\n");
+        return -1;
+    }
+
+    dev = FlashBus_GetDeviceById(dev_id);
+    if (dev == NULL) {
+        Shell_Printf("  ERROR: Device %d not found on bus!\r\n", dev_id);
+        return -1;
+    }
+    if (!dev->initialized) {
+        Shell_Printf("  ERROR: Device %d not initialized!\r\n", dev_id);
+        return -1;
+    }
+
+    /* ---- 读取并打印设备信息 ---------------------------------- */
+    if (dev->ops->get_info(dev, &info) != FLASH_OK) {
+        Shell_Print("  ERROR: Cannot read device info!\r\n");
+        return -1;
+    }
+
+    Shell_Printf("  Device  : %-12s  MFG=0x%02X  MemType=0x%02X  DevID=0x%02X\r\n",
+                 dev->name, info.mfg_id, info.mem_type, info.dev_id);
+    Shell_Printf("  Size    : %lu MB   Page=%lu B   Sector=%lu B   Block=%lu KB\r\n",
+                 (unsigned long)(info.total_size >> 20),
+                 (unsigned long)info.page_size,
+                 (unsigned long)info.sector_size,
+                 (unsigned long)(info.block_size >> 10));
+
+    /* 测试区: 最后一个扇区, 不干扰有效数据 */
+    test_addr = info.total_size - info.sector_size;
+    Shell_Printf("  TestAddr: 0x%06lX  (last sector, %lu KB from start)\r\n\r\n",
+                 (unsigned long)test_addr,
+                 (unsigned long)(test_addr >> 10));
+
+    /* ======================================================
+     * [1/4]  Erase sector + blank verify
+     * ====================================================== */
+    Shell_Print("  [1/4] Erase + blank verify         ");
+    ret = FlashDev_EraseSector(dev, test_addr);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] erase ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    ret = FlashDev_Read(dev, test_addr, read_buf, 256);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] read after erase ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    fail_at = -1;
+    for (i = 0; i < 256; i++) {
+        if (read_buf[i] != 0xFF) { fail_at = i; break; }
+    }
+    if (fail_at >= 0) {
+        Shell_Printf("[FAIL] buf[%d]=0x%02X (expected 0xFF)\r\n",
+                     fail_at, read_buf[fail_at]);
+    } else {
+        Shell_Print("[PASS]\r\n");
+        pass_count++;
+    }
+
+    /* ======================================================
+     * [2/4]  Single-byte write / read
+     * ====================================================== */
+    Shell_Print("  [2/4] Single-byte write/read       ");
+    write_buf[0] = 0xA5;
+    ret = FlashDev_Write(dev, test_addr, write_buf, 1);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] write ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    read_buf[0] = 0x00;
+    ret = FlashDev_Read(dev, test_addr, read_buf, 1);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] read ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    if (read_buf[0] != 0xA5) {
+        Shell_Printf("[FAIL] wrote=0xA5 read=0x%02X\r\n", read_buf[0]);
+    } else {
+        Shell_Print("[PASS]\r\n");
+        pass_count++;
+    }
+
+    /* ======================================================
+     * [3/4]  256-byte page write / verify (re-erase first)
+     * ====================================================== */
+    Shell_Print("  [3/4] 256-byte page write/verify   ");
+    FlashDev_EraseSector(dev, test_addr);
+    for (i = 0; i < 256; i++) {
+        write_buf[i] = (uint8_t)i;
+    }
+    ret = FlashDev_Write(dev, test_addr, write_buf, 256);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] write ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    memset(read_buf, 0, sizeof(read_buf));
+    ret = FlashDev_Read(dev, test_addr, read_buf, 256);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] read ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    fail_at = -1;
+    for (i = 0; i < 256; i++) {
+        if (read_buf[i] != (uint8_t)i) { fail_at = i; break; }
+    }
+    if (fail_at >= 0) {
+        Shell_Printf("[FAIL] buf[%d] wrote=0x%02X read=0x%02X\r\n",
+                     fail_at, (uint8_t)fail_at, read_buf[fail_at]);
+    } else {
+        Shell_Print("[PASS]\r\n");
+        pass_count++;
+    }
+
+    /* ======================================================
+     * [4/4]  Cross-page write / verify
+     *        写 256 字节起始于 test_addr+384, 横跨本扇区内
+     *        第 1 页(+256)与第 2 页(+512)的分界 (+384 = mid)
+     *        此区域未被前面测试写过, 无需额外擦除
+     * ====================================================== */
+    Shell_Print("  [4/4] Cross-page write/verify      ");
+    cp_addr = test_addr + 384;
+    for (i = 0; i < 256; i++) {
+        write_buf[i] = (uint8_t)(0xA0 + (i & 0x0F));
+    }
+    ret = FlashDev_Write(dev, cp_addr, write_buf, 256);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] write ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    memset(read_buf, 0, sizeof(read_buf));
+    ret = FlashDev_Read(dev, cp_addr, read_buf, 256);
+    if (ret != FLASH_OK) {
+        Shell_Printf("[FAIL] read ret=%d\r\n", (int)ret);
+        goto summary;
+    }
+    fail_at = -1;
+    for (i = 0; i < 256; i++) {
+        if (read_buf[i] != (uint8_t)(0xA0 + (i & 0x0F))) { fail_at = i; break; }
+    }
+    if (fail_at >= 0) {
+        Shell_Printf("[FAIL] buf[%d] wrote=0x%02X read=0x%02X\r\n",
+                     fail_at,
+                     (uint8_t)(0xA0 + (fail_at & 0x0F)),
+                     read_buf[fail_at]);
+    } else {
+        Shell_Print("[PASS]\r\n");
+        pass_count++;
+    }
+
+summary:
+    Shell_Printf("\r\n  Result: %d/4 tests passed  [%s]\r\n",
+                 pass_count,
+                 (pass_count == 4) ? "ALL PASSED" : "FAILED");
+    return (pass_count == 4) ? 0 : -1;
 }
 
 static int flash_read_cmd(int argc, char *argv[])

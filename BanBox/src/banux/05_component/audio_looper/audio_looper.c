@@ -76,6 +76,9 @@ LoopManager_t g_loop_manager = {
     .boundary_samples_valid = 0
 };
 
+/** 下位机定时操作状态（音频线程仅写 pending_* 位；主循环写其余字段） */
+LooperTimedOps_t g_looper_timed_ops = {0};
+
 // 校验相关变量（归纳到结构体）
 static int16_t ReadBuf[96];
 
@@ -538,6 +541,8 @@ void loop_init_segment_region(uint8_t seg_idx, uint16_t max_sec)
     g_loop_manager.segments[seg_idx].play_position = 0;
     g_loop_manager.segments[seg_idx].state         = SEGMENT_INACTIVE;
     g_loop_manager.segments[seg_idx].is_active      = 0;
+    g_loop_manager.segments[seg_idx].trim_start_page = 0;  /* 清除裁剪信息 */
+    g_loop_manager.segments[seg_idx].trim_end_page   = 0;
 
     /* 标记 Flash 已使用 */
     SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
@@ -1374,26 +1379,64 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
     }
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
     
+    // 计算本段的有效循环起止页
+    uint32_t loop_start = segment->trim_start_page;
+    uint32_t loop_end   = (segment->trim_end_page > 0 && segment->trim_end_page <= segment->length_pages)
+                          ? segment->trim_end_page : segment->length_pages;
+
     // 检查播放位置是否需要循环
-    if (segment->play_position >= segment->length_pages) {
+    if (segment->play_position >= loop_end) {
         // 只在循环重置时打印一次
-        if (segment->play_position == segment->length_pages) {
-            DBG("Segment %d loop: reset position from %lu to 0 (length=%lu)\n",
-                segment_index, (unsigned long)segment->play_position, (unsigned long)segment->length_pages);
+        if (segment->play_position == loop_end) {
+            DBG("Segment %d loop: reset position from %lu to %lu (loop=%lu..%lu)\n",
+                segment_index, (unsigned long)segment->play_position,
+                (unsigned long)loop_start, (unsigned long)loop_start, (unsigned long)loop_end);
         }
-        segment->play_position = 0;  // 重置到段开头
+        segment->play_position = loop_start;  // 重置到裁剪起始页
 #if LOOPER_IO_BUFFER_ENABLE
         /* 循环回绕时重新初始化读缓存，确保预读页号与播放位置同步 */
         {
             LooperReadCache_t *cache = &s_read_cache[segment_index];
             if (cache->active) {
-                cache->prefetch_page = 0;
+                cache->prefetch_page = loop_start;
                 cache->head = 0;
                 cache->tail = 0;
                 cache->active = 0;  /* 下面会重新初始化 */
             }
         }
 #endif
+        /* ── 定时操作回绕触发（仅设置 pending 标志，无 I/O） ──────────────────────
+         * 实际状态切换由主循环 Looper_TimedOps_Process() 负责执行。
+         * 规则：
+         *   chain : 当前段 == chain_stop_seg  → 触发衔接
+         *   join  : 任意 PLAYING 段回绕       → 触发接入
+         *   wait  : deferred_stop 位已置       → 触发延迟停止 */
+        {
+            LooperTimedOps_t *ops = &g_looper_timed_ops;
+            /* 衔接触发：只有 chain_stop_seg 回绕才触发 */
+            if (ops->chain_armed && (ops->chain_stop_seg == (uint8_t)segment_index)) {
+                ops->pending_chain = 1;
+            }
+            /* 接入触发：任意 PLAYING 段回绕即触发 */
+            if (ops->join_armed) {
+                ops->pending_join = 1;
+            }
+            /* 延迟停止触发 */
+            if (ops->deferred_stop_mask & (1u << (uint8_t)segment_index)) {
+                ops->pending_wait_finish |= (1u << (uint8_t)segment_index);
+                ops->deferred_stop_mask  &= (uint8_t)(~(1u << (uint8_t)segment_index));
+            }
+            /* 同步录制触发：只有 sr_trigger_seg 回绕才触发 */
+            if (ops->sr_armed && (ops->sr_trigger_seg == (uint8_t)segment_index)) {
+                ops->pending_sr = 1;
+                ops->sr_armed   = 0;  /* 一次性：触发后自动解除 */
+            }
+            /* 同步录制等长自动停止：SR 已触发录制，等待 trigger_seg 再次回绕时停止 */
+            if (ops->sr_autostop_armed && (ops->sr_trigger_seg == (uint8_t)segment_index)) {
+                ops->pending_sr_stop   = 1;
+                ops->sr_autostop_armed = 0;
+            }
+        }
     }
     
     uint32_t segment_data[48];
@@ -1855,11 +1898,13 @@ void loop_clear_segment(uint8_t segment_index)
     }
 
     /* 重置段元数据 */
-    g_loop_manager.segments[segment_index].length_pages  = 0;
-    g_loop_manager.segments[segment_index].length_bytes  = 0;
-    g_loop_manager.segments[segment_index].is_active     = 0;
-    g_loop_manager.segments[segment_index].state         = SEGMENT_INACTIVE;
-    g_loop_manager.segments[segment_index].play_position = 0;
+    g_loop_manager.segments[segment_index].length_pages   = 0;
+    g_loop_manager.segments[segment_index].length_bytes   = 0;
+    g_loop_manager.segments[segment_index].is_active      = 0;
+    g_loop_manager.segments[segment_index].state          = SEGMENT_INACTIVE;
+    g_loop_manager.segments[segment_index].play_position  = 0;
+    g_loop_manager.segments[segment_index].trim_start_page = 0;
+    g_loop_manager.segments[segment_index].trim_end_page   = 0;
 
     /* 重新统计活跃段数 */
     uint8_t i, cnt = 0;
@@ -2184,9 +2229,135 @@ uint8_t loop_is_segment_playing(uint8_t segment_index)
     return (g_loop_manager.segments[segment_index].state == SEGMENT_PLAYING) ? 1 : 0;
 }
 
-// ============================================================================
-// AudioLooper接口实现函数（内部实现）
-// ============================================================================
+/* ============================================================================
+ * 定时操作（Looper_TimedOps）实现
+ * ============================================================================ */
+
+/**
+ * @brief 清除所有定时操作状态（looper reset 时调用）
+ */
+void Looper_TimedOps_Reset(void)
+{
+    memset(&g_looper_timed_ops, 0, sizeof(g_looper_timed_ops));
+    DBG("[TimedOps] Reset\n");
+}
+
+/**
+ * @brief 主循环中消费 pending 标志，执行停止/启动，并发送 BLE 通知包。
+ *
+ * 通知包格式 (5字节):
+ *   [0xAA][0x55][0x23][0x01][timed_ops_state]
+ *   timed_ops_state 位定义:
+ *     bit0 = chain_armed      (衔接等待中)
+ *     bit1 = join_armed       (接入等待中)
+ *     bit2 = wait_finish[0]   (seg0 等待播完)
+ *     bit3 = wait_finish[1]   (seg1 等待播完)
+ *     bit4 = deferred_stop[0] (seg0 延迟停止挂起)
+ *     bit5 = deferred_stop[1] (seg1 延迟停止挂起)
+ */
+void Looper_TimedOps_Process(void)
+{
+    LooperTimedOps_t *ops = &g_looper_timed_ops;
+    uint8_t did_something = 0;
+
+    /* Shell_WriteRaw 前置声明（不引入头文件依赖） */
+    extern void Shell_WriteRaw(const uint8_t *data, uint16_t len);
+
+    /* ── 1. 衔接处理 ─────────────────────────────────────────────────── */
+    if (ops->pending_chain) {
+        uint8_t stop_seg  = ops->chain_stop_seg;
+        uint8_t start_seg = ops->chain_start_seg;
+        ops->pending_chain = 0;
+        ops->chain_armed   = 0;
+        /* 先停后起，顺序很重要 */
+        if (stop_seg < MAX_SEGMENTS) {
+            loop_set_segment_stopped(stop_seg);
+            DBG("[TimedOps] Chain: seg%d stopped\n", stop_seg);
+        }
+        if (start_seg < MAX_SEGMENTS) {
+            loop_set_segment_playing(start_seg);
+            DBG("[TimedOps] Chain: seg%d started\n", start_seg);
+        }
+        did_something = 1;
+    }
+
+    /* ── 2. 接入处理 ─────────────────────────────────────────────────── */
+    if (ops->pending_join) {
+        uint8_t start_seg = ops->join_start_seg;
+        ops->pending_join = 0;
+        ops->join_armed   = 0;
+        if (start_seg < MAX_SEGMENTS) {
+            loop_set_segment_playing(start_seg);
+            DBG("[TimedOps] Join: seg%d started\n", start_seg);
+        }
+        did_something = 1;
+    }
+
+    /* ── 3. 同步录制处理 ─────────────────────────────────────────────── */
+    if (ops->pending_sr) {
+        uint8_t rec_seg = ops->sr_record_seg;
+        ops->pending_sr = 0;
+        if (rec_seg < MAX_SEGMENTS) {
+            loop_set_segment_recording(rec_seg);
+            /* match 模式：等待 trigger_seg 下次回绕时自动停止（等长录制） */
+            if (ops->sr_match) {
+                ops->sr_autostop_armed = 1;
+            }
+            DBG("[TimedOps] SyncRec: seg%d started recording at boundary (match=%d)\n",
+                rec_seg, ops->sr_match);
+        }
+        did_something = 1;
+    }
+
+    /* ── 3b. 同步录制等长自动停止 ──────────────────────────────────────── */
+    if (ops->pending_sr_stop) {
+        uint8_t rec_seg = ops->sr_record_seg;
+        ops->pending_sr_stop = 0;
+        if (rec_seg < MAX_SEGMENTS &&
+            loop_get_segment_state(rec_seg) == SEGMENT_RECORDING) {
+            loop_stop_current_segment(rec_seg);  /* 精确停止并切换到 PLAYING */
+            DBG("[TimedOps] SyncRec auto-stop: seg%d stopped at boundary -> PLAYING\n", rec_seg);
+        }
+        did_something = 1;
+    }
+
+    /* ── 4. 延迟停止处理 ─────────────────────────────────────────────── */
+    if (ops->pending_wait_finish) {
+        uint8_t mask = ops->pending_wait_finish;
+        ops->pending_wait_finish = 0;
+        uint8_t i;
+        for (i = 0; i < MAX_SEGMENTS; i++) {
+            if (mask & (1u << i)) {
+                loop_set_segment_stopped(i);
+                /* 一次性：执行后清除对应段的 wait-finish 偏好，避免按钮卡在激活态 */
+                ops->wait_finish_mask &= (uint8_t)(~(1u << i));
+                DBG("[TimedOps] WaitFinish: seg%d stopped (mask cleared)\n", i);
+            }
+        }
+        did_something = 1;
+    }
+
+    /* ── 5. 发送 BLE 通知 ────────────────────────────────────────────── */
+    if (did_something) {
+        uint8_t state_byte = 0;
+        if (ops->chain_armed)              state_byte |= (1u << 0);
+        if (ops->join_armed)               state_byte |= (1u << 1);
+        if (ops->wait_finish_mask  & 0x01) state_byte |= (1u << 2);
+        if (ops->wait_finish_mask  & 0x02) state_byte |= (1u << 3);
+        if (ops->deferred_stop_mask & 0x01) state_byte |= (1u << 4);
+        if (ops->deferred_stop_mask & 0x02) state_byte |= (1u << 5);
+        if (ops->sr_armed)                 state_byte |= (1u << 6); /* bit6: SR 激活中 */
+        uint8_t buf[5];
+        buf[0] = 0xAA;
+        buf[1] = 0x55;
+        buf[2] = 0x23;  /* type: timed-ops notify */
+        buf[3] = 0x01;  /* payload length */
+        buf[4] = state_byte;
+        Shell_WriteRaw(buf, sizeof(buf));
+    }
+}
+
+
 
 /**
  * @brief AudioLooper接口：初始化
@@ -2764,6 +2935,74 @@ uint8_t loop_get_segment_volume(uint8_t segment_index)
 }
 
 // ============================================================================
+// 段裁剪控制
+// ============================================================================
+
+/**
+ * @brief 设置段的循环裁剪起止页
+ * @param segment_index 段索引
+ * @param start_page    循环起始页（0=从头播放）
+ * @param end_page      循环终止页（0=到录制末尾）
+ *
+ * 说明：仅影响播放/预读范围，不修改Flash上的录制数据。
+ *       若 end_page > length_pages 则自动钳制到 length_pages。
+ */
+void loop_set_segment_trim(uint8_t segment_index, uint32_t start_page, uint32_t end_page)
+{
+    if (segment_index >= MAX_SEGMENTS) {
+        DBG("[Looper] set_segment_trim: invalid index %d\n", segment_index);
+        return;
+    }
+    SegmentInfo_t *seg = &g_loop_manager.segments[segment_index];
+
+    /* 边界钳制 */
+    if (end_page > 0 && end_page > seg->length_pages) {
+        end_page = seg->length_pages;
+    }
+    if (start_page > 0 && end_page > 0 && start_page >= end_page) {
+        DBG("[Looper] set_segment_trim: start_page(%lu) >= end_page(%lu), ignored\n",
+            (unsigned long)start_page, (unsigned long)end_page);
+        return;
+    }
+
+    seg->trim_start_page = start_page;
+    seg->trim_end_page   = end_page;
+
+    /* 若当前正在播放此段，将播放指针钳制到新的有效范围 */
+    if (seg->state == SEGMENT_PLAYING && seg->is_active) {
+        uint32_t loop_start = start_page;
+        uint32_t loop_end   = (end_page > 0) ? end_page : seg->length_pages;
+        if (seg->play_position < loop_start || seg->play_position >= loop_end) {
+            seg->play_position = loop_start;
+#if LOOPER_IO_BUFFER_ENABLE
+            {
+                LooperReadCache_t *cache = &s_read_cache[segment_index];
+                cache->prefetch_page = loop_start;
+                cache->head = 0;
+                cache->tail = 0;
+                cache->active = 0;  /* 触发重新初始化 */
+            }
+#endif
+        }
+    }
+
+    DBG("[Looper] Segment %d trim set: start=%lu end=%lu (length=%lu)\n",
+        segment_index,
+        (unsigned long)start_page, (unsigned long)end_page,
+        (unsigned long)seg->length_pages);
+}
+
+/**
+ * @brief 获取段当前的裁剪起止页
+ */
+void loop_get_segment_trim(uint8_t segment_index, uint32_t *start_page, uint32_t *end_page)
+{
+    if (segment_index >= MAX_SEGMENTS || !start_page || !end_page) return;
+    *start_page = g_loop_manager.segments[segment_index].trim_start_page;
+    *end_page   = g_loop_manager.segments[segment_index].trim_end_page;
+}
+
+// ============================================================================
 // 段Flash绑定控制
 // ============================================================================
 
@@ -2832,6 +3071,12 @@ void looper_init_read_cache(uint8_t segment_index)
     SegmentInfo_t *seg = &g_loop_manager.segments[segment_index];
     LooperReadCache_t *cache = &s_read_cache[segment_index];
 
+    /* 计算有效循环起止页 */
+    uint32_t trim_start = seg->trim_start_page;
+    uint32_t trim_end   = (seg->trim_end_page > 0 && seg->trim_end_page <= seg->length_pages)
+                          ? seg->trim_end_page : seg->length_pages;
+    uint32_t loop_pages = trim_end - trim_start;
+
     cache->head = 0;
     cache->tail = 0;
     cache->prefetch_page = seg->play_position;
@@ -2841,12 +3086,12 @@ void looper_init_read_cache(uint8_t segment_index)
     uint8_t fill = LOOPER_READ_CACHE_PAGES - 1;
     uint8_t i;
 
-    if (seg->length_pages == 0) {
+    if (seg->length_pages == 0 || loop_pages == 0) {
         cache->active = 0;
         return;
     }
-    if ((uint32_t)fill > seg->length_pages) {
-        fill = (uint8_t)seg->length_pages;
+    if ((uint32_t)fill > loop_pages) {
+        fill = (uint8_t)loop_pages;
     }
 
     for (i = 0; i < fill; i++) {
@@ -2862,8 +3107,8 @@ void looper_init_read_cache(uint8_t segment_index)
 #endif
         cache->head = (cache->head + 1) % LOOPER_READ_CACHE_PAGES;
         cache->prefetch_page++;
-        if (cache->prefetch_page >= seg->length_pages) {
-            cache->prefetch_page = 0;
+        if (cache->prefetch_page >= trim_end) {
+            cache->prefetch_page = trim_start;
         }
     }
 
@@ -2975,8 +3220,12 @@ void looper_flush_io(void)
 #endif
         cache->head = (cache->head + 1) % LOOPER_READ_CACHE_PAGES;
         cache->prefetch_page++;
-        if (cache->prefetch_page >= seg->length_pages) {
-            cache->prefetch_page = 0;
+        {
+            uint32_t te = (seg->trim_end_page > 0 && seg->trim_end_page <= seg->length_pages)
+                          ? seg->trim_end_page : seg->length_pages;
+            if (cache->prefetch_page >= te) {
+                cache->prefetch_page = seg->trim_start_page;
+            }
         }
         }
     }
@@ -3131,6 +3380,14 @@ static uint8_t AudioLooper_GetSegmentVolume(uint8_t segment_index) {
     return loop_get_segment_volume(segment_index);
 }
 
+static void AudioLooper_SetSegmentTrim(uint8_t segment_index, uint32_t start_page, uint32_t end_page) {
+    loop_set_segment_trim(segment_index, start_page, end_page);
+}
+
+static void AudioLooper_GetSegmentTrim(uint8_t segment_index, uint32_t *start_page, uint32_t *end_page) {
+    loop_get_segment_trim(segment_index, start_page, end_page);
+}
+
 #if LOOPER_MULTI_FLASH_ENABLE
 static void AudioLooper_SetSegmentFlash(uint8_t segment_index, uint8_t flash_dev_id) {
     loop_set_segment_flash(segment_index, flash_dev_id);
@@ -3278,6 +3535,10 @@ AudioLooper_t AudioLooper = {
     // 段音量控制
     .SetSegmentVolume = AudioLooper_SetSegmentVolume,
     .GetSegmentVolume = AudioLooper_GetSegmentVolume,
+
+    // 段裁剪控制
+    .SetSegmentTrim = AudioLooper_SetSegmentTrim,
+    .GetSegmentTrim = AudioLooper_GetSegmentTrim,
 
 #if LOOPER_MULTI_FLASH_ENABLE
     // 段Flash绑定控制

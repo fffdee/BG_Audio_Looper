@@ -74,7 +74,7 @@ typedef enum {
  * 每段 RAM 占用 = LOOPER_WRITE_BUF_PAGES × 192 字节
  * 推荐值: 8 (1.5KB/段), 最小: 2 */
 #ifndef LOOPER_WRITE_BUF_PAGES
-#define LOOPER_WRITE_BUF_PAGES    8
+#define LOOPER_WRITE_BUF_PAGES    2
 #endif
 
 /* 播放读缓存深度（页数）
@@ -82,7 +82,7 @@ typedef enum {
  * 每段 RAM 占用 = LOOPER_READ_CACHE_PAGES × 192 字节
  * 推荐值: 8 (1.5KB/段), 最小: 2 */
 #ifndef LOOPER_READ_CACHE_PAGES
-#define LOOPER_READ_CACHE_PAGES    8
+#define LOOPER_READ_CACHE_PAGES    2
 #endif
 
 /* ----- 录制写环形缓冲区 (每段一个) ----- */
@@ -168,6 +168,8 @@ typedef struct {
 #if LOOPER_MULTI_FLASH_ENABLE
     uint8_t  flash_dev_id;   /* 绑定的Flash设备号 (0=Flash#0, 1=Flash#1, ...) */
 #endif
+    uint32_t trim_start_page; /* 循环起始页（0=从头播放） */
+    uint32_t trim_end_page;   /* 循环终止页（0=播放至末尾） */
 } SegmentInfo_t;
 
 /* Metronome config structure */
@@ -281,6 +283,9 @@ typedef struct {
     /* 段音量控制 */
     void (*SetSegmentVolume)(uint8_t segment_index, uint8_t volume); /* 设置指定段音量 0-100 */
     uint8_t (*GetSegmentVolume)(uint8_t segment_index);              /* 获取指定段音量 */
+    /* 段裁剪控制：设置/获取循环起止页，不修改Flash数据，仅影响播放范围 */
+    void (*SetSegmentTrim)(uint8_t segment_index, uint32_t start_page, uint32_t end_page);
+    void (*GetSegmentTrim)(uint8_t segment_index, uint32_t *start_page, uint32_t *end_page);
 #if LOOPER_MULTI_FLASH_ENABLE
     /* 段Flash绑定控制 (仅多Flash模式) */
     void (*SetSegmentFlash)(uint8_t segment_index, uint8_t flash_dev_id); /* 绑定段到指定Flash */
@@ -400,6 +405,25 @@ void metronome_mix_audio(uint32_t* output_data, uint16_t length);
 void loop_set_segment_volume(uint8_t segment_index, uint8_t volume); /* 设置段播放音量 0-100 */
 uint8_t loop_get_segment_volume(uint8_t segment_index);              /* 获取段播放音量 */
 
+/* ============================================================================
+ * Looper 段裁剪控制
+ * ============================================================================ */
+/**
+ * @brief 设置段的循环裁剪起止页（仅影响播放范围，不修改Flash数据）
+ * @param segment_index 段索引
+ * @param start_page    循环起始页（0=从头）
+ * @param end_page      循环终止页（0=到录制末尾）
+ */
+void loop_set_segment_trim(uint8_t segment_index, uint32_t start_page, uint32_t end_page);
+
+/**
+ * @brief 获取段当前的裁剪起止页
+ * @param segment_index 段索引
+ * @param start_page    输出：循环起始页
+ * @param end_page      输出：循环终止页（0=到录制末尾）
+ */
+void loop_get_segment_trim(uint8_t segment_index, uint32_t *start_page, uint32_t *end_page);
+
 /* 段与Flash绑定控制 (仅多Flash模式) */
 #if LOOPER_MULTI_FLASH_ENABLE
 void    loop_set_segment_flash(uint8_t segment_index, uint8_t flash_dev_id); /* 将指定段绑定到某颗Flash (须在录制前设置) */
@@ -458,5 +482,68 @@ void loop_init_segment_region(uint8_t seg_idx, uint16_t max_sec);
  * @return 1 = 正在擦除（录制被阻塞）；0 = 擦除完成或未启动
  */
 uint8_t loop_segment_partial_erase_pending(uint8_t seg_idx);
+
+/* ============================================================================
+ * Looper 下位机定时操作（衔接 / 接入 / 等待本轮播完再停止）
+ *
+ * 原理：音频回调 loop_process_segment_playback 检测到段回绕（循环到起点）时，
+ *       仅设置 pending_* 标志位（无 I/O）；主循环调用
+ *       Looper_TimedOps_Process() 消费标志并执行真正的状态切换 + BLE 回包。
+ *
+ * 精度：回绕检测在音频帧级（48 samples = 1ms @ 48kHz），对 Looper 场景完全够用。
+ * ============================================================================ */
+
+/**
+ * 定时操作状态结构体
+ *
+ * chain_armed  : 1 = 衔接等待中；下次 chain_stop_seg 回绕时，停止它并启动 chain_start_seg
+ * join_armed   : 1 = 接入等待中；下次任意 PLAYING 段回绕时，同时启动 join_start_seg
+ * wait_finish_mask : bit N = 1 → 停止 seg N 时等到本轮结束（用户持久偏好）
+ * deferred_stop_mask : bit N = 1 → 已收到 stop 请求，等待 seg N 下次回绕后再真正停止
+ *
+ * pending_*    : 由音频线程在回绕点置 1（仅设标志，不执行任何 I/O），
+ *                主循环 Looper_TimedOps_Process() 读标志并执行操作后清零。
+ */
+typedef struct {
+    /* --- 衔接：chain_stop_seg 本轮结束 → 停止它，同时启动 chain_start_seg --- */
+    uint8_t chain_armed;        /* 1 = 衔接已激活 */
+    uint8_t chain_stop_seg;     /* 触发回绕时将被停止的段 */
+    uint8_t chain_start_seg;    /* 触发回绕时将被启动的段 */
+    uint8_t pending_chain;      /* 音频线程置 1，主循环执行后清 0 */
+
+    /* --- 接入：下次任意 PLAYING 段回绕 → 额外启动 join_start_seg（原播放段继续） --- */
+    uint8_t join_armed;         /* 1 = 接入已激活 */
+    uint8_t join_start_seg;     /* 触发回绕时将被启动的段 */
+    uint8_t pending_join;       /* 音频线程置 1，主循环执行后清 0 */
+
+    /* --- 等待播完再停止 --- */
+    uint8_t wait_finish_mask;       /* 持久偏好 bit mask (bit N = seg N 开启了 wait-finish) */
+    uint8_t deferred_stop_mask;     /* 待延迟停止 bit mask (stop 命令已收到，等回绕) */
+    uint8_t pending_wait_finish;    /* 音频线程置位，主循环执行停止后清 0 */
+
+    /* --- 同步录制：trigger_seg 回绕时触发 rec_seg 开始录制 --- */
+    uint8_t sr_armed;           /* 1 = 同步录制已激活 */
+    uint8_t sr_trigger_seg;     /* 触发回绕的段（通常 seg0） */
+    uint8_t sr_record_seg;      /* 回绕后开始录制的段（通常 seg1） */
+    uint8_t pending_sr;         /* 音频线程置 1，主循环执行后清 0 */
+    uint8_t sr_match;           /* 1 = SR 触发录制后，在 trigger_seg 下次回绕时自动停止 rec_seg（等长模式） */
+    uint8_t sr_autostop_armed;  /* 1 = 等待 trigger_seg 再次回绕时停止 rec_seg */
+    uint8_t pending_sr_stop;    /* 音频线程置 1，主循环执行自动停止后清 0 */
+} LooperTimedOps_t;
+
+/** 全局定时操作状态（audio_looper.c 定义） */
+extern LooperTimedOps_t g_looper_timed_ops;
+
+/**
+ * @brief 清除所有定时操作标志（通常在段清除/重置时调用）
+ */
+void Looper_TimedOps_Reset(void);
+
+/**
+ * @brief 主循环中调用：消费 pending 标志，执行 stop/start 状态切换，
+ *        并通过 Shell_WriteRaw 发送 AA55 23 型 BLE 通知包告知 App。
+ *        （勿在中断上下文调用：内部可能触发 Flash I/O）
+ */
+void Looper_TimedOps_Process(void);
 
 #endif /* __AUDIO_LOOPER_H__ */

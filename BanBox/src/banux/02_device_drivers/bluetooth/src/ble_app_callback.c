@@ -7,6 +7,7 @@
 #include "ble_app_func.h"
 
 #include "shell_io_ble.h" // 引入notify测试接口
+#include "audio_looper.h" // 断开时停止 Looper 和节拍器
 
 /* ⚠️ 生产环境必须设置为0，避免测试任务干扰正常通信 */
 #define AUTO_START_NOTIFY_TEST 0
@@ -40,6 +41,19 @@ void BLEStackCallBackFunc(uint8_t event)
 		case BLE_STACK_DISCONNECTED:
 			BT_DBG("BLE_STACK_DISCONNECTED\n");
 			BleConnectFlag = 0;
+			/* 蓝牙断开时仅停止正在播放或录制的段（不动 INACTIVE 段） */
+			{
+				uint8_t i;
+				for (i = 0; i < 2; i++) {
+					SegmentState_t segState = loop_get_segment_state(i);
+					if (segState == SEGMENT_PLAYING || segState == SEGMENT_RECORDING) {
+						loop_set_segment_stopped(i);
+					}
+				}
+
+				metronome_disable();
+				BT_DBG("[BLE] Disconnect: looper+metronome stopped\n");
+			}
 #if (AUTO_START_NOTIFY_TEST)
 			BLE_StopNotifyTest(); // 断开时停止notify测试
 #endif

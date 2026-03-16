@@ -1148,6 +1148,8 @@ void Audio_loop(void)
 	USB_HotplugCheck();
 
 	AudioLoopWithGraph();
+	/* 消费回绕触发的 pending 标志（衔接/接入/延迟停止），必须在音频处理之后调用 */
+	Looper_TimedOps_Process();
 	/* CDC串口应用处理 - 使用Shell IO管理器（自动切换CDC/BLE） */
 	ShellIOManager_Process();
 
@@ -1176,6 +1178,8 @@ void Audio_loop(void)
 		AudioLoopMinimal(bt_audio_buffer);
 	}
 
+	/* 消费回绕触发的 pending 标志（衔接/接入/延迟停止），必须在音频处理之后调用 */
+	Looper_TimedOps_Process();
 	/* CDC串口应用处理 - 使用Shell IO管理器（自动切换CDC/BLE） */
 	ShellIOManager_Process();
 #endif

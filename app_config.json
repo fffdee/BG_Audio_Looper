@@ -1,0 +1,18 @@
+{
+  "build_config_h": "C:/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/src/build_config.h",
+  "compile_dir": "C:/Users/BanGO/Desktop/BanGO_prj/BG_Audio_Looper/BanBox/Debug",
+  "release_dir": "",
+  "map_file_path": "",
+  "elf_file_path": "",
+  "watch_ext": [
+    ".bin",
+    ".hex"
+  ],
+  "theme": "light",
+  "custom_pages": [
+    {
+      "name": "looper",
+      "macros": []
+    }
+  ]
+}

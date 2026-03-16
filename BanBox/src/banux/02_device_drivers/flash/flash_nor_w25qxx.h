@@ -97,6 +97,18 @@ void W25Qxx_Destroy(FlashDevice_t *dev);
 const FlashOps_t* W25Qxx_GetOps(void);
 
 /**
+ * @brief 发送 64KB 块擦除命令后立即返回（非阻塞）
+ *
+ * 只发送擦除命令，不等待完成；调用后需通过 W25Qxx_IsBusy()
+ * 轮询直到返回 0，才可进行下一次写/擦操作。
+ *
+ * @param dev   设备指针
+ * @param addr  块内任意地址（自动对齐到 64KB 边界）
+ * @return FLASH_OK / FLASH_ERR_*
+ */
+FlashStatus_t W25Qxx_EraseBlockStart(FlashDevice_t *dev, uint32_t addr);
+
+/**
  * @brief 发送全片擦除命令后立即返回（非阻塞）
  *
  * 调用后需轮询 W25Qxx_IsBusy() 确认擦除结束，
@@ -106,18 +118,6 @@ const FlashOps_t* W25Qxx_GetOps(void);
  * @return FLASH_OK / FLASH_ERR_*
  */
 FlashStatus_t W25Qxx_EraseChipStart(FlashDevice_t *dev);
-
-/**
- * @brief 发送 64KB 块擦除命令后立即返回（非阻塞）
- *
- * 调用后需轮询 W25Qxx_IsBusy() 确认擦除结束。
- * addr 会自动对齐到 64KB 块边界。
- *
- * @param dev   设备指针
- * @param addr  块起始地址（绝对地址，自动对齐）
- * @return FLASH_OK / FLASH_ERR_*
- */
-FlashStatus_t W25Qxx_EraseBlockStart(FlashDevice_t *dev, uint32_t addr);
 
 /**
  * @brief 非阻塞忙状态查询

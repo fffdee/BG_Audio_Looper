@@ -10,7 +10,7 @@
 #include "spim_interface.h"
 #include "dma.h"
 #include "gpio.h"
-#include "debug.h"
+#include "debug.h"251pp'p'p
 #include "rtos_api.h"
 #include <string.h>
 #include <stdlib.h>
@@ -593,6 +593,44 @@ void W25Qxx_Destroy(FlashDevice_t *dev)
  *         FLASH_ERR_NOT_INIT 设备未初始化
  *         FLASH_ERR_TIMEOUT 发送前等待就绪超时（芯片异常）
  */
+FlashStatus_t W25Qxx_EraseBlockStart(FlashDevice_t *dev, uint32_t addr)
+{
+    FlashStatus_t ret;
+
+    if (!dev) {
+        return FLASH_ERR_PARAM;
+    }
+
+    if (!dev->initialized) {
+        return FLASH_ERR_NOT_INIT;
+    }
+
+    /* 地址对齐到 64KB 块边界 */
+    addr &= ~(W25QXX_BLOCK_SIZE_64K - 1);
+
+    if (addr >= dev->info.total_size) {
+        return FLASH_ERR_PARAM;
+    }
+
+    /* 等待前序操作完成 */
+    ret = W25Qxx_WaitReady(dev, 100);
+    if (ret != FLASH_OK) {
+        return ret;
+    }
+
+    /* 写使能 */
+    w25qxx_write_enable(dev);
+
+    /* 发送块擦除命令，不等待完成 */
+    dev->cs.select();
+    w25qxx_cmd_addr(dev, W25QXX_CMD_BLOCK_ERASE_64K, addr);
+    dev->cs.deselect();
+
+    W25QXX_LOG("Block erase command sent at 0x%lX (async)\n", (unsigned long)addr);
+
+    return FLASH_OK;
+}
+
 FlashStatus_t W25Qxx_EraseChipStart(FlashDevice_t *dev)
 {
     FlashStatus_t ret;
@@ -639,41 +677,4 @@ uint8_t W25Qxx_IsBusy(FlashDevice_t *dev)
     w25qxx_cmd_read(dev, W25QXX_CMD_READ_STATUS_REG1, &sr, 1);
 
     return (sr & W25QXX_SR1_BUSY) ? 1 : 0;
-}
-
-FlashStatus_t W25Qxx_EraseBlockStart(FlashDevice_t *dev, uint32_t addr)
-{
-    FlashStatus_t ret;
-
-    if (!dev) {
-        return FLASH_ERR_PARAM;
-    }
-    if (!dev->initialized) {
-        return FLASH_ERR_NOT_INIT;
-    }
-
-    /* 地址对齐到 64KB 块边界 */
-    addr &= ~(W25QXX_BLOCK_SIZE_64K - 1);
-
-    if (addr >= dev->info.total_size) {
-        return FLASH_ERR_PARAM;
-    }
-
-    /* 确保前序操作已完成（正常情况下芯片应已就绪） */
-    ret = W25Qxx_WaitReady(dev, 100);
-    if (ret != FLASH_OK) {
-        return ret;
-    }
-
-    /* 写使能 */
-    w25qxx_write_enable(dev);
-
-    /* 发送 64KB 块擦除命令，不等待完成 */
-    dev->cs.select();
-    w25qxx_cmd_addr(dev, W25QXX_CMD_BLOCK_ERASE_64K, addr);
-    dev->cs.deselect();
-
-    W25QXX_LOG("Block erase cmd sent addr=0x%lX (async, poll IsBusy)\n", (unsigned long)addr);
-
-    return FLASH_OK;
 }

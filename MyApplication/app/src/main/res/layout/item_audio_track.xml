@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 单条音频轨卡片（由 LooperControlActivity 动态添加到 container_audio_tracks） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#1F2937"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="10dp"
+    android:layout_marginBottom="6dp">
+
+    <!-- ── 标题行：轨道名 / 时长 / 重置按钮 ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:id="@+id/tv_track_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="LOOP 1"
+            android:textColor="#00D9FF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_track_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00s"
+            android:textColor="#888888"
+            android:textSize="11sp"
+            android:layout_marginEnd="6dp" />
+
+        <!-- 重置裁剪点 -->
+        <Button
+            android:id="@+id/btn_track_reset_trim"
+            style="@android:style/Widget.Material.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:text="重置"
+            android:textSize="10sp"
+            android:textColor="#888888"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp" />
+
+    </LinearLayout>
+
+    <!-- ── 可视化裁剪条（拖拽头/尾柄） ── -->
+    <com.example.myapplication.AudioTrackTrimView
+        android:id="@+id/trim_view"
+        android:layout_width="match_parent"
+        android:layout_height="56dp" />
+
+    <!-- ── 时间刻度标签（起/止）── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:id="@+id/tv_trim_start_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00s"
+            android:textColor="#506070"
+            android:textSize="9sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/tv_trim_end_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00s"
+            android:textColor="#506070"
+            android:textSize="9sp" />
+
+    </LinearLayout>
+
+    <!-- ── 精确数字输入行：头 / 尾 / 应用 ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="头:"
+            android:textColor="#AAAAAA"
+            android:textSize="11sp"
+            android:layout_marginEnd="4dp" />
+
+        <EditText
+            android:id="@+id/et_trim_start"
+            android:layout_width="68dp"
+            android:layout_height="34dp"
+            android:inputType="numberDecimal"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:background="#2D3748"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:hint="0.00"
+            android:textColorHint="#555555"
+            android:gravity="center"
+            android:singleLine="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" s   尾:"
+            android:textColor="#AAAAAA"
+            android:textSize="11sp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <EditText
+            android:id="@+id/et_trim_end"
+            android:layout_width="68dp"
+            android:layout_height="34dp"
+            android:inputType="numberDecimal"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:background="#2D3748"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:hint="0.00"
+            android:textColorHint="#555555"
+            android:gravity="center"
+            android:singleLine="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" s"
+            android:textColor="#AAAAAA"
+            android:textSize="11sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- 应用按钮 -->
+        <Button
+            android:id="@+id/btn_track_apply_trim"
+            style="@android:style/Widget.Material.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:text="✓ 应用"
+            android:textSize="11sp"
+            android:textColor="#00D9FF"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

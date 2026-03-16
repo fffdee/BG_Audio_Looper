@@ -69,6 +69,11 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
     private static final int DRAWER_WIDTH = 280; // 侧边栏宽度（dp）
     private static final long ANIMATION_DURATION = 300; // 动画时长（ms）
 
+    // 缓存连接状态 UI 控件，用于 onResume 刷新
+    private TextView tvConnectionStatus;
+    private TextView tvDeviceNameView;
+    private Button   btnConnectView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +98,9 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
         TextView tvStatus = findViewById(R.id.tv_connection_status);
         TextView tvDeviceName = findViewById(R.id.tv_device_name);
         Button btnConnect = findViewById(R.id.btn_connect);
+        tvConnectionStatus = tvStatus;
+        tvDeviceNameView   = tvDeviceName;
+        btnConnectView     = btnConnect;
         Button btnTerminal = findViewById(R.id.btn_terminal);
         btnSpeakerMode = findViewById(R.id.btn_speaker_mode);
 
@@ -174,6 +182,15 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 从子 Activity 返回时刷新连接状态 UI
+        if (tvConnectionStatus != null) {
+            updateConnectionStatus(tvConnectionStatus, tvDeviceNameView, btnConnectView);
+        }
     }
 
     /**
