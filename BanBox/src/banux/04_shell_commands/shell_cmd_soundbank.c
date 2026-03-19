@@ -380,6 +380,8 @@ static const char * const note_names[] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
 
+
+
 static int cmd_sb_test(int argc, char *argv[])
 {
     uint8_t note;
@@ -540,6 +542,7 @@ static int cmd_sb_test(int argc, char *argv[])
 
     return 0;
 }
+
 
 /* ============================================
  * 测试: 通过 TriggerNoteOn + 效果图路径触发

@@ -8,7 +8,7 @@
  */
 
 #include "sf2_source.h"
-
+#if DRUM_MCH_EN == 1
 /* SF2音源数据数组 */
 const uint8_t sf2_source_data[SF2_SOURCE_SIZE] = {
     /* 0x00000000 */
@@ -20890,3 +20890,4 @@ const uint8_t sf2_source_data[SF2_SOURCE_SIZE] = {
     /* 0x0004CC00 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+#endif

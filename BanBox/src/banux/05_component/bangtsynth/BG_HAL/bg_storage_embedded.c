@@ -21,20 +21,11 @@
 /* ============================================
  * 内嵌音源数据 (由 sf2_to_c_converter.py 生成)
  * ============================================ */
-#if (BG_DEFAULT_SOUNDBANK == BG_SOUNDBANK_SOFT_PIANO)
-    /* Thrift store spinet piano - 默认钢琴音源 */
-    #include "../durm_data/sf2_source.h"
-    #define EMBEDDED_SF2_DATA       sf2_source_data
-    #define EMBEDDED_SF2_SIZE       SF2_SOURCE_SIZE
+
+    #include "tip_data.h"
+    #define EMBEDDED_SF2_DATA       tip_data
+    #define EMBEDDED_SF2_SIZE       TIP_SIZE
     #define EMBEDDED_SF2_NAME       "Thrift Store Spinet Piano"
-
-#elif (BG_DEFAULT_SOUNDBANK == BG_SOUNDBANK_4OPFM)
-    /* 4OPFM - FM打击乐音源 (待添加) */
-    #error "BG_SOUNDBANK_4OPFM not implemented yet. Please use BG_SOUNDBANK_SOFT_PIANO"
-
-#else
-    #error "Invalid BG_DEFAULT_SOUNDBANK value! Must be BG_SOUNDBANK_4OPFM or BG_SOUNDBANK_SOFT_PIANO"
-#endif
 
 /* ============================================
  * 内部状态

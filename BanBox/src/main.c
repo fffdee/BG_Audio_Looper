@@ -111,6 +111,9 @@ uint8_t UI_count = 0, UI_flag = 0;
 /* BLE sync command timing */
 static uint32_t ble_tick_counter = 0;
 
+uint8_t power_flag = 0;
+uint8_t count_flag = 0;
+uint16_t power_count =0;
 void Timer2Interrupt(void) {
 	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
 	OTG_PortLinkCheck();
@@ -133,6 +136,13 @@ void Timer2Interrupt(void) {
 
 	/* Increment BLE tick counter for sync command timing */
 	ble_tick_counter++;
+
+	if(count_flag){
+		power_count++;
+	}
+	else{
+		power_count = 0;
+	}
 }
 
 xQueueHandle xQueue;
@@ -220,30 +230,160 @@ void spi_read(uint8_t *data,uint16_t size)
 	while(!SPIM_DMA_HalfDone(PERIPHERAL_ID_SPIM_RX));
 }
 
-
-void button_init()
+void power_on()
 {
-	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX16);
-	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX16);
-	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX16);
-	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX16);
 
-	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX0);
-	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX0);
-	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX0);
-	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX0);
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+	CtrlVarsInit();
 
-	GPIO_RegOneBitSet(GPIO_B_IE, GPIO_INDEX5);
-	GPIO_RegOneBitClear(GPIO_B_OE, GPIO_INDEX5);
-	GPIO_RegOneBitSet(GPIO_B_PU, GPIO_INDEX5);
-	GPIO_RegOneBitClear(GPIO_B_PD, GPIO_INDEX5);
+	/* SPI and Driver Framework already initialized in main() */
+	/* All hardware drivers (LCD, Flash, etc.) auto-initialized by framework */
+	DBG("[Task] Hardware drivers already initialized in main()\n");
 
-	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX15);
-	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX15);
-	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX15);
-	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX15);
+#ifdef  UI_EN
+	BG_lcd.Init();
+#endif
+	/*=====================================================
+	 * System Parameter Initialization
+	 * 浠庡唴閮‵lash鍔犺浇淇濆瓨鐨勫弬鏁板埌鍏ㄥ眬鍙橀噺
+	 * 蹇呴』鍦ㄧ‖浠跺垵濮嬪寲鍚庛�鍔熻兘妯″潡鍒濆鍖栧墠璋冪敤
+	 *====================================================*/
+	DBG("[Task] Loading system parameters from flash...\n");
+	{
+		SysParam_Status_t param_status = SysParam_Init();
+		if (param_status == SYSPARAM_OK) {
+			DBG("[Task] Parameters loaded successfully from flash\n");
+			/* Apply saved parameters to audio system (override CtrlVarsInit defaults) */
+			SysParam_ApplyToAudio();
+		} else {
+			DBG("[Task] Using default parameters (status=%d)\n", param_status);
+			/* First boot or flash corruption - defaults already loaded and saved */
+			/* Call ApplyToAudio to ensure defaults are synced to gCtrlVars */
+			SysParam_ApplyToAudio();
+		}
+	}
+
+	DBG("[Task] Initializing Audio Manager...\n");
+	/* Initialize Audio Manager (includes AudioLooper which needs Flash) */
+	BG_AudioManager.Audio_Init(44100);
+
+#ifdef BANGTSYNTH_EN
+	/*=====================================================
+	 * BanGTsynth MIDI 合成器初始化
+	 * 初始化 MIDI 控制器、音频处理流水线
+	 * 必须在 Audio_Init 之后调用 (Effect Graph 已创建)
+	 *====================================================*/
+	DBG("[Task] Initializing BanGTsynth...\n");
+	{
+		extern int osPortRemainMem(void);
+		DBG("[Task] Heap before BanGTsynth: %d bytes\n", osPortRemainMem());
+	}
+	const char *cmd = "sb -t 60 20 3000\r";
+	if (BanGTsynth_Node_Init() == 0) {
+		DBG("[Task] BanGTsynth initialized OK\n");
+		/* 设置内嵌 SF2 存储驱动并加载默认音源 */
+		BG_Storage.SetDriver(&bg_storage_driver_embedded);
+		if (soundbank_manager.Init(0) == SUCCESS) {
+			DBG("[Task] Embedded SF2 soundbank loaded OK\n");
+			const char *cmd = "sb -t 60 20 3000\r";
+			Shell_InputData((uint8_t *)cmd, strlen(cmd));
+		} else {
+			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
+		}
+	} else {
+		DBG("[Task] BanGTsynth init FAILED\n");
+	}
+#endif
+
+	DBG("[Task] Initializing UI System...\n");
+
+
+	BANGUI_QUICK_INIT();
+
+
+	/* 璁剧疆 Home 瑙嗗浘鍥炬爣鍥炶皟 */
+	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 缁戝畾 Looper 瑙嗗浘 */
+
+	/*=====================================================
+	 * BOOT SPLASH SCREEN - 寮�満鐣岄潰
+	 * 鍚姩 UI 绯荤粺锛屼粠寮�満鐣岄潰寮�锛圠ogo + 杩涘害鏉★級
+	 * 鍔ㄧ敾鐢�view_boot.c 鐨勭姸鎬佹満椹卞姩锛屾棤纭欢杩�	 * 鍔ㄧ敾瀹屾垚鍚庤嚜鍔ㄥ垏鎹㈠埌 Home 妗岄潰
+	 *====================================================*/
+	BANGUI_START(UI_STATE_BOOT);
+
+
+	DBG("[Main] System initialized successfully\n");
+	DBG("[Main] Starting from Boot Screen...\n");
+
+	/* Initialize Shell LCD console adapter */
+#ifdef UI_EN
+	ShellLCD_Adapter_Init();
+#endif
+
+
+	DBG("[Main] Entering main loop...\n");
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+
 }
 
+void power_off()
+{
+	const char *cmd = "sb -t 59 20 2000\r";
+	Shell_InputData((uint8_t *)cmd, strlen(cmd));
+	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX20);
+	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX24);
+}
+void pwr_button_init()
+{
+	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX23);
+	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX23);
+	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX23);
+	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX23);
+
+	GPIO_RegOneBitSet(GPIO_A_OE, GPIO_INDEX20);
+	GPIO_RegOneBitClear(GPIO_A_IE, GPIO_INDEX20);
+	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX20);
+
+	GPIO_RegOneBitSet(GPIO_A_OE, GPIO_INDEX24);
+	GPIO_RegOneBitClear(GPIO_A_IE, GPIO_INDEX24);
+	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX24);
+}
+
+uint8_t valid_press = 0;
+void pwr_butoon_handler()
+{
+	if(GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX23) == 0 && valid_press ==1)
+	{
+		count_flag = 1;
+
+		if(power_count > 1000 && power_flag == 0 && GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX23) == 0){
+			count_flag  = 0;
+			valid_press  = 0;
+			power_on();
+			power_flag = 1;
+			power_count=0;
+			DBG("Power ON triggered\n");
+
+		}else if (power_count > 1000 && power_flag == 1 && GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX23) == 0)
+		{
+			valid_press  = 0;
+			count_flag  = 0;
+			power_off();
+			power_flag = 0;
+			power_count = 0;
+			DBG("Power OFF triggered\n");
+
+		}
+
+	}else{
+		valid_press = 1;
+		count_flag = 0;
+	}
+
+
+}
 /*============================================================================
  * Looper 4-Button Control
  * Button mapping:
@@ -311,95 +451,16 @@ void hardware_check()
 
 void EffectTask() {
 
+	pwr_button_init();
 
-
-	CtrlVarsInit();
-
-	/* SPI and Driver Framework already initialized in main() */
-	/* All hardware drivers (LCD, Flash, etc.) auto-initialized by framework */
-	DBG("[Task] Hardware drivers already initialized in main()\n");
-
-#ifdef  UI_EN
-	BG_lcd.Init();
-#endif
-	/*=====================================================
-	 * System Parameter Initialization
-	 * 浠庡唴閮‵lash鍔犺浇淇濆瓨鐨勫弬鏁板埌鍏ㄥ眬鍙橀噺
-	 * 蹇呴』鍦ㄧ‖浠跺垵濮嬪寲鍚庛�鍔熻兘妯″潡鍒濆鍖栧墠璋冪敤
-	 *====================================================*/
-	DBG("[Task] Loading system parameters from flash...\n");
+	while (!power_flag)
 	{
-		SysParam_Status_t param_status = SysParam_Init();
-		if (param_status == SYSPARAM_OK) {
-			DBG("[Task] Parameters loaded successfully from flash\n");
-			/* Apply saved parameters to audio system (override CtrlVarsInit defaults) */
-			SysParam_ApplyToAudio();
-		} else {
-			DBG("[Task] Using default parameters (status=%d)\n", param_status);
-			/* First boot or flash corruption - defaults already loaded and saved */
-			/* Call ApplyToAudio to ensure defaults are synced to gCtrlVars */
-			SysParam_ApplyToAudio();
-		}
+		pwr_butoon_handler();
 	}
-
-	DBG("[Task] Initializing Audio Manager...\n");
-	/* Initialize Audio Manager (includes AudioLooper which needs Flash) */
-	BG_AudioManager.Audio_Init(44100);
-
-#ifdef BANGTSYNTH_EN
-	/*=====================================================
-	 * BanGTsynth MIDI 合成器初始化
-	 * 初始化 MIDI 控制器、音频处理流水线
-	 * 必须在 Audio_Init 之后调用 (Effect Graph 已创建)
-	 *====================================================*/
-	DBG("[Task] Initializing BanGTsynth...\n");
-	{
-		extern int osPortRemainMem(void);
-		DBG("[Task] Heap before BanGTsynth: %d bytes\n", osPortRemainMem());
-	}
-	if (BanGTsynth_Node_Init() == 0) {
-		DBG("[Task] BanGTsynth initialized OK\n");
-		/* 设置内嵌 SF2 存储驱动并加载默认音源 */
-		BG_Storage.SetDriver(&bg_storage_driver_embedded);
-		if (soundbank_manager.Init(0) == SUCCESS) {
-			DBG("[Task] Embedded SF2 soundbank loaded OK\n");
-		} else {
-			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
-		}
-	} else {
-		DBG("[Task] BanGTsynth init FAILED\n");
-	}
-#endif
-
-	DBG("[Task] Initializing UI System...\n");
-
-
-	BANGUI_QUICK_INIT();
-
-
-	/* 璁剧疆 Home 瑙嗗浘鍥炬爣鍥炶皟 */
-	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 缁戝畾 Looper 瑙嗗浘 */
-
-	/*=====================================================
-	 * BOOT SPLASH SCREEN - 寮�満鐣岄潰
-	 * 鍚姩 UI 绯荤粺锛屼粠寮�満鐣岄潰寮�锛圠ogo + 杩涘害鏉★級
-	 * 鍔ㄧ敾鐢�view_boot.c 鐨勭姸鎬佹満椹卞姩锛屾棤纭欢杩�	 * 鍔ㄧ敾瀹屾垚鍚庤嚜鍔ㄥ垏鎹㈠埌 Home 妗岄潰
-	 *====================================================*/
-	BANGUI_START(UI_STATE_BOOT);
-
-
-	DBG("[Main] System initialized successfully\n");
-	DBG("[Main] Starting from Boot Screen...\n");
-
-	/* Initialize Shell LCD console adapter */
-#ifdef UI_EN
-	ShellLCD_Adapter_Init();
-#endif
-	button_init();
-
-	DBG("[Main] Entering main loop...\n");
 
 	while (1) {
+
+		pwr_butoon_handler();
 		/* Check and send delayed BLE sync responses */
 		extern void BLE_CheckSyncResponse(void);
 		BLE_CheckSyncResponse();

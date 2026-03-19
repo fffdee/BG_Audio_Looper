@@ -12,10 +12,11 @@
 
 #include <stdint.h>
 
+#if DRUM_MCH_EN == 1
 /* SF2音源数据大小 */
 #define SF2_SOURCE_SIZE 314376U
 
 /* SF2音源数据（只读） */
 extern const uint8_t sf2_source_data[SF2_SOURCE_SIZE];
-
+#endif
 #endif /* SF2_SOURCE_H */

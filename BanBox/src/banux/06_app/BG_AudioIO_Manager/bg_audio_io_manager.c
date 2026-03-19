@@ -958,6 +958,8 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
  *   - 蓝牙模式下即使数据暂时不足也保持 BT 模式，等待数据到来
  *   - 避免 ADC/BT 模式频繁切换导致的失真
  */
+
+uint8_t flag_on=1;
 static void AudioLoopWithGraph(void)
 {
 	uint16_t frame_size = 0;
@@ -968,7 +970,12 @@ static void AudioLoopWithGraph(void)
 	const uint16_t MIN_FRAME = 48;
 	const uint16_t MAX_FRAME = BT_DECODED_BUFFER_SIZE;  /* 与缓冲区大小对齐 */
 	static bool last_bt_streaming = false;  /* 上一帧的蓝牙状态 */
-	
+
+	// if(flag_on){
+	// 	const char *cmd = "sb -t 60 20 3000\r";
+	// 	Shell_InputData((uint8_t *)cmd, strlen(cmd));
+	// 	flag_on = 0;
+	// }
 	/* 获取图实例 */
 	graph = EffectGraph_GetInstance();
 	if (!graph) {
