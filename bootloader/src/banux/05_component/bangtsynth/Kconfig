@@ -1,0 +1,216 @@
+#
+# BanGTsynth Configuration
+#
+
+mainmenu "BanGTsynth Configuration"
+
+menu "Platform Selection"
+
+choice
+	prompt "Target Platform"
+	default PLATFORM_LINUX
+	help
+	  Select the target platform for BanGTsynth.
+
+config PLATFORM_LINUX
+	bool "Linux (ALSA)"
+	help
+	  Build for Linux platform with ALSA audio support.
+
+config PLATFORM_STM32
+	bool "STM32 (ARM Cortex-M)"
+	help
+	  Build for STM32 microcontroller with I2S audio.
+
+config PLATFORM_ESP32
+	bool "ESP32 (WiFi/BLE)"
+	help
+	  Build for ESP32 platform with I2S audio.
+
+config PLATFORM_CUSTOM
+	bool "Custom Platform"
+	help
+	  Use custom platform implementation.
+
+endchoice
+
+endmenu
+
+menu "Audio Configuration"
+
+config SAMPLE_RATE
+	int "Sample Rate (Hz)"
+	range 8000 192000
+	default 48000
+	help
+	  Audio sample rate in Hz.
+	  Common values: 44100, 48000, 96000
+
+config MAX_CHANNELS
+	int "Maximum Audio Channels"
+	range 1 8
+	default 2
+	help
+	  Maximum number of audio channels.
+	  1 = Mono, 2 = Stereo
+
+config AUDIO_BIT_DEPTH
+	int "Audio Bit Depth"
+	range 8 32
+	default 16
+	help
+	  Audio bit depth (8, 16, 24, or 32).
+
+config MAX_POLYPHONY
+	int "Maximum Polyphony"
+	range 1 128
+	default 32
+	help
+	  Maximum number of simultaneous voices.
+	  Reduce this value to save memory on embedded systems.
+
+endmenu
+
+menu "Feature Modules"
+
+config ENABLE_MIDI_CONTROLLER
+	bool "MIDI Controller"
+	default y
+	help
+	  Enable MIDI message processing and control.
+	  Required for MIDI input functionality.
+
+config ENABLE_MIXER
+	bool "Audio Mixer"
+	default y
+	help
+	  Enable multi-track audio mixer.
+	  Allows mixing multiple audio sources.
+
+if ENABLE_MIXER
+	config MAX_MIX_COUNT
+		int "Maximum Mix Channels"
+		range 1 32
+		default 10
+		help
+		  Maximum number of channels in the mixer.
+endif
+
+config ENABLE_ENVELOPE_GEN
+	bool "Envelope Generator (ADSR)"
+	default y
+	help
+	  Enable ADSR envelope generator.
+	  Provides attack, decay, sustain, release control.
+
+config ENABLE_SEQUENCER
+	bool "Sequencer"
+	default n
+	help
+	  Enable MIDI sequencer for playback.
+	  Allows playing MIDI files.
+
+endmenu
+
+menu "Input/Output Options"
+
+config ENABLE_USB_MIDI
+	bool "USB MIDI Input"
+	depends on PLATFORM_LINUX
+	default n
+	help
+	  Enable USB MIDI input support (Linux only).
+	  Requires ALSA sequencer library.
+
+config ENABLE_KEYBOARD_INPUT
+	bool "Keyboard Input"
+	default y if PLATFORM_LINUX
+	default n
+	help
+	  Enable keyboard input for testing.
+
+config ENABLE_SERIAL_MIDI
+	bool "Serial MIDI Input"
+	default n
+	help
+	  Enable MIDI input via serial port (UART).
+
+endmenu
+
+menu "Storage Configuration"
+
+config MAX_FILE_COUNT
+	int "Maximum Sound Files"
+	range 10 1000
+	default 100
+	help
+	  Maximum number of sound files that can be loaded.
+
+config WAV_START_ADDRESS
+	hex "WAV Data Start Address"
+	default 0x19000
+	help
+	  Starting address for WAV data in storage.
+
+endmenu
+
+menu "Buffer Configuration"
+
+config BUFFER_SIZE
+	int "Audio Buffer Size (samples per ms)"
+	range 8 192
+	default 48
+	help
+	  Number of samples per millisecond.
+	  Typically equal to sample_rate / 1000.
+
+config RING_BUFFER_MULTIPLIER
+	int "Ring Buffer Size Multiplier"
+	range 2 8
+	default 2
+	help
+	  Ring buffer size = BUFFER_SIZE * multiplier.
+	  Higher values provide more buffering but use more memory.
+
+endmenu
+
+menu "Debug Options"
+
+config DEBUG_ENABLED
+	bool "Enable Debug Output"
+	default n
+	help
+	  Enable debug printf statements.
+
+config READ_DEBUG
+	bool "Enable Read Debug"
+	depends on DEBUG_ENABLED
+	default n
+	help
+	  Enable debugging for audio file reading.
+
+config MIDI_DEBUG
+	bool "Enable MIDI Debug"
+	depends on DEBUG_ENABLED
+	default n
+	help
+	  Enable debugging for MIDI message processing.
+
+endmenu
+
+menu "Advanced Options"
+
+config USE_STATIC_MEMORY
+	bool "Use Static Memory Allocation"
+	default n
+	help
+	  Use static memory pools instead of malloc/free.
+	  Recommended for embedded systems.
+
+config ENABLE_PROFILING
+	bool "Enable Performance Profiling"
+	default n
+	help
+	  Enable performance measurement and profiling.
+
+endmenu

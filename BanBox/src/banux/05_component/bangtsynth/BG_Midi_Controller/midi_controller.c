@@ -5,7 +5,7 @@
 
 #include "midi_info.h"
 #include "soundbank_manager.h"  // 使用统一音源管理器
-#include "drum_machine.h"       // 鼓机模块
+
 #if ENABLE_AUDIO_PROCESSOR
 #include "bg_audio_processor.h"  // 音频处理器流水线
 #include "effects/bg_effect_drc.h"  // DRC 效果

@@ -33,7 +33,7 @@
 #include "shell_io_cdc.h"
 #include "shell_io_ble.h"
 #include "shell_io_manager.h"
-#include "audio_looper.h"
+
 #include "metronome.h"
 #include "sra.h"
 #include "spi_flash.h"

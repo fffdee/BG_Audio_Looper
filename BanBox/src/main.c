@@ -279,15 +279,14 @@ void power_on()
 		extern int osPortRemainMem(void);
 		DBG("[Task] Heap before BanGTsynth: %d bytes\n", osPortRemainMem());
 	}
-	const char *cmd = "sb -t 60 20 3000\r";
+
 	if (BanGTsynth_Node_Init() == 0) {
 		DBG("[Task] BanGTsynth initialized OK\n");
 		/* 设置内嵌 SF2 存储驱动并加载默认音源 */
 		BG_Storage.SetDriver(&bg_storage_driver_embedded);
 		if (soundbank_manager.Init(0) == SUCCESS) {
 			DBG("[Task] Embedded SF2 soundbank loaded OK\n");
-			const char *cmd = "sb -t 60 20 3000\r";
-			Shell_InputData((uint8_t *)cmd, strlen(cmd));
+
 		} else {
 			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
 		}
@@ -325,6 +324,9 @@ void power_on()
 	DBG("[Main] Entering main loop...\n");
 	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
 	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+
+const char *cmd = "sb -t 60 20 4000\r";
+	Shell_InputData((uint8_t *)cmd, strlen(cmd));
 
 }
 
@@ -374,6 +376,7 @@ void pwr_butoon_handler()
 			power_flag = 0;
 			power_count = 0;
 			DBG("Power OFF triggered\n");
+			Reset_McuSystem ();
 
 		}
 
@@ -451,13 +454,13 @@ void hardware_check()
 
 void EffectTask() {
 
+
 	pwr_button_init();
 
 	while (!power_flag)
 	{
 		pwr_butoon_handler();
 	}
-
 	while (1) {
 
 		pwr_butoon_handler();
@@ -730,8 +733,9 @@ int main(void) {
 
 	NVIC_EnableIRQ(SWI_IRQn);
 
-	xQueue = xQueueCreate(4, sizeof(uint32_t));
 	SarADC_Init();
+	xQueue = xQueueCreate(4, sizeof(uint32_t));
+
 	/* Initialize SPI hardware BEFORE driver framework (drivers need it) */
 	DBG("[Main] Initializing SPI hardware...\n");
 	spi_init();
