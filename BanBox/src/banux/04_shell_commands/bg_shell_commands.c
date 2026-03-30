@@ -16,6 +16,7 @@
 #include "shell_io_cdc.h"
 #include "shell_io_ble.h"
 #include "shell_io_manager.h"
+#include "remind_sound.h"
 
 #include "bg_lcd.h"
 #include "BG_FlashMgr.h"
@@ -3158,10 +3159,80 @@ void Shell_RegisterAllModules(void)
     /* 鼓机命令 (BANGTSYNTH_EN) */
     extern int ShellCmdDrum_Register(void);
 
+    /* 提示音测试命令 */
+    extern void ShellCmdRemind_Register(void);
 
     ShellCmdMetronome_Register();
 
     ShellCmdDrum_Register();
 
+    ShellCmdRemind_Register();   /* remind 提示音测试命令 */
+}
 
+/*============================================================================
+ * remind 模块 - 提示音测试
+ *   remind -l / --list          列出所有已注册的提示音
+ *   remind -p / --play <id>     按索引播放
+ *   remind -n / --on            播放开机音（等同于 -p 0）
+ *   remind -f / --off           播放关机音（等同于 -p 1）
+ *===========================================================================*/
+
+static int remind_list(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    Shell_Printf("Remind sound table (%d items):\r\n", RemindSound_GetCount());
+    RemindSound_ListAll();
+    return 0;
+}
+
+static int remind_play_by_index(int argc, char *argv[])
+{
+    int id;
+    if (argc < 1) {
+        Shell_Print("Usage: remind -p <id>\r\n");
+        Shell_Printf("  Total items: %d\r\n", RemindSound_GetCount());
+        return -1;
+    }
+    id = atoi(argv[0]);
+    Shell_Printf("Playing remind sound id=%d ...\r\n", id);
+    if (RemindSound_PlayByIndex((uint8_t)id) != 0) {
+        Shell_Printf("Error: id=%d not found (table has %d items)\r\n",
+                     id, RemindSound_GetCount());
+        return -1;
+    }
+    Shell_Print("Done.\r\n");
+    return 0;
+}
+
+static int remind_play_on(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    Shell_Print("Playing power-on remind sound...\r\n");
+    RemindSound_PlayByName("on");
+    Shell_Print("Done.\r\n");
+    return 0;
+}
+
+static int remind_play_off(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    Shell_Print("Playing power-off remind sound...\r\n");
+    RemindSound_PlayByName("off");
+    Shell_Print("Done.\r\n");
+    return 0;
+}
+
+static const ShellOpt_t remind_opts[] = {
+    OPT("l", "list",  NULL,   "List all registered remind sounds", remind_list),
+    OPT("p", "play",  "<id>", "Play remind sound by index",        remind_play_by_index),
+    OPT("n", "on",    NULL,   "Play power-on  sound (id=0)",       remind_play_on),
+    OPT("f", "off",   NULL,   "Play power-off sound (id=1)",       remind_play_off),
+    OPT_END()
+};
+
+DEFINE_MODULE(remind, "Remind sound test", MOD_CAT_DEBUG, remind_opts);
+
+void ShellCmdRemind_Register(void)
+{
+    REGISTER_MODULE(remind);
 }

@@ -20,6 +20,16 @@ public class BluetoothHelper {
         public void setBleNotifyListener(BleNotifyListener listener) {
             this.bleNotifyListener = listener;
         }
+
+    /** Raw-bytes listener; receives every AB02 notification before other processing.
+     *  When set, the default JSON/binary path is skipped for that notification. */
+    public interface BleRawDataListener {
+        void onData(byte[] data);
+    }
+    private volatile BleRawDataListener rawDataListener;
+    public void setRawDataListener(BleRawDataListener listener) {
+        this.rawDataListener = listener;
+    }
     private BluetoothGatt bluetoothGatt;
     private boolean isConnected = false;
     private boolean isCccdEnabled = false;  // 跟踪CCCD是否成功使能
@@ -279,6 +289,15 @@ public class BluetoothHelper {
             @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                 byte[] rawData = characteristic.getValue();
+
+                // If a raw-bytes listener is registered (e.g. FirmwareUpgradeActivity),
+                // hand the data directly to it and skip all other processing.
+                BleRawDataListener raw = rawDataListener;
+                if (raw != null) {
+                    raw.onData(rawData);
+                    return;
+                }
+
                 String chunk = new String(rawData);
                 Log.d("BLE", "[Notify] " + chunk);
                 

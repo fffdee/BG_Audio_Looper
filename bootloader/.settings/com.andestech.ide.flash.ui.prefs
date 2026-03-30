@@ -1,0 +1,2 @@
+RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>true</eraseAll><flashDriver>F\:/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/MVsB1_Base_SDK/Tools/b1_download_v1.7.exe</flashDriver><imageFile>F\:\\project_and_dataset\\project\\BG_Audio_Looper\\BG_Audio_Looper\\bootloader\\Debug\\output\\bootloader.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>true</verify></rseFlashDriverModel>
+eclipse.preferences.version=1

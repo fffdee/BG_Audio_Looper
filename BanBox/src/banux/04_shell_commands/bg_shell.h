@@ -35,7 +35,7 @@ extern "C" {
  ******************************************************************************/
 #define SHELL_CMD_MAX_LEN       128     // Max command line length
 #define SHELL_CMD_MAX_ARGS      15      // Max argument count
-#define SHELL_MODULE_MAX        30     // Max module count (increased for sysmon + future modules)
+#define SHELL_MODULE_MAX        40     // Max module count (increased for remind + future modules)
 #define SHELL_OUT_BUF_SIZE      256     // Output buffer size
 
 /* LCD Console Configuration - 6x8 font: 160/6=26 chars, (128-10)/9=13 lines */

@@ -59,6 +59,7 @@
 #include "otg_device_audio.h"
 #include "ctrlvars.h"
 #include "product_def.h"
+#include "app_upgrade.h"    /* A/B partition confirm + reboot-to-bootloader */
 /* Page Manager - Now in BanGUI core (via bangui.h) */
 /* #include "page_manager.h" - Removed, use bangui.h */
 
@@ -77,6 +78,9 @@
 
 
 #include "drv_init.h"           /* Driver Framework Initialization */
+
+/* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
+#include "remind_sound.h"
 
 /* BanGTsynth MIDI 合成器模块 */
 #ifdef BANGTSYNTH_EN
@@ -113,6 +117,13 @@ static uint32_t ble_tick_counter = 0;
 
 uint8_t power_flag = 0;
 uint8_t count_flag = 0;
+
+/* BLE OTA send adapter: bridges App_OTA_Init callback to BLE_Send. */
+extern uint16_t BLE_Send(uint8_t *data, uint16_t len);
+static void ble_ota_send(const uint8_t *data, uint16_t len)
+{
+    BLE_Send((uint8_t *)data, len);
+}
 uint16_t power_count =0;
 void Timer2Interrupt(void) {
 	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
@@ -325,15 +336,16 @@ void power_on()
 	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
 	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
 
-const char *cmd = "sb -t 60 20 4000\r";
-	Shell_InputData((uint8_t *)cmd, strlen(cmd));
+	/* 开机提示音已在 BG_audio_Init() 内部播放（InitDAC 后、InitAudioEffects 前）*/
 
 }
 
 void power_off()
 {
-	const char *cmd = "sb -t 59 20 2000\r";
-	Shell_InputData((uint8_t *)cmd, strlen(cmd));
+	/* 释放混响内存，为关机提示音腾出 ~57KB 堆空间 */
+	BG_AudioIO_PrepareForShutdown();
+	/* 关机提示音 */
+	RemindSound_PlayByName("off");
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX20);
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX24);
 }
@@ -461,12 +473,33 @@ void EffectTask() {
 	{
 		pwr_butoon_handler();
 	}
+
+#ifdef BOOTLOADER_EN
+	/*
+	 * Step 8: Confirm A/B boot success.
+	 * Resets boot_fail_cnt to 0 in the partition flags so the bootloader
+	 * won't roll back to the other partition on the next reboot.
+	 * Safe no-op when boot_fail_cnt is already 0.
+	 */
+	App_ConfirmBootSuccess();
+
+	/* Step 9: Initialise BLE OTA engine.
+	 * Upgrade packets arrive via BLE AB01 write (0xAA SOF);
+	 * ACK/NACK responses are sent back via BLE_Send (AB02 notify). */
+	App_OTA_Init(ble_ota_send);
+#endif /* BOOTLOADER_EN */
+
 	while (1) {
 
 		pwr_butoon_handler();
 		/* Check and send delayed BLE sync responses */
 		extern void BLE_CheckSyncResponse(void);
 		BLE_CheckSyncResponse();
+
+#ifdef BOOTLOADER_EN
+		/* Drive OTA flash-erase and post-FINISH reboot (deferred work) */
+		App_OTA_Process();
+#endif /* BOOTLOADER_EN */
 
 		BG_AudioManager.Audio_Loop();
 

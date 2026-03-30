@@ -164,6 +164,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="@dimen/button_height_medium"
                         android:text="BLE 终端" />
+
+                    <Button
+                        android:id="@+id/btn_firmware_upgrade"
+                        style="@style/DebugButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/button_height_medium"
+                        android:text="固件升级"
+                        android:layout_marginTop="@dimen/spacing_medium" />
                 </LinearLayout>
 
             </LinearLayout>

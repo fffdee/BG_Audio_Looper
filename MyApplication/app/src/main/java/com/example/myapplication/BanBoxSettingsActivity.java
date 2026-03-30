@@ -140,6 +140,20 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
             });
         }
 
+        // 固件升级
+        Button btnFirmwareUpgrade = findViewById(R.id.btn_firmware_upgrade);
+        if (btnFirmwareUpgrade != null) {
+            btnFirmwareUpgrade.setOnClickListener(v -> {
+                if (checkConnection()) {
+                    // 初始化 BluetoothHelperSingleton
+                    BluetoothHelperSingleton.setInstance(bluetoothHelper);
+                    // 启动固件升级 Activity
+                    Intent intent = new Intent(BanBoxSettingsActivity.this, FirmwareUpgradeActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
+
         // 副音箱模式切换
         if (btnSpeakerMode != null) {
             Log.d("BanBoxSettings", "btnSpeakerMode initialized successfully");

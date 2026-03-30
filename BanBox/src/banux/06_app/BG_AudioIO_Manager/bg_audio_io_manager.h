@@ -51,5 +51,6 @@ extern BG_Audio_Io_Manager BG_AudioManager;
  * @note 在加载新预设后必须调用此函数，否则音频处理将失败
  */
 void BG_AudioIO_SetupEffectGraphCallbacks(void);
+void BG_AudioIO_PrepareForShutdown(void);
 
 #endif 

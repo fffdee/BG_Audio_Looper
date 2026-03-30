@@ -11,21 +11,22 @@
 #include "sys.h"
 #include "app_config.h"
 #include "rom.h"
+
 #if FLASH_BOOT_EN
 
 
-//******ÒÔÏÂÈ«ÎªÉý¼¶Ê§°Ü
-//Î´¼ì²âµ½Éý¼¶½Ó¿Ú
+//******ï¿½ï¿½ï¿½ï¿½È«Îªï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½
+//Î´ï¿½ï¿½âµ½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
 #define NO_DEVICE_LINK			3
 #define NO_UDISK_LINK			4
 #define NO_SDCARD_LINK			5
 #define NO_PC_LINK				6
 #define NO_BT_LINK				7
-//ÎÄ¼þÏµÍ³³ö´í
+//ï¿½Ä¼ï¿½ÏµÍ³ï¿½ï¿½ï¿½ï¿½
 #define FS_OPEN_MVA_ERR			8
 #define FS_SDCARD_ERR			9
 #define FS_UDISK_ERR			10
-//Éý¼¶Êý¾ÝºÏ·¨ÐÔ¼ì²éÊ§°Ü
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝºÏ·ï¿½ï¿½Ô¼ï¿½ï¿½Ê§ï¿½ï¿½
 #define MVA_HEADER_ERR			11
 #define MVA_MAGIC_ERR			12
 #define MVA_BOOT_LEN_ERR		13
@@ -35,7 +36,7 @@
 #define MVA_CONFIG_LEN_ERR		17
 #define MVA_CONST_OFFSET_ERR	18
 #define MVA_CONFIG_OFFEST_ERR	19
-//Éý¼¶¹ý³ÌÖÐÊý¾Ý´«Êä»òÊý¾ÝÐ´ÈëÊ§°Ü
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ê§ï¿½ï¿½
 #define PROCESS_BOOT_ERR		21
 #define PROCESS_CODE_ERR		22
 #define PROCESS_CONST_ERR		23
@@ -45,13 +46,13 @@
 
 #define     ADR_FLASH_BOOT_FLAGE                                             (0x4000100C)
 typedef struct _ST_FLASH_BOOT_FLAGE {
-	volatile  unsigned long UDisk                      :  1; /**< enable UÅÌ mode  */
-	volatile  unsigned long PC                         :  1; /**< enable PCÉý¼¶ mode  */
-	volatile  unsigned long sdcard                     :  2; /**< enable SD¿¨ mode  */
+	volatile  unsigned long UDisk                      :  1; /**< enable Uï¿½ï¿½ mode  */
+	volatile  unsigned long PC                         :  1; /**< enable PCï¿½ï¿½ï¿½ï¿½ mode  */
+	volatile  unsigned long sdcard                     :  2; /**< enable SDï¿½ï¿½ mode  */
 	volatile  unsigned long bt                         :  1; /**< bt  */
-	volatile  unsigned long updata                     :  1; /**< ±£ÁôÆäËû  */
+	volatile  unsigned long updata                     :  1; /**< ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  */
 	volatile  unsigned long flag                       :  2; /**< enable  */
-	volatile  unsigned long RSV                        :  1; /**< ±£Áô  */
+	volatile  unsigned long RSV                        :  1; /**< ï¿½ï¿½ï¿½ï¿½  */
 	volatile  unsigned long ERROR_CODE                 :  8; /**< error code  */
 	volatile  unsigned long POR_CODE                   :  8; /**< error code  */
 
@@ -62,24 +63,24 @@ volatile uint8_t FlashBootUpgradeFlag;
 void report_up_grate()
 {
 	uint16_t err_code=0,clear_data=0;
-	clear_data = ROM_UserRegisterGet();//V2.1.4°æ±¾¼°ÒÔÉÏµÄflashboot£¬Éý¼¶±êÖ¾ÇëÒÔROM_UserRegisterGet»ñÈ¡Êý¾ÝÎª×¼
-	err_code = (clear_data&0x1f);//µÍ5bitÓÃÓÚ´«µÝÉý¼¶½á¹û
+	clear_data = ROM_UserRegisterGet();//V2.1.4ï¿½æ±¾ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½flashbootï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ROM_UserRegisterGetï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Îª×¼
+	err_code = (clear_data&0x1f);//ï¿½ï¿½5bitï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	FlashBootUpgradeFlag = (uint8_t)err_code;
 	if(err_code == USER_CODE_RUN_START)
 	{
-		APP_DBG("Õý³£Æô¶¯\n");
+		APP_DBG("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n");
 	}
 	else if(err_code == UPDAT_OK)
 	{
-		APP_DBG("Éý¼¶OK\n");
+		APP_DBG("ï¿½ï¿½ï¿½ï¿½OK\n");
 	}
 	else if(err_code == NEEDLESS_UPDAT)
 	{
-		APP_DBG("´úÂëÎÞÐèÉý¼¶\n");
+		APP_DBG("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n");
 	}
 	else
 	{
-		APP_DBG("Éý¼¶Ê§°Ü error code %d\n", err_code);
+		APP_DBG("ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½ error code %d\n", err_code);
 	}
 	clear_data = (clear_data&0xffe0);
 	ROM_UserRegisterSet(clear_data);
@@ -109,8 +110,8 @@ void start_up_grate(uint32_t UpdateResource)
 	*(uint32_t *)ADR_FLASH_BOOT_FLAGE = 0;
 	if(ResourceValue(AppResourceCard) && (UpdateResource == AppResourceCard))
 	{
-		//¹ÒÔØ¼ì²âÖ¸¶¨µÄmva°ü´æÔÚ£¬
-		SREG_FLASH_BOOT_FLAGE.updata = 1;//Éý¼¶Ê¹ÄÜÎ»
+		//ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½mvaï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½
+		SREG_FLASH_BOOT_FLAGE.updata = 1;//ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Î»
 		#if CFG_RES_CARD_GPIO == SDIO_A15_A16_A17
 		SREG_FLASH_BOOT_FLAGE.sdcard = 1;
 		#else
@@ -119,15 +120,15 @@ void start_up_grate(uint32_t UpdateResource)
 	}
 	else if(ResourceValue(AppResourceUDisk) && (UpdateResource == AppResourceUDisk))
 	{
-		//¹ÒÔØ¼ì²âÖ¸¶¨µÄmva°ü´æÔÚ£¬
-		SREG_FLASH_BOOT_FLAGE.updata = 1;//Éý¼¶Ê¹ÄÜÎ»
+		//ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½mvaï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½
+		SREG_FLASH_BOOT_FLAGE.updata = 1;//ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Î»
 		SREG_FLASH_BOOT_FLAGE.UDisk = 1;
 	}
 	else if(ResourceValue(AppResourceUsbDevice) && (UpdateResource == AppResourceUsbDevice))
 	{
-		//¼ì²âPCÉý¼¶µÄÁ¬½ÓÓÐÐ§ÐÔ¡£
-		SREG_FLASH_BOOT_FLAGE.PC = 1;//pcÉý¼¶
-		SREG_FLASH_BOOT_FLAGE.updata = 1;//Éý¼¶Ê¹ÄÜÎ»
+		//ï¿½ï¿½ï¿½PCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ô¡ï¿½
+		SREG_FLASH_BOOT_FLAGE.PC = 1;//pcï¿½ï¿½ï¿½ï¿½
+		SREG_FLASH_BOOT_FLAGE.updata = 1;//ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Î»
 	}
 
 	if(SREG_FLASH_BOOT_FLAGE.updata)
@@ -137,9 +138,9 @@ void start_up_grate(uint32_t UpdateResource)
 		jump_fun = (fun)0;
 		WDG_Enable(WDG_STEP_1S);
 		GIE_DISABLE();
-		DisableIDCache();	//¹Ø±ÕIDcache
-		DataCacheInvalidAll();//Çå³ýDcache
-		ICacheInvalidAll();//Çå³ýIcache
+		DisableIDCache();	//ï¿½Ø±ï¿½IDcache
+		DataCacheInvalidAll();//ï¿½ï¿½ï¿½Dcache
+		ICacheInvalidAll();//ï¿½ï¿½ï¿½Icache
 		SysTickDeInit();
 		SysTimerIntFlagClear();
 		
@@ -151,7 +152,7 @@ void start_up_grate(uint32_t UpdateResource)
 			i=i+4;
 		}
 
-		*(uint32_t *)0x40022000 &= ~0x77FFF8;//REG¸´Î» flash aupll not reset
+		*(uint32_t *)0x40022000 &= ~0x77FFF8;//REGï¿½ï¿½Î» flash aupll not reset
 		*(uint32_t *)0x40022000 |= 0x7FFFF8;
 
 		*(uint32_t *)0x40022004 &= ~0x7FFFF7FF;//fun reset  flash not reset
@@ -159,7 +160,7 @@ void start_up_grate(uint32_t UpdateResource)
 
 
 		*(uint32_t *)ADR_FLASH_BOOT_FLAGE = temp;
-		__nds32__mtsr(0, NDS32_SR_INT_MASK2);//ÖÐ¶ÏÊ¹ÄÜÎ»ÇåÁã
+		__nds32__mtsr(0, NDS32_SR_INT_MASK2);//ï¿½Ð¶ï¿½Ê¹ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
 		__nds32__mtsr(__nds32__mfsr(NDS32_SR_HSP_CTL) & 0, NDS32_SR_HSP_CTL);
 		__asm("NOP");
 		GPIO_RegisterResetMask();

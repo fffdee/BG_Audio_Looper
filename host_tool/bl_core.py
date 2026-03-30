@@ -1,0 +1,378 @@
+"""
+bl_core.py — BG Bootloader 协议核心
+包含 CRC 计算、数据包构建/解析、串口通信、Bootloader 操作。
+GUI 和 CLI 共享该模块，不依赖任何 UI 框架。
+"""
+
+import time
+import struct
+from typing import Optional, Tuple, Callable
+
+try:
+    import serial
+    import serial.tools.list_ports
+except ImportError as e:
+    raise ImportError("请先安装 pyserial: pip install pyserial") from e
+
+# ─── 协议常量 ────────────────────────────────────────────────────────────────
+SOF        = 0xAA
+CHUNK_SIZE = 256    # 每个 DATA 包携带的固件字节数
+TIMEOUT_S  = 5.0   # 等待响应的超时秒数
+MAX_RETRY  = 3      # NACK / 超时后的最大重试次数
+
+
+class Cmd:
+    SYNC        = 0x01
+    START       = 0x02
+    DATA        = 0x03
+    FINISH      = 0x04
+    JUMP        = 0x05
+    ERASE       = 0x06
+    QUERY_INFO  = 0x07   # v2: 查询设备分区信息
+    SET_PART    = 0x08   # v2: 设置活跃分区
+    REBOOT      = 0x09   # v2: 请求设备重启
+
+
+class Rsp:
+    ACK  = 0xA1
+    NACK = 0xA2
+
+
+class ErrCode:
+    _names = {
+        0x01: "CRC_MISMATCH",
+        0x02: "FLASH_ERROR",
+        0x03: "SIZE_OVERFLOW",
+        0x04: "STATE_INVALID",
+        0x05: "BAD_PARAM",
+    }
+
+    @classmethod
+    def name(cls, code: int) -> str:
+        return cls._names.get(code, f"0x{code:02X}")
+
+
+# ─── CRC16-CCITT (poly=0x1021, init=0xFFFF) ─────────────────────────────────
+def crc16(data: bytes) -> int:
+    crc = 0xFFFF
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = (crc << 1) ^ 0x1021 if crc & 0x8000 else crc << 1
+            crc &= 0xFFFF
+    return crc
+
+
+# ─── 数据包构建 / 解析 ────────────────────────────────────────────────────────
+def build_packet(cmd: int, seq: int, data: bytes = b"") -> bytes:
+    """构建一个完整的协议帧。"""
+    header    = struct.pack(">BBHH", SOF, cmd, seq, len(data))
+    crc_input = struct.pack(">BHH", cmd, seq, len(data)) + data
+    return header + data + struct.pack(">H", crc16(crc_input))
+
+
+def parse_packet(raw: bytes) -> Optional[Tuple[int, int, bytes]]:
+    """
+    从 raw 字节流中解析一个完整帧。
+    - 成功: 返回 (cmd, seq, data)
+    - 数据不足: 返回 None
+    - CRC 错误: 抛出 ValueError
+    """
+    if len(raw) < 8:
+        return None
+    if raw[0] != SOF:
+        raise ValueError("Bad SOF byte")
+    cmd, seq, length = struct.unpack(">BHH", raw[1:6])
+    if len(raw) < 8 + length:
+        return None
+    data     = raw[6 : 6 + length]
+    recv_crc, = struct.unpack(">H", raw[6 + length : 8 + length])
+    exp_crc  = crc16(struct.pack(">BHH", cmd, seq, length) + data)
+    if recv_crc != exp_crc:
+        raise ValueError(f"CRC mismatch: got 0x{recv_crc:04X}, expected 0x{exp_crc:04X}")
+    return cmd, seq, data
+
+
+# ─── 串口通信层 ───────────────────────────────────────────────────────────────
+class BLComm:
+    """封装串口读写，提供"发送并等待响应"语义。"""
+
+    def __init__(self, port: str, baudrate: int = 115200):
+        self._ser = serial.Serial(port, baudrate=baudrate, timeout=0.05)
+        self._buf = bytearray()
+
+    def close(self):
+        if self._ser.is_open:
+            self._ser.close()
+
+    def flush_rx(self):
+        self._ser.reset_input_buffer()
+        self._buf.clear()
+
+    def send_and_recv(self, pkt: bytes,
+                      timeout: float = TIMEOUT_S) -> Tuple[int, int, bytes]:
+        """
+        发送 pkt，等待并返回 (cmd, seq, data)。
+        超时时抛出 TimeoutError。
+        """
+        self._ser.write(pkt)
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            chunk = self._ser.read(256)
+            if chunk:
+                self._buf.extend(chunk)
+            # 尝试在缓冲区中找到并解析一帧
+            while len(self._buf) >= 8:
+                idx = self._buf.find(SOF)
+                if idx < 0:
+                    self._buf.clear()
+                    break
+                if idx > 0:
+                    del self._buf[:idx]
+                try:
+                    result = parse_packet(bytes(self._buf))
+                    if result is None:
+                        break          # 还需要更多数据
+                    rsp_cmd, rsp_seq, rsp_data = result
+                    del self._buf[: 8 + len(rsp_data)]
+                    return rsp_cmd, rsp_seq, rsp_data
+                except ValueError:
+                    del self._buf[0]   # 跳过坏帧头，继续找下一个 SOF
+        raise TimeoutError("等待设备响应超时")
+
+
+# ─── Bootloader 操作层 ────────────────────────────────────────────────────────
+class Bootloader:
+    """
+    封装全部 bootloader 操作。
+    progress_cb: 可选回调 progress_cb(sent, total) 用于汇报进度。
+    log_cb:      可选回调 log_cb(msg: str) 用于输出日志。
+    """
+
+    def __init__(self, comm: BLComm,
+                 progress_cb: Optional[Callable[[int, int], None]] = None,
+                 log_cb:      Optional[Callable[[str], None]] = None):
+        self._comm       = comm
+        self._seq        = 0
+        self._progress   = progress_cb or (lambda s, t: None)
+        self._log        = log_cb       or print
+
+    def _next_seq(self) -> int:
+        s = self._seq
+        self._seq = (self._seq + 1) & 0xFFFF
+        return s
+
+    def _transact(self, cmd: int, data: bytes = b"",
+                  timeout: float = TIMEOUT_S, label: str = "") -> bytes:
+        """发送命令，等待 ACK，按需重试。失败时抛出 RuntimeError。"""
+        seq      = self._next_seq()
+        pkt      = build_packet(cmd, seq, data)
+        last_err = "unknown"
+
+        for attempt in range(1, MAX_RETRY + 1):
+            if attempt > 1:
+                self._log(f"  [重试 {attempt}/{MAX_RETRY}]")
+                self._comm.flush_rx()
+
+            try:
+                rsp_cmd, _rsp_seq, rsp_data = self._comm.send_and_recv(pkt, timeout)
+            except TimeoutError:
+                last_err = "超时"
+                continue
+
+            if rsp_cmd == Rsp.ACK:
+                return rsp_data
+            if rsp_cmd == Rsp.NACK:
+                code     = rsp_data[0] if rsp_data else 0xFF
+                last_err = f"NACK({ErrCode.name(code)})"
+                if code != 0x01:   # 非 CRC 错误不再重试
+                    break
+            else:
+                last_err = f"未知响应 cmd=0x{rsp_cmd:02X}"
+
+        tag = f" [{label}]" if label else ""
+        raise RuntimeError(f"命令 0x{cmd:02X}{tag} 失败: {last_err}")
+
+    # ── 对外接口 ─────────────────────────────────────────────────────────────
+
+    def ping(self) -> int:
+        """握手；返回设备协议版本号。"""
+        resp    = self._transact(Cmd.SYNC, label="SYNC")
+        version = resp[0] if resp else 0
+        self._log(f"设备在线，协议版本 v{version}")
+        return version
+
+    def erase(self):
+        """擦除整个应用 Flash 区域（最长 30 s）。"""
+        self._log("正在擦除应用区 Flash …")
+        self._transact(Cmd.ERASE, timeout=30.0, label="ERASE")
+        self._log("擦除完成 ✓")
+
+    def upgrade(self, firmware: bytes):
+        """完整升级流程：QUERY_INFO → START → DATA chunks → FINISH。"""
+        total = len(firmware)
+        self._log(f"固件大小: {total} 字节  ({total / 1024:.1f} KB)")
+
+        # ── 先查询分区信息，校验大小并显示目标分区 ──────────────────────────
+        info        = self.query_info()
+        active_part = info["active_part"]
+        if active_part == 0:
+            backup_base = info["part_b_base"]
+            backup_size = info["part_b_size"]
+            backup_lbl  = "B"
+        else:
+            backup_base = info["part_a_base"]
+            backup_size = info["part_a_size"]
+            backup_lbl  = "A"
+
+        self._log(
+            f"将写入备份分区 {backup_lbl}  地址=0x{backup_base:06X}  "
+            f"容量={backup_size // 1024} KB"
+        )
+        if total > backup_size:
+            raise RuntimeError(
+                f"固件大小 {total:,} 字节 ({total/1024:.1f} KB) "
+                f"超出分区 {backup_lbl} 容量 {backup_size:,} 字节 "
+                f"({backup_size//1024} KB)"
+            )
+
+        self._transact(Cmd.START, struct.pack(">I", total),
+                       timeout=30.0, label="START")
+        self._log("Flash 已擦除，开始传输 …")
+
+        offset = 0
+        while offset < total:
+            chunk   = firmware[offset : offset + CHUNK_SIZE]
+            payload = struct.pack(">I", offset) + chunk
+            self._transact(Cmd.DATA, payload, label=f"DATA@0x{offset:X}")
+            offset += len(chunk)
+            self._progress(offset, total)
+
+        self._transact(Cmd.FINISH, struct.pack(">I", total), label="FINISH")
+        self._log("升级完成 ✓")
+
+    def jump(self):
+        """发送 JUMP，设备跳转到应用。"""
+        self._log("正在跳转到应用 …")
+        self._transact(Cmd.JUMP, label="JUMP")
+        self._log("设备已跳转 ✓")
+
+    def query_info(self) -> dict:
+        """
+        查询设备分区信息（协议 v2+）。
+        解析 DevInfo_t 结构体（20 字节）:
+          [0]  boot_mode       uint8
+          [1]  active_part     uint8
+          [2]  boot_fail_cnt   uint8
+          [3]  protocol_ver    uint8
+          [4-7]  part_a_base   uint32 BE
+          [8-11] part_a_size   uint32 BE
+          [12-15] part_b_base  uint32 BE
+          [16-19] part_b_size  uint32 BE
+        """
+        resp = self._transact(Cmd.QUERY_INFO, label="QUERY_INFO")
+        info = {
+            "protocol_ver":  0,
+            "boot_mode":     0,
+            "active_part":   0,
+            "boot_fail_cnt": 0,
+            "part_a_base":   0x00040000,
+            "part_a_size":   0x00200000,   # default 2 MB
+            "part_b_base":   0x00240000,
+            "part_b_size":   0x00200000,   # default 2 MB
+        }
+        if len(resp) >= 4:
+            info["boot_mode"]     = resp[0]
+            info["active_part"]   = resp[1]
+            info["boot_fail_cnt"] = resp[2]
+            info["protocol_ver"]  = resp[3]
+        if len(resp) >= 20:
+            (info["part_a_base"],
+             info["part_a_size"],
+             info["part_b_base"],
+             info["part_b_size"]) = struct.unpack("<IIII", resp[4:20])
+        active_lbl  = 'B' if info['active_part'] else 'A'
+        backup_lbl  = 'A' if info['active_part'] else 'B'
+        backup_size = info['part_a_size'] if info['active_part'] else info['part_b_size']
+        self._log(
+            f"设备信息: 协议v{info['protocol_ver']}  "
+            f"模式={'双分区A/B' if info['boot_mode'] else '单分区'}  "
+            f"当前运行分区={active_lbl}  "
+            f"备份分区={backup_lbl}({backup_size//1024} KB)  "
+            f"启动失败次数={info['boot_fail_cnt']}"
+        )
+        return info
+
+    def set_partition(self, part: int):
+        """
+        设置活跃分区（协议 v2+）。
+        part: 0 = A 区（出厂固件），1 = B 区（用户升级固件）
+        """
+        if part not in (0, 1):
+            raise ValueError("part 必须为 0(A) 或 1(B)")
+        self._transact(Cmd.SET_PART, bytes([part]), label="SET_PART")
+        self._log(f"活跃分区已设置为 {'B' if part else 'A'} ✓")
+
+    def reboot(self):
+        """请求设备立即重启（协议 v2+）。"""
+        self._log("正在请求设备重启 …")
+        # Device reboots immediately; ACK may not arrive — ignore timeout
+        try:
+            self._transact(Cmd.REBOOT, timeout=2.0, label="REBOOT")
+        except (TimeoutError, RuntimeError):
+            pass   # 设备重启后 ACK 可能丢失，属于正常现象
+        self._log("重启命令已发送 ✓")
+
+
+# ─── 工具函数 ─────────────────────────────────────────────────────────────────
+def list_ports():
+    """返回 [(device, description), ...] 列表。"""
+    return [(p.device, p.description or p.device)
+            for p in sorted(serial.tools.list_ports.comports())]
+
+
+def probe_port(port: str, baudrate: int = 115200,
+               timeout: float = 0.5) -> Optional[int]:
+    """
+    向指定端口发送 SYNC 握手包，快速探测是否有 Bootloader 应答。
+    返回协议版本号；探测失败返回 None。
+    """
+    try:
+        ser = serial.Serial(port, baudrate=baudrate, timeout=0.05)
+    except (serial.SerialException, OSError):
+        return None
+    try:
+        pkt = build_packet(Cmd.SYNC, 0)
+        ser.reset_input_buffer()
+        ser.write(pkt)
+        buf = bytearray()
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            chunk = ser.read(256)
+            if chunk:
+                buf.extend(chunk)
+            while len(buf) >= 8:
+                idx = buf.find(SOF)
+                if idx < 0:
+                    buf.clear()
+                    break
+                if idx > 0:
+                    del buf[:idx]
+                try:
+                    result = parse_packet(bytes(buf))
+                    if result is None:
+                        break
+                    rsp_cmd, _, rsp_data = result
+                    if rsp_cmd == Rsp.ACK:
+                        return rsp_data[0] if rsp_data else 0
+                    del buf[:8 + len(rsp_data)]
+                except ValueError:
+                    del buf[0]
+        return None
+    except Exception:
+        return None
+    finally:
+        try:
+            ser.close()
+        except Exception:
+            pass

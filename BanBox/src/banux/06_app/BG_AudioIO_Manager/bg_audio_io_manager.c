@@ -19,6 +19,7 @@
 #include "gpio.h"
 #include "debug.h"
 #include "type.h"
+#include "remind_sound.h"
 #include "audio_effect.h"
 #include "ctrlvars.h"
 #include "otg_device_hcd.h"
@@ -61,6 +62,7 @@
 #include "shell_cmd_mode.h"
 
 #include "bt_manager.h"
+#include "rtos_api.h"
 
 // ==================== 全局缓冲区定义 ====================
 static uint32_t AudioADC1Buf[1024] = {0};
@@ -387,6 +389,11 @@ void BG_audio_Init(uint16_t SampleRate)
 	InitDAC(SampleRate);
 	InitADC0LineIn(SampleRate);
 	InitADC1Mic(SampleRate);
+
+	/* 开机提示音：在此处播放可保证 DAC 已就绪，且堆内存尚未被音效占用
+	 * osPortMalloc(19KB) 在 ~74KB 空闲堆时成功；InitAudioEffects 之后仅剩 ~9KB */
+	RemindSound_PlayByName("on");
+
 	InitAudioEffects(SampleRate);
 	InitControlGPIO();
 	InitDetectionGPIO();
@@ -1377,7 +1384,11 @@ static void DAC0_WriteSpeakerData(EffectNode_t *node, uint32_t *in_buf, uint16_t
 	uint16_t samples_to_write;
 	
 	(void)node;
-	
+
+	/* 播放提示音期间，放弃 DAC 写入，避免与 RemindSound_Play 的直接写入冲突 */
+	if (g_remind_sound_active)
+		return;
+
 	// 获取 DAC FIFO 可用空间
 	free_space = AudioDAC_DataSpaceLenGet(DAC0);
 	samples_to_write = (len < free_space) ? len : free_space;
@@ -2059,6 +2070,21 @@ static void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_co
  * 挂接 Effect Graph 节点的音频设备回调
  * 注意：此函数在预设加载后需要被重新调用，以确保新节点的回调函数正确注册
  */
+/**
+ * @brief 关机前释放大内存效果器（混响），为口令提示音 pvPortMalloc 计划出堆空间
+ * @note  必须在 RemindSound_PlayByName("off") 之前调用。
+ *        覚夹 ct 指针清零并关闭 enable， ISR 中的 ReverbApply 会安全跳过。
+ */
+void BG_AudioIO_PrepareForShutdown(void)
+{
+    if (gCtrlVars.reverb_unit.ct != NULL) {
+        gCtrlVars.reverb_unit.enable = 0;
+        osPortFree(gCtrlVars.reverb_unit.ct);
+        gCtrlVars.reverb_unit.ct = NULL;
+        DBG("[Audio] Reverb freed for shutdown sound\n");
+    }
+}
+
 void BG_AudioIO_SetupEffectGraphCallbacks(void)
 {
 	EffectNode_t* node = NULL;

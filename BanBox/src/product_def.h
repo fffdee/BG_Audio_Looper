@@ -29,6 +29,12 @@ extern "C" {
 /* BanGTsynth MIDI 合成器模块 (注释掉此行可移除合成器功能) */
 #define BANGTSYNTH_EN
 
+/*
+ * BOOTLOADER_EN: 有 bootloader 时启用 A/B 分区管理和 BLE OTA
+ * 注释掉此行以直接烧录（无 bootloader），方便快速功能验证
+ */
+//#define BOOTLOADER_EN
+
 #endif // BANBOX_1_0
 
 #ifdef BANBOX_1_1

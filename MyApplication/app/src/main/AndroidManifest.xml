@@ -36,6 +36,7 @@
     <activity android:name=".ProjectDetailActivity" />
     <activity android:name=".ExportSettingsActivity" />
     <activity android:name=".BanBoxSettingsActivity" />
+    <activity android:name=".FirmwareUpgradeActivity" />
     <activity android:name=".FxControlActivity" />
     <activity android:name=".HardwareVolumeActivity" />
     <activity android:name=".EqControlActivity" />
