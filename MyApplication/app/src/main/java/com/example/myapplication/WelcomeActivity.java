@@ -31,7 +31,7 @@ import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WelcomeActivity extends AppCompatActivity {
+public class WelcomeActivity extends BaseActivity {
     private BluetoothHelper bluetoothHelper;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
@@ -52,13 +52,10 @@ public class WelcomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome_mecha);
+        setupBaseToolbar(false);
 
         // 获取全局BluetoothHelper实例
         bluetoothHelper = com.example.myapplication.BluetoothManager.getInstance().getBluetoothHelper();
-
-        // 设置Toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         // 初始化蓝牙
         android.bluetooth.BluetoothManager bluetoothManager =
@@ -131,6 +128,11 @@ public class WelcomeActivity extends AppCompatActivity {
 
         // 初始化状态显示
         updateConnectionStatusUI();
+    }
+
+    @Override
+    protected String getToolbarTitle() {
+        return "BanBox 音频系统";
     }
 
     @Override

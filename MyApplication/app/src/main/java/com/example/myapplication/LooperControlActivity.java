@@ -19,6 +19,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
  *
  * State flow: INACTIVE -> (r) -> RECORDING -> (p) -> PLAYING -> (t) -> STOPPED -> (p) -> PLAYING...
  */
-public class LooperControlActivity extends AppCompatActivity {
+public class LooperControlActivity extends BaseActivity {
 
     private static final String BLE_UUID = "0000ab01-0000-1000-8000-00805f9b34fb";
     private static final int SEG_COUNT = 2;
@@ -62,16 +63,16 @@ public class LooperControlActivity extends AppCompatActivity {
     private static int currentBeats   = 4;   // 每小节拍数
     private static int countdownBeats = 4;   // 倒数拍数
 
-    // Color constants
-    private static final int COLOR_INACTIVE  = Color.parseColor("#00D9FF");
-    private static final int COLOR_RECORDING = Color.parseColor("#FF4444");
-    private static final int COLOR_PLAYING   = Color.parseColor("#00FFA3");
-    private static final int COLOR_STOPPED   = Color.parseColor("#888888");
+    // Color constants (theme-aware, initialized in initThemeColors)
+    private int COLOR_INACTIVE;
+    private int COLOR_RECORDING;
+    private int COLOR_PLAYING;
+    private int COLOR_STOPPED;
 
-    private static final int TINT_INACTIVE  = Color.parseColor("#1A3040");
-    private static final int TINT_RECORDING = Color.parseColor("#3D1010");
-    private static final int TINT_PLAYING   = Color.parseColor("#0D3020");
-    private static final int TINT_STOPPED   = Color.parseColor("#222222");
+    private int TINT_INACTIVE;
+    private int TINT_RECORDING;
+    private int TINT_PLAYING;
+    private int TINT_STOPPED;
 
     // -------- 每段独立配置（static：Activity 重建时保留） --------
     /** 录制小节数，0 = 手动停止（无限） */
@@ -235,14 +236,10 @@ public class LooperControlActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_looper_control);
+        setupBaseToolbar(true);
 
+        initThemeColors();
         bluetoothHelper = BluetoothManager.getInstance().getBluetoothHelper();
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
 
         initViews();
         if (savedInstanceState == null) loadSettings();
@@ -251,6 +248,26 @@ public class LooperControlActivity extends AppCompatActivity {
         setupDrawerListeners();
         setupBleListener();
         refreshTopInfoBar();
+    }
+
+    /** 便捷方法：获取主题感知颜色 */
+    private int clr(int resId) { return ContextCompat.getColor(this, resId); }
+
+    /** 初始化主题感知颜色常量 */
+    private void initThemeColors() {
+        COLOR_INACTIVE  = clr(R.color.color_inactive);
+        COLOR_RECORDING = clr(R.color.color_recording);
+        COLOR_PLAYING   = clr(R.color.color_playing);
+        COLOR_STOPPED   = clr(R.color.color_stopped);
+        TINT_INACTIVE   = clr(R.color.tint_inactive);
+        TINT_RECORDING  = clr(R.color.tint_recording);
+        TINT_PLAYING    = clr(R.color.tint_playing);
+        TINT_STOPPED    = clr(R.color.tint_stopped);
+    }
+
+    @Override
+    protected String getToolbarTitle() {
+        return "Looper 控制";
     }
 
     @Override
@@ -524,7 +541,7 @@ public class LooperControlActivity extends AppCompatActivity {
         final android.widget.EditText input = new android.widget.EditText(this);
         input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
         input.setText(String.valueOf(currentBpm));
-        input.setTextColor(Color.WHITE);
+        input.setTextColor(clr(R.color.text_primary));
         input.setTextSize(18);
         input.setGravity(android.view.Gravity.CENTER);
         input.setSelection(input.getText().length());
@@ -536,7 +553,7 @@ public class LooperControlActivity extends AppCompatActivity {
         
         TextView hint = new TextView(this);
         hint.setText("范围：60 ~ 200 BPM");
-        hint.setTextColor(Color.parseColor("#888888"));
+        hint.setTextColor(clr(R.color.dialog_sub_text));
         hint.setTextSize(12);
         hint.setGravity(android.view.Gravity.CENTER);
         hint.setPadding(0, 10, 0, 0);
@@ -615,16 +632,16 @@ public class LooperControlActivity extends AppCompatActivity {
         int metroColor;
         if (metroOnDuringRec && countdownBeforeRec) {
             metroLabel = "倒数+录制";
-            metroColor = Color.parseColor("#FFB800");
+            metroColor = clr(R.color.text_warning);
         } else if (metroOnDuringRec) {
             metroLabel = "录制中";
-            metroColor = Color.parseColor("#00FFA3");
+            metroColor = clr(R.color.text_success);
         } else if (countdownBeforeRec) {
             metroLabel = "倒数" + countdownBeats;
-            metroColor = Color.parseColor("#FFB800");
+            metroColor = clr(R.color.text_warning);
         } else {
             metroLabel = "关闭";
-            metroColor = Color.parseColor("#888888");
+            metroColor = clr(R.color.text_tertiary);
         }
         tvTopMetroMode.setText(metroLabel);
         tvTopMetroMode.setTextColor(metroColor);
@@ -638,7 +655,7 @@ public class LooperControlActivity extends AppCompatActivity {
         boolean connected = bluetoothHelper != null && bluetoothHelper.isConnected();
         tvTopHwStatus.setText(connected ? "已连接" : "未连接");
         tvTopHwStatus.setTextColor(
-            Color.parseColor(connected ? "#4CAF50" : "#FF4444"));
+            clr(connected ? R.color.status_connected : R.color.status_disconnected));
     }
 
     private void setupListeners() {
@@ -655,7 +672,7 @@ public class LooperControlActivity extends AppCompatActivity {
                             handler.postDelayed(longPressRunnables[idx], 2000);
                             // 显示长按提示
                             tvSegHint[idx].setText("‹ 长按 2s 删除...");
-                            tvSegHint[idx].setTextColor(Color.parseColor("#FF6666"));
+                            tvSegHint[idx].setTextColor(clr(R.color.text_error));
                         }
                         break;
                     case MotionEvent.ACTION_UP:
@@ -1137,7 +1154,7 @@ public class LooperControlActivity extends AppCompatActivity {
         if (remaining <= 0 || segStates[idx] != SegState.RECORDING) return;
         final int r = remaining;
         tvSegHint[idx].setText("录制中... " + r + " 小节");
-        tvSegHint[idx].setTextColor(Color.parseColor("#FF6644"));
+        tvSegHint[idx].setTextColor(clr(R.color.text_error));
         handler.postDelayed(() -> {
             if (segStates[idx] == SegState.RECORDING) {
                 scheduleCountdownHint(idx, r - 1, msPerMeasure);
@@ -1619,10 +1636,10 @@ public class LooperControlActivity extends AppCompatActivity {
         btn.setEnabled(enabled);
         if (!enabled) {
             btn.setAlpha(0.35f);
-            btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1F2937")));
+            btn.setBackgroundTintList(ColorStateList.valueOf(clr(R.color.dialog_btn_bg)));
             if (btn instanceof ImageButton) {
                 ((ImageButton) btn).setImageTintList(
-                    ColorStateList.valueOf(Color.parseColor("#888888")));
+                    ColorStateList.valueOf(clr(R.color.text_tertiary)));
             }
         } else if (active) {
             btn.setAlpha(1.0f);
@@ -1634,10 +1651,10 @@ public class LooperControlActivity extends AppCompatActivity {
         } else {
             // 使能未激活：浅蓝色背景，明显区别于失能态
             btn.setAlpha(1.0f);
-            btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1A3A5C")));
+            btn.setBackgroundTintList(ColorStateList.valueOf(clr(R.color.global_btn_active_bg)));
             if (btn instanceof ImageButton) {
                 ((ImageButton) btn).setImageTintList(
-                    ColorStateList.valueOf(Color.parseColor("#7EC8E3")));
+                    ColorStateList.valueOf(clr(R.color.global_btn_active_text)));
             }
         }
     }
@@ -2139,12 +2156,12 @@ public class LooperControlActivity extends AppCompatActivity {
         android.widget.LinearLayout root = new android.widget.LinearLayout(this);
         root.setOrientation(android.widget.LinearLayout.VERTICAL);
         root.setPadding(48, 32, 48, 16);
-        root.setBackgroundColor(Color.parseColor("#16213E"));
+        root.setBackgroundColor(clr(R.color.dialog_bg));
 
         // 标题行
         TextView title = new TextView(this);
         title.setText("LOOP " + (idx + 1) + "  裁剪范围");
-        title.setTextColor(Color.parseColor("#00D9FF"));
+        title.setTextColor(clr(R.color.text_accent));
         title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setPadding(0, 0, 0, 16);
@@ -2153,7 +2170,7 @@ public class LooperControlActivity extends AppCompatActivity {
         // 说明文字
         TextView hint = new TextView(this);
         hint.setText("以「页」为单位（1000 页 ≈ 1 秒）。\n起点=0 表示从头；终点=0 或等于最大值表示到末尾。");
-        hint.setTextColor(Color.parseColor("#808080"));
+        hint.setTextColor(clr(R.color.dialog_hint_text));
         hint.setTextSize(11);
         hint.setPadding(0, 0, 0, 20);
         root.addView(hint);
@@ -2220,7 +2237,7 @@ public class LooperControlActivity extends AppCompatActivity {
             String label, int[] valueHolder, int min, int max, int pagesPerSec) {
         android.widget.LinearLayout block = new android.widget.LinearLayout(this);
         block.setOrientation(android.widget.LinearLayout.VERTICAL);
-        block.setBackgroundColor(Color.parseColor("#0F1419"));
+        block.setBackgroundColor(clr(R.color.dialog_section_bg));
         block.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams bp =
             new android.widget.LinearLayout.LayoutParams(
@@ -2236,8 +2253,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView lbl = new TextView(this);
         lbl.setText(label);
-        lbl.setTextColor(Color.parseColor("#00D9FF"));
-        lbl.setTextSize(13);
+        lbl.setTextColor(clr(R.color.text_accent));
         android.widget.LinearLayout.LayoutParams lblP =
             new android.widget.LinearLayout.LayoutParams(0,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -2246,7 +2262,7 @@ public class LooperControlActivity extends AppCompatActivity {
         final TextView tvVal = new TextView(this);
         int initSec10 = valueHolder[0] * 10 / pagesPerSec; // 精确到0.1s
         tvVal.setText(valueHolder[0] + " p (" + (initSec10 / 10) + "." + (initSec10 % 10) + "s)");
-        tvVal.setTextColor(Color.parseColor("#00FFA3"));
+        tvVal.setTextColor(clr(R.color.text_success));
         tvVal.setTextSize(13);
         tvVal.setTypeface(null, android.graphics.Typeface.BOLD);
         tvVal.setGravity(android.view.Gravity.END);
@@ -2294,12 +2310,12 @@ public class LooperControlActivity extends AppCompatActivity {
         android.widget.LinearLayout root = new android.widget.LinearLayout(this);
         root.setOrientation(android.widget.LinearLayout.VERTICAL);
         root.setPadding(48, 32, 48, 16);
-        root.setBackgroundColor(Color.parseColor("#16213E"));
+        root.setBackgroundColor(clr(R.color.dialog_bg));
 
         // -- 小节数区域 --
         android.widget.LinearLayout rowMeasures = new android.widget.LinearLayout(this);
         rowMeasures.setOrientation(android.widget.LinearLayout.VERTICAL);
-        rowMeasures.setBackgroundColor(Color.parseColor("#0F1419"));
+        rowMeasures.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowMeasures.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockParams =
             new android.widget.LinearLayout.LayoutParams(
@@ -2310,7 +2326,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView lblMeasures = new TextView(this);
         lblMeasures.setText("录制小节数");
-        lblMeasures.setTextColor(Color.parseColor("#00D9FF"));
+        lblMeasures.setTextColor(clr(R.color.text_accent));
         lblMeasures.setTextSize(14);
         lblMeasures.setTypeface(null, android.graphics.Typeface.BOLD);
         lblMeasures.setPadding(0, 0, 0, 12);
@@ -2318,7 +2334,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView subMeasures = new TextView(this);
         subMeasures.setText("设为 0 = 手动停止（无限录制）");
-        subMeasures.setTextColor(Color.parseColor("#888888"));
+        subMeasures.setTextColor(clr(R.color.dialog_sub_text));
         subMeasures.setTextSize(11);
         subMeasures.setPadding(0, 0, 0, 14);
         rowMeasures.addView(subMeasures);
@@ -2331,14 +2347,14 @@ public class LooperControlActivity extends AppCompatActivity {
         Button btnDec = new Button(this);
         btnDec.setText("−");
         btnDec.setTextSize(22);
-        btnDec.setTextColor(Color.WHITE);
-        btnDec.setBackgroundColor(Color.parseColor("#1F2937"));
+        btnDec.setTextColor(clr(R.color.text_primary));
+        btnDec.setBackgroundColor(clr(R.color.dialog_btn_bg));
         android.widget.LinearLayout.LayoutParams btnP =
             new android.widget.LinearLayout.LayoutParams(120, 120);
         btnDec.setLayoutParams(btnP);
 
         final TextView tvVal = new TextView(this);
-        tvVal.setTextColor(Color.parseColor("#00FFA3"));
+        tvVal.setTextColor(clr(R.color.text_success));
         tvVal.setTextSize(30);
         tvVal.setTypeface(null, android.graphics.Typeface.BOLD);
         tvVal.setGravity(android.view.Gravity.CENTER);
@@ -2353,8 +2369,8 @@ public class LooperControlActivity extends AppCompatActivity {
         Button btnInc = new Button(this);
         btnInc.setText("+");
         btnInc.setTextSize(22);
-        btnInc.setTextColor(Color.WHITE);
-        btnInc.setBackgroundColor(Color.parseColor("#1F2937"));
+        btnInc.setTextColor(clr(R.color.text_primary));
+        btnInc.setBackgroundColor(clr(R.color.dialog_btn_bg));
         btnInc.setLayoutParams(btnP);
 
         btnDec.setOnClickListener(v -> {
@@ -2373,7 +2389,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView unitHint = new TextView(this);
         unitHint.setText("小节（范围：0~64，0 = 无限）");
-        unitHint.setTextColor(Color.parseColor("#606060"));
+        unitHint.setTextColor(clr(R.color.dialog_unit_text));
         unitHint.setTextSize(10);
         unitHint.setGravity(android.view.Gravity.CENTER);
         unitHint.setPadding(0, 10, 0, 0);
@@ -2384,7 +2400,7 @@ public class LooperControlActivity extends AppCompatActivity {
         // -- 播放模式区域 --
         android.widget.LinearLayout rowPlay = new android.widget.LinearLayout(this);
         rowPlay.setOrientation(android.widget.LinearLayout.VERTICAL);
-        rowPlay.setBackgroundColor(Color.parseColor("#0F1419"));
+        rowPlay.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowPlay.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockParams2 =
             new android.widget.LinearLayout.LayoutParams(
@@ -2395,7 +2411,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView lblPlay = new TextView(this);
         lblPlay.setText("录制结束后");
-        lblPlay.setTextColor(Color.parseColor("#00D9FF"));
+        lblPlay.setTextColor(clr(R.color.text_accent));
         lblPlay.setTextSize(14);
         lblPlay.setTypeface(null, android.graphics.Typeface.BOLD);
         lblPlay.setPadding(0, 0, 0, 14);
@@ -2406,18 +2422,18 @@ public class LooperControlActivity extends AppCompatActivity {
 
         android.widget.RadioButton rbAutoPlay = new android.widget.RadioButton(this);
         rbAutoPlay.setText("自动开始播放");
-        rbAutoPlay.setTextColor(Color.WHITE);
+        rbAutoPlay.setTextColor(clr(R.color.text_primary));
         rbAutoPlay.setTextSize(14);
         rbAutoPlay.setButtonTintList(android.content.res.ColorStateList.valueOf(
-            Color.parseColor("#00D9FF")));
+            clr(R.color.text_accent)));
         rbAutoPlay.setId(View.generateViewId());
 
         android.widget.RadioButton rbNoPlay = new android.widget.RadioButton(this);
         rbNoPlay.setText("停止录制，不自动播放");
-        rbNoPlay.setTextColor(Color.WHITE);
+        rbNoPlay.setTextColor(clr(R.color.text_primary));
         rbNoPlay.setTextSize(14);
         rbNoPlay.setButtonTintList(android.content.res.ColorStateList.valueOf(
-            Color.parseColor("#00D9FF")));
+            clr(R.color.text_accent)));
         rbNoPlay.setId(View.generateViewId());
 
         rgPlay.addView(rbAutoPlay);
@@ -2434,7 +2450,7 @@ public class LooperControlActivity extends AppCompatActivity {
         // -- 音量区域 --
         android.widget.LinearLayout rowVolume = new android.widget.LinearLayout(this);
         rowVolume.setOrientation(android.widget.LinearLayout.VERTICAL);
-        rowVolume.setBackgroundColor(Color.parseColor("#0F1419"));
+        rowVolume.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowVolume.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockVolParams =
             new android.widget.LinearLayout.LayoutParams(
@@ -2450,7 +2466,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView lblVolume = new TextView(this);
         lblVolume.setText("播放音量");
-        lblVolume.setTextColor(Color.parseColor("#00D9FF"));
+        lblVolume.setTextColor(clr(R.color.text_accent));
         lblVolume.setTextSize(14);
         lblVolume.setTypeface(null, android.graphics.Typeface.BOLD);
         android.widget.LinearLayout.LayoutParams lblVolP =
@@ -2460,7 +2476,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         final TextView tvVolValue = new TextView(this);
         tvVolValue.setText(tmpVolume[0] + "%");
-        tvVolValue.setTextColor(Color.parseColor("#00FFA3"));
+        tvVolValue.setTextColor(clr(R.color.text_success));
         tvVolValue.setTextSize(16);
         tvVolValue.setTypeface(null, android.graphics.Typeface.BOLD);
         tvVolValue.setGravity(android.view.Gravity.END);
@@ -2494,7 +2510,7 @@ public class LooperControlActivity extends AppCompatActivity {
         // -- 预裁剪区域 --
         android.widget.LinearLayout rowPreCrop = new android.widget.LinearLayout(this);
         rowPreCrop.setOrientation(android.widget.LinearLayout.VERTICAL);
-        rowPreCrop.setBackgroundColor(Color.parseColor("#0F1419"));
+        rowPreCrop.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowPreCrop.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockPreParams =
             new android.widget.LinearLayout.LayoutParams(
@@ -2505,7 +2521,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView lblPreCrop = new TextView(this);
         lblPreCrop.setText("预裁剪");
-        lblPreCrop.setTextColor(Color.parseColor("#00D9FF"));
+        lblPreCrop.setTextColor(clr(R.color.text_accent));
         lblPreCrop.setTextSize(14);
         lblPreCrop.setTypeface(null, android.graphics.Typeface.BOLD);
         lblPreCrop.setPadding(0, 0, 0, 4);
@@ -2513,7 +2529,7 @@ public class LooperControlActivity extends AppCompatActivity {
 
         TextView subPreCrop = new TextView(this);
         subPreCrop.setText("录制完成后自动截去首/尾多余时长（0.00s = 不截）");
-        subPreCrop.setTextColor(Color.parseColor("#888888"));
+        subPreCrop.setTextColor(clr(R.color.dialog_sub_text));
         subPreCrop.setTextSize(11);
         subPreCrop.setPadding(0, 0, 0, 14);
         rowPreCrop.addView(subPreCrop);
@@ -2524,14 +2540,14 @@ public class LooperControlActivity extends AppCompatActivity {
         startRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView lblCropStart = new TextView(this);
         lblCropStart.setText("截去开头");
-        lblCropStart.setTextColor(Color.WHITE);
+        lblCropStart.setTextColor(clr(R.color.text_primary));
         lblCropStart.setTextSize(13);
         android.widget.LinearLayout.LayoutParams lblCropStartP =
             new android.widget.LinearLayout.LayoutParams(0,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         lblCropStart.setLayoutParams(lblCropStartP);
         final TextView tvCropStartVal = new TextView(this);
-        tvCropStartVal.setTextColor(Color.parseColor("#00FFA3"));
+        tvCropStartVal.setTextColor(clr(R.color.text_success));
         tvCropStartVal.setTextSize(14);
         tvCropStartVal.setTypeface(null, android.graphics.Typeface.BOLD);
         tvCropStartVal.setGravity(android.view.Gravity.END);
@@ -2565,14 +2581,14 @@ public class LooperControlActivity extends AppCompatActivity {
         endRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView lblCropEnd = new TextView(this);
         lblCropEnd.setText("截去结尾");
-        lblCropEnd.setTextColor(Color.WHITE);
+        lblCropEnd.setTextColor(clr(R.color.text_primary));
         lblCropEnd.setTextSize(13);
         android.widget.LinearLayout.LayoutParams lblCropEndP =
             new android.widget.LinearLayout.LayoutParams(0,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         lblCropEnd.setLayoutParams(lblCropEndP);
         final TextView tvCropEndVal = new TextView(this);
-        tvCropEndVal.setTextColor(Color.parseColor("#00FFA3"));
+        tvCropEndVal.setTextColor(clr(R.color.text_success));
         tvCropEndVal.setTextSize(14);
         tvCropEndVal.setTypeface(null, android.graphics.Typeface.BOLD);
         tvCropEndVal.setGravity(android.view.Gravity.END);
@@ -2643,8 +2659,8 @@ public class LooperControlActivity extends AppCompatActivity {
         tvSegCfgHint[idx].setText(measures + "  " + action + "  " + vol);
         tvSegCfgHint[idx].setTextColor(
             segAutoPlay[idx]
-                ? Color.parseColor("#50C8D8")
-                : Color.parseColor("#909090"));
+                ? clr(R.color.seg_cfg_active)
+                : clr(R.color.seg_cfg_inactive));
         // 同步底部最大录制时长 chip 标签
         if (tvSegMaxRec != null && tvSegMaxRec[idx] != null) {
             tvSegMaxRec[idx].setText("⏱ " + segMaxRecSec[idx] + "s");

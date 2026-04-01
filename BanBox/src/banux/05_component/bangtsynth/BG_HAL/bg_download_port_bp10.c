@@ -19,6 +19,10 @@
  * 编译条件: BG_TARGET_PLATFORM == BG_PLATFORM_BP10
  */
 
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_config.h"
 #if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
 
@@ -351,3 +355,5 @@ static void dl_send_response(uint8_t rsp, uint16_t seq, uint8_t status)
 }
 
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_BP10 */
+
+#endif /* BANGTSYNTH_EN */

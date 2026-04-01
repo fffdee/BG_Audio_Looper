@@ -10,11 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AudioChainDiagramActivity extends AppCompatActivity {
+public class AudioChainDiagramActivity extends BaseActivity {
     private BluetoothHelper bluetoothHelper;
     private AudioChainView audioChainView;
-    private ImageButton btnResetView;
-    private ImageButton btnBack;
     private int hardwareVariant = 0; // 默认硬件变体 00
 
     @Override
@@ -25,15 +23,12 @@ public class AudioChainDiagramActivity extends AppCompatActivity {
         bluetoothHelper = com.example.myapplication.BluetoothManager.getInstance().getBluetoothHelper();
 
         setContentView(R.layout.activity_audio_chain_diagram);
+        setupBaseToolbar(true);
 
         audioChainView = findViewById(R.id.audio_chain_view);
-        btnResetView = findViewById(R.id.btn_reset_view);
-        btnBack = findViewById(R.id.btn_back);
-
-        // 返回按钮
-        btnBack.setOnClickListener(v -> finish());
 
         // 重置视图按钮
+        ImageButton btnResetView = findViewById(R.id.btn_reset_view);
         btnResetView.setOnClickListener(v -> {
             audioChainView.resetView();
             Toast.makeText(this, "已重置视图", Toast.LENGTH_SHORT).show();
@@ -44,6 +39,11 @@ public class AudioChainDiagramActivity extends AppCompatActivity {
 
         // 显示音频链路图
         displayAudioChain();
+    }
+
+    @Override
+    protected String getToolbarTitle() {
+        return "音频信号链路图";
     }
 
     /**

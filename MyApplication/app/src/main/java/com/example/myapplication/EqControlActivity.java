@@ -30,7 +30,7 @@ import java.util.List;
  * - 不再需要手动发送 filter_count 命令（固件会根据启用的 band 自动计算）
  * - 命令必须按顺序发送：type → f0 → Q → gain → enable（enable 触发应用）
  */
-public class EqControlActivity extends AppCompatActivity {
+public class EqControlActivity extends BaseActivity {
 
     // UI 控件
     private EqCurveView eqCurveView;
@@ -50,7 +50,6 @@ public class EqControlActivity extends AppCompatActivity {
     private ImageButton btnImportEq;
     private ImageButton btnExportEq;
     private Button btnSyncEq;
-    private ImageButton btnBack;
     private ImageButton btnOpenPresets;
     private ImageButton btnResetEq;
     
@@ -114,6 +113,7 @@ public class EqControlActivity extends AppCompatActivity {
         bluetoothHelper = com.example.myapplication.BluetoothManager.getInstance().getBluetoothHelper();
         
         setContentView(R.layout.activity_eq_control);
+        setupBaseToolbar(true);
 
         try {
             // 检查蓝牙连接状态（非阻断性）
@@ -215,9 +215,13 @@ public class EqControlActivity extends AppCompatActivity {
     }
 
     @Override
+    protected String getToolbarTitle() {
+        return "均衡器设置";
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        // 更新连接状态UI，但不强制退出
         if (bluetoothHelper != null) {
             boolean isConnected = bluetoothHelper.isConnected();
             updateConnectionUI(isConnected);
@@ -326,7 +330,6 @@ public class EqControlActivity extends AppCompatActivity {
             btnSave = findViewById(R.id.btn_save);
             btnImportEq = findViewById(R.id.btn_import_eq);
             btnExportEq = findViewById(R.id.btn_export_eq);
-            btnBack = findViewById(R.id.btn_back);
             btnSyncEq = findViewById(R.id.btn_sync_eq);
             btnOpenPresets = findViewById(R.id.btn_open_presets);
             btnResetEq = findViewById(R.id.btn_reset_eq);
@@ -393,9 +396,6 @@ public class EqControlActivity extends AppCompatActivity {
      * 设置监听器
      */
     private void setupListeners() {
-        // 返回按钮
-        btnBack.setOnClickListener(v -> finish());
-
         // 保存按钮
         btnSave.setOnClickListener(v -> saveEqSettings());
 

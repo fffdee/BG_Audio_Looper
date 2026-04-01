@@ -3,8 +3,10 @@
  * @brief SF2 音源数据实现 - tip.sf2
  */
 
+#include "product_def.h"
 #include "tip_data.h"
 
+#ifdef BANGTSYNTH_EN
 /* SF2 数据: tip.sf2 (591,332 bytes) */
 const uint8_t tip_data[591332] = {
     /* 0x000000 */
@@ -39277,3 +39279,4 @@ const uint8_t tip_data[591332] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00
 };
+#endif /* BANGTSYNTH_EN */

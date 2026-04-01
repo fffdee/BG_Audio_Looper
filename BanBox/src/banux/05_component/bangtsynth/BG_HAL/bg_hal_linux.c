@@ -5,6 +5,10 @@
  * 说明: 其他平台移植时，参考此文件实现 bg_hal.h 中定义的接口
  *****************************************************/
 
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_config.h"
 #if (BG_TARGET_PLATFORM == BG_PLATFORM_LINUX)
 
@@ -430,3 +434,5 @@ bg_hal_storage_t bg_hal_storage = {
 };
 
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
+
+#endif /* BANGTSYNTH_EN */

@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "midi_soundbank_bridge.h"
 #include "midi_controller.h"
 #include "soundbank_manager.h"
@@ -223,3 +227,5 @@ static void bridge_reset(void)
     
     printf("[MIDI Bridge] All channels reset\n");
 }
+
+#endif /* BANGTSYNTH_EN */

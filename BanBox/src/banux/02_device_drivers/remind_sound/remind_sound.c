@@ -273,6 +273,12 @@ void RemindSound_Play(const uint8_t *mp3_data, uint32_t mp3_size, uint8_t vol_pc
 
             error_cnt = 0;
 
+            /* 实时跟踪电位器音量：每解码一帧重新读 ADC 并按 vol_pct 缩放更新 DAC */
+            pot_vol  = remind_read_pot_dac_vol();
+            play_vol = (uint16_t)((uint32_t)pot_vol * vol_pct / 100);
+            if (play_vol == 0) play_vol = 1;
+            AudioDAC_VolSet(DAC0, play_vol, play_vol);
+
             /* 等待 DAC FIFO 有足够空间 */
             while (AudioDAC0DataSpaceLenGet() <
                    audio_decoder->song_info->pcm_data_length)

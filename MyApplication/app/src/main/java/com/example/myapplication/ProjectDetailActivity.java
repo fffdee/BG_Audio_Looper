@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class ProjectDetailActivity extends AppCompatActivity {
+public class ProjectDetailActivity extends BaseActivity {
     private static final String TAG = "ProjectDetailActivity";
 
     private RecyclerView rvImages;

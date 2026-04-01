@@ -22,7 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateProjectActivity extends AppCompatActivity {
+public class CreateProjectActivity extends BaseActivity {
     private EditText etProjectName;
     private TextView tvSelectedCount;
     private RecyclerView rvSelectedImages;

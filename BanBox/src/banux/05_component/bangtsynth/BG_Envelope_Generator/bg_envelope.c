@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_envelope.h"
 #include <math.h>
 #include <string.h>
@@ -198,3 +202,5 @@ void BG_Envelope_SetParams(BG_Envelope_t *env, const BG_EnvParams_t *params) {
         switch_to_stage(env, current_stage);
     }
 }
+
+#endif /* BANGTSYNTH_EN */

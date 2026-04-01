@@ -4,16 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@android:color/white">
+    android:background="@color/bg_dark">
 
-    <!-- Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar_export_settings"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/design_default_color_primary"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:titleTextColor="@android:color/white" />
+    <!-- 统一顶部导航栏 -->
+    <include layout="@layout/include_base_toolbar" />
 
     <!-- 设置内容 -->
     <ScrollView
@@ -119,7 +113,7 @@
                 android:text="💡 提示：\n• 导出质量越高，文件越大但画质越好\n• 取消自动清理可保留导出缓存，但会占用存储空间\n• 最后选择的导出目录会被记住，方便下次使用"
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray"
-                android:background="#F5F5F5"
+                android:background="@color/bg_card_light"
                 android:padding="12dp"
                 android:layout_marginTop="16dp" />
 

@@ -2,6 +2,10 @@
  * BG_Storage - 音源存储抽象层实现
  */
 
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_storage.h"
 #include "bg_config.h"
 #include "bg_log.h"
@@ -291,3 +295,5 @@ BG_Storage_t BG_Storage = {
  * 平台驱动实现在独立的 .c 文件中
  * (由 Makefile 编译链接)
  * ============================================ */
+
+#endif /* BANGTSYNTH_EN */

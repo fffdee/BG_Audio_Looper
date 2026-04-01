@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_config.h"
 #if (BG_TARGET_PLATFORM == BG_PLATFORM_LINUX)
 
@@ -113,3 +117,5 @@ int bg_download_port_read(const char *source, void *buffer, size_t size, size_t 
  */
 
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
+
+#endif /* BANGTSYNTH_EN */

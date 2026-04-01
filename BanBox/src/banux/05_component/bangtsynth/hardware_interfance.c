@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "hardware_interfance.h"
 #include "bg_config.h"
 #include "bgs_parser.h"
@@ -44,3 +48,5 @@ BG_Reader BG_reader = {
     .DeInit = bgs_deinit,
     .Callback = bgs_read_callback,
 };
+
+#endif /* BANGTSYNTH_EN */

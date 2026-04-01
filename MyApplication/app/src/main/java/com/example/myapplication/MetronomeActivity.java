@@ -15,13 +15,12 @@ import androidx.appcompat.app.AppCompatActivity;
  * 节拍器Activity
  * 提供节拍器的控制和设置功能
  */
-public class MetronomeActivity extends AppCompatActivity {
+public class MetronomeActivity extends BaseActivity {
     
     private BluetoothHelper bluetoothHelper;
     private Handler handler = new Handler(Looper.getMainLooper());
     
     // UI控件
-    private ImageButton btnBack;
     private TextView tvMetronomeStatus;
     private TextView tvBpmDisplay;
     private TextView tvBeatsDisplay;
@@ -41,6 +40,7 @@ public class MetronomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_metronome);
+        setupBaseToolbar(true);
         
         // 获取全局BluetoothHelper实例
         bluetoothHelper = BluetoothManager.getInstance().getBluetoothHelper();
@@ -69,6 +69,11 @@ public class MetronomeActivity extends AppCompatActivity {
     }
     
     @Override
+    protected String getToolbarTitle() {
+        return "节拍器";
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         // 页面重新获得焦点时重新查询状态
@@ -78,7 +83,6 @@ public class MetronomeActivity extends AppCompatActivity {
     }
     
     private void initViews() {
-        btnBack = findViewById(R.id.btn_back);
         tvMetronomeStatus = findViewById(R.id.tv_metronome_status);
         tvBpmDisplay = findViewById(R.id.tv_bpm_display);
         tvBeatsDisplay = findViewById(R.id.tv_beats_display);
@@ -91,9 +95,6 @@ public class MetronomeActivity extends AppCompatActivity {
         seekbarBpm = findViewById(R.id.seekbar_bpm);
         seekbarBeats = findViewById(R.id.seekbar_beats);
         seekbarVolume = findViewById(R.id.seekbar_volume);
-        
-        // 返回按钮
-        btnBack.setOnClickListener(v -> finish());
         
         // 启动/停止按钮
         btnMetroToggle.setOnClickListener(v -> toggleMetronome());

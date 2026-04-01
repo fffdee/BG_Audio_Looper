@@ -6,48 +6,8 @@
     android:background="@color/bg_dark"
     android:fitsSystemWindows="true">
 
-    <!-- 顶部标题栏 -->
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/toolbar_height"
-        android:background="@color/primary_darker"
-        android:elevation="@dimen/card_elevation"
-        android:paddingStart="@dimen/toolbar_padding"
-        android:paddingEnd="@dimen/toolbar_padding">
-
-        <ImageButton
-            android:id="@+id/btn_back"
-            android:layout_width="@dimen/icon_size_large"
-            android:layout_height="@dimen/icon_size_large"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_revert"
-            android:tint="@color/text_primary"
-            android:contentDescription="返回" />
-
-        <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🎵 音频信号链路图"
-            android:textSize="@dimen/text_size_xlarge"
-            android:textColor="@color/text_accent"
-            android:textStyle="bold"
-            android:layout_centerInParent="true" />
-
-        <ImageButton
-            android:id="@+id/btn_reset_view"
-            android:layout_width="@dimen/button_height_small"
-            android:layout_height="@dimen/button_height_small"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/ic_refresh"
-            android:contentDescription="重置视图"
-            android:background="@drawable/button_glow"
-            android:scaleType="centerInside"
-            android:padding="@dimen/spacing_small"
-            android:elevation="@dimen/card_elevation" />
-    </RelativeLayout>
+    <!-- 统一顶部导航栏 -->
+    <include layout="@layout/include_base_toolbar" />
 
     <!-- 内容区域 -->
     <FrameLayout
@@ -55,6 +15,19 @@
         android:layout_height="match_parent"
         android:padding="@dimen/spacing_medium"
         android:background="@color/bg_dark">
+
+        <!-- 重置视图按钮 -->
+        <ImageButton
+            android:id="@+id/btn_reset_view"
+            android:layout_width="@dimen/button_height_small"
+            android:layout_height="@dimen/button_height_small"
+            android:layout_gravity="top|end"
+            android:src="@drawable/ic_refresh"
+            android:contentDescription="重置视图"
+            android:background="@drawable/button_glow"
+            android:scaleType="centerInside"
+            android:padding="@dimen/spacing_small"
+            android:elevation="@dimen/card_elevation" />
 
         <!-- 图例说明 -->
         <HorizontalScrollView

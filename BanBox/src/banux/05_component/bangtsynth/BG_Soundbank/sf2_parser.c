@@ -1,4 +1,8 @@
-﻿#include "sf2_parser.h"
+﻿#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
+#include "sf2_parser.h"
 #include "soundbank_manager.h"  // 使用存储层接口
 #include "bg_config.h"           // 配置宏 (SYNTH_MAX_VOICES等)
 #include "bg_log.h"              // 日志接口
@@ -1218,3 +1222,5 @@ static SF2_Engine_Type detect_engine_type(const char *engine_name)
     BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "Engine detection: using STANDARD\n");
     return SF2_ENGINE_STANDARD;
 }
+
+#endif /* BANGTSYNTH_EN */

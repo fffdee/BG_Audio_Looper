@@ -44,7 +44,7 @@ import android.widget.EditText;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.core.view.GravityCompat;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends BaseActivity {
     private boolean isMultiSelectMode = false; // 是否多选模式
     private View exportPanel; // 底部导出按钮容器
     private ExportConfigManager exportConfigManager; // 导出配置管理器
@@ -74,21 +74,13 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_mecha);
+        setupBaseToolbar(true);
 
         // 获取全局BluetoothHelper实例
         bluetoothHelper = BluetoothManager.getInstance().getBluetoothHelper();
 
         // 初始化导出配置管理器
         exportConfigManager = new ExportConfigManager(this);
-
-        // 设置Toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        // 添加返回按钮
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
 
         // 初始化RecyclerView分割线
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
@@ -142,19 +134,21 @@ public class HomeActivity extends AppCompatActivity {
         updateBluetoothStatusUI();
 
         // Toolbar菜单点击事件
-        toolbar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.menu_create) {
-                startActivity(new Intent(HomeActivity.this, CreateProjectActivity.class));
-                return true;
-            } else if (item.getItemId() == R.id.menu_wechat_export) {
-                toggleMultiSelectMode();
-                return true;
-            } else if (item.getItemId() == R.id.menu_bluetooth) {
-                showBluetoothStatusDialog();
-                return true;
-            }
-            return false;
-        });
+        if (baseToolbar != null) {
+            baseToolbar.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.menu_create) {
+                    startActivity(new Intent(HomeActivity.this, CreateProjectActivity.class));
+                    return true;
+                } else if (item.getItemId() == R.id.menu_wechat_export) {
+                    toggleMultiSelectMode();
+                    return true;
+                } else if (item.getItemId() == R.id.menu_bluetooth) {
+                    showBluetoothStatusDialog();
+                    return true;
+                }
+                return false;
+            });
+        }
 
         // 初始化底部导出按钮点击事件
         View btnExportSelected = findViewById(R.id.btn_export_selected);
@@ -1031,6 +1025,11 @@ public class HomeActivity extends AppCompatActivity {
             e.printStackTrace();
             return false;
         }
+    }
+
+    @Override
+    protected String getToolbarTitle() {
+        return "项目列表";
     }
 
     @Override

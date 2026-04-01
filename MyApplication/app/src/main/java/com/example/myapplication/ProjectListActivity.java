@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectListActivity extends AppCompatActivity {
+public class ProjectListActivity extends BaseActivity {
     private ListView lvProjects;
     private List<ImageProject> projectList;
     private List<String> projectNames;

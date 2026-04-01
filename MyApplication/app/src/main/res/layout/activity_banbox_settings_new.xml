@@ -11,7 +11,10 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- 顶部状态栏 -->
+        <!-- 统一顶部导航栏 -->
+        <include layout="@layout/include_base_toolbar" />
+
+        <!-- 蓝牙状态卡片 -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

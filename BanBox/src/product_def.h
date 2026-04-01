@@ -27,13 +27,13 @@ extern "C" {
 #define USB_EN
 
 /* BanGTsynth MIDI 合成器模块 (注释掉此行可移除合成器功能) */
-#define BANGTSYNTH_EN
+/* #define BANGTSYNTH_EN */  /* 暂时禁用：节省 ~885 KB Flash，优先解决升级问题 */
 
 /*
  * BOOTLOADER_EN: 有 bootloader 时启用 A/B 分区管理和 BLE OTA
  * 注释掉此行以直接烧录（无 bootloader），方便快速功能验证
  */
-//#define BOOTLOADER_EN
+#define BOOTLOADER_EN
 
 #endif // BANBOX_1_0
 

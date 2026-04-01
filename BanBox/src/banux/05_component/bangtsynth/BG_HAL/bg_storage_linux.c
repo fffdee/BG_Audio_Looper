@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_config.h"
 #if (BG_TARGET_PLATFORM == BG_PLATFORM_LINUX)
 
@@ -267,3 +271,5 @@ const BG_Storage_Driver_t bg_storage_driver_linux = {
 };
 
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
+
+#endif /* BANGTSYNTH_EN */

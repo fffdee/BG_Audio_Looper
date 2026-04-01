@@ -8,6 +8,10 @@
  * 编译条件: BG_TARGET_PLATFORM == BG_PLATFORM_BP10
  */
 
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_config.h"
 #if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
 
@@ -180,3 +184,5 @@ const BG_Storage_Driver_t bg_storage_driver_bp10 = {
 };
 
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_BP10 */
+
+#endif /* BANGTSYNTH_EN */

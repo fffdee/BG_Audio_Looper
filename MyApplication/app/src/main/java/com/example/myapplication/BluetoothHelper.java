@@ -10,6 +10,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class BluetoothHelper {
@@ -35,8 +39,13 @@ public class BluetoothHelper {
     private boolean isCccdEnabled = false;  // 跟踪CCCD是否成功使能
     private String connectedDevice = null;
     private BluetoothGattCallback gattCallback;
-    private OnConnectionChangedListener listener;
+    // 多监听器列表（替代单一 listener）
+    private final List<OnConnectionChangedListener> connectionListeners = new ArrayList<>();
     private Handler handler = new Handler(Looper.getMainLooper());
+
+    // LiveData 用于全局蓝牙状态广播
+    private final MutableLiveData<BleConnectionState> connectionStateLiveData =
+            new MutableLiveData<>(BleConnectionState.disconnected());
     
     // CCCD重试控制
     private int cccdRetryCount = 0;
@@ -100,8 +109,71 @@ public class BluetoothHelper {
         void onDisconnected();
     }
 
+    /** @deprecated 使用 addConnectionListener / removeConnectionListener 代替 */
+    @Deprecated
     public void setOnConnectionChangedListener(OnConnectionChangedListener listener) {
-        this.listener = listener;
+        // 兼容旧代码：清除旧的，再添加新的
+        // 由于旧调用方式会覆盖，这里用 tag 方案保持兼容
+        synchronized (connectionListeners) {
+            connectionListeners.removeIf(l -> l instanceof TaggedListener && ((TaggedListener) l).tag.equals("legacy"));
+            if (listener != null) {
+                connectionListeners.add(new TaggedListener("legacy", listener));
+            }
+        }
+    }
+
+    public void addConnectionListener(OnConnectionChangedListener listener) {
+        if (listener == null) return;
+        synchronized (connectionListeners) {
+            if (!connectionListeners.contains(listener)) {
+                connectionListeners.add(listener);
+            }
+        }
+    }
+
+    public void removeConnectionListener(OnConnectionChangedListener listener) {
+        if (listener == null) return;
+        synchronized (connectionListeners) {
+            connectionListeners.remove(listener);
+        }
+    }
+
+    public LiveData<BleConnectionState> getConnectionStateLiveData() {
+        return connectionStateLiveData;
+    }
+
+    /** 内部包装类，用于兼容旧的 setOnConnectionChangedListener */
+    private static class TaggedListener implements OnConnectionChangedListener {
+        final String tag;
+        final OnConnectionChangedListener delegate;
+        TaggedListener(String tag, OnConnectionChangedListener delegate) {
+            this.tag = tag;
+            this.delegate = delegate;
+        }
+        @Override public void onConnected(String deviceName, BluetoothGatt gatt) { delegate.onConnected(deviceName, gatt); }
+        @Override public void onDisconnected() { delegate.onDisconnected(); }
+    }
+
+    /** 通知所有监听器：已连接 */
+    private void notifyConnected(String deviceName, BluetoothGatt gatt) {
+        List<OnConnectionChangedListener> snapshot;
+        synchronized (connectionListeners) {
+            snapshot = new ArrayList<>(connectionListeners);
+        }
+        for (OnConnectionChangedListener l : snapshot) {
+            l.onConnected(deviceName, gatt);
+        }
+    }
+
+    /** 通知所有监听器：已断开 */
+    private void notifyDisconnected() {
+        List<OnConnectionChangedListener> snapshot;
+        synchronized (connectionListeners) {
+            snapshot = new ArrayList<>(connectionListeners);
+        }
+        for (OnConnectionChangedListener l : snapshot) {
+            l.onDisconnected();
+        }
     }
 
     public boolean isConnected() {
@@ -129,9 +201,10 @@ public class BluetoothHelper {
                     // 主动请求MTU为250
                     boolean mtuReq = gatt.requestMtu(250);
                     Log.d("BLE", "requestMtu(250) called, result=" + mtuReq);
-                    handler.post(() -> {
-                        if (listener != null) listener.onConnected(connectedDevice, gatt);
-                    });
+                    // 更新 LiveData
+                    connectionStateLiveData.postValue(
+                            BleConnectionState.connected(connectedDevice, gatt));
+                    handler.post(() -> notifyConnected(connectedDevice, gatt));
                     gatt.discoverServices();
                 } else if (newState == android.bluetooth.BluetoothProfile.STATE_DISCONNECTED) {
                     isConnected = false;
@@ -139,9 +212,9 @@ public class BluetoothHelper {
                     cccdRetryCount = 0;  // 重置重试计数
                     connectedDevice = null;
                     bluetoothGatt = null;
-                    handler.post(() -> {
-                        if (listener != null) listener.onDisconnected();
-                    });
+                    // 更新 LiveData
+                    connectionStateLiveData.postValue(BleConnectionState.disconnected());
+                    handler.post(() -> notifyDisconnected());
                 }
             }
             @Override
@@ -501,6 +574,8 @@ public class BluetoothHelper {
         connectedDevice = null;
         // 清空数据缓冲区
         dataBuffer.setLength(0);
-        if (listener != null) listener.onDisconnected();
+        // 更新 LiveData 并通知所有监听器
+        connectionStateLiveData.postValue(BleConnectionState.disconnected());
+        handler.post(() -> notifyDisconnected());
     }
 }

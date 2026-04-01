@@ -39,7 +39,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BanBoxSettingsActivity extends AppCompatActivity {
+public class BanBoxSettingsActivity extends BaseActivity {
     private BluetoothHelper bluetoothHelper;
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
     private BluetoothAdapter bluetoothAdapter;
@@ -82,6 +82,7 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
         bluetoothHelper = com.example.myapplication.BluetoothManager.getInstance().getBluetoothHelper();
 
         setContentView(R.layout.activity_banbox_settings_new);
+        setupBaseToolbar(true);
 
         // 初始化SharedPreferences（保存设置）
         sharedPreferences = getSharedPreferences("BanBoxSettings", MODE_PRIVATE);
@@ -199,9 +200,13 @@ public class BanBoxSettingsActivity extends AppCompatActivity {
     }
 
     @Override
+    protected String getToolbarTitle() {
+        return "BanBox 设置";
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        // 从子 Activity 返回时刷新连接状态 UI
         if (tvConnectionStatus != null) {
             updateConnectionStatus(tvConnectionStatus, tvDeviceNameView, btnConnectView);
         }

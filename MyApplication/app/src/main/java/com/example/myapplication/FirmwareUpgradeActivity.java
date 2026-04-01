@@ -41,7 +41,7 @@ import java.util.Deque;
  *
  * 使用 BluetoothHelper 的原始字节回调处理升级协议响应。
  */
-public class FirmwareUpgradeActivity extends AppCompatActivity {
+public class FirmwareUpgradeActivity extends BaseActivity {
     private static final String TAG = "FirmwareUpgrade";
 
     // UI 控件
@@ -92,6 +92,7 @@ public class FirmwareUpgradeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_firmware_upgrade);
+        setupBaseToolbar(true);
 
         // 查找UI控件
         initViews();
@@ -103,11 +104,7 @@ public class FirmwareUpgradeActivity extends AppCompatActivity {
         // 设置原始字节回调，用于接收升级协议响应
         bluetoothHelper.setRawDataListener(this::onRawDataReceived);
 
-        // 返回按钮
-        ImageButton btnBack = findViewById(R.id.btn_back);
-        if (btnBack != null) {
-            btnBack.setOnClickListener(v -> finish());
-        }
+        // 返回按钮已由 BaseActivity.setupBaseToolbar 处理
 
         // 选择文件
         btnSelectFile.setOnClickListener(v -> selectFirmwareFile());
@@ -120,6 +117,11 @@ public class FirmwareUpgradeActivity extends AppCompatActivity {
 
         // 回退至A区
         btnRollback.setOnClickListener(v -> doRollback());
+    }
+
+    @Override
+    protected String getToolbarTitle() {
+        return "固件升级";
     }
 
     private void initViews() {

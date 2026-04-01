@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "midi_controller.h"
 #include "bg_config.h"
 #include "hardware_interfance.h"
@@ -216,3 +220,5 @@ void MIDI_Message_Handle(uint8_t *data, uint8_t len)
 
 
 }
+
+#endif /* BANGTSYNTH_EN */

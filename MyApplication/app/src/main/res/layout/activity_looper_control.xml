@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -11,16 +11,10 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-    <!-- Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_darker"
-        app:titleTextColor="@color/text_primary"
-        app:title="🎛 Looper 控制" />
+    <!-- 统一顶部导航�?-->
+    <include layout="@layout/include_base_toolbar" />
 
-    <!-- ===== 顶部信息栏：BPM / 节拍 / 节拍器模式 / 硬件状态 ===== -->
+    <!-- ===== 顶部信息栏：BPM / 节拍 / 节拍器模�?/ 硬件状�?===== -->
     <LinearLayout
         android:id="@+id/layout_top_info"
         android:layout_width="match_parent"
@@ -69,7 +63,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="节拍"
+                android:text="节拍器"
                 android:textColor="@color/text_secondary"
                 android:textSize="10sp" />
             <TextView
@@ -82,7 +76,7 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 节拍器模式卡片 -->
+        <!-- 节拍器模式卡�?-->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -108,7 +102,7 @@
                 android:gravity="center" />
         </LinearLayout>
 
-        <!-- 硬件状态卡片 -->
+        <!-- 硬件状态卡�?-->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -158,7 +152,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:text="—"
+            android:text="--"
             android:textColor="@color/primary_accent"
             android:textSize="12sp"
             android:maxLines="3"
@@ -193,7 +187,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="▶ 循环段控制"
+                android:text="⏱ 循环段控制"
                 android:textColor="@color/primary_accent_glow"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -202,25 +196,18 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="未录制 → 录制 → 播放 → 暂停 → 播放…"
+                android:text="未录制 / 录制 / 播放 / 暂停 / 播放中"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- ═══════ Loop 状态信息面板（始终可见，卡片上方） ═══════ -->
+            <!-- ══════�?Loop 状态信息面板（始终可见，卡片上方） ══════�?-->
             <LinearLayout
                 android:id="@+id/layout_loop_sync_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:background="#1A2535"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:layout_marginBottom="8dp"
-                android:gravity="center_vertical"
-                android:visibility="gone">
+                android:background="@color/panel_bg">
 
                 <!-- 大号倒数数字框 -->
                 <LinearLayout
@@ -229,7 +216,7 @@
                     android:layout_height="72dp"
                     android:orientation="vertical"
                     android:gravity="center"
-                    android:background="#FF2222"
+                    android:background="@color/countdown_box_bg"
                     android:layout_marginEnd="12dp">
 
                     <TextView
@@ -252,7 +239,7 @@
                         android:gravity="center" />
                 </LinearLayout>
 
-                <!-- 文字信息区 -->
+                <!-- 文字信息�?-->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -263,7 +250,7 @@
                         android:id="@+id/tv_loop_sync_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="⏳ 同步信息"
+                        android:text="● 同步信息"
                         android:textColor="@color/text_accent"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -280,14 +267,14 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Loop 按钮行 -->
+            <!-- Loop 按钮�?-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="10dp">
 
-                <!-- 段0 -->
+                <!-- �? -->
                 <FrameLayout
                     android:id="@+id/card_seg0"
                     android:layout_width="0dp"
@@ -331,7 +318,7 @@
                                 android:id="@+id/tv_seg0_hint"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="点击 → 开始录制"
+                                android:text="点击 ▶ 开始录制"
                                 android:textColor="@color/text_tertiary"
                                 android:textSize="10sp"
                                 android:layout_marginTop="2dp" />
@@ -340,25 +327,25 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="∞  ► 播放"
-                                android:textColor="#60B0C0"
+                                android:textColor="@color/cfg_hint_color"
                                 android:textSize="9sp"
                                 android:layout_marginTop="4dp" />
                         </LinearLayout>
 
-                        <!-- 底部重置行 -->
-                        <!-- 分隔线 -->
+                        <!-- 底部重置�?-->
+                        <!-- 分隔�?-->
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:background="#30FFFFFF" />
-                        <!-- 底部工具行：⏱ 最大时长选择 chip  +  🗑 删除按钮 -->
+                            android:background="@color/divider_color" />
+                        <!-- 底部工具行：�?最大时长选择 chip  +  🗑 删除按钮 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:background="#1A2535">
+                            android:background="@color/panel_bg">
 
-                            <!-- 第一行：跟随 / 等长 / 等本轮 -->
+                            <!-- 第一行：跟随 / 等长 / 等本�?-->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -396,7 +383,7 @@
                                     android:enabled="false"
                                     android:alpha="0.4"
                                     android:contentDescription="录制等长" />
-                                <!-- 等待本轮播完再停止 -->
+                                <!-- 等待本轮播完再停止"-->
                                 <ImageButton
                                     android:id="@+id/btn_seg0_wait_finish"
                                     android:layout_width="0dp"
@@ -412,7 +399,7 @@
                                     android:contentDescription="等待本轮播完再停止" />
                             </LinearLayout>
 
-                            <!-- 第二行：最大时长 chip + 删除按钮 -->
+                            <!-- 第二行：最大时�?chip + 删除按钮 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -422,7 +409,7 @@
                                 android:paddingEnd="8dp"
                                 android:paddingTop="2dp"
                                 android:paddingBottom="6dp">
-                                <!-- 最大录制时长选择器 chip -->
+                                <!-- 最大录制时长选择�?chip -->
                                 <TextView
                                     android:id="@+id/tv_seg0_max_rec"
                                     android:layout_width="0dp"
@@ -430,7 +417,7 @@
                                     android:layout_weight="1"
                                     android:gravity="center"
                                     android:text="⏱ 10s"
-                                    android:textColor="#CCA030"
+                                    android:textColor="@color/chip_text_color"
                                     android:textSize="11sp"
                                     android:background="@drawable/chip_max_rec"
                                     android:clickable="true"
@@ -456,7 +443,7 @@
 
                     </LinearLayout>
 
-                    <!-- 右上角配置按钮 -->
+                    <!-- 右上角配置按�?-->
                     <ImageButton
                         android:id="@+id/btn_seg0_config"
                         android:layout_width="30dp"
@@ -471,7 +458,7 @@
                         android:contentDescription="段录制设置" />
                 </FrameLayout>
 
-                <!-- 段1 -->
+                <!-- �? -->
                 <FrameLayout
                     android:id="@+id/card_seg1"
                     android:layout_width="0dp"
@@ -515,7 +502,7 @@
                                 android:id="@+id/tv_seg1_hint"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="点击 → 开始录制"
+                                android:text="点击 ▶ 开始录制"
                                 android:textColor="@color/text_tertiary"
                                 android:textSize="10sp"
                                 android:layout_marginTop="2dp" />
@@ -524,25 +511,25 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="∞  ► 播放"
-                                android:textColor="#60B0C0"
+                                android:textColor="@color/cfg_hint_color"
                                 android:textSize="9sp"
                                 android:layout_marginTop="4dp" />
                         </LinearLayout>
 
-                        <!-- 底部重置行 -->
-                        <!-- 分隔线 -->
+                        <!-- 底部重置�?-->
+                        <!-- 分隔�?-->
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:background="#30FFFFFF" />
+                            android:background="@color/divider_color" />
                         <!-- 底部工具行：两行布局 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:background="#1A2535">
+                            android:background="@color/panel_bg">
 
-                            <!-- 第一行：跟随 / 等长 / 等本轮 -->
+                            <!-- 第一行：跟随 / 等长 / 等本�?-->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -580,7 +567,7 @@
                                     android:enabled="false"
                                     android:alpha="0.4"
                                     android:contentDescription="录制等长" />
-                                <!-- 等待本轮播完再停止 -->
+                                <!-- 等待本轮播完再停止"-->
                                 <ImageButton
                                     android:id="@+id/btn_seg1_wait_finish"
                                     android:layout_width="0dp"
@@ -596,7 +583,7 @@
                                     android:contentDescription="等待本轮播完再停止" />
                             </LinearLayout>
 
-                            <!-- 第二行：最大时长 chip + 删除按钮 -->
+                            <!-- 第二行：最大时�?chip + 删除按钮 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -606,7 +593,7 @@
                                 android:paddingEnd="8dp"
                                 android:paddingTop="2dp"
                                 android:paddingBottom="6dp">
-                                <!-- 最大录制时长选择器 chip -->
+                                <!-- 最大录制时长选择�?chip -->
                                 <TextView
                                     android:id="@+id/tv_seg1_max_rec"
                                     android:layout_width="0dp"
@@ -614,7 +601,7 @@
                                     android:layout_weight="1"
                                     android:gravity="center"
                                     android:text="⏱ 10s"
-                                    android:textColor="#CCA030"
+                                    android:textColor="@color/chip_text_color"
                                     android:textSize="11sp"
                                     android:background="@drawable/chip_max_rec"
                                     android:clickable="true"
@@ -660,13 +647,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="8dp" />
 
-            <!-- ═══════ 全局控制区 ═══════ -->
+            <!-- ══════�?全局控制�?══════�?-->
             <LinearLayout
                 android:id="@+id/layout_global_controls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#1A2535"
+                android:background="@color/panel_bg"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:paddingTop="10dp"
@@ -676,8 +663,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚡ 全局控制"
-                    android:textColor="#00D9FF"
+                    android:text="⚙ 全局控制"
+                    android:textColor="@color/text_accent"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
@@ -696,10 +683,10 @@
                         android:layout_height="52dp"
                         android:layout_weight="1"
                         android:layout_marginEnd="6dp"
-                        android:text="↪ 衔接\n1→2"
+                        android:text="衔接\n1→2"
                         android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:background="#1F2937"
+                        android:textColor="@color/text_primary"
+                        android:background="@color/panel_bg_alt"
                         android:enabled="false"
                         android:alpha="0.4" />
 
@@ -709,10 +696,10 @@
                         android:layout_width="0dp"
                         android:layout_height="52dp"
                         android:layout_weight="1"
-                        android:text="⤵ 接入\n下轮"
+                        android:text="接入\n下轮"
                         android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:background="#1F2937"
+                        android:textColor="@color/text_primary"
+                        android:background="@color/panel_bg_alt"
                         android:enabled="false"
                         android:alpha="0.4" />
                 </LinearLayout>
@@ -732,8 +719,8 @@
                         android:layout_marginEnd="6dp"
                         android:text="▶▶ 全部\n播放"
                         android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:background="#1F2937"
+                        android:textColor="@color/text_primary"
+                        android:background="@color/panel_bg_alt"
                         android:enabled="false"
                         android:alpha="0.4" />
 
@@ -745,21 +732,21 @@
                         android:layout_weight="1"
                         android:text="■■ 全部\n停止"
                         android:textSize="11sp"
-                        android:textColor="#FFFFFF"
-                        android:background="#1F2937"
+                        android:textColor="@color/text_primary"
+                        android:background="@color/panel_bg_alt"
                         android:enabled="false"
                         android:alpha="0.4" />
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- ═══════ 音频轨面板 ═══════ -->
+            <!-- ══════�?音频轨面�?══════�?-->
             <LinearLayout
                 android:id="@+id/layout_audio_tracks_panel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#1A2535"
+                android:background="@color/panel_bg"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:paddingTop="10dp"
@@ -770,13 +757,13 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎵 音频轨"
-                    android:textColor="#00D9FF"
+                    android:text="🎥 音频轨"
+                    android:textColor="@color/text_accent"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
 
-                <!-- 动态添加音频轨卡片的容器 -->
+                <!-- 动态添加音频轨卡片的容�?-->
                 <LinearLayout
                     android:id="@+id/container_audio_tracks"
                     android:layout_width="match_parent"
@@ -799,7 +786,7 @@
     <!-- 侧边栏：Looper 全局设置 -->
     <include layout="@layout/drawer_looper_settings" />
 
-    <!-- 半透明遮罩（点击关闭侧边栏） -->
+    <!-- 半透明遮罩（点击关闭侧边栏�?-->
     <View
         android:id="@+id/looper_drawer_overlay"
         android:layout_width="match_parent"

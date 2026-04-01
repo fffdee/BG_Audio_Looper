@@ -4,6 +4,10 @@
  * 作者: BanGO
  */
 
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_config.h"
 #if (BG_TARGET_PLATFORM == BG_PLATFORM_LINUX)
 
@@ -71,3 +75,5 @@ bg_filesystem_t bg_filesystem = {
 };
 
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
+
+#endif /* BANGTSYNTH_EN */

@@ -30,7 +30,7 @@
     <!-- 调试/次要按钮样式 - 深色渐变 -->
     <style name="DebugButton" parent="BaseButton">
         <item name="android:background">@drawable/button_debug</item>
-        <item name="android:textColor">#AAAAAA</item>
+        <item name="android:textColor">@color/text_secondary</item>
     </style>
 
     <!-- EQ专用按钮样式 -->
@@ -42,6 +42,7 @@
     <style name="EqSecondaryButton" parent="BaseButton">
         <item name="android:background">@drawable/button_secondary</item>
         <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
 
     <style name="EqDangerButton" parent="BaseButton">

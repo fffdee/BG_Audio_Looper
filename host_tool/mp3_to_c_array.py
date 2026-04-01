@@ -15,7 +15,8 @@ import lameenc
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QGroupBox, QLabel, QLineEdit, QPushButton, QTextEdit, QFileDialog,
-    QProgressBar, QStatusBar, QSplitter, QMessageBox, QComboBox, QSlider, QSpinBox
+    QProgressBar, QStatusBar, QSplitter, QMessageBox, QComboBox, QSlider, QSpinBox,
+    QDoubleSpinBox, QCheckBox
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QUrl, QEventLoop
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QAudioDecoder, QAudioFormat
@@ -55,13 +56,16 @@ class ConvertWorker(QThread):
     finished_err = pyqtSignal(str)   # error message
 
     def __init__(self, src_path: str, out_dir: str, array_name: str,
-                 volume_pct: int = 100, pre_data: bytes = None):
+                 volume_pct: int = 100, pre_data: bytes = None,
+                 trim_start_ms: int = 0, trim_end_ms: int = 0):
         super().__init__()
-        self.src_path   = src_path
-        self.out_dir    = out_dir
-        self.array_name = array_name
-        self.volume_pct = max(1, min(200, volume_pct))  # clamp 1-200%
-        self.pre_data   = pre_data  # MP3 音量调整后的字节（主线程预处理）
+        self.src_path      = src_path
+        self.out_dir       = out_dir
+        self.array_name    = array_name
+        self.volume_pct    = max(1, min(200, volume_pct))  # clamp 1-200%
+        self.pre_data      = pre_data  # MP3 音量/裁剪后的字节（主线程预处理）
+        self.trim_start_ms = trim_start_ms
+        self.trim_end_ms   = trim_end_ms
 
     def log(self, msg: str):
         self.log_signal.emit(msg)
@@ -103,6 +107,31 @@ class ConvertWorker(QThread):
             wf.writeframes(scaled)
         return buf_out.getvalue()
 
+    def _trim_wav(self, data: bytes, start_ms: int, end_ms: int) -> bytes:
+        """对 WAV 文件按起止时间（毫秒）裁剪，返回新的 WAV bytes。"""
+        buf_in = io.BytesIO(data)
+        try:
+            with wave.open(buf_in) as wf:
+                n_channels = wf.getnchannels()
+                sampwidth  = wf.getsampwidth()
+                framerate  = wf.getframerate()
+                n_frames   = wf.getnframes()
+                start_frame = int(framerate * start_ms / 1000)
+                end_frame   = int(framerate * end_ms / 1000) if end_ms > 0 else n_frames
+                start_frame = max(0, min(start_frame, n_frames))
+                end_frame   = max(start_frame, min(end_frame, n_frames))
+                wf.setpos(start_frame)
+                pcm = wf.readframes(end_frame - start_frame)
+        except Exception as e:
+            raise ValueError(f"WAV 解析失败，无法裁剪: {e}")
+        buf_out = io.BytesIO()
+        with wave.open(buf_out, 'wb') as wf:
+            wf.setnchannels(n_channels)
+            wf.setsampwidth(sampwidth)
+            wf.setframerate(framerate)
+            wf.writeframes(pcm)
+        return buf_out.getvalue()
+
     def _convert(self):
         src = self.src_path
         if not os.path.isfile(src):
@@ -115,13 +144,25 @@ class ConvertWorker(QThread):
         with open(src, "rb") as f:
             data = f.read()
 
+        ext = os.path.splitext(src)[1].lower()
+
+        # ------------------------------------------------------------------
+        # WAV 长度裁剪（在音量调整之前执行）
+        # ------------------------------------------------------------------
+        if (self.trim_start_ms > 0 or self.trim_end_ms > 0) and ext == '.wav':
+            start_s = self.trim_start_ms / 1000.0
+            end_s   = self.trim_end_ms / 1000.0
+            self.log(f"裁剪 WAV: {start_s:.3f}s ~ {end_s:.3f}s")
+            self.progress.emit(5)
+            data = self._trim_wav(data, self.trim_start_ms, self.trim_end_ms)
+            self.log(f"裁剪完成，新大小: {len(data):,} 字节")
+
         # ------------------------------------------------------------------
         # 检测文件类型并执行音量调整
         # WAV:  wave + audioop 直接 PCM 缩放
         # MP3:  QAudioDecoder 解码 → audioop 缩放 → 输出 WAV（固件 RIFF 自动检测）
         # 其他: 跳过音量调整，按原始数据嵌入
         # ------------------------------------------------------------------
-        ext        = os.path.splitext(src)[1].lower()
         vol        = self.volume_pct
         output_ext = ext   # 记录实际输出扩展名（MP3 调音量时改为 .wav）
         if vol != 100:
@@ -218,6 +259,10 @@ class ConvertWorker(QThread):
                 self.log(f"音量设置 : {self.volume_pct}%  (格式不支持，按原始电平嵌入)")
         else:
             self.log(f"音量设置 : 100%  (原始电平，未修改)")
+        if self.trim_start_ms > 0 or self.trim_end_ms > 0:
+            self.log(f"长度裁剪 : {self.trim_start_ms/1000:.3f}s ~ {self.trim_end_ms/1000:.3f}s")
+        else:
+            self.log(f"长度裁剪 : 未启用（完整文件）")
         self.log(f"固件 ROM 占用: ~{total:,} 字节 ({total/1024:.1f} KB)")
         self.log("转换完成！")
         self.finished_ok.emit(h_path, c_path)
@@ -235,6 +280,8 @@ class MainWindow(QMainWindow):
         self._worker = None
         self._player = QMediaPlayer()
         self._player.stateChanged.connect(self._on_player_state_changed)
+        self._player.durationChanged.connect(self._on_duration_detected)
+        self._audio_duration_ms = 0
         self._build_ui()
 
     # ------------------------------------------------------------------
@@ -317,6 +364,52 @@ class MainWindow(QMainWindow):
         self.src_edit.textChanged.connect(self._update_vol_state)
         root.addWidget(grp_vol)
 
+        # ---- Trim ----
+        grp_trim = QGroupBox("长度裁剪  (WAV / MP3 支持)")
+        lay_trim_outer = QVBoxLayout(grp_trim)
+        lay_trim_top = QHBoxLayout()
+        self.trim_check = QCheckBox("启用裁剪")
+        self.trim_check.setChecked(False)
+        self.trim_check.toggled.connect(self._on_trim_toggled)
+        self.trim_duration_lbl = QLabel("总时长: --")
+        self.trim_duration_lbl.setStyleSheet("color: #aaa;")
+        lay_trim_top.addWidget(self.trim_check)
+        lay_trim_top.addStretch()
+        lay_trim_top.addWidget(self.trim_duration_lbl)
+        lay_trim_outer.addLayout(lay_trim_top)
+        lay_trim_spin = QHBoxLayout()
+        lbl_start = QLabel("开始:")
+        self.trim_start_spin = QDoubleSpinBox()
+        self.trim_start_spin.setRange(0, 9999.0)
+        self.trim_start_spin.setValue(0)
+        self.trim_start_spin.setDecimals(3)
+        self.trim_start_spin.setSuffix(" 秒")
+        self.trim_start_spin.setSingleStep(0.1)
+        self.trim_start_spin.setFixedWidth(120)
+        self.trim_start_spin.setEnabled(False)
+        lbl_end = QLabel("结束:")
+        self.trim_end_spin = QDoubleSpinBox()
+        self.trim_end_spin.setRange(0, 9999.0)
+        self.trim_end_spin.setValue(0)
+        self.trim_end_spin.setDecimals(3)
+        self.trim_end_spin.setSuffix(" 秒")
+        self.trim_end_spin.setSingleStep(0.1)
+        self.trim_end_spin.setFixedWidth(120)
+        self.trim_end_spin.setEnabled(False)
+        lay_trim_spin.addWidget(lbl_start)
+        lay_trim_spin.addWidget(self.trim_start_spin)
+        lay_trim_spin.addSpacing(16)
+        lay_trim_spin.addWidget(lbl_end)
+        lay_trim_spin.addWidget(self.trim_end_spin)
+        lay_trim_spin.addStretch()
+        lay_trim_outer.addLayout(lay_trim_spin)
+        lbl_trim_hint = QLabel("选择文件后自动检测时长  |  结束=0 表示到文件末尾")
+        lbl_trim_hint.setStyleSheet("color: #888; font-size: 9px;")
+        lay_trim_outer.addWidget(lbl_trim_hint)
+        self.src_edit.textChanged.connect(self._on_src_changed)
+        self.src_edit.textChanged.connect(self._update_trim_state)
+        root.addWidget(grp_trim)
+
         # ---- Preview ----
         grp_preview = QGroupBox("试听  (播放原始文件，音量旋鈕实时控制预听电平)")
         lay_preview = QHBoxLayout()
@@ -398,7 +491,63 @@ class MainWindow(QMainWindow):
             self.vol_slider.setValue(100)
             self.vol_spinbox.setValue(100)
 
-    def _decode_mp3_for_volume(self, src_path: str, vol_pct: int) -> bytes:
+    def _update_trim_state(self, src_path: str):
+        """WAV / MP3 支持裁剪；其他格式置灰。"""
+        ext = src_path.lower()
+        trim_ok = ext.endswith('.wav') or ext.endswith('.mp3')
+        self.trim_check.setEnabled(trim_ok)
+        enabled = trim_ok and self.trim_check.isChecked()
+        self.trim_start_spin.setEnabled(enabled)
+        self.trim_end_spin.setEnabled(enabled)
+        if not trim_ok and src_path:
+            self.trim_check.setChecked(False)
+
+    def _on_trim_toggled(self, checked: bool):
+        src = self.src_edit.text().strip().lower()
+        trim_ok = src.endswith('.wav') or src.endswith('.mp3')
+        enabled = checked and trim_ok
+        self.trim_start_spin.setEnabled(enabled)
+        self.trim_end_spin.setEnabled(enabled)
+
+    def _on_src_changed(self, src_path: str):
+        """检测音频时长，更新裁剪控件范围。"""
+        self._audio_duration_ms = 0
+        if not src_path or not os.path.isfile(src_path):
+            self._update_trim_range(0)
+            return
+        ext = os.path.splitext(src_path)[1].lower()
+        if ext == '.wav':
+            try:
+                with wave.open(src_path) as wf:
+                    dur_ms = int(wf.getnframes() / wf.getframerate() * 1000)
+                self._audio_duration_ms = dur_ms
+                self._update_trim_range(dur_ms)
+            except Exception:
+                self._update_trim_range(0)
+        elif ext == '.mp3':
+            # QMediaPlayer 异步检测时长，durationChanged 回调更新
+            self._player.setMedia(QMediaContent(QUrl.fromLocalFile(src_path)))
+        else:
+            self._update_trim_range(0)
+
+    def _on_duration_detected(self, duration_ms: int):
+        if duration_ms > 0:
+            self._audio_duration_ms = duration_ms
+            self._update_trim_range(duration_ms)
+
+    def _update_trim_range(self, duration_ms: int):
+        dur_sec = duration_ms / 1000.0
+        self.trim_start_spin.setMaximum(max(0, dur_sec - 0.001) if dur_sec > 0 else 9999.0)
+        self.trim_end_spin.setMaximum(dur_sec if dur_sec > 0 else 9999.0)
+        self.trim_end_spin.setValue(dur_sec)
+        self.trim_start_spin.setValue(0)
+        if duration_ms > 0:
+            self.trim_duration_lbl.setText(f"总时长: {dur_sec:.3f} 秒")
+        else:
+            self.trim_duration_lbl.setText("总时长: --")
+
+    def _preprocess_mp3(self, src_path: str, vol_pct: int,
+                        trim_start_ms: int = 0, trim_end_ms: int = 0) -> bytes:
         """在主线程用 QAudioDecoder 解码 MP3 → PCM 缩放 → lameenc 编码回 MP3。
         QAudioDecoder 是 Qt 多媒体对象，只能在主线程（有完整事件循环的线程）使用。
         """
@@ -451,6 +600,16 @@ class MainWindow(QMainWindow):
             raise ValueError("未获取到 PCM 数据，请确认 Windows 已安装 MP3 解码器")
 
         pcm = bytes(pcm_data)
+
+        # 裁剪 PCM（16-bit stereo, 44100 Hz）
+        frame_size = 2 * 2  # 16-bit * 2ch = 4 bytes/frame
+        if trim_start_ms > 0 or trim_end_ms > 0:
+            start_byte = int(44100 * trim_start_ms / 1000) * frame_size
+            end_byte   = int(44100 * trim_end_ms / 1000) * frame_size if trim_end_ms > 0 else len(pcm)
+            start_byte = max(0, min(start_byte, len(pcm)))
+            end_byte   = max(start_byte, min(end_byte, len(pcm)))
+            pcm = pcm[start_byte:end_byte]
+
         scaled = audioop.mul(pcm, 2, vol_pct / 100.0)
 
         enc = lameenc.Encoder()
@@ -542,23 +701,34 @@ class MainWindow(QMainWindow):
         vol = self.vol_spinbox.value()
         ext = os.path.splitext(src)[1].lower()
 
-        # MP3 音量调整必须在主线程用 QAudioDecoder 完成（Qt 多媒体对象不能在子线程使用）
+        trim_enabled  = self.trim_check.isChecked()
+        trim_start_ms = int(self.trim_start_spin.value() * 1000) if trim_enabled else 0
+        trim_end_ms   = int(self.trim_end_spin.value() * 1000) if trim_enabled else 0
+
+        # MP3 音量调整/裁剪必须在主线程用 QAudioDecoder 完成（Qt 多媒体对象不能在子线程使用）
         pre_data = None
-        if ext == '.mp3' and vol != 100:
-            self._append_log(f"解码 MP3 并调整音量 {vol}%（主线程）...")
-            self.statusBar().showMessage("正在解码 MP3...")
+        need_mp3_preprocess = ext == '.mp3' and (vol != 100 or trim_start_ms > 0 or trim_end_ms > 0)
+        if need_mp3_preprocess:
+            desc = []
+            if vol != 100:
+                desc.append(f"音量 {vol}%")
+            if trim_start_ms > 0 or trim_end_ms > 0:
+                desc.append(f"裁剪 {trim_start_ms/1000:.3f}s~{trim_end_ms/1000:.3f}s")
+            self._append_log(f"预处理 MP3（{', '.join(desc)}）（主线程）...")
+            self.statusBar().showMessage("正在预处理 MP3...")
             QApplication.processEvents()  # 刷新 UI，防止假死
             try:
-                pre_data = self._decode_mp3_for_volume(src, vol)
-                self._append_log(f"MP3 重编码完成: {len(pre_data):,} 字节 ({len(pre_data)/1024:.1f} KB)")
+                pre_data = self._preprocess_mp3(src, vol, trim_start_ms, trim_end_ms)
+                self._append_log(f"MP3 预处理完成: {len(pre_data):,} 字节 ({len(pre_data)/1024:.1f} KB)")
             except Exception as e:
                 self.convert_btn.setEnabled(True)
-                self.statusBar().showMessage("MP3 解码失败")
-                self._append_log(f"[ERROR] MP3 解码失败: {e}")
-                QMessageBox.critical(self, "MP3 解码失败", str(e))
+                self.statusBar().showMessage("MP3 预处理失败")
+                self._append_log(f"[ERROR] MP3 预处理失败: {e}")
+                QMessageBox.critical(self, "MP3 预处理失败", str(e))
                 return
 
-        self._worker = ConvertWorker(src, out, name, volume_pct=vol, pre_data=pre_data)
+        self._worker = ConvertWorker(src, out, name, volume_pct=vol, pre_data=pre_data,
+                                     trim_start_ms=trim_start_ms, trim_end_ms=trim_end_ms)
         self._worker.log_signal.connect(self._append_log)
         self._worker.progress.connect(self.progress_bar.setValue)
         self._worker.finished_ok.connect(self._on_success)

@@ -5,7 +5,7 @@
         <layer-list>
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#3D3D3D" />
+                    <solid android:color="#C0C0C0" />
                     <corners android:radius="20dp" />
                 </shape>
             </item>
@@ -17,20 +17,20 @@
         <layer-list>
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#00AA66" />
+                    <solid android:color="#008A55" />
                     <corners android:radius="20dp" />
                 </shape>
             </item>
         </layer-list>
     </item>
     
-    <!-- 正常状态 - 绿色渐变+强发光 -->
+    <!-- 正常状态 - 绿色渐变 -->
     <item>
         <layer-list>
-            <!-- 强发光外层 -->
+            <!-- 阴影外层 -->
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#6000FFA3" />
+                    <solid android:color="#3000C980" />
                     <corners android:radius="22dp" />
                 </shape>
             </item>
@@ -39,9 +39,9 @@
                 <shape android:shape="rectangle">
                     <gradient
                         android:angle="135"
-                        android:startColor="#00FFA3"
-                        android:centerColor="#00CC88"
-                        android:endColor="#009966"
+                        android:startColor="#00C980"
+                        android:centerColor="#00A366"
+                        android:endColor="#008855"
                         android:type="linear" />
                     <corners android:radius="20dp" />
                 </shape>

@@ -11,8 +11,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
-public class HardwareVolumeActivity extends AppCompatActivity {
+public class HardwareVolumeActivity extends BaseActivity {
     private static final String[] CHANNELS = {"Guitar1", "Guitar2", "Mic1", "Mic2", "Output"};
     private static final String[] CMD_OPTS = {"-g1", "-g2", "-m1", "-m2", "-o"};
     private static final int[] DEFAULT_VALUES = {50, 50, 50, 50, 80};
@@ -43,10 +44,7 @@ public class HardwareVolumeActivity extends AppCompatActivity {
         }
         
         setContentView(R.layout.activity_hardware_volume);
-
-        // 初始化返回按钮
-        ImageButton btnBack = findViewById(R.id.btn_back_volume);
-        btnBack.setOnClickListener(v -> finish());
+        setupBaseToolbar(true);
 
         // 初始化保存按钮
         ImageButton btnSave = findViewById(R.id.btn_save_volume);
@@ -63,6 +61,11 @@ public class HardwareVolumeActivity extends AppCompatActivity {
         queryVolumeParams();
     }
     
+    @Override
+    protected String getToolbarTitle() {
+        return "音量控制";
+    }
+
     /**
      * 设置BLE通知监听器
      */
@@ -338,7 +341,7 @@ public class HardwareVolumeActivity extends AppCompatActivity {
             TextView labelText = new TextView(this);
             labelText.setText(channel);
             labelText.setTextSize(14);
-            labelText.setTextColor(Color.WHITE);
+            labelText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
             labelText.setGravity(Gravity.CENTER);
             labelText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             labelText.setPadding(0, 12, 0, 0);

@@ -12,8 +12,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
-public class FxControlActivity extends AppCompatActivity {
+public class FxControlActivity extends BaseActivity {
     // DRC 参数配置
     private static final String[] DRC_PARAMS = {"Threshold", "Ratio", "Attack", "Release"};
     private static final int[] DRC_RANGES = {-60, 0, 1, 20, 1, 500, 10, 2000};
@@ -49,10 +50,7 @@ public class FxControlActivity extends AppCompatActivity {
         }
         
         setContentView(R.layout.activity_fx_control);
-
-        // 初始化返回按钮
-        ImageButton btnBack = findViewById(R.id.btn_back);
-        btnBack.setOnClickListener(v -> finish());
+        setupBaseToolbar(true);
 
         // 初始化保存按钮
         ImageButton btnSave = findViewById(R.id.btn_save_fx);
@@ -60,11 +58,11 @@ public class FxControlActivity extends AppCompatActivity {
 
         // 创建 DRC 滑条
         LinearLayout drcContainer = findViewById(R.id.drc_sliders_container);
-        createVerticalSliders(drcContainer, 10, DRC_PARAMS, DRC_RANGES, DRC_DEFAULTS, "#00FFA3");
+        createVerticalSliders(drcContainer, 10, DRC_PARAMS, DRC_RANGES, DRC_DEFAULTS, R.color.text_success);
 
         // 创建混响滑条
         LinearLayout reverbContainer = findViewById(R.id.reverb_sliders_container);
-        createVerticalSliders(reverbContainer, 12, REVERB_PARAMS, REVERB_RANGES, REVERB_DEFAULTS, "#00D9FF");
+        createVerticalSliders(reverbContainer, 12, REVERB_PARAMS, REVERB_RANGES, REVERB_DEFAULTS, R.color.text_accent);
         
         // 设置BLE通知监听器来接收查询响应
         setupBleNotificationListener();
@@ -73,6 +71,11 @@ public class FxControlActivity extends AppCompatActivity {
         queryEffectParams();
     }
     
+    @Override
+    protected String getToolbarTitle() {
+        return "音效控制";
+    }
+
     /**
      * 查询效果器参数
      */
@@ -144,7 +147,7 @@ public class FxControlActivity extends AppCompatActivity {
      * 创建竖向滑条组
      */
     private void createVerticalSliders(LinearLayout container, int nodeId, String[] params, 
-                                      int[] ranges, int[] defaults, String accentColor) {
+                                      int[] ranges, int[] defaults, int accentColorResId) {
         java.util.Map<String, VerticalSeekBar> seekBars = new java.util.HashMap<>();
         java.util.Map<String, TextView> valueTexts = new java.util.HashMap<>();
         
@@ -167,7 +170,7 @@ public class FxControlActivity extends AppCompatActivity {
             TextView valueText = new TextView(this);
             valueText.setText(String.valueOf(defaultValue));
             valueText.setTextSize(18);
-            valueText.setTextColor(Color.parseColor(accentColor));
+            valueText.setTextColor(ContextCompat.getColor(this, accentColorResId));
             valueText.setGravity(Gravity.CENTER);
             valueText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             valueText.setPadding(0, 0, 0, 12);
@@ -185,7 +188,7 @@ public class FxControlActivity extends AppCompatActivity {
             TextView labelText = new TextView(this);
             labelText.setText(param);
             labelText.setTextSize(14);
-            labelText.setTextColor(Color.WHITE);
+            labelText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
             labelText.setGravity(Gravity.CENTER);
             labelText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             labelText.setPadding(0, 12, 0, 0);

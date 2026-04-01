@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_effect_eq.h"
 #include "bg_log.h"
 #include <string.h>
@@ -320,3 +324,5 @@ void bg_effect_eq_preset_jazz(BG_EQ_Effect_t *eq)
     bg_effect_eq_update_coefficients(eq);
     BG_LOG_I(BG_LOG_TAG_EFFECT_EQ, "Preset: Jazz\n");
 }
+
+#endif /* BANGTSYNTH_EN */

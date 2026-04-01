@@ -6,15 +6,8 @@
     android:orientation="vertical"
     android:background="@drawable/gradient_background">
 
-    <!-- 顶部工具栏 -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
-        android:elevation="4dp"
-        app:titleTextColor="#00FFA3"
-        app:title="BanBox 音频系统" />
+    <!-- 统一顶部导航栏 -->
+    <include layout="@layout/include_base_toolbar" />
 
     <!-- 主内容区域 -->
     <LinearLayout
@@ -40,12 +33,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="BanBox"
-            android:textColor="#00FFA3"
+            android:textColor="@color/primary_accent_glow"
             android:textSize="48sp"
             android:textStyle="bold"
             android:fontFamily="sans-serif-condensed"
             android:letterSpacing="0.1"
-            android:shadowColor="#00FFA3"
+            android:shadowColor="@color/primary_accent_glow"
             android:shadowRadius="10"
             android:shadowDx="0"
             android:shadowDy="0" />
@@ -56,7 +49,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="玩转你的音乐"
-            android:textColor="#FF6B9D"
+            android:textColor="@color/subtitle_accent"
             android:textSize="18sp"
             android:letterSpacing="0.15"
             android:fontFamily="sans-serif-light" />
@@ -82,7 +75,7 @@
                     android:layout_width="12dp"
                     android:layout_height="12dp"
                     android:background="@drawable/slider_thumb"
-                    android:backgroundTint="#FF4444" />
+                    android:backgroundTint="@color/status_disconnected" />
 
                 <TextView
                     android:id="@+id/tv_connection_status"
@@ -91,7 +84,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="12dp"
                     android:text="● 未连接"
-                    android:textColor="#FF4444"
+                    android:textColor="@color/status_disconnected"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -100,7 +93,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="BanBox 设备"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp"
                     android:fontFamily="monospace" />
             </LinearLayout>
@@ -153,7 +146,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:text="v1.0 MECHA BanGO"
-        android:textColor="#555555"
+        android:textColor="@color/text_tertiary"
         android:textSize="12sp"
         android:gravity="center"
         android:fontFamily="monospace"

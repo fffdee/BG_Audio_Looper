@@ -14,10 +14,10 @@
  *                    (shared state machine)
  *
  * Flash layout (dual-partition mode, BOOT_CURRENT_MODE == BOOT_MODE_DUAL_AB):
- *   0x00000000 - 0x0003FFFF  Bootloader    (256 KB)
- *   0x00040000 - 0x000FFFFF  Partition A   (768 KB) factory FW
- *   0x00100000 - 0x001BFFFF  Partition B   (768 KB) user upgrade  ← 1 MB
- *   0x001C0000 - 0x001C0FFF  Partition flags (4 KB)
+ *   0x00000000 - 0x0003FFFF  Bootloader      (256 KB)
+ *   0x00040000 - 0x0023FFFF  Partition A      (2 MB)   equal peer
+ *   0x00240000 - 0x0043FFFF  Partition B      (2 MB)   equal peer
+ *   0x00440000 - 0x00440FFF  Partition flags  (4 KB)
  *
  * Packet format (big-endian multi-byte fields):
  *   [SOF:1][CMD:1][SEQ:2][LEN:2][DATA:len][CRC16:2]

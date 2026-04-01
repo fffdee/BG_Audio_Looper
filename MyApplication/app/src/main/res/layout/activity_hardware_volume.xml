@@ -6,40 +6,25 @@
     android:background="@color/bg_dark"
     android:fitsSystemWindows="true">
 
-    <!-- 顶部标题栏 -->
-    <RelativeLayout
+    <!-- 统一顶部导航栏 -->
+    <include layout="@layout/include_base_toolbar" />
+
+    <!-- 音量操作按钮栏 -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/toolbar_height"
-        android:background="@color/primary_darker"
-        android:elevation="@dimen/card_elevation"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical"
+        android:background="@color/bg_card"
         android:paddingStart="@dimen/toolbar_padding"
-        android:paddingEnd="@dimen/toolbar_padding">
-
-        <ImageButton
-            android:id="@+id/btn_back_volume"
-            android:layout_width="@dimen/icon_size_large"
-            android:layout_height="@dimen/icon_size_large"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_revert"
-            android:tint="@color/text_primary"
-            android:contentDescription="返回" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="音量控制"
-            android:textSize="@dimen/text_size_xlarge"
-            android:textColor="@color/text_error"
-            android:textStyle="bold" />
+        android:paddingEnd="@dimen/toolbar_padding"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
 
         <ImageButton
             android:id="@+id/btn_save_volume"
             android:layout_width="@dimen/icon_size_large"
             android:layout_height="@dimen/icon_size_large"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
             android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_save"
@@ -47,7 +32,7 @@
             android:contentDescription="保存音量设置"
             android:scaleType="centerInside"
             android:padding="8dp" />
-    </RelativeLayout>
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"

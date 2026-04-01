@@ -3,17 +3,17 @@
     <!-- 禁用状态 -->
     <item android:state_enabled="false">
         <shape android:shape="rectangle">
-            <solid android:color="#505050"/>
+            <solid android:color="#C0C0C0"/>
             <corners android:radius="12dp"/>
         </shape>
     </item>
     
-    <!-- 按下状态 - 强烈红光 -->
+    <!-- 按下状态 -->
     <item android:state_pressed="true">
         <layer-list>
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#FF6B9D"/>
+                    <solid android:color="#D32F2F"/>
                     <corners android:radius="14dp"/>
                 </shape>
             </item>
@@ -21,41 +21,34 @@
                 <shape android:shape="rectangle">
                     <gradient
                         android:angle="135"
-                        android:startColor="#FF5555"
-                        android:centerColor="#EE3333"
-                        android:endColor="#CC1111"/>
+                        android:startColor="#E53935"
+                        android:centerColor="#D32F2F"
+                        android:endColor="#C62828"/>
                     <corners android:radius="12dp"/>
                 </shape>
             </item>
         </layer-list>
     </item>
     
-    <!-- 正常状态 - 红色渐变带粉色发光 -->
+    <!-- 正常状态 - 红色渐变 -->
     <item>
         <layer-list>
-            <!-- 外层粉色发光 -->
+            <!-- 外层阴影 -->
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#FF6B9D"/>
+                    <solid android:color="#30D32F2F"/>
                     <corners android:radius="14dp"/>
                 </shape>
             </item>
-            <!-- 中层光晕 -->
+            <!-- 渐变主体 -->
             <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
-                <shape android:shape="rectangle">
-                    <solid android:color="#FF4466"/>
-                    <corners android:radius="12dp"/>
-                </shape>
-            </item>
-            <!-- 内层红色渐变 -->
-            <item android:top="4dp" android:left="4dp" android:right="4dp" android:bottom="4dp">
                 <shape android:shape="rectangle">
                     <gradient
                         android:angle="135"
-                        android:startColor="#FF3344"
-                        android:centerColor="#DD1122"
-                        android:endColor="#AA0000"/>
-                    <corners android:radius="10dp"/>
+                        android:startColor="#EF5350"
+                        android:centerColor="#E53935"
+                        android:endColor="#D32F2F"/>
+                    <corners android:radius="12dp"/>
                 </shape>
             </item>
         </layer-list>

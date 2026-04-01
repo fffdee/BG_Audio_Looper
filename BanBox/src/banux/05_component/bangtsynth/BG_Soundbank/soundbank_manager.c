@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "soundbank_manager.h"
 #include "bgs_parser.h"
 #include "sf2_parser.h"
@@ -529,3 +533,5 @@ static BG_ERR soundbank_download(const char *data_source, uint32_t offset, size_
 }
 
 #endif /* ENABLE_SOUNDBANK_DOWNLOAD */
+
+#endif /* BANGTSYNTH_EN */

@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_log.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -139,3 +143,5 @@ static void log_print(bg_log_level_t level, bg_log_tag_t tag, const char *format
         printf("%s", buffer);
     }
 }
+
+#endif /* BANGTSYNTH_EN */

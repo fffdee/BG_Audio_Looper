@@ -255,6 +255,11 @@ static void ota_dispatch(uint8_t cmd, uint16_t seq,
 
     case OTA_CMD_START: {
         uint32_t sz;
+        /* Reject if deferred erase is still in progress (race guard) */
+        if (g_ota.do_erase || g_ota.eng_state == OTA_ERASING) {
+            DBG("[OTA] START: erase still in progress\n");
+            ota_send_nack(seq, OTA_ERR_STATE); break;
+        }
         if (dlen < 4) { ota_send_nack(seq, OTA_ERR_PARAM); break; }
         sz = ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16)
            | ((uint32_t)data[2] <<  8) |  (uint32_t)data[3];
@@ -402,7 +407,12 @@ void App_OTA_Process(void)
                 return;
             }
         }
-        g_ota.eng_state = OTA_READY;
+        /* Only transition to READY if still in ERASING state.
+         * If START arrived during erase (and was accepted after
+         * the race-guard fix), don't overwrite WRITING state. */
+        if (g_ota.eng_state == OTA_ERASING) {
+            g_ota.eng_state = OTA_READY;
+        }
         g_ota.written   = 0;
         DBG("[OTA] Erase done\n");
     }
@@ -420,7 +430,7 @@ void App_OTA_Process(void)
         new_active       = (flag.active_part == 0) ? 1u : 0u;
         flag.active_part = new_active;
         flag.boot_fail_cnt = 0;
-        part_flag_seal(&flag);   /* sets magic + crc32 */
+        /* part_flag_write() internally calls part_flag_seal() */
 
         if (!part_flag_write(&flag)) {
             DBG("[OTA] COMMIT: flag write failed!\n");

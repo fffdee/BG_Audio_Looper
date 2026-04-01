@@ -7,8 +7,10 @@
  * 自动生成，请勿手动修改
  */
 
+#include "product_def.h"
 #include "sf2_source.h"
 
+#ifdef BANGTSYNTH_EN
 /* SF2音源数据数组 */
 const uint8_t sf2_source_data[SF2_SOURCE_SIZE] = {
     /* 0x00000000 */
@@ -20890,3 +20892,4 @@ const uint8_t sf2_source_data[SF2_SOURCE_SIZE] = {
     /* 0x0004CC00 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+#endif /* BANGTSYNTH_EN */

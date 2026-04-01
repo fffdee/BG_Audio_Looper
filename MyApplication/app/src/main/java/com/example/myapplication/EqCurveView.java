@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
 import android.view.View;
+import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,7 +91,7 @@ public class EqCurveView extends View {
     private void init() {
         // 网格画笔
         gridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        gridPaint.setColor(Color.parseColor("#333333"));
+        gridPaint.setColor(ContextCompat.getColor(getContext(), R.color.eq_grid));
         gridPaint.setStrokeWidth(1);
         gridPaint.setStyle(Paint.Style.STROKE);
         
@@ -112,19 +113,19 @@ public class EqCurveView extends View {
         
         // 文字画笔
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        textPaint.setColor(Color.parseColor("#888888"));
+        textPaint.setColor(ContextCompat.getColor(getContext(), R.color.eq_text));
         textPaint.setTextSize(24);
         
         // 零线画笔
         zeroLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        zeroLinePaint.setColor(Color.parseColor("#666666"));
+        zeroLinePaint.setColor(ContextCompat.getColor(getContext(), R.color.eq_zero_line));
         zeroLinePaint.setStrokeWidth(2);
         zeroLinePaint.setStyle(Paint.Style.STROKE);
         zeroLinePaint.setPathEffect(new DashPathEffect(new float[]{10, 5}, 0));
         
         curvePath = new Path();
         
-        setBackgroundColor(Color.parseColor("#1a1a1a"));
+        setBackgroundColor(ContextCompat.getColor(getContext(), R.color.eq_bg));
     }
     
     /**
@@ -296,7 +297,7 @@ public class EqCurveView extends View {
             textPaint.setColor(Color.WHITE);
             textPaint.setTextSize(20);
             canvas.drawText(String.valueOf(i), x - 5, y + 6, textPaint);
-            textPaint.setColor(Color.parseColor("#888888"));
+            textPaint.setColor(ContextCompat.getColor(getContext(), R.color.eq_text));
             textPaint.setTextSize(24);
         }
     }

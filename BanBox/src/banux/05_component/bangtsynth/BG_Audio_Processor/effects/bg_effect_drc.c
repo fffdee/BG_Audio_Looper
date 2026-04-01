@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_effect_drc.h"
 #include "bg_log.h"
 #include <string.h>
@@ -135,3 +139,5 @@ BG_DRC_Effect_t* bg_effect_drc_create(float threshold, float ratio,
     
     return &drc_instance;
 }
+
+#endif /* BANGTSYNTH_EN */

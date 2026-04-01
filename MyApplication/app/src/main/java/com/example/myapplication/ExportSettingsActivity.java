@@ -11,7 +11,7 @@ import androidx.appcompat.widget.Toolbar;
 /**
  * 导出设置页面 - 允许用户配置导出相关的偏好设置
  */
-public class ExportSettingsActivity extends AppCompatActivity {
+public class ExportSettingsActivity extends BaseActivity {
     
     private ExportConfigManager configManager;
     private SeekBar seekBarQuality;
@@ -25,20 +25,14 @@ public class ExportSettingsActivity extends AppCompatActivity {
         
         configManager = new ExportConfigManager(this);
         
-        initToolbar();
+        setupBaseToolbar(true);
         initViews();
         loadCurrentSettings();
     }
     
-    private void initToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar_export_settings);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("导出设置");
-        }
-        
-        toolbar.setNavigationOnClickListener(v -> finish());
+    @Override
+    protected String getToolbarTitle() {
+        return "导出设置";
     }
     
     private void initViews() {

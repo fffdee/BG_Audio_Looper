@@ -18,6 +18,8 @@
 #include "bg_log.h"
 #include <string.h>
 
+#ifdef BANGTSYNTH_EN
+
 /* ============================================
  * 内嵌音源数据 (由 sf2_to_c_converter.py 生成)
  * ============================================ */
@@ -124,3 +126,5 @@ const BG_Storage_Driver_t bg_storage_driver_embedded = {
     .sync     = emb_storage_sync,
     .get_info = emb_storage_get_info
 };
+
+#endif /* BANGTSYNTH_EN */

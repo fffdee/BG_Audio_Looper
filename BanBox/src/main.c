@@ -473,6 +473,9 @@ void EffectTask() {
 	{
 		pwr_butoon_handler();
 	}
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+
 
 #ifdef BOOTLOADER_EN
 	/*

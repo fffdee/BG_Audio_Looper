@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -490,3 +494,5 @@ void bgs_all_note_off(uint8_t program)
         BG_reader.Data.ProgramData[program].note_states[note].velocity = 0;
     }
 }
+
+#endif /* BANGTSYNTH_EN */

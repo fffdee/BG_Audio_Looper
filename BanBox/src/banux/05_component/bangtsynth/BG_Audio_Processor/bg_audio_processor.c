@@ -1,3 +1,7 @@
+#include "product_def.h"
+
+#ifdef BANGTSYNTH_EN
+
 #include "bg_audio_processor.h"
 #include "bg_log.h"
 #include <string.h>
@@ -305,3 +309,5 @@ static const BG_AudioEffect_Node_t* processor_get_effect_info(uint8_t effect_id)
     
     return &g_effects[effect_id];
 }
+
+#endif /* BANGTSYNTH_EN */

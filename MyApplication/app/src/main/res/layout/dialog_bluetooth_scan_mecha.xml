@@ -48,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@android:color/transparent"
-        android:backgroundTint="#00FFA3"
+        android:backgroundTint="@color/primary_accent_glow"
         style="?android:attr/listDivider"
         android:alpha="0.3" />
 

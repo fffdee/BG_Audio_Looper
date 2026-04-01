@@ -3,68 +3,52 @@
     <!-- 禁用状态 -->
     <item android:state_enabled="false">
         <shape android:shape="rectangle">
-            <solid android:color="#505050"/>
+            <solid android:color="#C0C0C0"/>
             <corners android:radius="12dp"/>
         </shape>
     </item>
     
-    <!-- 按下状态 - 发光加强 -->
+    <!-- 按下状态 -->
     <item android:state_pressed="true">
         <layer-list>
-            <!-- 外层强发光 -->
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#00FFA3"/>
+                    <solid android:color="#00A366"/>
                     <corners android:radius="14dp"/>
                 </shape>
             </item>
-            <!-- 中层光晕 -->
-            <item android:top="1dp" android:left="1dp" android:right="1dp" android:bottom="1dp">
-                <shape android:shape="rectangle">
-                    <solid android:color="#00E6FF"/>
-                    <corners android:radius="13dp"/>
-                </shape>
-            </item>
-            <!-- 内层高亮 -->
-            <item android:top="3dp" android:left="3dp" android:right="3dp" android:bottom="3dp">
+            <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
                 <shape android:shape="rectangle">
                     <gradient
                         android:angle="135"
-                        android:startColor="#00FFBB"
-                        android:centerColor="#00CCFF"
-                        android:endColor="#0099FF"/>
-                    <corners android:radius="11dp"/>
+                        android:startColor="#0097B2"
+                        android:centerColor="#0088A0"
+                        android:endColor="#007090"/>
+                    <corners android:radius="12dp"/>
                 </shape>
             </item>
         </layer-list>
     </item>
     
-    <!-- 正常状态 - 三层发光效果 -->
+    <!-- 正常状态 - 青色渐变 -->
     <item>
         <layer-list>
-            <!-- 最外层青色发光 -->
+            <!-- 外层阴影 -->
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="#00FFA3"/>
+                    <solid android:color="#300097B2"/>
                     <corners android:radius="14dp"/>
                 </shape>
             </item>
-            <!-- 中层光晕过渡 -->
+            <!-- 渐变主体 -->
             <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
-                <shape android:shape="rectangle">
-                    <solid android:color="#00D9FF"/>
-                    <corners android:radius="12dp"/>
-                </shape>
-            </item>
-            <!-- 内层渐变主体 -->
-            <item android:top="4dp" android:left="4dp" android:right="4dp" android:bottom="4dp">
                 <shape android:shape="rectangle">
                     <gradient
                         android:angle="135"
-                        android:startColor="#00BBFF"
-                        android:centerColor="#0088DD"
-                        android:endColor="#0055BB"/>
-                    <corners android:radius="10dp"/>
+                        android:startColor="#0097B2"
+                        android:centerColor="#0088A0"
+                        android:endColor="#007090"/>
+                    <corners android:radius="12dp"/>
                 </shape>
             </item>
         </layer-list>

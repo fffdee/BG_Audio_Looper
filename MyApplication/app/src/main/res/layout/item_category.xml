@@ -16,7 +16,7 @@
         android:id="@+id/category_selected_bar"
         android:layout_width="3dp"
         android:layout_height="20dp"
-        android:background="#00FFA3"
+        android:background="@color/primary_accent_glow"
         android:visibility="invisible"
         android:layout_marginEnd="10dp" />
 
@@ -37,7 +37,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="#CCCCCC"
+        android:textColor="@color/text_primary"
         android:textSize="14sp"
         android:includeFontPadding="false"
         android:maxLines="1"
@@ -48,7 +48,7 @@
         android:id="@+id/tv_category_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#666666"
+        android:textColor="@color/text_tertiary"
         android:textSize="11sp"
         android:includeFontPadding="false"
         android:minWidth="18dp"

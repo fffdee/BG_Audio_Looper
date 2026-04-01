@@ -16,13 +16,12 @@ import androidx.appcompat.app.AppCompatActivity;
  * 鼓机Activity
  * 提供16步×8轨道的鼓机编辑和播放功能
  */
-public class DrumMachineActivity extends AppCompatActivity {
+public class DrumMachineActivity extends BaseActivity {
     
     private BluetoothHelper bluetoothHelper;
     private Handler handler = new Handler(Looper.getMainLooper());
     
     // UI控件
-    private ImageButton btnBack;
     private TextView tvStatus;
     private TextView tvBpmDisplay;
     private TextView tvVolumeDisplay;
@@ -50,6 +49,7 @@ public class DrumMachineActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drum_machine);
+        setupBaseToolbar(true);
         
         // 获取全局BluetoothHelper实例
         bluetoothHelper = BluetoothManager.getInstance().getBluetoothHelper();
@@ -73,7 +73,6 @@ public class DrumMachineActivity extends AppCompatActivity {
      * 初始化UI控件
      */
     private void initViews() {
-        btnBack = findViewById(R.id.btn_back);
         tvStatus = findViewById(R.id.tv_drum_status);
         tvBpmDisplay = findViewById(R.id.tv_bpm_display);
         tvVolumeDisplay = findViewById(R.id.tv_volume_display);
@@ -84,9 +83,7 @@ public class DrumMachineActivity extends AppCompatActivity {
         seekbarVolume = findViewById(R.id.seekbar_volume);
         gridDrumPad = findViewById(R.id.grid_drum_pad);
         
-        // 返回按钮
-        btnBack.setOnClickListener(v -> finish());
-        
+        // 播放/停止按钮
         // 播放/停止按钮
         btnPlayStop.setOnClickListener(v -> togglePlayStop());
         
@@ -162,6 +159,11 @@ public class DrumMachineActivity extends AppCompatActivity {
         });
     }
     
+    @Override
+    protected String getToolbarTitle() {
+        return "鼓机";
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
