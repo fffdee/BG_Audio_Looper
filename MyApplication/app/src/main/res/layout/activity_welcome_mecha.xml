@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/gradient_background">
 
-    <!-- 统一顶部导航栏 -->
     <include layout="@layout/include_base_toolbar" />
 
-    <!-- 主内容区域 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -18,7 +20,6 @@
         android:gravity="center"
         android:padding="32dp">
 
-        <!-- Logo区域 - BG科技风Logo -->
         <ImageView
             android:layout_width="280dp"
             android:layout_height="140dp"
@@ -27,7 +28,6 @@
             android:contentDescription="BG Audio Logo"
             android:elevation="8dp" />
 
-        <!-- 标题 -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,7 +43,6 @@
             android:shadowDx="0"
             android:shadowDy="0" />
 
-        <!-- 副标题 -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -54,7 +53,6 @@
             android:letterSpacing="0.15"
             android:fontFamily="sans-serif-light" />
 
-        <!-- 连接状态卡片 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -98,7 +96,6 @@
                     android:fontFamily="monospace" />
             </LinearLayout>
 
-            <!-- 连接按钮 -->
             <Button
                 android:id="@+id/btn_bluetooth_connect"
                 style="@style/GlowButton"
@@ -108,7 +105,6 @@
                 android:text="连接蓝牙设备" />
         </LinearLayout>
 
-        <!-- 主按钮区域 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -140,7 +136,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 底部版本信息 -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -152,3 +147,14 @@
         android:fontFamily="monospace"
         android:letterSpacing="0.2" />
 </LinearLayout>
+
+    <View
+        android:id="@+id/app_settings_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone" />
+
+    <include layout="@layout/drawer_app_settings" />
+
+</FrameLayout>

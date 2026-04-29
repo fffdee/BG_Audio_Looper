@@ -30,7 +30,6 @@ import android.widget.Toast;
 import android.widget.LinearLayout;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -51,9 +50,8 @@ public class BanBoxSettingsActivity extends BaseActivity {
     private AlertDialog scanDialog;
 
     // 侧边栏相关控件
-    private View settingsDrawerOverlay; // 遮罩层
-    private LinearLayout drawerSettings; // 侧边栏
-    private SwitchCompat switchBootSound; // 开机提示音开关
+    private View settingsDrawerOverlay;
+    private LinearLayout drawerSettings;
     private SharedPreferences sharedPreferences; // 用于保存设置
 
     // 副音箱模式相关
@@ -102,7 +100,6 @@ public class BanBoxSettingsActivity extends BaseActivity {
         tvConnectionStatus = tvStatus;
         tvDeviceNameView   = tvDeviceName;
         btnConnectView     = btnConnect;
-        Button btnTerminal = findViewById(R.id.btn_terminal);
         btnSpeakerMode = findViewById(R.id.btn_speaker_mode);
 
         // 初始化ViewPager
@@ -128,29 +125,6 @@ public class BanBoxSettingsActivity extends BaseActivity {
                     Toast.makeText(this, "已断开连接", Toast.LENGTH_SHORT).show();
                 } else {
                     showScanDialog();
-                }
-            });
-        }
-
-        // 终端
-        if (btnTerminal != null) {
-            btnTerminal.setOnClickListener(v -> {
-                if (checkConnection()) {
-                    showTerminalDialog();
-                }
-            });
-        }
-
-        // 固件升级
-        Button btnFirmwareUpgrade = findViewById(R.id.btn_firmware_upgrade);
-        if (btnFirmwareUpgrade != null) {
-            btnFirmwareUpgrade.setOnClickListener(v -> {
-                if (checkConnection()) {
-                    // 初始化 BluetoothHelperSingleton
-                    BluetoothHelperSingleton.setInstance(bluetoothHelper);
-                    // 启动固件升级 Activity
-                    Intent intent = new Intent(BanBoxSettingsActivity.this, FirmwareUpgradeActivity.class);
-                    startActivity(intent);
                 }
             });
         }
@@ -216,109 +190,81 @@ public class BanBoxSettingsActivity extends BaseActivity {
      * 初始化侧边栏控件和交互逻辑
      */
     private void initSideDrawer() {
-        // 获取控件引用
-        settingsDrawerOverlay = findViewById(R.id.settings_drawer_overlay);
-        drawerSettings = findViewById(R.id.drawer_settings);
-        switchBootSound = findViewById(R.id.switch_boot_sound);
-        View btnOpenSettings = findViewById(R.id.btn_open_settings); // 打开设置按钮
-        View btnCloseSettingsDrawer = findViewById(R.id.btn_close_settings_drawer); // 关闭侧边栏按钮
+        settingsDrawerOverlay = findViewById(R.id.app_settings_overlay);
+        View drawerAppSettings = findViewById(R.id.drawer_app_settings);
 
-        Log.d("BanBoxSettings", "settingsDrawerOverlay: " + settingsDrawerOverlay);
-        Log.d("BanBoxSettings", "drawerSettings: " + drawerSettings);
-        Log.d("BanBoxSettings", "switchBootSound: " + switchBootSound);
-        Log.d("BanBoxSettings", "btnOpenSettings: " + btnOpenSettings);
-        Log.d("BanBoxSettings", "btnCloseSettingsDrawer: " + btnCloseSettingsDrawer);
-
-        // 从SharedPreferences加载开机提示音设置
-        boolean isBootSoundEnabled = sharedPreferences.getBoolean("boot_sound_enabled", true);
-        if (switchBootSound != null) {
-            switchBootSound.setChecked(isBootSoundEnabled);
+        View btnCloseDrawer = findViewById(R.id.btn_close_app_settings_drawer);
+        if (btnCloseDrawer != null) {
+            btnCloseDrawer.setOnClickListener(v -> closeSettingsDrawer());
         }
 
-        // 1. 打开设置按钮点击事件（右上角的设置图标）
-        if (btnOpenSettings != null) {
-            btnOpenSettings.setOnClickListener(v -> {
-                Log.d("BanBoxSettings", "Settings button clicked");
-                openSettingsDrawer();
-            });
-        }
-
-        // 2. 遮罩层点击事件（点击遮罩关闭侧边栏）
         if (settingsDrawerOverlay != null) {
             settingsDrawerOverlay.setOnClickListener(v -> closeSettingsDrawer());
         }
 
-        // 3. 关闭侧边栏按钮点击事件
-        if (btnCloseSettingsDrawer != null) {
-            btnCloseSettingsDrawer.setOnClickListener(v -> closeSettingsDrawer());
+        View btnDebugTerminal = findViewById(R.id.btn_drawer_debug_terminal);
+        if (btnDebugTerminal != null) {
+            btnDebugTerminal.setOnClickListener(v -> {
+                closeSettingsDrawer();
+                startActivity(new Intent(BanBoxSettingsActivity.this, DebugTerminalActivity.class));
+            });
         }
 
-        // 4. 开机提示音开关状态改变事件（保存设置）
-        if (switchBootSound != null) {
-            switchBootSound.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                // 保存设置到SharedPreferences
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean("boot_sound_enabled", isChecked);
-                editor.apply();
-
-                // 可选：如果蓝牙已连接，发送命令到设备更新设置
-                if (bluetoothHelper.isConnected()) {
-                    String cmd = isChecked ? "boot_sound on" : "boot_sound off";
-                    sendBleShellCommand(cmd, success -> {
-                        runOnUiThread(() -> {
-                            String toastMsg = isChecked ? "已启用开机提示音" : "已禁用开机提示音";
-                            if (success) {
-                                Toast.makeText(BanBoxSettingsActivity.this, toastMsg, Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(BanBoxSettingsActivity.this, "设置失败，请重试", Toast.LENGTH_SHORT).show();
-                                // 恢复开关状态
-                                switchBootSound.setChecked(!isChecked);
-                            }
-                        });
-                    });
-                } else {
-                    // 未连接蓝牙，仅保存本地设置
-                    String toastMsg = isChecked ? "已启用开机提示音（下次连接生效）" : "已禁用开机提示音（下次连接生效）";
-                    Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
-                }
+        View btnOtaUpgrade = findViewById(R.id.btn_drawer_ota_upgrade);
+        if (btnOtaUpgrade != null) {
+            btnOtaUpgrade.setOnClickListener(v -> {
+                closeSettingsDrawer();
+                startActivity(new Intent(BanBoxSettingsActivity.this, FirmwareUpgradeActivity.class));
             });
+        }
+
+        try {
+            android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            TextView tvAppVersion = findViewById(R.id.tv_drawer_app_version);
+            if (tvAppVersion != null) {
+                tvAppVersion.setText(pi.versionName != null ? pi.versionName : "1.0.0");
+            }
+            TextView tvBuildNumber = findViewById(R.id.tv_drawer_build_number);
+            if (tvBuildNumber != null) {
+                tvBuildNumber.setText(String.valueOf(pi.versionCode));
+            }
+            TextView tvAppName = findViewById(R.id.tv_drawer_app_name);
+            if (tvAppName != null) {
+                tvAppName.setText(getString(pi.applicationInfo.labelRes));
+            }
+        } catch (Exception e) {
+            Log.w("BanBoxSettings", "Failed to get package info", e);
+        }
+
+        if (drawerAppSettings != null) {
+            drawerSettings = (LinearLayout) drawerAppSettings;
         }
     }
 
     /**
      * 打开侧边栏（简化版用于测试）
      */
-    private void openSettingsDrawer() {
-        if (drawerSettings == null || settingsDrawerOverlay == null) {
-            Log.e("BanBoxSettings", "drawerSettings or settingsDrawerOverlay is null");
-            return;
-        }
-
-        Log.d("BanBoxSettings", "Opening settings drawer");
-
-        // 显示遮罩层
-        settingsDrawerOverlay.setVisibility(View.VISIBLE);
-
-        // 直接设置侧边栏可见，不使用动画
-        drawerSettings.setTranslationX(0); // 确保位置正确
-        drawerSettings.setVisibility(View.VISIBLE);
-
-        Log.d("BanBoxSettings", "Settings drawer opened (no animation)");
+    private void openAppSettingsDrawer() {
+        openSettingsDrawer();
     }
 
-    /**
-     * 关闭侧边栏（简化版用于测试）
-     */
+    private void openSettingsDrawer() {
+        if (drawerSettings == null || settingsDrawerOverlay == null) return;
+        settingsDrawerOverlay.setVisibility(View.VISIBLE);
+        drawerSettings.setVisibility(View.VISIBLE);
+        drawerSettings.setTranslationX(drawerSettings.getWidth());
+        drawerSettings.animate().translationX(0).setDuration(250).start();
+    }
+
     private void closeSettingsDrawer() {
         if (drawerSettings == null || settingsDrawerOverlay == null) return;
-
-        Log.d("BanBoxSettings", "Closing settings drawer");
-
-        // 隐藏遮罩层和侧边栏
-        settingsDrawerOverlay.setVisibility(View.GONE);
-        drawerSettings.setVisibility(View.GONE);
-
-        Log.d("BanBoxSettings", "Settings drawer closed");
+        drawerSettings.animate()
+                .translationX(drawerSettings.getWidth())
+                .setDuration(250)
+                .withEndAction(() -> {
+                    drawerSettings.setVisibility(View.GONE);
+                    settingsDrawerOverlay.setVisibility(View.GONE);
+                }).start();
     }
 
     // 发送命令到AB01特征（0x0006）
@@ -462,16 +408,10 @@ public class BanBoxSettingsActivity extends BaseActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.welcome_menu, menu);
-        // 根据连接状态改变图标
         MenuItem bluetoothItem = menu.findItem(R.id.menu_bluetooth);
         if (bluetoothItem != null) {
-            if (bluetoothHelper.isConnected()) {
-                bluetoothItem.setIcon(android.R.drawable.ic_menu_manage);
-                bluetoothItem.setTitle("蓝牙已连接");
-            } else {
-                bluetoothItem.setIcon(android.R.drawable.ic_menu_manage);
-                bluetoothItem.setTitle("蓝牙连接");
-            }
+            bluetoothItem.setIcon(android.R.drawable.ic_menu_preferences);
+            bluetoothItem.setTitle("设置");
         }
         return true;
     }
@@ -479,13 +419,12 @@ public class BanBoxSettingsActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            // 返回到主页面
             Intent intent = new Intent(BanBoxSettingsActivity.this, WelcomeActivity.class);
             startActivity(intent);
             finish();
             return true;
         } else if (item.getItemId() == R.id.menu_bluetooth) {
-            showBluetoothScanDialog();
+            openAppSettingsDrawer();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -789,7 +728,6 @@ public class BanBoxSettingsActivity extends BaseActivity {
         functions.add(new FunctionItem("", HardwareVolumeActivity.class));
         functions.add(new FunctionItem("", MetronomeActivity.class));
         functions.add(new FunctionItem("", AudioChainDiagramActivity.class));
-        functions.add(new FunctionItem("", DrumMachineActivity.class));
         functions.add(new FunctionItem("", LooperControlActivity.class));
 
         // 创建适配器

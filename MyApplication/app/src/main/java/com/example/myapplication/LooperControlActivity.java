@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -35,7 +36,17 @@ import java.util.regex.Pattern;
 public class LooperControlActivity extends BaseActivity {
 
     private static final String BLE_UUID = "0000ab01-0000-1000-8000-00805f9b34fb";
-    private static final int SEG_COUNT = 2;
+    private static final int SEG_COUNT = 4;
+
+    // -------- 存储空间常量 --------
+    /** 总Flash空间：8MB (与下位机一致) */
+    private static final long TOTAL_STORAGE_BYTES = 8L * 1024 * 1024;  // 8388608 bytes
+    /** 音频数据速率：48kHz × 32bit × 2声道 = 192000 bytes/sec (与下位机一致) */
+    private static final long AUDIO_BYTES_PER_SEC = 192000L;
+    /** 总录制时间（秒）= 总空间 / 数据速率 */
+    private static final float TOTAL_REC_TIME_SEC = (float) TOTAL_STORAGE_BYTES / AUDIO_BYTES_PER_SEC;  // ≈43.69s
+    /** 进度条最大值（千分比，精度0.1%） */
+    private static final int PROGRESS_MAX = 1000;
 
     // -------- 节拍器独立开关（static：Activity 重建时保留） --------
     // true = 录制中开启节拍器；false = 录制中静音
@@ -43,19 +54,20 @@ public class LooperControlActivity extends BaseActivity {
     // true = 录制前先倒数拍；false = 直接开始录制
     private static boolean countdownBeforeRec = true;
     // 每段独立：跟随「先录段」循环头开始录制
-    private static final boolean[] segFollowEnabled = {false, false};
+    private static final boolean[] segFollowEnabled = {false, false, false, false};
     // 每段独立：录制时自动对齐参考段的录制长度
-    private static final boolean[] segMatchEnabled  = {false, false};
+    private static final boolean[] segMatchEnabled  = {false, false, false, false};
 
     // Segment state enum
     private enum SegState { INACTIVE, RECORDING, PLAYING, STOPPED }
 
     private BluetoothHelper bluetoothHelper;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private boolean isLooperModeOn = true;
 
     // App-side state tracking（static：Activity 重建时保留段状态）
     private static final SegState[] segStates = {
-        SegState.INACTIVE, SegState.INACTIVE
+            SegState.INACTIVE, SegState.INACTIVE, SegState.INACTIVE, SegState.INACTIVE
     };
 
     // -------- 全局设置状态（static：Activity 重建时保留） --------
@@ -76,17 +88,17 @@ public class LooperControlActivity extends BaseActivity {
 
     // -------- 每段独立配置（static：Activity 重建时保留） --------
     /** 录制小节数，0 = 手动停止（无限） */
-    private static final int[]     segMeasures = {0, 0};
+    private static final int[]     segMeasures = {0, 0, 0, 0};
     /** 录制结束后是否自动播放 */
-    private static final boolean[] segAutoPlay = {true, true};
+    private static final boolean[] segAutoPlay = {true, true, true, true};
     /** 每段播放音量 0-100，默认 100 */
-    private static final int[]     segVolumes  = {100, 100};
+    private static final int[]     segVolumes  = {100, 100, 100, 100};
     /** 每段最大录制秒数：10 / 30 / 60 */
-    private static final int[]     segMaxRecSec = {10, 10};
+    private static final int[]     segMaxRecSec = {10, 10, 10, 10};
     /** 每段预裁剪起始偏移（ms），录制完成后自动应用（0=不裁剪） */
-    private static final long[] segPreCropStartMs = {0L, 0L};
+    private static final long[] segPreCropStartMs = {0L, 0L, 0L, 0L};
     /** 每段预裁剪末尾裁除时长（ms，从末尾倒退），录制完成后自动应用（0=不裁剪） */
-    private static final long[] segPreCropEndMs   = {0L, 0L};
+    private static final long[] segPreCropEndMs   = {0L, 0L, 0L, 0L};
 
     // -------- UI：循环段卡片 --------
     // segCards 指向外层 FrameLayout（负责背景着色）
@@ -104,18 +116,23 @@ public class LooperControlActivity extends BaseActivity {
     private ImageButton[]  btnSegReset  = new ImageButton[SEG_COUNT];
     /** 卡片底部最大录制时长显示 */
     private TextView[]     tvSegMaxRec  = new TextView[SEG_COUNT];
-    /** 卡片底部：跟随录制图标按钮（每段独立）*/
+    /** 卡片底部：跟随录制（每段独立）*/
     private ImageButton[]  btnSegFollow     = new ImageButton[SEG_COUNT];
-    /** 卡片底部：录制等长图标按钮（每段独立）*/
+    /** 卡片底部：录制等长（每段独立）*/
     private ImageButton[]  btnSegMatch      = new ImageButton[SEG_COUNT];
+    /** 卡片底部：参照段结束后录制（每段独立）*/
+    private ImageButton[]  btnSegRecordAfterRef = new ImageButton[SEG_COUNT];
+    /** 卡片底部：衔接播放（每段独立）*/
+    private ImageButton[]  btnSegChain       = new ImageButton[SEG_COUNT];
+    /** 卡片底部：接入播放（每段独立）*/
+    private ImageButton[]  btnSegJoin        = new ImageButton[SEG_COUNT];
     /** 卡片底部：等待本轮播完再停止（每段独立）*/
     private ImageButton[]  btnSegWaitFinish = new ImageButton[SEG_COUNT];
 
-    // -------- UI：全局控制区 --------
-    private Button btnChainPlay;  // 衔接播放 Loop1→Loop2
-    private Button btnJoinPlay;   // 等本轮结束再接入播放
+    // -------- UI：全局控制按钮 --------
     private Button btnPlayAll;    // 全部同时播放
     private Button btnStopAll;    // 全部同时停止
+    private Button btnDeleteAll;  // 全部删除
 
     // -------- UI：倒数大数字框 --------
     private View     layoutCountdownBox;  // 红色方形容器
@@ -152,27 +169,12 @@ public class LooperControlActivity extends BaseActivity {
 
     // -------- 全局控制状态（static 部分在 Activity 重建后保留） --------
     /** 每段独立的「等待本轮播完再停止」开关 */
-    private static final boolean[] waitFinishEnabled = {false, false};
-    /** 衔接模式激活中（Loop1 播完后将触发 Loop2） */
-    private static boolean chainPlayActive   = false;
-    /** 衔接时注册的 Runnable（非 static：与 Activity 生命周期绑定） */
-    private Runnable chainPlayRunnable = null;
-    /** 接入模式激活中（本轮结束后停止段将接入播放） */
-    private static boolean joinPlayActive    = false;
-    /** 接入时注册的 Runnable（非 static：与 Activity 生命周期绑定） */
-    private Runnable joinPlayRunnable  = null;
-
-    // -------- 预测时间轴：本地模拟下位机回绕时刻，无需等待 BLE 0x23 通知 --------
-    /** 衔接将停止的段索引（arming 时保存） */
-    private int      chainPredictStopSeg   = -1;
-    /** 衔接将启动的段索引（arming 时保存） */
-    private int      chainPredictStartSeg  = -1;
-    /** 接入将启动的段索引（arming 时保存） */
-    private int      joinPredictStartSeg   = -1;
-    /** 衔接本地预测定时 Runnable（与 0x23 通知二选一，先到先处理） */
-    private Runnable chainPredictRunnable  = null;
-    /** 接入本地预测定时 Runnable */
-    private Runnable joinPredictRunnable   = null;
+    private static final boolean[] waitFinishEnabled = {false, false, false, false};
+    // -------- 参照段追踪 --------
+    /** 当前参照段（最早开始播放的段） */
+    private int      referenceSegIndex = -1;
+    /** UI：参照段显示控件 */
+    private TextView tvTopReferenceSeg;
     /** 等待停止本地预测定时（每段独立：等待本轮结束后切换 STOPPED） */
     private final Runnable[] waitFinishPredictRunnables = new Runnable[SEG_COUNT];
     /** 同步录制：下位机已激活 SR（looper -SR 已发出，等待 trigger_seg 回绕） */
@@ -192,6 +194,15 @@ public class LooperControlActivity extends BaseActivity {
     private LinearLayout  containerAudioTracks;
     /** 每段对应的音频轨卡片 View（null = 未显示） */
     private final View[]  audioTrackViews = new View[SEG_COUNT];
+
+    // -------- UI：录制空间占用条 --------
+    private ProgressBar  progressStorage;
+    private TextView     tvStorageUsed;
+    private TextView     tvStorageTime;
+    private TextView[]   tvSegStorage = new TextView[SEG_COUNT];
+
+    // -------- 录制时实时更新存储显示的定时任务 --------
+    private final Runnable[] storageUpdateRunnables = new Runnable[SEG_COUNT];
 
     // -------- UI：顶部信息栏 --------
     private TextView tvTopBpm;
@@ -248,6 +259,8 @@ public class LooperControlActivity extends BaseActivity {
         setupDrawerListeners();
         setupBleListener();
         refreshTopInfoBar();
+
+        sendCommand("looper_mode on", null);
     }
 
     /** 便捷方法：获取主题感知颜色 */
@@ -297,9 +310,8 @@ public class LooperControlActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        sendCommand("looper_mode off", null);
         // 页面销毁时清除所有定时器
-        if (chainPredictRunnable != null) { handler.removeCallbacks(chainPredictRunnable); chainPredictRunnable = null; }
-        if (joinPredictRunnable  != null) { handler.removeCallbacks(joinPredictRunnable);  joinPredictRunnable  = null; }
         if (srPredictRunnable    != null) { handler.removeCallbacks(srPredictRunnable);    srPredictRunnable    = null; }
         srArmed = false;
         for (int i = 0; i < SEG_COUNT; i++) {
@@ -319,6 +331,8 @@ public class LooperControlActivity extends BaseActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_looper, menu);
+        MenuItem looperModeItem = menu.findItem(R.id.menu_looper_mode);
+        updateLooperModeIcon(looperModeItem);
         return true;
     }
 
@@ -328,44 +342,72 @@ public class LooperControlActivity extends BaseActivity {
         if (id == android.R.id.home) {
             finish();
             return true;
+        } else if (id == R.id.menu_looper_mode) {
+            isLooperModeOn = !isLooperModeOn;
+            updateLooperModeIcon(item);
+            sendCommand("looper_mode " + (isLooperModeOn ? "on" : "off"),
+                    isLooperModeOn ? "传统模式" : "效果图模式");
+            return true;
         } else if (id == R.id.menu_looper_settings) {
-            // 打开全局设置侧边栏
             openDrawer();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
+    private void updateLooperModeIcon(MenuItem item) {
+        if (item == null) return;
+        if (isLooperModeOn) {
+            item.setIcon(R.drawable.ic_music_note);
+            item.getIcon().setAlpha(255);
+        } else {
+            item.setIcon(R.drawable.ic_music_note);
+            item.getIcon().setAlpha(80);
+        }
+    }
+
     private void initViews() {
         // 外层 FrameLayout（背景着色用）
         int[] cardIds = {
-            R.id.card_seg0, R.id.card_seg1
+                R.id.card_seg0, R.id.card_seg1, R.id.card_seg2, R.id.card_seg3
         };
         // 内层 LinearLayout（点击交互用）
         int[] mainAreaIds = {
-            R.id.card_seg0_main, R.id.card_seg1_main
+                R.id.card_seg0_main, R.id.card_seg1_main, R.id.card_seg2_main, R.id.card_seg3_main
         };
         int[][] subIds = {
-            {R.id.tv_seg0_name, R.id.tv_seg0_state, R.id.tv_seg0_hint, R.id.tv_seg0_cfg_hint},
-            {R.id.tv_seg1_name, R.id.tv_seg1_state, R.id.tv_seg1_hint, R.id.tv_seg1_cfg_hint}
+                {R.id.tv_seg0_name, R.id.tv_seg0_state, R.id.tv_seg0_hint, R.id.tv_seg0_cfg_hint},
+                {R.id.tv_seg1_name, R.id.tv_seg1_state, R.id.tv_seg1_hint, R.id.tv_seg1_cfg_hint},
+                {R.id.tv_seg2_name, R.id.tv_seg2_state, R.id.tv_seg2_hint, R.id.tv_seg2_cfg_hint},
+                {R.id.tv_seg3_name, R.id.tv_seg3_state, R.id.tv_seg3_hint, R.id.tv_seg3_cfg_hint}
         };
         int[] configBtnIds = {
-            R.id.btn_seg0_config, R.id.btn_seg1_config
+                R.id.btn_seg0_config, R.id.btn_seg1_config, R.id.btn_seg2_config, R.id.btn_seg3_config
         };
         int[] resetBtnIds = {
-            R.id.btn_seg0_reset, R.id.btn_seg1_reset
+                R.id.btn_seg0_reset, R.id.btn_seg1_reset, R.id.btn_seg2_reset, R.id.btn_seg3_reset
         };
         int[] maxRecTvIds = {
-            R.id.tv_seg0_max_rec, R.id.tv_seg1_max_rec
+                R.id.tv_seg0_max_rec, R.id.tv_seg1_max_rec, R.id.tv_seg2_max_rec, R.id.tv_seg3_max_rec
         };
         int[] followBtnIds = {
-            R.id.btn_seg0_follow, R.id.btn_seg1_follow
+                R.id.btn_seg0_follow, R.id.btn_seg1_follow, R.id.btn_seg2_follow, R.id.btn_seg3_follow
         };
         int[] matchBtnIds = {
-            R.id.btn_seg0_match, R.id.btn_seg1_match
+                R.id.btn_seg0_match, R.id.btn_seg1_match, R.id.btn_seg2_match, R.id.btn_seg3_match
+        };
+        int[] recordAfterRefBtnIds = {
+                R.id.btn_seg0_record_after_ref, R.id.btn_seg1_record_after_ref,
+                R.id.btn_seg2_record_after_ref, R.id.btn_seg3_record_after_ref
+        };
+        int[] chainBtnIds = {
+                R.id.btn_seg0_chain, R.id.btn_seg1_chain, R.id.btn_seg2_chain, R.id.btn_seg3_chain
+        };
+        int[] joinBtnIds = {
+                R.id.btn_seg0_join, R.id.btn_seg1_join, R.id.btn_seg2_join, R.id.btn_seg3_join
         };
         int[] waitFinishBtnIds = {
-            R.id.btn_seg0_wait_finish, R.id.btn_seg1_wait_finish
+                R.id.btn_seg0_wait_finish, R.id.btn_seg1_wait_finish, R.id.btn_seg2_wait_finish, R.id.btn_seg3_wait_finish
         };
         for (int i = 0; i < SEG_COUNT; i++) {
             segCards[i]        = findViewById(cardIds[i]);
@@ -379,14 +421,24 @@ public class LooperControlActivity extends BaseActivity {
             tvSegMaxRec[i]     = findViewById(maxRecTvIds[i]);
             btnSegFollow[i]    = findViewById(followBtnIds[i]);
             btnSegMatch[i]     = findViewById(matchBtnIds[i]);
+            btnSegRecordAfterRef[i] = findViewById(recordAfterRefBtnIds[i]);
+            btnSegChain[i]     = findViewById(chainBtnIds[i]);
+            btnSegJoin[i]      = findViewById(joinBtnIds[i]);
             btnSegWaitFinish[i]= findViewById(waitFinishBtnIds[i]);
         }
 
         // 全局控制区
-        btnChainPlay = findViewById(R.id.btn_chain_play);
-        btnJoinPlay  = findViewById(R.id.btn_join_play);
         btnPlayAll   = findViewById(R.id.btn_play_all);
         btnStopAll   = findViewById(R.id.btn_stop_all);
+        btnDeleteAll = findViewById(R.id.btn_delete_all);
+
+        // 参照段显示
+        tvTopReferenceSeg = findViewById(R.id.tv_top_reference_seg);
+
+        // 初始化播放时间数组
+        for (int i = 0; i < SEG_COUNT; i++) {
+            segPlayStartTime[i] = 0;
+        }
 
         // 倒数大数字框
         layoutCountdownBox   = findViewById(R.id.layout_countdown_box);
@@ -408,11 +460,24 @@ public class LooperControlActivity extends BaseActivity {
         tvTopMetroMode = findViewById(R.id.tv_top_metro_mode);
         tvTopHwStatus  = findViewById(R.id.tv_top_hw_status);
 
+        // 录制空间占用条
+        progressStorage   = findViewById(R.id.progress_storage);
+        tvStorageUsed     = findViewById(R.id.tv_storage_used);
+        tvStorageTime     = findViewById(R.id.tv_storage_time);
+        int[] segStorageIds = {
+                R.id.tv_seg0_storage, R.id.tv_seg1_storage,
+                R.id.tv_seg2_storage, R.id.tv_seg3_storage
+        };
+        for (int i = 0; i < SEG_COUNT; i++) {
+            tvSegStorage[i] = findViewById(segStorageIds[i]);
+        }
+
         for (int i = 0; i < SEG_COUNT; i++) {
             refreshSegUI(i);
             refreshSegCfgHint(i);
         }
         updateControlButtonStates();
+        updateStorageDisplay();  // 初始化存储空间显示
     }
 
     /** 初始化侧边栏控件引用 */
@@ -458,7 +523,7 @@ public class LooperControlActivity extends BaseActivity {
         swCountdownBeforeRec.setChecked(countdownBeforeRec);
         // 倒数拍数行根据倒数开关显示/隐藏
         layoutCountdownBeats.setVisibility(
-            countdownBeforeRec ? View.VISIBLE : View.GONE);
+                countdownBeforeRec ? View.VISIBLE : View.GONE);
 
         tvCountdownValue.setText(String.valueOf(countdownBeats));
         tvBeatsValue.setText(String.valueOf(currentBeats));
@@ -480,7 +545,7 @@ public class LooperControlActivity extends BaseActivity {
         swCountdownBeforeRec.setOnCheckedChangeListener((buttonView, isChecked) -> {
             countdownBeforeRec = isChecked;
             layoutCountdownBeats.setVisibility(
-                countdownBeforeRec ? View.VISIBLE : View.GONE);
+                    countdownBeforeRec ? View.VISIBLE : View.GONE);
         });
 
         // Looper设置：第二段跟随第一段（已移至主界面，保留内部变量更新）
@@ -545,12 +610,12 @@ public class LooperControlActivity extends BaseActivity {
         input.setTextSize(18);
         input.setGravity(android.view.Gravity.CENTER);
         input.setSelection(input.getText().length());
-        
+
         android.widget.LinearLayout container = new android.widget.LinearLayout(this);
         container.setOrientation(android.widget.LinearLayout.VERTICAL);
         container.setPadding(50, 20, 50, 10);
         container.addView(input);
-        
+
         TextView hint = new TextView(this);
         hint.setText("范围：60 ~ 200 BPM");
         hint.setTextColor(clr(R.color.dialog_sub_text));
@@ -560,29 +625,29 @@ public class LooperControlActivity extends BaseActivity {
         container.addView(hint);
 
         new AlertDialog.Builder(this)
-            .setTitle("设置 BPM")
-            .setView(container)
-            .setPositiveButton("确定", (d, w) -> {
-                try {
-                    int newBpm = Integer.parseInt(input.getText().toString().trim());
-                    if (newBpm < 60 || newBpm > 200) {
-                        Toast.makeText(this, "BPM 范围必须在 60-200 之间", Toast.LENGTH_SHORT).show();
-                        return;
+                .setTitle("设置 BPM")
+                .setView(container)
+                .setPositiveButton("确定", (d, w) -> {
+                    try {
+                        int newBpm = Integer.parseInt(input.getText().toString().trim());
+                        if (newBpm < 60 || newBpm > 200) {
+                            Toast.makeText(this, "BPM 范围必须在 60-200 之间", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        currentBpm = newBpm;
+                        tvBpmValue.setText(String.valueOf(currentBpm));
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(this, "请输入有效数字", Toast.LENGTH_SHORT).show();
                     }
-                    currentBpm = newBpm;
-                    tvBpmValue.setText(String.valueOf(currentBpm));
-                } catch (NumberFormatException e) {
-                    Toast.makeText(this, "请输入有效数字", Toast.LENGTH_SHORT).show();
-                }
-            })
-            .setNegativeButton("取消", null)
-            .show();
-        
+                })
+                .setNegativeButton("取消", null)
+                .show();
+
         // 自动弹出键盘
         input.requestFocus();
         handler.postDelayed(() -> {
-            android.view.inputmethod.InputMethodManager imm = 
-                (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+            android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
             if (imm != null) imm.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
         }, 100);
     }
@@ -599,12 +664,12 @@ public class LooperControlActivity extends BaseActivity {
     /** 关闭侧边栏（带滑出动画） */
     private void closeDrawer() {
         drawerLooperSettings.animate()
-            .translationX(drawerLooperSettings.getWidth())
-            .setDuration(250)
-            .withEndAction(() -> {
-                drawerLooperSettings.setVisibility(View.GONE);
-                looperDrawerOverlay.setVisibility(View.GONE);
-            }).start();
+                .translationX(drawerLooperSettings.getWidth())
+                .setDuration(250)
+                .withEndAction(() -> {
+                    drawerLooperSettings.setVisibility(View.GONE);
+                    looperDrawerOverlay.setVisibility(View.GONE);
+                }).start();
     }
 
     /** 将当前设置应用到顶部信息栏 & 发送 BLE 命令到硬件 */
@@ -615,7 +680,7 @@ public class LooperControlActivity extends BaseActivity {
         sendCommand("metro beats " + currentBeats, null);
         // 节拍器开/关由 App 側在录制时动态控制，这里先关闭
         sendCommand("metro off", null);
-        
+
         refreshTopInfoBar();
         closeDrawer();
         Toast.makeText(this, "设置已应用并发送", Toast.LENGTH_SHORT).show();
@@ -626,7 +691,7 @@ public class LooperControlActivity extends BaseActivity {
         if (tvTopBpm == null) return;
         tvTopBpm.setText(String.valueOf(currentBpm));
         tvTopBeats.setText(currentBeats + "/4");
-        
+
         // 节拍器显示逻辑：
         String metroLabel;
         int metroColor;
@@ -645,8 +710,44 @@ public class LooperControlActivity extends BaseActivity {
         }
         tvTopMetroMode.setText(metroLabel);
         tvTopMetroMode.setTextColor(metroColor);
-        
+
+        // 更新参照段显示
+        updateReferenceSegmentDisplay();
+
         updateHwStatusIndicator();
+    }
+
+    /**
+     * 更新参照段（追踪最早开始播放的段）
+     */
+    private void updateReferenceSegmentDisplay() {
+        if (tvTopReferenceSeg == null) return;
+
+        // 遍历所有播放中的段，找到最早开始的
+        long earliestTime = Long.MAX_VALUE;
+        int earliestSeg = -1;
+
+        for (int i = 0; i < SEG_COUNT; i++) {
+            if (segStates[i] == SegState.PLAYING) {
+                long startTs = segPlayStartTime[i] > 0 ? segPlayStartTime[i] : Long.MAX_VALUE - i;
+                if (startTs < earliestTime) {
+                    earliestTime = startTs;
+                    earliestSeg = i;
+                }
+            }
+        }
+
+        // 更新参照段索引
+        referenceSegIndex = earliestSeg;
+
+        // 更新显示
+        if (referenceSegIndex >= 0) {
+            tvTopReferenceSeg.setText("LOOP " + (referenceSegIndex + 1));
+            tvTopReferenceSeg.setTextColor(COLOR_PLAYING);
+        } else {
+            tvTopReferenceSeg.setText("--");
+            tvTopReferenceSeg.setTextColor(clr(R.color.text_secondary));
+        }
     }
 
     /** 根据蓝牙连接状态更新"硬件"指示 */
@@ -655,7 +756,7 @@ public class LooperControlActivity extends BaseActivity {
         boolean connected = bluetoothHelper != null && bluetoothHelper.isConnected();
         tvTopHwStatus.setText(connected ? "已连接" : "未连接");
         tvTopHwStatus.setTextColor(
-            clr(connected ? R.color.status_connected : R.color.status_disconnected));
+                clr(connected ? R.color.status_connected : R.color.status_disconnected));
     }
 
     private void setupListeners() {
@@ -697,15 +798,20 @@ public class LooperControlActivity extends BaseActivity {
             btnSegFollow[i].setOnClickListener(v -> onFollowButtonClick(idx));
             // 底部录制等长按钮
             btnSegMatch[i].setOnClickListener(v -> onMatchButtonClick(idx));
+            // 底部参照段结束后录制按钮
+            btnSegRecordAfterRef[i].setOnClickListener(v -> onRecordAfterRefClick(idx));
+            // 底部衔接播放按钮
+            btnSegChain[i].setOnClickListener(v -> onChainClick(idx));
+            // 底部接入播放按钮
+            btnSegJoin[i].setOnClickListener(v -> onJoinClick(idx));
             // 底部等待本轮播完再停止按钮（每段独立）
             btnSegWaitFinish[i].setOnClickListener(v -> onWaitFinishToggle(idx));
         }
 
         // 全局控制按钮
-        btnChainPlay.setOnClickListener(v -> onChainPlayClick());
-        btnJoinPlay.setOnClickListener(v -> onJoinPlayClick());
         btnPlayAll.setOnClickListener(v -> onPlayAllClick());
         btnStopAll.setOnClickListener(v -> onStopAllClick());
+        btnDeleteAll.setOnClickListener(v -> onDeleteAllClick());
     }
 
     private void onSegmentCardClick(int idx) {
@@ -758,7 +864,8 @@ public class LooperControlActivity extends BaseActivity {
             segPlayStartTime[idx] = 0; // 暂停时清除播放位置基准
         }
         refreshSegUI(idx);
-        // 录制→播放：计算预裁剪命令并与停录命令拼在一起发送
+        refreshTopInfoBar();
+        updateControlButtonStates();
         final String fullCmd;
         if (prevState == SegState.RECORDING && nextState == SegState.PLAYING) {
             String trimCmd = buildPreCropUpdate(idx);
@@ -847,6 +954,10 @@ public class LooperControlActivity extends BaseActivity {
         segInSyncWait[idx] = false;
         hideSyncInfoPanel();
         refreshSegUI(idx);
+
+        // 启动录制时的存储空间实时更新（每200ms刷新一次）
+        startStorageUpdateForRecording(idx);
+
         // 等长录制：若开关开启且参考段时长已知，自动按相同时长停止（考虑裁剪后的有效时长）
         if (segMatchEnabled[idx]) {
             int ref = (srRefSegIdx >= 0) ? srRefSegIdx : 0;
@@ -866,12 +977,46 @@ public class LooperControlActivity extends BaseActivity {
             if (!success) {
                 // 回滚
                 cancelAutoStop(idx);
+                stopStorageUpdateForRecording(idx);
                 segStates[idx] = prevState;
                 segRecordStartTime[idx] = 0;
                 hideSyncInfoPanel();
                 refreshSegUI(idx);
             }
         });
+    }
+
+    /**
+     * 开始录制时的存储空间实时更新
+     * 每200ms刷新一次空间占用显示
+     */
+    private void startStorageUpdateForRecording(final int idx) {
+        if (storageUpdateRunnables[idx] != null) {
+            handler.removeCallbacks(storageUpdateRunnables[idx]);
+        }
+        storageUpdateRunnables[idx] = new Runnable() {
+            @Override
+            public void run() {
+                if (segStates[idx] == SegState.RECORDING) {
+                    updateStorageDisplay();
+                    // 继续下一次更新
+                    handler.postDelayed(this, 200);
+                }
+            }
+        };
+        handler.post(storageUpdateRunnables[idx]);
+    }
+
+    /**
+     * 停止录制时的存储空间更新任务
+     */
+    private void stopStorageUpdateForRecording(int idx) {
+        if (storageUpdateRunnables[idx] != null) {
+            handler.removeCallbacks(storageUpdateRunnables[idx]);
+            storageUpdateRunnables[idx] = null;
+        }
+        // 最终更新一次显示
+        updateStorageDisplay();
     }
 
     /** 在信息面板显示 LOOP 2 录制半长倒计时（每100ms刷新） */
@@ -887,8 +1032,8 @@ public class LooperControlActivity extends BaseActivity {
         tvLoopSyncTitle.setText("⏱ LOOP " + (idx + 1) + " 录制中（跟随先录段长度）");
         int ref = (srRefSegIdx >= 0) ? srRefSegIdx : 0;
         tvLoopSyncInfo.setText(
-            "LOOP " + (ref + 1) + " 循环时长: " + String.format("%.2f", getEffectiveLoopDurationMs(ref) / 1000.0) + "s" +
-            "\n完成倒计时: " + secs + "." + tenths + "s"
+                "LOOP " + (ref + 1) + " 循环时长: " + String.format("%.2f", getEffectiveLoopDurationMs(ref) / 1000.0) + "s" +
+                        "\n完成倒计时: " + secs + "." + tenths + "s"
         );
         layoutLoopSyncInfo.setVisibility(View.VISIBLE);
         // 大数字框显示剩余秒数
@@ -910,6 +1055,12 @@ public class LooperControlActivity extends BaseActivity {
             segLoopDurationMs[idx] = now - segRecordStartTime[idx];
         }
         segPlayStartTime[idx] = now;
+
+        // 录制完成后停止存储空间的实时更新
+        if (fromRecording) {
+            stopStorageUpdateForRecording(idx);
+        }
+
         // 录制完成后在音频轨面板显示/更新该段的裁剪卡片
         if (fromRecording) {
             upsertAudioTrackCard(idx);
@@ -946,7 +1097,7 @@ public class LooperControlActivity extends BaseActivity {
         // UI：进入同步等待状态，展示倒计时面板
         segInCountdown[idx] = true;
         segInSyncWait[idx]  = true;
-        showSyncInfoPanel(idx, loopTotal, targetMs);
+        showSyncInfoPanel(idx, refIdx, loopTotal, targetMs);
 
         if (metroOnDuringRec) { sendCommand("metro on", null); refreshTopInfoBar(); }
 
@@ -954,21 +1105,21 @@ public class LooperControlActivity extends BaseActivity {
         srRefSegIdx = refIdx;
         srArmed = true;
         sendCommandWithCallback(
-            "looper -SR " + refIdx + " " + idx + (segMatchEnabled[idx] ? " match" : ""),
-            success -> {
-                if (!success) {
-                    srArmed = false;
-                    srRefSegIdx = -1;
-                    if (srPredictRunnable != null) {
-                        handler.removeCallbacks(srPredictRunnable);
-                        srPredictRunnable = null;
+                "looper -SR " + refIdx + " " + idx + (segMatchEnabled[idx] ? " match" : ""),
+                success -> {
+                    if (!success) {
+                        srArmed = false;
+                        srRefSegIdx = -1;
+                        if (srPredictRunnable != null) {
+                            handler.removeCallbacks(srPredictRunnable);
+                            srPredictRunnable = null;
+                        }
+                        segInCountdown[idx] = false;
+                        segInSyncWait[idx]  = false;
+                        hideSyncInfoPanel();
+                        updateControlButtonStates();
                     }
-                    segInCountdown[idx] = false;
-                    segInSyncWait[idx]  = false;
-                    hideSyncInfoPanel();
-                    updateControlButtonStates();
                 }
-            }
         );
 
         // 预测时间轴：与 chain/join 完全一致的模式
@@ -1005,6 +1156,9 @@ public class LooperControlActivity extends BaseActivity {
         refreshSegUI(idx);
         updateControlButtonStates();
 
+        // 同步录制时也启动存储空间实时更新
+        startStorageUpdateForRecording(idx);
+
         // ① 等长录制：从 startMs 起 capDur 后切 PLAYING
         if (segMatchEnabled[idx] && capDur > 0) {
             long delay = Math.max(0L, (startMs + capDur) - System.currentTimeMillis());
@@ -1027,7 +1181,7 @@ public class LooperControlActivity extends BaseActivity {
     }
 
     /** 在按钮下方信息面板显示 LOOP 同步信息（每 100ms 刷新） */
-    private void showSyncInfoPanel(int idx, long loopDuration, long targetMs) {
+    private void showSyncInfoPanel(int idx, int refIdx, long loopDuration, long targetMs) {
         if (!segInSyncWait[idx]) return;
         long remaining = targetMs - System.currentTimeMillis();
         if (remaining < 0) remaining = 0;
@@ -1036,9 +1190,9 @@ public class LooperControlActivity extends BaseActivity {
 
         tvLoopSyncTitle.setText("🔁 跟随录制 — LOOP " + (idx + 1) + " 等待同步");
         tvLoopSyncInfo.setText(
-            "LOOP 1 循环时长: " + String.format("%.2f", loopDuration / 1000.0) + "s" +
-            "\n⏳ 距下一循环头: " + secs + "." + tenths + "s\n" +
-            "点击 LOOP " + (idx + 1) + " 卡片可取消等待"
+                "LOOP " + (refIdx + 1) + " 循环时长: " + String.format("%.2f", loopDuration / 1000.0) + "s" +
+                        "\n⏳ 距下一循环头: " + secs + "." + tenths + "s\n" +
+                        "点击 LOOP " + (idx + 1) + " 卡片可取消等待"
         );
         layoutLoopSyncInfo.setVisibility(View.VISIBLE);
         // 大数字框显示剩余秒数
@@ -1047,7 +1201,9 @@ public class LooperControlActivity extends BaseActivity {
         layoutCountdownBox.setVisibility(View.VISIBLE);
 
         if (remaining > 80) {
-            handler.postDelayed(() -> showSyncInfoPanel(idx, loopDuration, targetMs), 100);
+            final int finalIdx = idx;
+            final int finalRefIdx = refIdx;
+            handler.postDelayed(() -> showSyncInfoPanel(finalIdx, finalRefIdx, loopDuration, targetMs), 100);
         }
     }
 
@@ -1109,9 +1265,9 @@ public class LooperControlActivity extends BaseActivity {
         if (remaining > 0) {
             tvLoopSyncTitle.setText("🎵 LOOP " + (idx + 1) + " 录制准备");
             tvLoopSyncInfo.setText(
-                "节拍器倒数中... 还剩 " + remaining + " 拍\n" +
-                "BPM: " + currentBpm + "  ·  " + countdownBeats + "拍后开始录制\n" +
-                "点击 LOOP " + (idx + 1) + " 卡片可取消"
+                    "节拍器倒数中... 还剩 " + remaining + " 拍\n" +
+                            "BPM: " + currentBpm + "  ·  " + countdownBeats + "拍后开始录制\n" +
+                            "点击 LOOP " + (idx + 1) + " 卡片可取消"
             );
             layoutLoopSyncInfo.setVisibility(View.VISIBLE);
             // 大数字框显示剩余拍数
@@ -1191,6 +1347,10 @@ public class LooperControlActivity extends BaseActivity {
             // 停止录制，不播放（乐观更新）
             segStates[idx] = SegState.STOPPED;
             segPlayStartTime[idx] = 0;
+
+            // 停止录制时也停止存储空间的实时更新
+            stopStorageUpdateForRecording(idx);
+
             refreshSegUI(idx);
             refreshSegCfgHint(idx);
             updateControlButtonStates();
@@ -1216,6 +1376,7 @@ public class LooperControlActivity extends BaseActivity {
     /**
      * 长按 2s 触发：删除该段录音并恢复到 INACTIVE
      * 对应硬件命令：looper -c <idx>
+     * 支持在 PLAYING/RECORDING 状态下删除（先停止再删除）
      */
     private void deleteSegment(int idx) {
         longPressRunnables[idx] = null;
@@ -1226,10 +1387,33 @@ public class LooperControlActivity extends BaseActivity {
             waitFinishPredictRunnables[idx] = null;
         }
         waitFinishEnabled[idx] = false;
+
+        // 如果正在播放或录制，先发送停止命令
+        if (segStates[idx] == SegState.PLAYING || segStates[idx] == SegState.RECORDING) {
+            sendCommandWithCallback("looper -t " + idx, success -> {
+                if (success) {
+                    // 停止成功后执行实际删除操作
+                    handler.postDelayed(() -> executeDeleteSegment(idx), 100);
+                } else {
+                    Toast.makeText(this, "停止失败，无法删除", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            executeDeleteSegment(idx);
+        }
+    }
+
+    /**
+     * 实际执行段删除的内部方法
+     */
+    private void executeDeleteSegment(int idx) {
+        // 停止可能正在运行的存储空间更新任务
+        stopStorageUpdateForRecording(idx);
+
         // 卡片闪烁反馈
         segCards[idx].animate().alpha(0.2f).setDuration(80)
-            .withEndAction(() -> segCards[idx].animate().alpha(1f).setDuration(80).start())
-            .start();
+                .withEndAction(() -> segCards[idx].animate().alpha(1f).setDuration(80).start())
+                .start();
         // 乐观更新：立即清为 INACTIVE
         final SegState prevStateForDel = segStates[idx];
         segStates[idx] = SegState.INACTIVE;
@@ -1243,8 +1427,8 @@ public class LooperControlActivity extends BaseActivity {
             if (j != idx && segInSyncWait[j]) {
                 cancelCountdown(j);
                 Toast.makeText(this,
-                    "LOOP " + (idx+1) + " 已删除，LOOP " + (j+1) + " 跟随等待已取消",
-                    Toast.LENGTH_SHORT).show();
+                        "LOOP " + (idx+1) + " 已删除，LOOP " + (j+1) + " 跟随等待已取消",
+                        Toast.LENGTH_SHORT).show();
             }
         }
         refreshSegUI(idx);
@@ -1272,8 +1456,8 @@ public class LooperControlActivity extends BaseActivity {
         segFollowEnabled[idx] = !segFollowEnabled[idx];
         updateControlButtonStates();
         Toast.makeText(this,
-            "LOOP " + (idx + 1) + " 跟随录制：" + (segFollowEnabled[idx] ? "开" : "关"),
-            Toast.LENGTH_SHORT).show();
+                "LOOP " + (idx + 1) + " 跟随录制：" + (segFollowEnabled[idx] ? "开" : "关"),
+                Toast.LENGTH_SHORT).show();
     }
 
     /** 录制等长按钮点击：与先录段长度一致自动停止 */
@@ -1281,139 +1465,143 @@ public class LooperControlActivity extends BaseActivity {
         segMatchEnabled[idx] = !segMatchEnabled[idx];
         updateControlButtonStates();
         Toast.makeText(this,
-            "LOOP " + (idx + 1) + " 录制等长：" + (segMatchEnabled[idx] ? "开" : "关"),
-            Toast.LENGTH_SHORT).show();
+                "LOOP " + (idx + 1) + " 录制等长：" + (segMatchEnabled[idx] ? "开" : "关"),
+                Toast.LENGTH_SHORT).show();
+    }
+
+    /** 参照段结束后录制按钮点击：参照段结束后开始录制 */
+    private void onRecordAfterRefClick(int idx) {
+        if (!checkConnection()) return;
+        if (segStates[idx] != SegState.INACTIVE) {
+            Toast.makeText(this, "只能在未录制时使用", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        int refIdx = getRefPlayingSegIdx(idx);
+        if (refIdx < 0) {
+            Toast.makeText(this, "需要有参照段在播放", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        waitForRefBoundaryThenRecord(idx, refIdx);
+    }
+
+    /** 衔接播放按钮点击：参照段播完后停止参照段，当前段开始播放 */
+    private void onChainClick(int idx) {
+        if (!checkConnection()) return;
+        int refIdx = referenceSegIndex;
+        if (refIdx < 0 || segStates[refIdx] != SegState.PLAYING) {
+            Toast.makeText(this, "需要有参照段在播放", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (segStates[idx] != SegState.STOPPED) {
+            Toast.makeText(this, "该段需要在已停止状态", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // 发送衔接命令
+        sendCommand("looper -C " + refIdx + " " + idx, null);
+        Toast.makeText(this, "衔接已激活，等待参照段结束", Toast.LENGTH_SHORT).show();
+    }
+
+    /** 接入播放按钮点击：参照段播完后当前段开始播放 */
+    private void onJoinClick(int idx) {
+        if (!checkConnection()) return;
+        int refIdx = referenceSegIndex;
+        if (refIdx < 0 || segStates[refIdx] != SegState.PLAYING) {
+            Toast.makeText(this, "需要有参照段在播放", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (segStates[idx] != SegState.STOPPED) {
+            Toast.makeText(this, "该段需要在已停止状态", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // 发送接入命令
+        sendCommand("looper -J " + idx, null);
+        Toast.makeText(this, "接入已激活，等待参照段结束", Toast.LENGTH_SHORT).show();
     }
 
     // ========================================================================
     // 全局控制按钮：衔接 / 接入 / 全部播放 / 全部停止
     // ========================================================================
 
-    /**
-     * 接入播放：当前 PLAYING 段本轮结束后，STOPPED 段加入播放（PLAYING 段继续）。
-     * 下位机在回绕点精确触发，App 仅发一条命令。与衔接互斥。
-     */
-    private void onJoinPlayClick() {
+    /** 全部删除：删除所有已录制的段 */
+    private void onDeleteAllClick() {
         if (!checkConnection()) return;
 
-        int playingIdx = -1, stoppedIdx = -1;
+        // 检查是否有任何已录制的段
+        boolean anyRecorded = false;
         for (int i = 0; i < SEG_COUNT; i++) {
-            if (segStates[i] == SegState.PLAYING) playingIdx = i;
-            if (segStates[i] == SegState.STOPPED)  stoppedIdx = i;
-        }
-
-        if (joinPlayActive) {
-            // 再次点击：取消接入（乐观更新）
-            joinPlayActive = false;
-            if (joinPredictRunnable != null) {
-                handler.removeCallbacks(joinPredictRunnable);
-                joinPredictRunnable = null;
+            if (segStates[i] != SegState.INACTIVE) {
+                anyRecorded = true;
+                break;
             }
-            updateControlButtonStates();
-            sendCommandWithCallback("looper -J cancel", success -> {
-                if (!success) {
-                    joinPlayActive = true;
-                    updateControlButtonStates();
-                }
-            });
-            Toast.makeText(this, "接入播放已取消", Toast.LENGTH_SHORT).show();
-            return;
         }
+        if (!anyRecorded) return;
 
-        if (playingIdx < 0 || stoppedIdx < 0) return;
+        new AlertDialog.Builder(this)
+                .setTitle("🗑 全部删除")
+                .setMessage("确认删除所有已录制的段？")
+                .setPositiveButton("确认删除", (d, w) -> {
+                    // 先停止所有正在播放/录制的段
+                    StringBuilder stopCmds = new StringBuilder();
+                    for (int i = 0; i < SEG_COUNT; i++) {
+                        if (segStates[i] == SegState.PLAYING || segStates[i] == SegState.RECORDING) {
+                            stopCmds.append("looper -t ").append(i).append("\r\n");
+                        }
+                    }
+                    if (stopCmds.length() > 0) {
+                        sendCommand(stopCmds.toString().trim(), null);
+                    }
 
-        // 乐观更新
-        joinPlayActive      = true;
-        chainPlayActive     = false;
-        joinPredictStartSeg = stoppedIdx;
-        updateControlButtonStates();
-        // 预测时间轴：在预期回绕点提前更新 UI，无需等待 BLE 0x23 通知
-        long joinRemaining = msUntilNextWrap(playingIdx);
-        if (joinRemaining > 0) {
-            if (joinPredictRunnable != null) handler.removeCallbacks(joinPredictRunnable);
-            joinPredictRunnable = () -> applyJoinPredictive();
-            handler.postDelayed(joinPredictRunnable, joinRemaining);
-        }
-        final int fStopIdx = stoppedIdx;
-        sendCommandWithCallback("looper -J " + fStopIdx, success -> {
-            if (!success) {
-                joinPlayActive = false;
-                if (joinPredictRunnable != null) {
-                    handler.removeCallbacks(joinPredictRunnable);
-                    joinPredictRunnable = null;
-                }
-                updateControlButtonStates();
-            }
-        });
-        Toast.makeText(this, "接入已激活，下位机等待 LOOP " + (playingIdx+1) + " 本轮结束",
-            Toast.LENGTH_SHORT).show();
-    }
+                    // 延迟后执行删除
+                    handler.postDelayed(() -> {
+                        for (int i = 0; i < SEG_COUNT; i++) {
+                            if (segStates[i] != SegState.INACTIVE) {
+                                // 清理定时器等
+                                cancelAutoStop(i);
+                                cancelCountdown(i);
+                                stopStorageUpdateForRecording(i);
+                                if (waitFinishPredictRunnables[i] != null) {
+                                    handler.removeCallbacks(waitFinishPredictRunnables[i]);
+                                    waitFinishPredictRunnables[i] = null;
+                                }
+                                waitFinishEnabled[i] = false;
 
-    /**
-     * 衔接播放：当前播放中的段播完本轮后停止，另一段（已停止）开始播放。
-     * 下位机在回绕点精确触发，App 仅发一条命令。与接入互斥。
-     */
-    private void onChainPlayClick() {
-        if (!checkConnection()) return;
+                                // 重置状态
+                                segStates[i] = SegState.INACTIVE;
+                                segLoopDurationMs[i] = 0;
+                                segRecordStartTime[i] = 0;
+                                segPlayStartTime[i] = 0;
+                                segTrimStartPage[i] = 0;
+                                segTrimEndPage[i] = 0;
 
-        int playingIdx = -1, stoppedIdx = -1;
-        for (int i = 0; i < SEG_COUNT; i++) {
-            if (segStates[i] == SegState.PLAYING) playingIdx = i;
-            if (segStates[i] == SegState.STOPPED)  stoppedIdx = i;
-        }
+                                // 刷新UI
+                                removeAudioTrackCard(i);
+                                refreshSegUI(i);
+                                refreshSegCfgHint(i);
+                            }
+                        }
 
-        if (chainPlayActive) {
-            // 再次点击：取消衔接（乐观更新）
-            chainPlayActive = false;
-            if (chainPredictRunnable != null) {
-                handler.removeCallbacks(chainPredictRunnable);
-                chainPredictRunnable = null;
-            }
-            updateControlButtonStates();
-            sendCommandWithCallback("looper -C cancel", success -> {
-                if (!success) {
-                    chainPlayActive = true;
-                    updateControlButtonStates();
-                }
-            });
-            Toast.makeText(this, "衔接已取消", Toast.LENGTH_SHORT).show();
-            return;
-        }
+                        updateControlButtonStates();
+                        updateStorageDisplay();
+                        refreshTopInfoBar();
 
-        if (playingIdx < 0 || stoppedIdx < 0) return;
+                        // 发送删除命令
+                        StringBuilder deleteCmds = new StringBuilder();
+                        for (int i = 0; i < SEG_COUNT; i++) {
+                            deleteCmds.append("looper -c ").append(i).append("\r\n");
+                        }
+                        sendCommand(deleteCmds.toString().trim(), null);
 
-        // 乐观更新
-        chainPlayActive      = true;
-        joinPlayActive       = false;
-        chainPredictStopSeg  = playingIdx;
-        chainPredictStartSeg = stoppedIdx;
-        updateControlButtonStates();
-        // 预测时间轴：在预期回绕点提前更新 UI，无需等待 BLE 0x23 通知
-        long chainRemaining = msUntilNextWrap(playingIdx);
-        if (chainRemaining > 0) {
-            if (chainPredictRunnable != null) handler.removeCallbacks(chainPredictRunnable);
-            chainPredictRunnable = () -> applyChainPredictive();
-            handler.postDelayed(chainPredictRunnable, chainRemaining);
-        }
-        final int fPlayIdx = playingIdx, fStopIdx = stoppedIdx;
-        sendCommandWithCallback("looper -C " + fPlayIdx + " " + fStopIdx, success -> {
-            if (!success) {
-                chainPlayActive = false;
-                if (chainPredictRunnable != null) {
-                    handler.removeCallbacks(chainPredictRunnable);
-                    chainPredictRunnable = null;
-                }
-                updateControlButtonStates();
-            }
-        });
-        Toast.makeText(this, "衔接已激活，下位机等待 LOOP " + (playingIdx+1) + " 本轮结束",
-            Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "所有段已删除", Toast.LENGTH_SHORT).show();
+                    }, 100);
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     /** 全部同时播放（仅对 STOPPED 的段；乐观更新） */
     private void onPlayAllClick() {
         if (!checkConnection()) return;
-        
+
         // 乐观更新：先将所有 STOPPED 段改为 PLAYING
         StringBuilder cmds = new StringBuilder();
         for (int i = 0; i < SEG_COUNT; i++) {
@@ -1425,7 +1613,7 @@ public class LooperControlActivity extends BaseActivity {
             }
         }
         updateControlButtonStates();
-        
+
         // 一次性发送所有播放命令
         if (cmds.length() > 0) {
             sendCommand(cmds.toString().trim(), null);
@@ -1520,8 +1708,8 @@ public class LooperControlActivity extends BaseActivity {
         waitFinishEnabled[idx] = !waitFinishEnabled[idx];
         updateControlButtonStates();
         Toast.makeText(this,
-            "LOOP " + (idx+1) + " 等待播完再停止：" + (waitFinishEnabled[idx] ? "开" : "关"),
-            Toast.LENGTH_SHORT).show();
+                "LOOP " + (idx+1) + " 等待播完再停止：" + (waitFinishEnabled[idx] ? "开" : "关"),
+                Toast.LENGTH_SHORT).show();
         sendCommandWithCallback("looper -W " + idx, success -> {
             if (!success) {
                 // 回滚
@@ -1573,54 +1761,167 @@ public class LooperControlActivity extends BaseActivity {
         tvSegState[idx].setTextColor(textColor);
         tvSegHint[idx].setText(hintLabel);
 
-        // 每次段状态改变时同步刷新所有控制按钮
+        // 每次段状态改变时同步刷新所有控制按钮和存储空间显示
         updateControlButtonStates();
+        updateStorageDisplay();
+        refreshTopInfoBar();
+    }
+
+    // ========================================================================
+    // 录制空间占用显示
+    // ========================================================================
+
+    /**
+     * 更新存储空间占用显示
+     * 计算所有段的已用空间，更新进度条和文本
+     */
+    private void updateStorageDisplay() {
+        if (progressStorage == null) return;  // 控件尚未初始化
+
+        long totalUsedBytes = 0;
+
+        for (int i = 0; i < SEG_COUNT; i++) {
+            long segBytes = 0;
+            String segText = "L" + (i+1) + ": ";
+
+            if (segStates[i] != SegState.INACTIVE && segLoopDurationMs[i] > 0) {
+                // 计算该段已用字节数 = 录制时长(ms) × 每毫秒字节数
+                segBytes = (long)(segLoopDurationMs[i] * (AUDIO_BYTES_PER_SEC / 1000.0));
+                float segSec = segLoopDurationMs[i] / 1000.0f;
+                segText += String.format("%.1fs", segSec);
+            } else if (segStates[i] == SegState.RECORDING) {
+                // 正在录制中：显示实时时长（使用当前时间戳）
+                long now = System.currentTimeMillis();
+                long recMs = now - segRecordStartTime[i];
+                segBytes = (long)(recMs * (AUDIO_BYTES_PER_SEC / 1000.0));
+                float recSec = recMs / 1000.0f;
+                segText += String.format("⏺%.1fs", recSec);
+            } else {
+                segText += "--";
+            }
+
+            totalUsedBytes += segBytes;
+
+            // 更新各段明细文本
+            if (tvSegStorage[i] != null) {
+                tvSegStorage[i].setText(segText);
+                // 根据段状态设置颜色
+                if (segStates[i] == SegState.RECORDING) {
+                    tvSegStorage[i].setTextColor(clr(R.color.color_recording));
+                } else if (segBytes > 0) {
+                    tvSegStorage[i].setTextColor(clr(R.color.text_secondary));
+                } else {
+                    tvSegStorage[i].setTextColor(clr(R.color.text_tertiary));
+                }
+            }
+        }
+
+        // 计算总使用量和剩余量
+        float usedMB = totalUsedBytes / (1024.0f * 1024.0f);
+        float totalMB = TOTAL_STORAGE_BYTES / (1024.0f * 1024.0f);
+        float remainMB = totalMB - usedMB;
+        float usedPercent = (totalMB > 0) ? (usedMB / totalMB * 100.0f) : 0f;
+
+        // 计算剩余录制时间（秒）
+        float remainSec = remainMB * 1024.0f * 1024.0f / AUDIO_BYTES_PER_SEC;
+
+        // 更新主显示文本
+        if (tvStorageUsed != null) {
+            tvStorageUsed.setText(String.format("%.1f%%", usedPercent));
+
+            // 根据占用率设置颜色警告
+            if (usedPercent >= 90) {
+                tvStorageUsed.setTextColor(0xFFFF5722);  // 深橙红
+            } else if (usedPercent >= 70) {
+                tvStorageUsed.setTextColor(0xFFFFC107);  // 琥珀色
+            } else {
+                tvStorageUsed.setTextColor(clr(R.color.primary_accent));  // 蓝色
+            }
+        }
+
+        if (tvStorageTime != null) {
+            if (remainSec > 0) {
+                tvStorageTime.setText(String.format("(剩余 %.1fs)", remainSec));
+                tvStorageTime.setTextColor(clr(R.color.text_secondary));
+            } else {
+                tvStorageTime.setText("(已满)");
+                tvStorageTime.setTextColor(clr(R.color.text_error));
+            }
+        }
+
+        // 更新进度条（千分比）
+        int progressValue = (int)(usedPercent * 10);  // 转换为0-1000
+        progressStorage.setProgress(Math.min(progressValue, PROGRESS_MAX));
     }
 
     /**
      * 统一刷新所有控制按钮的三态（失能/使能/激活）。
      * 互斥规则：
-     *   btnSegFollow[0]/btnSegMatch[0]/btnSegWaitFinish[0]: 跟随/等长始终失能；等待仅段有录音时使能
-     *   btnSegFollow[1]/btnSegMatch[1]: seg0已录好且seg1未录制时使能
+     *   btnSegFollow[i]/btnSegMatch[i]: 有参照段播放时，未录制的段可跟随
      *   btnSegWaitFinish[i]: 对应段 PLAYING 或 STOPPED 时使能
-     *   btnChainPlay/btnJoinPlay: 两段都录好且一PLAYING一STOPPED时使能（互斥激活）
-     *   btnPlayAll: 两段录好且有一段STOPPED时使能
-     *   btnStopAll: 两段录好且有一段PLAYING时使能
+     *   btnChainPlay/btnJoinPlay: 有参照段播放，且存在已录好的停止段
+     *   btnPlayAll: 有已录好的段，且至少有一段 STOPPED
+     *   btnStopAll: 有已录好的段，且至少有一段 PLAYING
      */
     private void updateControlButtonStates() {
-        if (btnChainPlay == null) return; // 控件尚未绑定
+        if (btnPlayAll == null) return; // 控件尚未绑定
 
-        boolean seg0Done = (segStates[0] == SegState.PLAYING || segStates[0] == SegState.STOPPED);
-        boolean seg1Done = (segStates[1] == SegState.PLAYING || segStates[1] == SegState.STOPPED);
-        boolean bothDone = seg0Done && seg1Done;
+        // 检查所有段的状态
+        boolean anyDone = false;
+        boolean hasPlaying = false;
+        boolean hasStopped = false;
+        int playingCount = 0;
+        int stoppedCount = 0;
+        int stoppedSegIdx = -1;
+
+        for (int i = 0; i < SEG_COUNT; i++) {
+            boolean isDone = (segStates[i] == SegState.PLAYING || segStates[i] == SegState.STOPPED);
+            if (isDone) {
+                anyDone = true;
+                if (segStates[i] == SegState.PLAYING) {
+                    hasPlaying = true;
+                    playingCount++;
+                } else if (segStates[i] == SegState.STOPPED) {
+                    hasStopped = true;
+                    stoppedCount++;
+                    if (stoppedSegIdx == -1) stoppedSegIdx = i; // 记录第一个停止的段
+                }
+            }
+        }
+
         // ---------- 段独立按钮（跟随/等长）：任意先录段播放时，未录制的段可跟随 ----------
         for (int i = 0; i < SEG_COUNT; i++) {
             boolean canFollow = (getRefPlayingSegIdx(i) >= 0 && segStates[i] == SegState.INACTIVE);
             applyButtonState(btnSegFollow[i], canFollow, canFollow && segFollowEnabled[i], 0xFF22A855);
             applyButtonState(btnSegMatch[i],  canFollow, canFollow && segMatchEnabled[i],  0xFF0097A7);
+            applyButtonState(btnSegRecordAfterRef[i], canFollow, false, 0xFF9C27B0);
+        }
+
+        // ---------- 段独立按钮（衔接/接入）：有参照段播放时，停止段可操作 ----------
+        boolean hasRefPlaying = (referenceSegIndex >= 0 && segStates[referenceSegIndex] == SegState.PLAYING);
+        for (int i = 0; i < SEG_COUNT; i++) {
+            boolean canChainJoin = hasRefPlaying && segStates[i] == SegState.STOPPED;
+            applyButtonState(btnSegChain[i], canChainJoin, false, 0xFF1D6FDB);
+            applyButtonState(btnSegJoin[i], canChainJoin, false, 0xFF9B59B6);
         }
 
         // ---------- 每段独立：等待本轮播完再停止 ----------
-        // LOOP 1/2 各自在本段有数据(非INACTIVE且非RECORDING)时使能
         for (int i = 0; i < SEG_COUNT; i++) {
             boolean segPlayable = (segStates[i] == SegState.PLAYING || segStates[i] == SegState.STOPPED);
             applyButtonState(btnSegWaitFinish[i], segPlayable, waitFinishEnabled[i], 0xFFE08B0A);
         }
 
         // ---------- 全局按钮 ----------
-        // 衔接/接入：两段都录好，且当前一个 PLAYING 一个 STOPPED（任意组合）
-        boolean canChainOrJoin = bothDone && (
-            (segStates[0] == SegState.PLAYING && segStates[1] == SegState.STOPPED) ||
-            (segStates[0] == SegState.STOPPED && segStates[1] == SegState.PLAYING));
-        applyButtonState(btnChainPlay, canChainOrJoin, chainPlayActive, 0xFF1D6FDB);
-        applyButtonState(btnJoinPlay,  canChainOrJoin, joinPlayActive,  0xFF9B59B6);
-
-        // 全部播放：两段都录好，且至少有一段 STOPPED
-        boolean canPlayAll = bothDone && (segStates[0] == SegState.STOPPED || segStates[1] == SegState.STOPPED);
+        // 全部播放：有已录好的段，且至少有一段 STOPPED
+        boolean canPlayAll = anyDone && hasStopped;
         applyButtonState(btnPlayAll, canPlayAll, false, 0xFF1D6FDB);
 
-        // 全部停止：两段都录好，且至少有一段 PLAYING
-        boolean canStopAll = bothDone && (segStates[0] == SegState.PLAYING || segStates[1] == SegState.PLAYING);
+        // 全部删除：有已录好的段
+        boolean canDeleteAll = anyDone;
+        applyButtonState(btnDeleteAll, canDeleteAll, false, 0xFFCC3333);
+
+        // 全部停止：有已录好的段，且至少有一段 PLAYING
+        boolean canStopAll = anyDone && hasPlaying;
         applyButtonState(btnStopAll, canStopAll, false, 0xFFCC3333);
     }
 
@@ -1639,14 +1940,14 @@ public class LooperControlActivity extends BaseActivity {
             btn.setBackgroundTintList(ColorStateList.valueOf(clr(R.color.dialog_btn_bg)));
             if (btn instanceof ImageButton) {
                 ((ImageButton) btn).setImageTintList(
-                    ColorStateList.valueOf(clr(R.color.text_tertiary)));
+                        ColorStateList.valueOf(clr(R.color.text_tertiary)));
             }
         } else if (active) {
             btn.setAlpha(1.0f);
             btn.setBackgroundTintList(ColorStateList.valueOf(activeColor));
             if (btn instanceof ImageButton) {
                 ((ImageButton) btn).setImageTintList(
-                    ColorStateList.valueOf(Color.WHITE));
+                        ColorStateList.valueOf(Color.WHITE));
             }
         } else {
             // 使能未激活：浅蓝色背景，明显区别于失能态
@@ -1654,7 +1955,7 @@ public class LooperControlActivity extends BaseActivity {
             btn.setBackgroundTintList(ColorStateList.valueOf(clr(R.color.global_btn_active_bg)));
             if (btn instanceof ImageButton) {
                 ((ImageButton) btn).setImageTintList(
-                    ColorStateList.valueOf(clr(R.color.global_btn_active_text)));
+                        ColorStateList.valueOf(clr(R.color.global_btn_active_text)));
             }
         }
     }
@@ -1668,8 +1969,6 @@ public class LooperControlActivity extends BaseActivity {
     /** BLE 断开时更新 App UI：将 PLAYING/RECORDING 段置为 STOPPED（固件已停止播放） */
     private void onBleDisconnected() {
         // 取消所有预测定时器
-        if (chainPredictRunnable != null) { handler.removeCallbacks(chainPredictRunnable); chainPredictRunnable = null; }
-        if (joinPredictRunnable  != null) { handler.removeCallbacks(joinPredictRunnable);  joinPredictRunnable  = null; }
         if (srPredictRunnable    != null) { handler.removeCallbacks(srPredictRunnable);    srPredictRunnable    = null; }
         srArmed = false;
         for (int i = 0; i < SEG_COUNT; i++) {
@@ -1685,8 +1984,6 @@ public class LooperControlActivity extends BaseActivity {
                 refreshSegUI(i);
             }
         }
-        chainPlayActive = false;
-        joinPlayActive  = false;
 
         // BLE 断开 → looper 设置恢复默认
         for (int i = 0; i < SEG_COUNT; i++) {
@@ -1761,8 +2058,8 @@ public class LooperControlActivity extends BaseActivity {
                     accum.setLength(0);
                 } else if (buf.contains("\r\n") &&
                         (buf.contains("RECORDING") || buf.contains("PLAYING")
-                         || buf.contains("STOPPED")  || buf.contains("INACTIVE")
-                         || buf.contains("Error:"))) {
+                                || buf.contains("STOPPED")  || buf.contains("INACTIVE")
+                                || buf.contains("Error:"))) {
                     accum.setLength(0);
                 }
             });
@@ -1795,6 +2092,8 @@ public class LooperControlActivity extends BaseActivity {
                 }
                 if (parsed == SegState.STOPPED || parsed == SegState.INACTIVE) {
                     segPlayStartTime[i] = 0; // 停止/无效时清除播放位置基准
+                } else if (parsed == SegState.PLAYING && segPlayStartTime[i] == 0) {
+                    segPlayStartTime[i] = System.currentTimeMillis();
                 }
                 segStates[i] = parsed;
                 refreshSegUI(i);
@@ -1856,6 +2155,11 @@ public class LooperControlActivity extends BaseActivity {
                 default:          parsed = SegState.INACTIVE;  break;
             }
             segStates[segIdx] = parsed;
+            if (parsed == SegState.STOPPED || parsed == SegState.INACTIVE) {
+                segPlayStartTime[segIdx] = 0;
+            } else if (parsed == SegState.PLAYING && segPlayStartTime[segIdx] == 0) {
+                segPlayStartTime[segIdx] = System.currentTimeMillis();
+            }
             refreshSegUI(segIdx);
             if (parsed == SegState.RECORDING
                     && segMeasures[segIdx] > 0
@@ -1889,54 +2193,13 @@ public class LooperControlActivity extends BaseActivity {
             if (hex.length() < 10) return;
             int state = Integer.parseInt(hex.substring(8, 10), 16);
 
-            boolean prevChainActive = chainPlayActive;
-            boolean prevJoinActive  = joinPlayActive;
             boolean prevWF0         = waitFinishEnabled[0];
             boolean prevWF1         = waitFinishEnabled[1];
             boolean prevSrArmed     = srArmed;
 
-            chainPlayActive       = (state & 0x01) != 0;
-            joinPlayActive        = (state & 0x02) != 0;
             waitFinishEnabled[0]  = (state & 0x04) != 0;
             waitFinishEnabled[1]  = (state & 0x08) != 0;
             srArmed               = (state & 0x40) != 0; // bit6: SR 激活中
-
-            // ── 衔接刚执行完（was armed, now cleared）→ 交换 PLAYING↔STOPPED ──
-            if (prevChainActive && !chainPlayActive) {
-                if (chainPredictRunnable != null) {
-                    // 0x23 先于预测定时到达：取消预测，由 0x23 驱动 swap
-                    handler.removeCallbacks(chainPredictRunnable);
-                    chainPredictRunnable = null;
-                    for (int i = 0; i < SEG_COUNT; i++) {
-                        if (segStates[i] == SegState.PLAYING) {
-                            segStates[i] = SegState.STOPPED;
-                            segPlayStartTime[i] = 0;
-                            refreshSegUI(i);
-                        } else if (segStates[i] == SegState.STOPPED) {
-                            segStates[i] = SegState.PLAYING;
-                            onSegmentEnteredPlaying(i, false);
-                            refreshSegUI(i);
-                        }
-                    }
-                }
-                // 否则预测定时器已先触发，状态已更新，无需重复处理
-            }
-
-            // ── 接入刚执行完（was armed, now cleared）→ STOPPED 段变 PLAYING ──
-            if (prevJoinActive && !joinPlayActive) {
-                if (joinPredictRunnable != null) {
-                    handler.removeCallbacks(joinPredictRunnable);
-                    joinPredictRunnable = null;
-                    for (int i = 0; i < SEG_COUNT; i++) {
-                        if (segStates[i] == SegState.STOPPED) {
-                            segStates[i] = SegState.PLAYING;
-                            onSegmentEnteredPlaying(i, false);
-                            refreshSegUI(i);
-                            break; // 只处理第一个 STOPPED 段
-                        }
-                    }
-                }
-            }
 
             // ── wait-finish 刚执行完（固件已清 wait_finish_mask）→ 段停止 ──
             for (int i = 0; i < Math.min(SEG_COUNT, 2); i++) {
@@ -1964,11 +2227,14 @@ public class LooperControlActivity extends BaseActivity {
                     handler.removeCallbacks(srPredictRunnable);
                     srPredictRunnable = null;
                     long nowMs = System.currentTimeMillis();
-                    // 时间基准重定义：固件确认 LOOP 1 刚刚回绕到位置 0
-                    segPlayStartTime[0] = nowMs;
+                    // 时间基准重定义：固件确认参照段刚刚回绕到位置 0
+                    if (srRefSegIdx >= 0) {
+                        segPlayStartTime[srRefSegIdx] = nowMs;
+                    }
                     for (int i = 0; i < SEG_COUNT; i++) {
                         if (segInSyncWait[i]) {
-                            applySrRecordingState(i, nowMs, getEffectiveLoopDurationMs(0));
+                            long refDur = (srRefSegIdx >= 0) ? getEffectiveLoopDurationMs(srRefSegIdx) : 0;
+                            applySrRecordingState(i, nowMs, refDur);
                             break;
                         }
                     }
@@ -2018,8 +2284,8 @@ public class LooperControlActivity extends BaseActivity {
 
             // 同步成功提示
             Toast.makeText(this,
-                String.format("Looper 已同步: BPM=%d  Beats=%d", currentBpm, currentBeats),
-                Toast.LENGTH_SHORT).show();
+                    String.format("Looper 已同步: BPM=%d  Beats=%d", currentBpm, currentBeats),
+                    Toast.LENGTH_SHORT).show();
 
             // Flash 状态检查：如果不是 CLEAN，提示擦除
             if (flashStatus != 0) {
@@ -2035,20 +2301,20 @@ public class LooperControlActivity extends BaseActivity {
      */
     private void checkAndPromptFlashErase() {
         new AlertDialog.Builder(this)
-            .setTitle("Flash 需要初始化")
-            .setMessage("Looper Flash 尚未初始化（上次退出前有录音数据）。\n\n" +
+                .setTitle("Flash 需要初始化")
+                .setMessage("Looper Flash 尚未初始化（上次退出前有录音数据）。\n\n" +
                         "需要全片擦除 (~20s) 才能正常录音。\n是否立即擦除？")
-            .setPositiveButton("立即擦除", (d, w) -> {
-                sendCommand("looper -e", null);
-                Toast.makeText(this, "Flash 擦除中，请稍等约20秒...", Toast.LENGTH_LONG).show();
-                for (int i = 0; i < SEG_COUNT; i++) {
-                    cancelAutoStop(i);
-                    segStates[i] = SegState.INACTIVE;
-                    refreshSegUI(i);
-                }
-            })
-            .setNegativeButton("稍后", null)
-            .show();
+                .setPositiveButton("立即擦除", (d, w) -> {
+                    sendCommand("looper -e", null);
+                    Toast.makeText(this, "Flash 擦除中，请稍等约20秒...", Toast.LENGTH_LONG).show();
+                    for (int i = 0; i < SEG_COUNT; i++) {
+                        cancelAutoStop(i);
+                        segStates[i] = SegState.INACTIVE;
+                        refreshSegUI(i);
+                    }
+                })
+                .setNegativeButton("稍后", null)
+                .show();
     }
 
     private boolean checkConnection() {
@@ -2117,11 +2383,11 @@ public class LooperControlActivity extends BaseActivity {
                     long newDurMs = (long)(effEnd - startPage) * 1000L / PAGES_PER_SEC;
                     segLoopDurationMs[seg] = newDurMs;
                     // 重新锁定播放相位：就算 loopTotal 变了，% 操作也能得到正确的循环内位置
-                    if (seg == 0 && segStates[0] == SegState.PLAYING
-                            && newDurMs > 0 && segPlayStartTime[0] > 0) {
+                    if (segStates[seg] == SegState.PLAYING
+                            && newDurMs > 0 && segPlayStartTime[seg] > 0) {
                         long now2 = System.currentTimeMillis();
-                        long el   = (now2 - segPlayStartTime[0]) % newDurMs;
-                        segPlayStartTime[0] = now2 - el;
+                        long el   = (now2 - segPlayStartTime[seg]) % newDurMs;
+                        segPlayStartTime[seg] = now2 - el;
                     }
                 }
             }
@@ -2147,8 +2413,8 @@ public class LooperControlActivity extends BaseActivity {
         // segLoopDurationMs 在录制结束时被记录，单位ms
         long durationMs = segLoopDurationMs[idx];
         final int maxPages = (durationMs > 0)
-            ? (int)(durationMs * PAGES_PER_SEC / 1000L)
-            : (int)((long)segMaxRecSec[idx] * PAGES_PER_SEC);
+                ? (int)(durationMs * PAGES_PER_SEC / 1000L)
+                : (int)((long)segMaxRecSec[idx] * PAGES_PER_SEC);
 
         final int[] tmpStart = { segTrimStartPage[idx] };
         final int[] tmpEnd   = { (segTrimEndPage[idx] > 0) ? segTrimEndPage[idx] : maxPages };
@@ -2177,59 +2443,57 @@ public class LooperControlActivity extends BaseActivity {
 
         // ---- 起始页 SeekBar ----
         android.widget.LinearLayout blockStart = buildTrimSeekRow(
-            "起始页（trim start）", tmpStart, 0, maxPages, PAGES_PER_SEC);
+                "起始页（trim start）", tmpStart, 0, maxPages, PAGES_PER_SEC);
         root.addView(blockStart);
 
         // ---- 终止页 SeekBar ----
         android.widget.LinearLayout blockEnd = buildTrimSeekRow(
-            "终止页（trim end）", tmpEnd, 0, maxPages, PAGES_PER_SEC);
+                "终止页（trim end）", tmpEnd, 0, maxPages, PAGES_PER_SEC);
         root.addView(blockEnd);
 
         new AlertDialog.Builder(this)
-            .setTitle("裁剪 LOOP " + (idx + 1))
-            .setView(root)
-            .setPositiveButton("应用", (d, w) -> {
-                int startPage = tmpStart[0];
-                int endPage   = (tmpEnd[0] >= maxPages) ? 0 : tmpEnd[0]; // 等于最大则传0表示到末尾
-                if (startPage > 0 && endPage > 0 && startPage >= endPage) {
-                    Toast.makeText(this, "起始页必须小于终止页", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                segTrimStartPage[idx] = startPage;
-                segTrimEndPage[idx]   = endPage;
-                sendCommand("looper -T " + idx + " " + startPage + " " + endPage, null);
+                .setTitle("裁剪 LOOP " + (idx + 1))
+                .setView(root)
+                .setPositiveButton("应用", (d, w) -> {
+                    int startPage = tmpStart[0];
+                    int endPage   = (tmpEnd[0] >= maxPages) ? 0 : tmpEnd[0]; // 等于最大则传0表示到末尾
+                    if (startPage > 0 && endPage > 0 && startPage >= endPage) {
+                        Toast.makeText(this, "起始页必须小于终止页", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    segTrimStartPage[idx] = startPage;
+                    segTrimEndPage[idx]   = endPage;
+                    sendCommand("looper -T " + idx + " " + startPage + " " + endPage, null);
 
-                // 更新循环时长并重新锁定相位（无论是否开启等长）
-                if (idx == 0) {
+                    // 更新循环时长并重新锁定相位（无论是否开启等长）
                     int effectiveEnd   = (endPage > 0) ? endPage : maxPages;
                     long newDurMs      = (long)(effectiveEnd - startPage) * 1000L / PAGES_PER_SEC;
-                    segLoopDurationMs[0] = newDurMs;
-                    if (segStates[0] == SegState.PLAYING && newDurMs > 0 && segPlayStartTime[0] > 0) {
+                    segLoopDurationMs[idx] = newDurMs;
+                    if (segStates[idx] == SegState.PLAYING && newDurMs > 0 && segPlayStartTime[idx] > 0) {
                         long now2 = System.currentTimeMillis();
-                        long el   = (now2 - segPlayStartTime[0]) % newDurMs;
-                        segPlayStartTime[0] = now2 - el;
+                        long el   = (now2 - segPlayStartTime[idx]) % newDurMs;
+                        segPlayStartTime[idx] = now2 - el;
                     }
-                }
 
-                Toast.makeText(this,
-                    "LOOP " + (idx + 1) + " 裁剪已应用: " +
-                    startPage + " → " + (endPage == 0 ? "末尾" : String.valueOf(endPage)),
-                    Toast.LENGTH_SHORT).show();
-            })
-            .setNeutralButton("重置", (d, w) -> {
-                segTrimStartPage[idx] = 0;
-                segTrimEndPage[idx]   = 0;
-                sendCommand("looper -T " + idx + " 0 0", null);
-                // 裁剪重置时，用原始录音时长恢复循环时长，重新锁定相位
-                if (idx == 0) {
-                    long origMs = segLoopDurationMs[0]; // 如果已是裁剪后的小值，用 rawMs 传参重算
-                    // parseLooperTrimBinary 收到 0 0 回包后会用 rawPages 恢复。
-                    // 这里先用 segLoopDurationMs 不变（回包后在 parseTrim 里恢复）
-                }
-                Toast.makeText(this, "LOOP " + (idx + 1) + " 裁剪已重置", Toast.LENGTH_SHORT).show();
-            })
-            .setNegativeButton("取消", null)
-            .show();
+                    Toast.makeText(this,
+                            "LOOP " + (idx + 1) + " 裁剪已应用: " +
+                                    startPage + " → " + (endPage == 0 ? "末尾" : String.valueOf(endPage)),
+                            Toast.LENGTH_SHORT).show();
+                })
+                .setNeutralButton("重置", (d, w) -> {
+                    segTrimStartPage[idx] = 0;
+                    segTrimEndPage[idx]   = 0;
+                    sendCommand("looper -T " + idx + " 0 0", null);
+                    // 裁剪重置时，用原始录音时长恢复循环时长，重新锁定相位
+                    if (idx == 0) {
+                        long origMs = segLoopDurationMs[0]; // 如果已是裁剪后的小值，用 rawMs 传参重算
+                        // parseLooperTrimBinary 收到 0 0 回包后会用 rawPages 恢复。
+                        // 这里先用 segLoopDurationMs 不变（回包后在 parseTrim 里恢复）
+                    }
+                    Toast.makeText(this, "LOOP " + (idx + 1) + " 裁剪已重置", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     /** 构建「标签 + 当前值文本 + SeekBar」的一行控件，供 showSegTrimDialog 复用 */
@@ -2240,9 +2504,9 @@ public class LooperControlActivity extends BaseActivity {
         block.setBackgroundColor(clr(R.color.dialog_section_bg));
         block.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams bp =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         bp.setMargins(0, 0, 0, 8);
         block.setLayoutParams(bp);
 
@@ -2255,8 +2519,8 @@ public class LooperControlActivity extends BaseActivity {
         lbl.setText(label);
         lbl.setTextColor(clr(R.color.text_accent));
         android.widget.LinearLayout.LayoutParams lblP =
-            new android.widget.LinearLayout.LayoutParams(0,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                new android.widget.LinearLayout.LayoutParams(0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         lbl.setLayoutParams(lblP);
 
         final TextView tvVal = new TextView(this);
@@ -2276,9 +2540,9 @@ public class LooperControlActivity extends BaseActivity {
         sb.setMax(max - min);
         sb.setProgress(valueHolder[0] - min);
         android.widget.LinearLayout.LayoutParams sbP =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         sbP.setMargins(0, 12, 0, 4);
         sb.setLayoutParams(sbP);
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -2318,9 +2582,9 @@ public class LooperControlActivity extends BaseActivity {
         rowMeasures.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowMeasures.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockParams =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         blockParams.setMargins(0, 0, 0, 16);
         rowMeasures.setLayoutParams(blockParams);
 
@@ -2350,7 +2614,7 @@ public class LooperControlActivity extends BaseActivity {
         btnDec.setTextColor(clr(R.color.text_primary));
         btnDec.setBackgroundColor(clr(R.color.dialog_btn_bg));
         android.widget.LinearLayout.LayoutParams btnP =
-            new android.widget.LinearLayout.LayoutParams(120, 120);
+                new android.widget.LinearLayout.LayoutParams(120, 120);
         btnDec.setLayoutParams(btnP);
 
         final TextView tvVal = new TextView(this);
@@ -2359,11 +2623,11 @@ public class LooperControlActivity extends BaseActivity {
         tvVal.setTypeface(null, android.graphics.Typeface.BOLD);
         tvVal.setGravity(android.view.Gravity.CENTER);
         android.widget.LinearLayout.LayoutParams valP =
-            new android.widget.LinearLayout.LayoutParams(0,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                new android.widget.LinearLayout.LayoutParams(0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
 
 
-                tvVal.setLayoutParams(valP);
+        tvVal.setLayoutParams(valP);
         tvVal.setText(tmpMeasures[0] == 0 ? "∞" : String.valueOf(tmpMeasures[0]));
 
         Button btnInc = new Button(this);
@@ -2403,9 +2667,9 @@ public class LooperControlActivity extends BaseActivity {
         rowPlay.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowPlay.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockParams2 =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         blockParams2.setMargins(0, 0, 0, 8);
         rowPlay.setLayoutParams(blockParams2);
 
@@ -2425,7 +2689,7 @@ public class LooperControlActivity extends BaseActivity {
         rbAutoPlay.setTextColor(clr(R.color.text_primary));
         rbAutoPlay.setTextSize(14);
         rbAutoPlay.setButtonTintList(android.content.res.ColorStateList.valueOf(
-            clr(R.color.text_accent)));
+                clr(R.color.text_accent)));
         rbAutoPlay.setId(View.generateViewId());
 
         android.widget.RadioButton rbNoPlay = new android.widget.RadioButton(this);
@@ -2433,7 +2697,7 @@ public class LooperControlActivity extends BaseActivity {
         rbNoPlay.setTextColor(clr(R.color.text_primary));
         rbNoPlay.setTextSize(14);
         rbNoPlay.setButtonTintList(android.content.res.ColorStateList.valueOf(
-            clr(R.color.text_accent)));
+                clr(R.color.text_accent)));
         rbNoPlay.setId(View.generateViewId());
 
         rgPlay.addView(rbAutoPlay);
@@ -2442,7 +2706,7 @@ public class LooperControlActivity extends BaseActivity {
         else                rgPlay.check(rbNoPlay.getId());
 
         rgPlay.setOnCheckedChangeListener((g, id) ->
-            tmpAutoPlay[0] = (id == rbAutoPlay.getId()));
+                tmpAutoPlay[0] = (id == rbAutoPlay.getId()));
 
         rowPlay.addView(rgPlay);
         root.addView(rowPlay);
@@ -2453,9 +2717,9 @@ public class LooperControlActivity extends BaseActivity {
         rowVolume.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowVolume.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockVolParams =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         blockVolParams.setMargins(0, 0, 0, 8);
         rowVolume.setLayoutParams(blockVolParams);
 
@@ -2470,8 +2734,8 @@ public class LooperControlActivity extends BaseActivity {
         lblVolume.setTextSize(14);
         lblVolume.setTypeface(null, android.graphics.Typeface.BOLD);
         android.widget.LinearLayout.LayoutParams lblVolP =
-            new android.widget.LinearLayout.LayoutParams(0,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                new android.widget.LinearLayout.LayoutParams(0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         lblVolume.setLayoutParams(lblVolP);
 
         final TextView tvVolValue = new TextView(this);
@@ -2490,9 +2754,9 @@ public class LooperControlActivity extends BaseActivity {
         sbVolume.setMax(100);
         sbVolume.setProgress(tmpVolume[0]);
         android.widget.LinearLayout.LayoutParams sbP =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         sbP.setMargins(0, 12, 0, 4);
         sbVolume.setLayoutParams(sbP);
         sbVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -2513,9 +2777,9 @@ public class LooperControlActivity extends BaseActivity {
         rowPreCrop.setBackgroundColor(clr(R.color.dialog_section_bg));
         rowPreCrop.setPadding(24, 20, 24, 20);
         android.widget.LinearLayout.LayoutParams blockPreParams =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         blockPreParams.setMargins(0, 0, 0, 8);
         rowPreCrop.setLayoutParams(blockPreParams);
 
@@ -2543,8 +2807,8 @@ public class LooperControlActivity extends BaseActivity {
         lblCropStart.setTextColor(clr(R.color.text_primary));
         lblCropStart.setTextSize(13);
         android.widget.LinearLayout.LayoutParams lblCropStartP =
-            new android.widget.LinearLayout.LayoutParams(0,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                new android.widget.LinearLayout.LayoutParams(0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         lblCropStart.setLayoutParams(lblCropStartP);
         final TextView tvCropStartVal = new TextView(this);
         tvCropStartVal.setTextColor(clr(R.color.text_success));
@@ -2557,9 +2821,9 @@ public class LooperControlActivity extends BaseActivity {
         rowPreCrop.addView(startRow);
 
         android.widget.LinearLayout.LayoutParams sbCropP =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         sbCropP.setMargins(0, 8, 0, 16);
         final SeekBar sbCropStart = new SeekBar(this);
         sbCropStart.setMax(2000);
@@ -2584,8 +2848,8 @@ public class LooperControlActivity extends BaseActivity {
         lblCropEnd.setTextColor(clr(R.color.text_primary));
         lblCropEnd.setTextSize(13);
         android.widget.LinearLayout.LayoutParams lblCropEndP =
-            new android.widget.LinearLayout.LayoutParams(0,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                new android.widget.LinearLayout.LayoutParams(0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         lblCropEnd.setLayoutParams(lblCropEndP);
         final TextView tvCropEndVal = new TextView(this);
         tvCropEndVal.setTextColor(clr(R.color.text_success));
@@ -2598,9 +2862,9 @@ public class LooperControlActivity extends BaseActivity {
         rowPreCrop.addView(endRow);
 
         android.widget.LinearLayout.LayoutParams sbCropEndP =
-            new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         sbCropEndP.setMargins(0, 8, 0, 4);
         final SeekBar sbCropEnd = new SeekBar(this);
         sbCropEnd.setMax(2000);
@@ -2620,31 +2884,31 @@ public class LooperControlActivity extends BaseActivity {
 
         // ---- 显示对话框 ----
         new AlertDialog.Builder(this)
-            .setTitle("LOOP " + (idx + 1) + " 录制配置")
-            .setView(root)
-            .setPositiveButton("确定", (d, w) -> {
-                segMeasures[idx]       = tmpMeasures[0];
-                segAutoPlay[idx]       = tmpAutoPlay[0];
-                segVolumes[idx]        = tmpVolume[0];
-                segPreCropStartMs[idx] = tmpPreCropStart[0];
-                segPreCropEndMs[idx]   = tmpPreCropEnd[0];
-                refreshSegCfgHint(idx);
-                // 串行发送：先发小节配置，再发音量（避免 BLE 并发写入被拒绝）
-                final String volCmd = "looper -V " + idx + " " + segVolumes[idx];
-                sendCommandWithCallback(
-                    "looper -cfg " + idx + " autoplay " + (segAutoPlay[idx] ? "1" : "0"),
-                    autoplaySent -> {
-                        // 等上一条写完再发音量
-                        handler.postDelayed(
-                            () -> sendCommand(volCmd, null),
-                            150);
-                    });
-                Toast.makeText(this,
-                    "LOOP " + (idx+1) + " 音量 " + segVolumes[idx] + "% 已保存", Toast.LENGTH_SHORT).show();
-                saveSettings();
-            })
-            .setNegativeButton("取消", null)
-            .show();
+                .setTitle("LOOP " + (idx + 1) + " 录制配置")
+                .setView(root)
+                .setPositiveButton("确定", (d, w) -> {
+                    segMeasures[idx]       = tmpMeasures[0];
+                    segAutoPlay[idx]       = tmpAutoPlay[0];
+                    segVolumes[idx]        = tmpVolume[0];
+                    segPreCropStartMs[idx] = tmpPreCropStart[0];
+                    segPreCropEndMs[idx]   = tmpPreCropEnd[0];
+                    refreshSegCfgHint(idx);
+                    // 串行发送：先发小节配置，再发音量（避免 BLE 并发写入被拒绝）
+                    final String volCmd = "looper -V " + idx + " " + segVolumes[idx];
+                    sendCommandWithCallback(
+                            "looper -cfg " + idx + " autoplay " + (segAutoPlay[idx] ? "1" : "0"),
+                            autoplaySent -> {
+                                // 等上一条写完再发音量
+                                handler.postDelayed(
+                                        () -> sendCommand(volCmd, null),
+                                        150);
+                            });
+                    Toast.makeText(this,
+                            "LOOP " + (idx+1) + " 音量 " + segVolumes[idx] + "% 已保存", Toast.LENGTH_SHORT).show();
+                    saveSettings();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     /**
@@ -2658,9 +2922,9 @@ public class LooperControlActivity extends BaseActivity {
         String vol      = "🔊" + segVolumes[idx] + "%";
         tvSegCfgHint[idx].setText(measures + "  " + action + "  " + vol);
         tvSegCfgHint[idx].setTextColor(
-            segAutoPlay[idx]
-                ? clr(R.color.seg_cfg_active)
-                : clr(R.color.seg_cfg_inactive));
+                segAutoPlay[idx]
+                        ? clr(R.color.seg_cfg_active)
+                        : clr(R.color.seg_cfg_inactive));
         // 同步底部最大录制时长 chip 标签
         if (tvSegMaxRec != null && tvSegMaxRec[idx] != null) {
             tvSegMaxRec[idx].setText("⏱ " + segMaxRecSec[idx] + "s");
@@ -2677,63 +2941,82 @@ public class LooperControlActivity extends BaseActivity {
         }
         final int[] checkedItem = {initSel};
         new AlertDialog.Builder(this)
-            .setTitle("⏱ LOOP " + (idx + 1) + " 最大录制时长")
-            .setSingleChoiceItems(labels, initSel, (dialog, which) ->
-                checkedItem[0] = which)
-            .setPositiveButton("确定", (d, w) -> {
-                segMaxRecSec[idx] = options[checkedItem[0]];
-                refreshSegCfgHint(idx);
-                saveSettings();
-            })
-            .setNegativeButton("取消", null)
-            .show();
+                .setTitle("⏱ LOOP " + (idx + 1) + " 最大录制时长")
+                .setSingleChoiceItems(labels, initSel, (dialog, which) ->
+                        checkedItem[0] = which)
+                .setPositiveButton("确定", (d, w) -> {
+                    segMaxRecSec[idx] = options[checkedItem[0]];
+                    refreshSegCfgHint(idx);
+                    saveSettings();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
-    /** 删除 LOOP 段：确认后按当前时长擦除对应 Flash 区域 */
+    /** 删除 LOOP 段 */
     private void showSegDeleteDialog(int idx) {
-        // 检查是否有任何段在播放中
-        boolean hasPlayingSegment = false;
-        for (int i = 0; i < SEG_COUNT; i++) {
-            if (segStates[i] == SegState.PLAYING) {
-                hasPlayingSegment = true;
-                break;
-            }
-        }
-        
-        // 如果有段在播放，禁止删除
-        if (hasPlayingSegment) {
-            Toast.makeText(this,
-                "播放中不允许删除段。请先停止播放。",
-                Toast.LENGTH_SHORT).show();
-            return;
+        // 检查要删除的段是否正在播放或录制
+        boolean isTargetActive = (segStates[idx] == SegState.PLAYING || segStates[idx] == SegState.RECORDING);
+        String warningMsg = "";
+
+        if (isTargetActive) {
+            warningMsg = (segStates[idx] == SegState.PLAYING) ?
+                    "\n⚠️ 该段正在播放，将先停止播放再删除。" :
+                    "\n⚠️ 该段正在录制，将停止录制并删除。";
         }
 
-        int sec    = segMaxRecSec[idx];
-        int blocks = (int) Math.ceil((sec * 192000.0) / (64 * 1024));
-        int estSec = (int) Math.ceil(blocks * 0.15);
         new AlertDialog.Builder(this)
-            .setTitle("🗑 删除 LOOP " + (idx + 1))
-            .setMessage("将按当前最大录制时长 " + sec + "s (约 " + blocks +
-                " 个 64KB 块）擦除对应 Flash 区域，预计约 " + estSec + "s。\n\n确认删除？")
-            .setPositiveButton("确认删除", (d, w) -> {
-                cancelAutoStop(idx);
-                cancelCountdown(idx);
-                segStates[idx]         = SegState.INACTIVE;
-                segLoopDurationMs[idx]  = 0;
-                segRecordStartTime[idx] = 0;
-                segPlayStartTime[idx]   = 0;
-                segTrimStartPage[idx]   = 0;
-                segTrimEndPage[idx]     = 0;
-                removeAudioTrackCard(idx);
-                refreshSegUI(idx);
-                refreshSegCfgHint(idx);
-                sendCommand("looper -I " + idx + " " + sec, null);
-                Toast.makeText(this,
-                    "LOOP " + (idx + 1) + " 删除中，擦除 Flash 区域（" + sec + "s / " + blocks + " 块）...",
-                    Toast.LENGTH_LONG).show();
-            })
-            .setNegativeButton("取消", null)
-            .show();
+                .setTitle("🗑 删除 LOOP " + (idx + 1))
+                .setMessage("确认删除 LOOP " + (idx + 1) + "？" + warningMsg)
+                .setPositiveButton("确认删除", (d, w) -> {
+                    // 如果目标段正在播放或录制，先发送停止命令
+                    if (segStates[idx] == SegState.PLAYING || segStates[idx] == SegState.RECORDING) {
+                        sendCommandWithCallback("looper -t " + idx, success -> {
+                            if (success) {
+                                handler.postDelayed(() -> performSegmentDeletionSimple(idx), 150);
+                            } else {
+                                Toast.makeText(this, "停止失败，无法删除", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        performSegmentDeletionSimple(idx);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 执行段删除操作（简化版，PSRAM无需擦除）
+     */
+    private void performSegmentDeletionSimple(int idx) {
+        cancelAutoStop(idx);
+        cancelCountdown(idx);
+
+        // 停止可能正在运行的存储空间更新任务
+        stopStorageUpdateForRecording(idx);
+
+        // 取消等待停止预测定时
+        if (waitFinishPredictRunnables[idx] != null) {
+            handler.removeCallbacks(waitFinishPredictRunnables[idx]);
+            waitFinishPredictRunnables[idx] = null;
+        }
+        waitFinishEnabled[idx] = false;
+        segStates[idx]         = SegState.INACTIVE;
+        segLoopDurationMs[idx]  = 0;
+        segRecordStartTime[idx] = 0;
+        segPlayStartTime[idx]   = 0;
+        segTrimStartPage[idx]   = 0;
+        segTrimEndPage[idx]     = 0;
+        removeAudioTrackCard(idx);
+        refreshSegUI(idx);
+        refreshSegCfgHint(idx);
+        updateControlButtonStates();
+        updateStorageDisplay();
+        sendCommand("looper -c " + idx, null);  // 使用清除命令
+        Toast.makeText(this,
+                "LOOP " + (idx + 1) + " 已删除",
+                Toast.LENGTH_SHORT).show();
     }
 
     interface SuccessCallback { void onResult(boolean success); }
@@ -2759,8 +3042,8 @@ public class LooperControlActivity extends BaseActivity {
         long durationMs = segLoopDurationMs[idx];
         final float durationSec = durationMs / 1000f;
         final int maxPages = durationSec > 0
-            ? (int)(durationSec * PAGES_PER_SEC)
-            : segMaxRecSec[idx] * PAGES_PER_SEC;
+                ? (int)(durationSec * PAGES_PER_SEC)
+                : segMaxRecSec[idx] * PAGES_PER_SEC;
 
         // Inflate 卡片布局
         View card = getLayoutInflater().inflate(R.layout.item_audio_track, containerAudioTracks, false);
@@ -2845,7 +3128,7 @@ public class LooperControlActivity extends BaseActivity {
             applyTrimForSegment(idx, sSec, eSec, maxPages);
             // 收起键盘
             android.view.inputmethod.InputMethodManager imm =
-                (android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+                    (android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
             if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
         });
 
@@ -2897,8 +3180,8 @@ public class LooperControlActivity extends BaseActivity {
         long durationMs = segLoopDurationMs[idx];
         float durationSec = durationMs / 1000f;
         int maxPages = durationSec > 0
-            ? (int)(durationSec * PAGES_PER_SEC)
-            : segMaxRecSec[idx] * PAGES_PER_SEC;
+                ? (int)(durationSec * PAGES_PER_SEC)
+                : segMaxRecSec[idx] * PAGES_PER_SEC;
 
         int startPage = segTrimStartPage[idx];
         int endPage   = segTrimEndPage[idx] > 0 ? segTrimEndPage[idx] : maxPages;
@@ -2930,16 +3213,14 @@ public class LooperControlActivity extends BaseActivity {
         sendCommand("looper -T " + idx + " " + startPage + " " + sendEndPage, null);
 
         // 始终以裁剪后的有效长度更新循环时长（不依赖 seg1MatchDuration 是否开启）
-        if (idx == 0) {
-            int effectiveEnd = (sendEndPage > 0) ? sendEndPage : maxPages;
-            long newDurMs = (long)(effectiveEnd - startPage) * 1000L / PAGES_PER_SEC;
-            segLoopDurationMs[0] = newDurMs;
-            // 重新锚定播放相位：让跟随录制的边界计算以新周期为基准
-            if (segStates[0] == SegState.PLAYING && newDurMs > 0) {
-                long now = System.currentTimeMillis();
-                long elapsed = (now - segPlayStartTime[0]) % newDurMs;
-                segPlayStartTime[0] = now - elapsed;
-            }
+        int effectiveEnd = (sendEndPage > 0) ? sendEndPage : maxPages;
+        long newDurMs = (long)(effectiveEnd - startPage) * 1000L / PAGES_PER_SEC;
+        segLoopDurationMs[idx] = newDurMs;
+        // 重新锚定播放相位：让跟随录制的边界计算以新周期为基准
+        if (segStates[idx] == SegState.PLAYING && newDurMs > 0) {
+            long now = System.currentTimeMillis();
+            long elapsed = (now - segPlayStartTime[idx]) % newDurMs;
+            segPlayStartTime[idx] = now - elapsed;
         }
         Toast.makeText(this, "LOOP " + (idx + 1) + " 裁剪已应用", Toast.LENGTH_SHORT).show();
     }
@@ -2970,45 +3251,6 @@ public class LooperControlActivity extends BaseActivity {
     }
 
     /**
-     * 本地预测定时触发：执行衔接状态切换（在预期回绕点更新 UI）。
-     * 与 0x23 BLE 通知二选一：先到先处理，另一方到达后静默跳过。
-     */
-    private void applyChainPredictive() {
-        chainPredictRunnable = null;
-        if (!chainPlayActive) return; // 0x23 已优先清除，跳过
-        chainPlayActive = false;
-        int stop  = chainPredictStopSeg;
-        int start = chainPredictStartSeg;
-        if (stop >= 0 && stop < SEG_COUNT && segStates[stop] == SegState.PLAYING) {
-            segStates[stop] = SegState.STOPPED;
-            segPlayStartTime[stop] = 0;
-            refreshSegUI(stop);
-        }
-        if (start >= 0 && start < SEG_COUNT && segStates[start] == SegState.STOPPED) {
-            segStates[start] = SegState.PLAYING;
-            onSegmentEnteredPlaying(start, false);
-            refreshSegUI(start);
-        }
-        updateControlButtonStates();
-    }
-
-    /**
-     * 本地预测定时触发：执行接入状态切换（在预期回绕点更新 UI）。
-     */
-    private void applyJoinPredictive() {
-        joinPredictRunnable = null;
-        if (!joinPlayActive) return; // 0x23 已优先清除，跳过
-        joinPlayActive = false;
-        int start = joinPredictStartSeg;
-        if (start >= 0 && start < SEG_COUNT && segStates[start] == SegState.STOPPED) {
-            segStates[start] = SegState.PLAYING;
-            onSegmentEnteredPlaying(start, false);
-            refreshSegUI(start);
-        }
-        updateControlButtonStates();
-    }
-
-    /**
      * 返回第 idx 段考虑裁剪后的有效循环时长（ms）。
      * 若 trim pages 已设置则直接从页数计算；否则返回 segLoopDurationMs。
      * 此方法不依赖 segLoopDurationMs 是否已被更新，始终能给出正确结果。
@@ -3029,7 +3271,19 @@ public class LooperControlActivity extends BaseActivity {
      * 返回目前唯一正在 PLAYING 且不是 recIdx 的段索引；
      * 若无此段或有多个 PLAYING 段，返回 -1。
      */
+    /**
+     * 获取参照播放段索引（优先使用最早开始播放的段）
+     * @param recIdx 待录制段索引
+     * @return 参照段索引，-1 表示无法确定
+     */
     private int getRefPlayingSegIdx(int recIdx) {
+        // 如果已有确定的参照段且正在播放，优先使用它
+        if (referenceSegIndex >= 0 && referenceSegIndex != recIdx &&
+                segStates[referenceSegIndex] == SegState.PLAYING) {
+            return referenceSegIndex;
+        }
+
+        // 否则回退到旧逻辑：查找任意一个正在播放的段
         int found = -1;
         for (int i = 0; i < SEG_COUNT; i++) {
             if (i != recIdx && segStates[i] == SegState.PLAYING) {
@@ -3093,7 +3347,7 @@ public class LooperControlActivity extends BaseActivity {
     /** 将所有本地设置持久化到 SharedPreferences */
     private void saveSettings() {
         android.content.SharedPreferences.Editor ed =
-            getSharedPreferences("LooperSettings", MODE_PRIVATE).edit();
+                getSharedPreferences("LooperSettings", MODE_PRIVATE).edit();
         ed.putBoolean("metro_on_during_rec",  metroOnDuringRec);
         ed.putBoolean("countdown_before_rec", countdownBeforeRec);
         ed.putInt("countdown_beats", countdownBeats);
@@ -3112,7 +3366,7 @@ public class LooperControlActivity extends BaseActivity {
     /** 从 SharedPreferences 恢复上次保存的设置 */
     private void loadSettings() {
         android.content.SharedPreferences sp =
-            getSharedPreferences("LooperSettings", MODE_PRIVATE);
+                getSharedPreferences("LooperSettings", MODE_PRIVATE);
         metroOnDuringRec   = sp.getBoolean("metro_on_during_rec",  false);
         countdownBeforeRec = sp.getBoolean("countdown_before_rec", true);
         countdownBeats     = sp.getInt("countdown_beats", 4);

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -11,774 +11,1428 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-    <!-- 统一顶部导航�?-->
-    <include layout="@layout/include_base_toolbar" />
+        <!-- 统一顶部导航�?-->
+        <include layout="@layout/include_base_toolbar" />
 
-    <!-- ===== 顶部信息栏：BPM / 节拍 / 节拍器模�?/ 硬件状�?===== -->
-    <LinearLayout
-        android:id="@+id/layout_top_info"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:orientation="horizontal"
-        android:background="@color/primary_darker"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
-        android:paddingBottom="4dp">
-
-        <!-- BPM 卡片 -->
+        <!-- ===== 顶部信息栏：BPM / 节拍 / 节拍器模�?/ 硬件状�?===== -->
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
+            android:id="@+id/layout_top_info"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="horizontal"
+            android:background="@color/primary_darker"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="4dp">
+
+            <!-- BPM 卡片 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/bg_card"
+                android:layout_marginEnd="3dp"
+                android:layout_marginStart="4dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BPM"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+                <TextView
+                    android:id="@+id/tv_top_bpm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="120"
+                    android:textColor="@color/primary_accent"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- 节拍卡片 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/bg_card"
+                android:layout_marginEnd="3dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="节拍器"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+                <TextView
+                    android:id="@+id/tv_top_beats"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="4/4"
+                    android:textColor="@color/primary_accent_glow"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- 节拍器模式卡�?-->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/bg_card"
+                android:layout_marginEnd="3dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="节拍器"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+                <TextView
+                    android:id="@+id/tv_top_metro_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="倒数"
+                    android:textColor="@color/text_warning"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <!-- 硬件状态卡�?-->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/bg_card"
+                android:layout_marginEnd="3dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="硬件"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+                <TextView
+                    android:id="@+id/tv_top_hw_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="未连接"
+                    android:textColor="@color/status_disconnected"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <!-- 参照段卡片 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/bg_card"
+                android:layout_marginEnd="4dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="参照段"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+                <TextView
+                    android:id="@+id/tv_top_reference_seg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textColor="@color/primary_accent"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:gravity="center" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- 状态栏 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:background="@color/bg_card"
-            android:layout_marginEnd="3dp"
-            android:layout_marginStart="4dp">
+            android:padding="10dp"
+            android:gravity="center_vertical">
+
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="BPM"
+                android:layout_weight="1"
+                android:text="设备状态"
                 android:textColor="@color/text_secondary"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
+
             <TextView
-                android:id="@+id/tv_top_bpm"
-                android:layout_width="wrap_content"
+                android:id="@+id/tv_looper_status"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="120"
+                android:layout_weight="2"
+                android:text="--"
                 android:textColor="@color/primary_accent"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- 节拍卡片 -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@color/bg_card"
-            android:layout_marginEnd="3dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="节拍器"
-                android:textColor="@color/text_secondary"
-                android:textSize="10sp" />
-            <TextView
-                android:id="@+id/tv_top_beats"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="4/4"
-                android:textColor="@color/primary_accent_glow"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- 节拍器模式卡�?-->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@color/bg_card"
-            android:layout_marginEnd="3dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="节拍器"
-                android:textColor="@color/text_secondary"
-                android:textSize="10sp" />
-            <TextView
-                android:id="@+id/tv_top_metro_mode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="倒数"
-                android:textColor="@color/text_warning"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:gravity="center" />
-        </LinearLayout>
-
-        <!-- 硬件状态卡�?-->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@color/bg_card"
-            android:layout_marginEnd="4dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="硬件"
-                android:textColor="@color/text_secondary"
-                android:textSize="10sp" />
-            <TextView
-                android:id="@+id/tv_top_hw_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="未连接"
-                android:textColor="@color/status_disconnected"
                 android:textSize="12sp"
-                android:textStyle="bold"
-                android:gravity="center" />
+                android:maxLines="3"
+                android:ellipsize="end" />
+
+            <Button
+                android:id="@+id/btn_looper_status"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="刷新"
+                android:textSize="11sp"
+                android:textColor="@color/bg_dark"
+                android:background="@drawable/button_secondary"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp" />
         </LinearLayout>
 
-    </LinearLayout>
-
-    <!-- 状态栏 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@color/bg_card"
-        android:padding="10dp"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="设备状态"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
-
-        <TextView
-            android:id="@+id/tv_looper_status"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="--"
-            android:textColor="@color/primary_accent"
-            android:textSize="12sp"
-            android:maxLines="3"
-            android:ellipsize="end" />
-
-        <Button
-            android:id="@+id/btn_looper_status"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:text="刷新"
-            android:textSize="11sp"
-            android:textColor="@color/bg_dark"
-            android:background="@drawable/button_secondary"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
-    </LinearLayout>
-
-    <!-- 主内容区 -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
-
+        <!-- 录制空间占用条 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:background="@color/bg_card"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="10dp"
+            android:layout_marginTop="2dp">
 
-            <!-- 标题 -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⏱ 循环段控制"
-                android:textColor="@color/primary_accent_glow"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="未录制 / 录制 / 播放 / 暂停 / 播放中"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginBottom="8dp" />
-
-            <!-- ══════�?Loop 状态信息面板（始终可见，卡片上方） ══════�?-->
-            <LinearLayout
-                android:id="@+id/layout_loop_sync_info"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:background="@color/panel_bg">
-
-                <!-- 大号倒数数字框 -->
-                <LinearLayout
-                    android:id="@+id/layout_countdown_box"
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@color/countdown_box_bg"
-                    android:layout_marginEnd="12dp">
-
-                    <TextView
-                        android:id="@+id/tv_countdown_big"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="4"
-                        android:textColor="@color/white"
-                        android:textSize="36sp"
-                        android:textStyle="bold"
-                        android:gravity="center" />
-
-                    <TextView
-                        android:id="@+id/tv_countdown_big_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="拍"
-                        android:textColor="#CCFFFFFF"
-                        android:textSize="10sp"
-                        android:gravity="center" />
-                </LinearLayout>
-
-                <!-- 文字信息�?-->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tv_loop_sync_title"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="● 同步信息"
-                        android:textColor="@color/text_accent"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="4dp" />
-
-                    <TextView
-                        android:id="@+id/tv_loop_sync_info"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textColor="@color/primary_accent"
-                        android:textSize="12sp"
-                        android:lineSpacingExtra="2dp" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Loop 按钮�?-->
+            <!-- 标题行：图标 + 标签 + 数值 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="10dp">
-
-                <!-- �? -->
-                <FrameLayout
-                    android:id="@+id/card_seg0"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/button_looper_seg">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <!-- 主点击区 -->
-                        <LinearLayout
-                            android:id="@+id/card_seg0_main"
-                            android:layout_width="match_parent"
-                            android:layout_height="150dp"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:paddingTop="8dp">
-                            <TextView
-                                android:id="@+id/tv_seg0_name"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="LOOP 1"
-                                android:textColor="@color/primary_accent"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
-                            <TextView
-                                android:id="@+id/tv_seg0_state"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="未录制"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp"
-                                android:layout_marginTop="4dp" />
-                            <TextView
-                                android:id="@+id/tv_seg0_hint"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="点击 ▶ 开始录制"
-                                android:textColor="@color/text_tertiary"
-                                android:textSize="10sp"
-                                android:layout_marginTop="2dp" />
-                            <TextView
-                                android:id="@+id/tv_seg0_cfg_hint"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="∞  ► 播放"
-                                android:textColor="@color/cfg_hint_color"
-                                android:textSize="9sp"
-                                android:layout_marginTop="4dp" />
-                        </LinearLayout>
-
-                        <!-- 底部重置�?-->
-                        <!-- 分隔�?-->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="@color/divider_color" />
-                        <!-- 底部工具行：�?最大时长选择 chip  +  🗑 删除按钮 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:background="@color/panel_bg">
-
-                            <!-- 第一行：跟随 / 等长 / 等本�?-->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center"
-                                android:paddingStart="8dp"
-                                android:paddingEnd="8dp"
-                                android:paddingTop="4dp"
-                                android:paddingBottom="2dp">
-                                <!-- 跟随录制按钮（LOOP 2 跟随 LOOP 1 开头）-->
-                                <ImageButton
-                                    android:id="@+id/btn_seg0_follow"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_media_next"
-                                    android:tint="#888888"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:enabled="false"
-                                    android:alpha="0.4"
-                                    android:contentDescription="跟随录制" />
-                                <!-- 录制等长按钮 -->
-                                <ImageButton
-                                    android:id="@+id/btn_seg0_match"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_menu_always_landscape_portrait"
-                                    android:tint="#888888"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:enabled="false"
-                                    android:alpha="0.4"
-                                    android:contentDescription="录制等长" />
-                                <!-- 等待本轮播完再停止"-->
-                                <ImageButton
-                                    android:id="@+id/btn_seg0_wait_finish"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_media_pause"
-                                    android:tint="#888888"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:enabled="false"
-                                    android:alpha="0.4"
-                                    android:contentDescription="等待本轮播完再停止" />
-                            </LinearLayout>
-
-                            <!-- 第二行：最大时�?chip + 删除按钮 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:paddingStart="8dp"
-                                android:paddingEnd="8dp"
-                                android:paddingTop="2dp"
-                                android:paddingBottom="6dp">
-                                <!-- 最大录制时长选择�?chip -->
-                                <TextView
-                                    android:id="@+id/tv_seg0_max_rec"
-                                    android:layout_width="0dp"
-                                    android:layout_height="30dp"
-                                    android:layout_weight="1"
-                                    android:gravity="center"
-                                    android:text="⏱ 10s"
-                                    android:textColor="@color/chip_text_color"
-                                    android:textSize="11sp"
-                                    android:background="@drawable/chip_max_rec"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:paddingStart="8dp"
-                                    android:paddingEnd="8dp"
-                                    android:contentDescription="设置最大录制时长" />
-                                <Space android:layout_width="16dp" android:layout_height="1dp" />
-                                <!-- 删除按钮 -->
-                                <ImageButton
-                                    android:id="@+id/btn_seg0_reset"
-                                    android:layout_width="40dp"
-                                    android:layout_height="40dp"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_menu_delete"
-                                    android:tint="#E05050"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:contentDescription="删除 LOOP 1" />
-                            </LinearLayout>
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                    <!-- 右上角配置按�?-->
-                    <ImageButton
-                        android:id="@+id/btn_seg0_config"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="top|end"
-                        android:layout_margin="3dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@android:drawable/ic_menu_manage"
-                        android:tint="#70FFFFFF"
-                        android:scaleType="fitCenter"
-                        android:padding="5dp"
-                        android:contentDescription="段录制设置" />
-                </FrameLayout>
-
-                <!-- �? -->
-                <FrameLayout
-                    android:id="@+id/card_seg1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/button_looper_seg">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <!-- 主点击区 -->
-                        <LinearLayout
-                            android:id="@+id/card_seg1_main"
-                            android:layout_width="match_parent"
-                            android:layout_height="150dp"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:paddingTop="8dp">
-                            <TextView
-                                android:id="@+id/tv_seg1_name"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="LOOP 2"
-                                android:textColor="@color/primary_accent"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
-                            <TextView
-                                android:id="@+id/tv_seg1_state"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="未录制"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp"
-                                android:layout_marginTop="4dp" />
-                            <TextView
-                                android:id="@+id/tv_seg1_hint"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="点击 ▶ 开始录制"
-                                android:textColor="@color/text_tertiary"
-                                android:textSize="10sp"
-                                android:layout_marginTop="2dp" />
-                            <TextView
-                                android:id="@+id/tv_seg1_cfg_hint"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="∞  ► 播放"
-                                android:textColor="@color/cfg_hint_color"
-                                android:textSize="9sp"
-                                android:layout_marginTop="4dp" />
-                        </LinearLayout>
-
-                        <!-- 底部重置�?-->
-                        <!-- 分隔�?-->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="@color/divider_color" />
-                        <!-- 底部工具行：两行布局 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:background="@color/panel_bg">
-
-                            <!-- 第一行：跟随 / 等长 / 等本�?-->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center"
-                                android:paddingStart="8dp"
-                                android:paddingEnd="8dp"
-                                android:paddingTop="4dp"
-                                android:paddingBottom="2dp">
-                                <!-- 跟随录制按钮 -->
-                                <ImageButton
-                                    android:id="@+id/btn_seg1_follow"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_media_next"
-                                    android:tint="#888888"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:enabled="false"
-                                    android:alpha="0.4"
-                                    android:contentDescription="跟随录制" />
-                                <!-- 录制等长按钮 -->
-                                <ImageButton
-                                    android:id="@+id/btn_seg1_match"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_menu_always_landscape_portrait"
-                                    android:tint="#888888"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:enabled="false"
-                                    android:alpha="0.4"
-                                    android:contentDescription="录制等长" />
-                                <!-- 等待本轮播完再停止"-->
-                                <ImageButton
-                                    android:id="@+id/btn_seg1_wait_finish"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_media_pause"
-                                    android:tint="#888888"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:enabled="false"
-                                    android:alpha="0.4"
-                                    android:contentDescription="等待本轮播完再停止" />
-                            </LinearLayout>
-
-                            <!-- 第二行：最大时�?chip + 删除按钮 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:paddingStart="8dp"
-                                android:paddingEnd="8dp"
-                                android:paddingTop="2dp"
-                                android:paddingBottom="6dp">
-                                <!-- 最大录制时长选择�?chip -->
-                                <TextView
-                                    android:id="@+id/tv_seg1_max_rec"
-                                    android:layout_width="0dp"
-                                    android:layout_height="30dp"
-                                    android:layout_weight="1"
-                                    android:gravity="center"
-                                    android:text="⏱ 10s"
-                                    android:textColor="@color/chip_text_color"
-                                    android:textSize="11sp"
-                                    android:background="@drawable/chip_max_rec"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:paddingStart="8dp"
-                                    android:paddingEnd="8dp"
-                                    android:contentDescription="设置最大录制时长" />
-                                <Space android:layout_width="16dp" android:layout_height="1dp" />
-                                <!-- 删除按钮 -->
-                                <ImageButton
-                                    android:id="@+id/btn_seg1_reset"
-                                    android:layout_width="40dp"
-                                    android:layout_height="40dp"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:src="@android:drawable/ic_menu_delete"
-                                    android:tint="#E05050"
-                                    android:scaleType="fitCenter"
-                                    android:padding="6dp"
-                                    android:contentDescription="删除 LOOP 2" />
-                            </LinearLayout>
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                    <ImageButton
-                        android:id="@+id/btn_seg1_config"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="top|end"
-                        android:layout_margin="3dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@android:drawable/ic_menu_manage"
-                        android:tint="#70FFFFFF"
-                        android:scaleType="fitCenter"
-                        android:padding="5dp"
-                        android:contentDescription="段录制设置" />
-                </FrameLayout>
-            </LinearLayout>
-
-            <!-- 底部占位 -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="8dp" />
-
-            <!-- ══════�?全局控制�?══════�?-->
-            <LinearLayout
-                android:id="@+id/layout_global_controls"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@color/panel_bg"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:layout_marginBottom="8dp">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚙ 全局控制"
-                    android:textColor="@color/text_accent"
+                    android:text="💾 录制空间"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_storage_used"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.0%"
+                    android:textColor="@color/primary_accent"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_storage_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="(剩余 41.7s)"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- 进度条背景 -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:background="@color/panel_bg_alt">
+
+                <!-- 已用空间进度条 -->
+                <ProgressBar
+                    android:id="@+id/progress_storage"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:max="1000"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/storage_progress_bg"
+                    android:scaleY="1.0" />
+            </FrameLayout>
+
+            <!-- 各段占用明细（可选） -->
+            <LinearLayout
+                android:id="@+id/layout_storage_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp">
+
+                <TextView
+                    android:id="@+id/tv_seg0_storage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="L1: --"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="9sp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/tv_seg1_storage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="L2: --"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="9sp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/tv_seg2_storage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="L3: --"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="9sp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/tv_seg3_storage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="L4: --"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="9sp"
+                    android:gravity="center" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 主内容区 -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- 标题 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⏱ 循环段控制"
+                    android:textColor="@color/primary_accent_glow"
+                    android:textSize="14sp"
                     android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="未录制 / 录制 / 播放 / 暂停 / 播放中"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
                     android:layout_marginBottom="8dp" />
 
-                <!-- 第一行：衔接 | 接入下轮 -->
+                <!-- ══════�?Loop 状态信息面板（始终可见，卡片上方） ══════�?-->
                 <LinearLayout
+                    android:id="@+id/layout_loop_sync_info"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
+                    android:background="@color/panel_bg">
+
+                    <!-- 大号倒数数字框 -->
+                    <LinearLayout
+                        android:id="@+id/layout_countdown_box"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@color/countdown_box_bg"
+                        android:layout_marginEnd="12dp">
+
+                        <TextView
+                            android:id="@+id/tv_countdown_big"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="4"
+                            android:textColor="@color/white"
+                            android:textSize="36sp"
+                            android:textStyle="bold"
+                            android:gravity="center" />
+
+                        <TextView
+                            android:id="@+id/tv_countdown_big_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="拍"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="10sp"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                    <!-- 文字信息�?-->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_loop_sync_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="● 同步信息"
+                            android:textColor="@color/text_accent"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:id="@+id/tv_loop_sync_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textColor="@color/primary_accent"
+                            android:textSize="12sp"
+                            android:lineSpacingExtra="2dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Loop 按钮区：2x2 网格布局 -->
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:rowCount="2"
+                    android:layout_marginBottom="10dp">
+
+                    <!-- LOOP 1 -->
+                    <FrameLayout
+                        android:id="@+id/card_seg0"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_marginEnd="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:background="@drawable/button_looper_seg">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <!-- 主点击区 -->
+                            <LinearLayout
+                                android:id="@+id/card_seg0_main"
+                                android:layout_width="match_parent"
+                                android:layout_height="130dp"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingTop="8dp">
+                                <TextView
+                                    android:id="@+id/tv_seg0_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="LOOP 1"
+                                    android:textColor="@color/primary_accent"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                                <TextView
+                                    android:id="@+id/tv_seg0_state"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="未录制"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:layout_marginTop="4dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg0_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="点击 ▶ 开始录制"
+                                    android:textColor="@color/text_tertiary"
+                                    android:textSize="9sp"
+                                    android:layout_marginTop="2dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg0_cfg_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="∞  ► 播放"
+                                    android:textColor="@color/cfg_hint_color"
+                                    android:textSize="8sp"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <!-- 分隔线 -->
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="@color/divider_color" />
+
+                            <!-- 底部工具行 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@color/panel_bg">
+
+                                <!-- 第一行：跟随 / 等长 / 参照段结束后录制 -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingBottom="1dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_follow"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_next"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="跟随录制" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_match"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_always_landscape_portrait"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="录制等长" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_record_after_ref"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_play"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="参照段结束后录制" />
+                                </LinearLayout>
+
+                                <!-- 第二行：衔接 / 接入 / 等待播完 -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="1dp"
+                                    android:paddingBottom="2dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_chain"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_rew"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="衔接播放" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_join"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_ff"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="接入播放" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_wait_finish"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_pause"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="等待本轮播完再停止" />
+                                </LinearLayout>
+
+                                <!-- 第二行：最大时长 chip + 删除按钮 -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingBottom="4dp">
+                                    <TextView
+                                        android:id="@+id/tv_seg0_max_rec"
+                                        android:layout_width="0dp"
+                                        android:layout_height="28dp"
+                                        android:layout_weight="1"
+                                        android:gravity="center"
+                                        android:text="⏱ 10s"
+                                        android:textColor="@color/chip_text_color"
+                                        android:textSize="10sp"
+                                        android:background="@drawable/chip_max_rec"
+                                        android:clickable="true"
+                                        android:focusable="true"
+                                        android:paddingStart="6dp"
+                                        android:paddingEnd="6dp"
+                                        android:contentDescription="设置最大录制时长" />
+                                    <Space android:layout_width="12dp" android:layout_height="1dp" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_reset"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_delete"
+                                        android:tint="#E05050"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:contentDescription="删除 LOOP 1" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btn_seg0_config"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="3dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@android:drawable/ic_menu_manage"
+                            android:tint="#70FFFFFF"
+                            android:scaleType="fitCenter"
+                            android:padding="4dp"
+                            android:contentDescription="段录制设置" />
+                    </FrameLayout>
+
+                    <!-- LOOP 2 -->
+                    <FrameLayout
+                        android:id="@+id/card_seg1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:background="@drawable/button_looper_seg">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:id="@+id/card_seg1_main"
+                                android:layout_width="match_parent"
+                                android:layout_height="130dp"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingTop="8dp">
+                                <TextView
+                                    android:id="@+id/tv_seg1_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="LOOP 2"
+                                    android:textColor="@color/primary_accent"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                                <TextView
+                                    android:id="@+id/tv_seg1_state"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="未录制"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:layout_marginTop="4dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg1_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="点击 ▶ 开始录制"
+                                    android:textColor="@color/text_tertiary"
+                                    android:textSize="9sp"
+                                    android:layout_marginTop="2dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg1_cfg_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="∞  ► 播放"
+                                    android:textColor="@color/cfg_hint_color"
+                                    android:textSize="8sp"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="@color/divider_color" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@color/panel_bg">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingBottom="1dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_follow"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_next"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="跟随录制" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_match"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_always_landscape_portrait"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="录制等长" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_record_after_ref"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_play"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="参照段结束后录制" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="1dp"
+                                    android:paddingBottom="2dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_chain"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_rew"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="衔接播放" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_join"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_ff"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="接入播放" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_wait_finish"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_pause"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="等待本轮播完再停止" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingBottom="4dp">
+                                    <TextView
+                                        android:id="@+id/tv_seg1_max_rec"
+                                        android:layout_width="0dp"
+                                        android:layout_height="28dp"
+                                        android:layout_weight="1"
+                                        android:gravity="center"
+                                        android:text="⏱ 10s"
+                                        android:textColor="@color/chip_text_color"
+                                        android:textSize="10sp"
+                                        android:background="@drawable/chip_max_rec"
+                                        android:clickable="true"
+                                        android:focusable="true"
+                                        android:paddingStart="6dp"
+                                        android:paddingEnd="6dp"
+                                        android:contentDescription="设置最大录制时长" />
+                                    <Space android:layout_width="12dp" android:layout_height="1dp" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_reset"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_delete"
+                                        android:tint="#E05050"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:contentDescription="删除 LOOP 2" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btn_seg1_config"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="3dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@android:drawable/ic_menu_manage"
+                            android:tint="#70FFFFFF"
+                            android:scaleType="fitCenter"
+                            android:padding="4dp"
+                            android:contentDescription="段录制设置" />
+                    </FrameLayout>
+
+                    <!-- LOOP 3 -->
+                    <FrameLayout
+                        android:id="@+id/card_seg2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_marginEnd="4dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/button_looper_seg">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:id="@+id/card_seg2_main"
+                                android:layout_width="match_parent"
+                                android:layout_height="130dp"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingTop="8dp">
+                                <TextView
+                                    android:id="@+id/tv_seg2_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="LOOP 3"
+                                    android:textColor="@color/primary_accent"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                                <TextView
+                                    android:id="@+id/tv_seg2_state"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="未录制"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:layout_marginTop="4dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg2_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="点击 ▶ 开始录制"
+                                    android:textColor="@color/text_tertiary"
+                                    android:textSize="9sp"
+                                    android:layout_marginTop="2dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg2_cfg_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="∞  ► 播放"
+                                    android:textColor="@color/cfg_hint_color"
+                                    android:textSize="8sp"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="@color/divider_color" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@color/panel_bg">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingBottom="1dp">
+                                    <ImageButton
+                                    android:id="@+id/btn_seg2_follow"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_media_next"
+                                    android:tint="#888888"
+                                    android:scaleType="fitCenter"
+                                    android:padding="6dp"
+                                    android:enabled="false"
+                                    android:alpha="0.4"
+                                    android:contentDescription="跟随录制" />
+                                <ImageButton
+                                    android:id="@+id/btn_seg2_match"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_menu_always_landscape_portrait"
+                                    android:tint="#888888"
+                                    android:scaleType="fitCenter"
+                                    android:padding="6dp"
+                                    android:enabled="false"
+                                    android:alpha="0.4"
+                                    android:contentDescription="录制等长" />
+                                <ImageButton
+                                    android:id="@+id/btn_seg2_record_after_ref"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_media_play"
+                                    android:tint="#888888"
+                                    android:scaleType="fitCenter"
+                                    android:padding="6dp"
+                                    android:enabled="false"
+                                    android:alpha="0.4"
+                                    android:contentDescription="参照段结束后录制" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="1dp"
+                                    android:paddingBottom="2dp">
+                                <ImageButton
+                                    android:id="@+id/btn_seg2_chain"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_media_rew"
+                                    android:tint="#888888"
+                                    android:scaleType="fitCenter"
+                                    android:padding="6dp"
+                                    android:enabled="false"
+                                    android:alpha="0.4"
+                                    android:contentDescription="衔接播放" />
+                                <ImageButton
+                                    android:id="@+id/btn_seg2_join"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_media_ff"
+                                    android:tint="#888888"
+                                    android:scaleType="fitCenter"
+                                    android:padding="6dp"
+                                    android:enabled="false"
+                                    android:alpha="0.4"
+                                    android:contentDescription="接入播放" />
+                                <ImageButton
+                                    android:id="@+id/btn_seg2_wait_finish"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_pause"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="等待本轮播完再停止" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingBottom="4dp">
+                                    <TextView
+                                        android:id="@+id/tv_seg2_max_rec"
+                                        android:layout_width="0dp"
+                                        android:layout_height="28dp"
+                                        android:layout_weight="1"
+                                        android:gravity="center"
+                                        android:text="⏱ 10s"
+                                        android:textColor="@color/chip_text_color"
+                                        android:textSize="10sp"
+                                        android:background="@drawable/chip_max_rec"
+                                        android:clickable="true"
+                                        android:focusable="true"
+                                        android:paddingStart="6dp"
+                                        android:paddingEnd="6dp"
+                                        android:contentDescription="设置最大录制时长" />
+                                    <Space android:layout_width="12dp" android:layout_height="1dp" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg2_reset"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_delete"
+                                        android:tint="#E05050"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:contentDescription="删除 LOOP 3" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btn_seg2_config"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="3dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@android:drawable/ic_menu_manage"
+                            android:tint="#70FFFFFF"
+                            android:scaleType="fitCenter"
+                            android:padding="4dp"
+                            android:contentDescription="段录制设置" />
+                    </FrameLayout>
+
+                    <!-- LOOP 4 -->
+                    <FrameLayout
+                        android:id="@+id/card_seg3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/button_looper_seg">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:id="@+id/card_seg3_main"
+                                android:layout_width="match_parent"
+                                android:layout_height="130dp"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingTop="8dp">
+                                <TextView
+                                    android:id="@+id/tv_seg3_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="LOOP 4"
+                                    android:textColor="@color/primary_accent"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                                <TextView
+                                    android:id="@+id/tv_seg3_state"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="未录制"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:layout_marginTop="4dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg3_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="点击 ▶ 开始录制"
+                                    android:textColor="@color/text_tertiary"
+                                    android:textSize="9sp"
+                                    android:layout_marginTop="2dp" />
+                                <TextView
+                                    android:id="@+id/tv_seg3_cfg_hint"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="∞  ► 播放"
+                                    android:textColor="@color/cfg_hint_color"
+                                    android:textSize="8sp"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="@color/divider_color" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@color/panel_bg">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingBottom="1dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_follow"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_next"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="跟随录制" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_match"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_always_landscape_portrait"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="录制等长" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_record_after_ref"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_play"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="参照段结束后录制" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="1dp"
+                                    android:paddingBottom="2dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_chain"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_rew"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="衔接播放" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_join"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_ff"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="接入播放" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_wait_finish"
+                                        android:layout_width="0dp"
+                                        android:layout_height="40dp"
+                                        android:layout_weight="1"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_media_pause"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="6dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="等待本轮播完再停止" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingStart="6dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingBottom="4dp">
+                                    <TextView
+                                        android:id="@+id/tv_seg3_max_rec"
+                                        android:layout_width="0dp"
+                                        android:layout_height="28dp"
+                                        android:layout_weight="1"
+                                        android:gravity="center"
+                                        android:text="⏱ 10s"
+                                        android:textColor="@color/chip_text_color"
+                                        android:textSize="10sp"
+                                        android:background="@drawable/chip_max_rec"
+                                        android:clickable="true"
+                                        android:focusable="true"
+                                        android:paddingStart="6dp"
+                                        android:paddingEnd="6dp"
+                                        android:contentDescription="设置最大录制时长" />
+                                    <Space android:layout_width="12dp" android:layout_height="1dp" />
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_reset"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_delete"
+                                        android:tint="#E05050"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:contentDescription="删除 LOOP 4" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btn_seg3_config"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="3dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@android:drawable/ic_menu_manage"
+                            android:tint="#70FFFFFF"
+                            android:scaleType="fitCenter"
+                            android:padding="4dp"
+                            android:contentDescription="段录制设置" />
+                    </FrameLayout>
+                </GridLayout>
+
+                <!-- 底部占位 -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp" />
+
+                <!-- ══════�?全局控制�?══════�?-->
+                <LinearLayout
+                    android:id="@+id/layout_global_controls"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@color/panel_bg"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
                     android:layout_marginBottom="8dp">
 
-                    <!-- 衔接播放：Loop1 播完→停Loop1→播Loop2 -->
-                    <Button
-                        android:id="@+id/btn_chain_play"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
-                        android:text="衔接\n1→2"
-                        android:textSize="11sp"
-                        android:textColor="@color/text_primary"
-                        android:background="@color/panel_bg_alt"
-                        android:enabled="false"
-                        android:alpha="0.4" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚙ 全局控制"
+                        android:textColor="@color/text_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
 
-                    <!-- 接入播放：等本轮结束后停止段加入 -->
-                    <Button
-                        android:id="@+id/btn_join_play"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:text="接入\n下轮"
-                        android:textSize="11sp"
-                        android:textColor="@color/text_primary"
-                        android:background="@color/panel_bg_alt"
-                        android:enabled="false"
-                        android:alpha="0.4" />
+                    <!-- 第一行：全部播放 | 全部删除 | 全部停止 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+
+                        <!-- 全部同时播放 -->
+                        <Button
+                            android:id="@+id/btn_play_all"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:text="▶▶ 全部\n播放"
+                            android:textSize="11sp"
+                            android:textColor="@color/text_primary"
+                            android:background="@color/panel_bg_alt"
+                            android:enabled="false"
+                            android:alpha="0.4" />
+
+                        <!-- 全部删除 -->
+                        <Button
+                            android:id="@+id/btn_delete_all"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:text="🗑 全部\n删除"
+                            android:textSize="11sp"
+                            android:textColor="@color/text_primary"
+                            android:background="@color/panel_bg_alt"
+                            android:enabled="false"
+                            android:alpha="0.4" />
+
+                        <!-- 全部同时停止 -->
+                        <Button
+                            android:id="@+id/btn_stop_all"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:text="■■ 全部\n停止"
+                            android:textSize="11sp"
+                            android:textColor="@color/text_primary"
+                            android:background="@color/panel_bg_alt"
+                            android:enabled="false"
+                            android:alpha="0.4" />
+                    </LinearLayout>
+
                 </LinearLayout>
 
-                <!-- 第二行：全部播放 | 全部停止 -->
+                <!-- ══════�?音频轨面�?══════�?-->
                 <LinearLayout
+                    android:id="@+id/layout_audio_tracks_panel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="vertical"
+                    android:background="@color/panel_bg"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone">
 
-                    <!-- 全部同时播放 -->
-                    <Button
-                        android:id="@+id/btn_play_all"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
-                        android:text="▶▶ 全部\n播放"
-                        android:textSize="11sp"
-                        android:textColor="@color/text_primary"
-                        android:background="@color/panel_bg_alt"
-                        android:enabled="false"
-                        android:alpha="0.4" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🎥 音频轨"
+                        android:textColor="@color/text_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
 
-                    <!-- 全部同时停止 -->
-                    <Button
-                        android:id="@+id/btn_stop_all"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:text="■■ 全部\n停止"
-                        android:textSize="11sp"
-                        android:textColor="@color/text_primary"
-                        android:background="@color/panel_bg_alt"
-                        android:enabled="false"
-                        android:alpha="0.4" />
+                    <!-- 动态添加音频轨卡片的容�?-->
+                    <LinearLayout
+                        android:id="@+id/container_audio_tracks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
                 </LinearLayout>
 
-            </LinearLayout>
-
-            <!-- ══════�?音频轨面�?══════�?-->
-            <LinearLayout
-                android:id="@+id/layout_audio_tracks_panel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@color/panel_bg"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🎥 音频轨"
-                    android:textColor="@color/text_accent"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
-
-                <!-- 动态添加音频轨卡片的容�?-->
-                <LinearLayout
-                    android:id="@+id/container_audio_tracks"
+                <!-- 底部占位 -->
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                    android:layout_height="16dp" />
 
             </LinearLayout>
-
-            <!-- 底部占位 -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="16dp" />
-
-        </LinearLayout>
-    </ScrollView>
+        </ScrollView>
 
     </LinearLayout>
     <!-- ===================== /主内容区 ===================== -->

@@ -5,7 +5,6 @@
     android:orientation="vertical"
     android:background="@color/bg_dark">
 
-    <!-- 统一顶部导航�?-->
     <include layout="@layout/include_base_toolbar" />
 
     <ScrollView
@@ -81,35 +80,15 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="6dp">
-                    <TextView
-                        android:layout_width="100dp"
-                        android:layout_height="wrap_content"
-                        android:text="当前分区:"
-                        android:textColor="@color/label_secondary"
-                        android:textSize="13sp" />
-                    <TextView
-                        android:id="@+id/tv_active_part"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="未获取"
-                        android:textColor="@color/value_text"
-                        android:textSize="13sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:orientation="horizontal">
                     <TextView
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
-                        android:text="B区固件:"
+                        android:text="APP容量:"
                         android:textColor="@color/label_secondary"
                         android:textSize="13sp" />
                     <TextView
-                        android:id="@+id/tv_fw_size"
+                        android:id="@+id/tv_app_size"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="未获取"
@@ -128,7 +107,7 @@
                     android:textColor="@color/text_accent" />
             </LinearLayout>
 
-            <!-- 固件文件选择 -->
+            <!-- 固件来源 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -140,7 +119,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="升级固件"
+                    android:text="固件来源"
                     android:textColor="@color/text_accent"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -152,28 +131,38 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <TextView
-                        android:id="@+id/tv_file_name"
+                    <Button
+                        android:id="@+id/btn_check_update"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="40dp"
                         android:layout_weight="1"
-                        android:text="未选择文件"
-                        android:textColor="@color/label_secondary"
+                        android:layout_marginEnd="8dp"
+                        android:text="检查云端更新"
                         android:textSize="13sp"
-                        android:singleLine="true"
-                        android:ellipsize="middle"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginEnd="8dp" />
+                        android:backgroundTint="@color/primary_accent"
+                        android:textColor="@color/on_surface_color" />
 
                     <Button
                         android:id="@+id/btn_select_file"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:text="选择文件"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:text="选择本地文件"
                         android:textSize="13sp"
                         android:backgroundTint="@color/bg_card_light"
                         android:textColor="@color/text_accent" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_file_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="未选择固件"
+                    android:textColor="@color/label_secondary"
+                    android:textSize="13sp"
+                    android:singleLine="true"
+                    android:ellipsize="middle"
+                    android:layout_marginBottom="4dp" />
 
                 <TextView
                     android:id="@+id/tv_file_size"
@@ -182,6 +171,15 @@
                     android:text=""
                     android:textColor="@color/label_secondary"
                     android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tv_cloud_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="@color/primary_accent"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <!-- 升级进度 -->
@@ -272,7 +270,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- 底部操作�?-->
+    <!-- 底部操作栏 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -295,11 +293,11 @@
             android:enabled="false" />
 
         <Button
-            android:id="@+id/btn_rollback"
+            android:id="@+id/btn_reboot"
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="回退至A区"
+            android:text="重启设备"
             android:textSize="13sp"
             android:backgroundTint="@color/rollback_btn_bg"
             android:textColor="@color/rollback_btn_text"

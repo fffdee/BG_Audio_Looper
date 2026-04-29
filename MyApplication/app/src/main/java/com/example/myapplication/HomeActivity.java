@@ -11,6 +11,9 @@ import android.content.pm.PackageManager;
 import android.widget.Toast;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -133,6 +136,9 @@ public class HomeActivity extends BaseActivity {
         // 更新初始状态
         updateBluetoothStatusUI();
 
+        // 初始化设置侧边栏
+        initSettingsDrawer();
+
         // Toolbar菜单点击事件
         if (baseToolbar != null) {
             baseToolbar.setOnMenuItemClickListener(item -> {
@@ -143,7 +149,7 @@ public class HomeActivity extends BaseActivity {
                     toggleMultiSelectMode();
                     return true;
                 } else if (item.getItemId() == R.id.menu_bluetooth) {
-                    showBluetoothStatusDialog();
+                    openSettingsDrawer();
                     return true;
                 }
                 return false;
@@ -1365,11 +1371,10 @@ public class HomeActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            if (drawerLayout != null && (drawerLayout.isDrawerOpen(GravityCompat.START) || drawerLayout.isDrawerOpen(GravityCompat.END))) {
                 drawerLayout.closeDrawers();
                 return true;
             }
-            // 返回到主页面
             Intent intent = new Intent(HomeActivity.this, WelcomeActivity.class);
             startActivity(intent);
             finish();
@@ -1380,7 +1385,7 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+        if (drawerLayout != null && (drawerLayout.isDrawerOpen(GravityCompat.START) || drawerLayout.isDrawerOpen(GravityCompat.END))) {
             drawerLayout.closeDrawers();
         } else if (isMultiSelectMode) {
             toggleMultiSelectMode();
@@ -1472,13 +1477,137 @@ public class HomeActivity extends BaseActivity {
 
     // 显示蓝牙连接状态对话框
     private void showBluetoothStatusDialog() {
-        // 模拟蓝牙设备列表（实际应用中应从蓝牙管理器获取）
-        String connectedDevice = "模拟蓝牙设备"; // 替换为实际连接的设备名称
+        String connectedDevice = "模拟蓝牙设备";
 
         new android.app.AlertDialog.Builder(this)
             .setTitle("蓝牙连接状态")
             .setMessage("当前连接的设备：\n" + connectedDevice)
             .setPositiveButton("确定", null)
             .show();
+    }
+
+    private void initSettingsDrawer() {
+        // 关闭按钮
+        View btnClose = findViewById(R.id.btn_close_settings_drawer);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> closeSettingsDrawer());
+        }
+
+        // 调试终端
+        View btnDebugTerminal = findViewById(R.id.btn_debug_terminal);
+        if (btnDebugTerminal != null) {
+            btnDebugTerminal.setOnClickListener(v -> {
+                closeSettingsDrawer();
+                startActivity(new Intent(HomeActivity.this, DebugTerminalActivity.class));
+            });
+        }
+
+        // OTA固件升级
+        View btnOtaUpgrade = findViewById(R.id.btn_ota_upgrade);
+        if (btnOtaUpgrade != null) {
+            btnOtaUpgrade.setOnClickListener(v -> {
+                closeSettingsDrawer();
+                startActivity(new Intent(HomeActivity.this, FirmwareUpgradeActivity.class));
+            });
+        }
+
+        // 版本号信息
+        try {
+            android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            TextView tvAppVersion = findViewById(R.id.tv_app_version);
+            if (tvAppVersion != null) {
+                tvAppVersion.setText(pi.versionName != null ? pi.versionName : "1.0.0");
+            }
+            TextView tvBuildNumber = findViewById(R.id.tv_build_number);
+            if (tvBuildNumber != null) {
+                tvBuildNumber.setText(String.valueOf(pi.versionCode));
+            }
+            TextView tvAppName = findViewById(R.id.tv_app_name);
+            if (tvAppName != null) {
+                tvAppName.setText(getString(pi.applicationInfo.labelRes));
+            }
+        } catch (Exception e) {
+            Log.w("HomeActivity", "Failed to get package info", e);
+        }
+    }
+
+    private void openSettingsDrawer() {
+        if (drawerLayout != null) {
+            drawerLayout.openDrawer(GravityCompat.END);
+        }
+    }
+
+    private void closeSettingsDrawer() {
+        if (drawerLayout != null) {
+            drawerLayout.closeDrawer(GravityCompat.END);
+        }
+    }
+
+    private void showTerminalDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setTitle("BanBox BLE终端");
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(32, 32, 32, 32);
+
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+        scrollView.setFillViewport(true);
+        scrollView.setVerticalScrollBarEnabled(true);
+        TextView rxBox = new TextView(this);
+        rxBox.setHint("接收区");
+        rxBox.setMinHeight(200);
+        rxBox.setPadding(8, 8, 8, 8);
+        rxBox.setBackgroundColor(0xFFEFEFEF);
+        rxBox.setTextIsSelectable(true);
+        scrollView.addView(rxBox, new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+        layout.addView(scrollView, new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        android.widget.LinearLayout inputLayout = new android.widget.LinearLayout(this);
+        inputLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        inputLayout.setPadding(0, 16, 0, 0);
+        android.widget.EditText txBox = new android.widget.EditText(this);
+        txBox.setHint("输入命令...");
+        txBox.setMinHeight(80);
+        txBox.setPadding(8, 8, 8, 8);
+        android.widget.LinearLayout.LayoutParams txParams = new android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        txParams.rightMargin = 16;
+        inputLayout.addView(txBox, txParams);
+        Button sendBtn = new Button(this);
+        sendBtn.setText("发送");
+        inputLayout.addView(sendBtn, new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+        layout.addView(inputLayout, new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        builder.setView(layout);
+        builder.setNegativeButton("关闭", null);
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
+
+        sendBtn.setOnClickListener(v -> {
+            String cmd = txBox.getText().toString();
+            if (cmd.isEmpty()) return;
+            String cmdWithCRLF = cmd + "\r\n";
+            bluetoothHelper.writeCharacteristic("0000ab01-0000-1000-8000-00805f9b34fb", cmdWithCRLF.getBytes(), success -> {
+                runOnUiThread(() -> {
+                    if (success) {
+                        rxBox.append("[TX] " + cmd + "\n");
+                        txBox.setText("");
+                    } else {
+                        rxBox.append("[TX] 发送失败\n");
+                    }
+                    scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+                });
+            });
+        });
+
+        bluetoothHelper.setBleNotifyListener((data) -> {
+            runOnUiThread(() -> {
+                rxBox.append("[RX] " + data + "\n");
+                scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+            });
+        });
     }
 }

@@ -1,514 +1,524 @@
 package com.example.myapplication;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.DocumentsContract;
-import android.provider.OpenableColumns;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 
-import com.example.myapplication.BluetoothHelper;
-
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.zip.CRC32;
 
-/**
- * FirmwareUpgradeActivity — BLE 固件升级
- *
- * 流程：
- * 1. SYNC(0x01)       — 握手，获取协议版本
- * 2. QUERY_INFO(0x07) — 查询设备分区信息
- * 3. ERASE(0x06)      — 擦除B分区
- * 4. START(0x02)      — 发起升级，指定固件大小
- * 5. DATA(0x03) ×N    — 分块发送固件数据
- * 6. FINISH(0x04)     — 完成传输，标记B分区为待升级
- * 7. JUMP(0x05)       — 请求重启到B分区
- *
- * 使用 BluetoothHelper 的原始字节回调处理升级协议响应。
- */
-public class FirmwareUpgradeActivity extends BaseActivity {
-    private static final String TAG = "FirmwareUpgrade";
+public class FirmwareUpgradeActivity extends Activity {
 
-    // UI 控件
-    private TextView tvBleStatus, tvProtocolVer, tvActivePart, tvFwSize;
-    private TextView tvFileName, tvFileSize;
-    private TextView tvProgressText, tvProgressPct;
-    private ProgressBar progressBar;
-    private TextView tvLog;
-    private ScrollView scrollLog;
-    private Button btnSelectFile, btnQueryInfo, btnStartUpgrade, btnRollback;
+    private static final String TAG = "FW_UPG";
 
-    // 数据
-    private BluetoothHelper bluetoothHelper;
-    private Handler mainHandler = new Handler(Looper.getMainLooper());
-    private Uri selectedFileUri;
-    private byte[] firmwareData;
-    private int firmwareSize;
-
-    // 升级状态机
-    private enum UpgradeState {
-        IDLE, SYNCING, QUERYING, ERASING, STARTING, UPLOADING, FINISHING, JUMPING, REBOOTING
-    }
-
-    private UpgradeState upgradeState = UpgradeState.IDLE;
-    private int uploadedBytes = 0;
-    private int totalBytes = 0;
-    private short nextSeq = 0;
-
-    // 协议常量
-    private static final byte SOF = (byte) 0xAA;
-    private static final byte CMD_SYNC = 0x01;
-    private static final byte CMD_START = 0x02;
-    private static final byte CMD_DATA = 0x03;
-    private static final byte CMD_FINISH = 0x04;
-    private static final byte CMD_JUMP = 0x05;
-    private static final byte CMD_ERASE = 0x06;
-    private static final byte CMD_QUERY_INFO = 0x07;
-    private static final byte CMD_SET_PART = 0x08;
-    private static final byte CMD_REBOOT = 0x09;
-
-    private static final byte RSP_ACK = (byte) 0xA1;
-    private static final byte RSP_NACK = (byte) 0xA2;
+    private static final int SOF_H = 0x42;
+    private static final int SOF_L = 0x47;
+    private static final int CMD_SYNC       = 0x01;
+    private static final int CMD_START      = 0x02;
+    private static final int CMD_DATA       = 0x03;
+    private static final int CMD_FINISH     = 0x04;
+    private static final int CMD_REBOOT     = 0x05;
+    private static final int CMD_QUERY_INFO = 0x06;
+    private static final int CMD_ABORT      = 0x07;
+    private static final int RSP_ACK        = 0xA1;
+    private static final int RSP_NACK       = 0xA2;
 
     private static final int CHUNK_SIZE = 256;
-    private static final int TIMEOUT_MS = 5000;
+    private static final int MAX_RETRY  = 3;
+    private static final long DATA_DELAY_MS = 10;
+    private static final int BLE_MTU = 200;
+
+    private static final String BEMFA_API =
+        "https://apis.bemfa.com/vb/api/v1/firmwareVersion";
+    private static final String BEMFA_OPENID = "4d9ec352e0376f2110a0c601a2857225";
+    private static final String BEMFA_TOPIC   = "AM8kJZZgX002";
+    private static final int    BEMFA_DEVTYPE = 3;
+
+    private TextView tvBleStatus, tvProtocolVer, tvAppSize;
+    private Button btnQueryInfo, btnCheckUpdate, btnSelectFile;
+    private Button btnStartUpgrade, btnReboot;
+    private TextView tvFileName, tvFileSize, tvCloudInfo;
+    private ProgressBar progressBar;
+    private TextView tvProgressText, tvProgressPct;
+    private TextView tvLog;
+    private ScrollView scrollLog;
+
+    private BluetoothHelper bleHelper;
+    private Handler uiHandler = new Handler(Looper.getMainLooper());
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private byte[] firmware;
+    private int seq = 0;
+    private volatile boolean upgrading = false;
+    private BemfaFirmwareInfo cloudFwInfo;
+
+    private final Object ackLock = new Object();
+    private volatile byte[] ackData;
+    private volatile boolean ackReceived;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_firmware_upgrade);
-        setupBaseToolbar(true);
 
-        // 查找UI控件
-        initViews();
+        tvBleStatus    = findViewById(R.id.tv_ble_status);
+        tvProtocolVer  = findViewById(R.id.tv_protocol_ver);
+        tvAppSize      = findViewById(R.id.tv_app_size);
+        btnQueryInfo   = findViewById(R.id.btn_query_info);
+        btnCheckUpdate = findViewById(R.id.btn_check_update);
+        btnSelectFile  = findViewById(R.id.btn_select_file);
+        tvFileName     = findViewById(R.id.tv_file_name);
+        tvFileSize     = findViewById(R.id.tv_file_size);
+        tvCloudInfo    = findViewById(R.id.tv_cloud_info);
+        progressBar    = findViewById(R.id.progress_bar);
+        tvProgressText = findViewById(R.id.tv_progress_text);
+        tvProgressPct  = findViewById(R.id.tv_progress_pct);
+        tvLog          = findViewById(R.id.tv_log);
+        scrollLog      = findViewById(R.id.scroll_log);
+        btnStartUpgrade = findViewById(R.id.btn_start_upgrade);
+        btnReboot      = findViewById(R.id.btn_reboot);
 
-        // 获取 BluetoothHelper 实例
-        bluetoothHelper = BluetoothHelperSingleton.getInstance();
+        bleHelper = BluetoothManager.getInstance().getBluetoothHelper();
+
         updateBleStatus();
 
-        // 设置原始字节回调，用于接收升级协议响应
-        bluetoothHelper.setRawDataListener(this::onRawDataReceived);
-
-        // 返回按钮已由 BaseActivity.setupBaseToolbar 处理
-
-        // 选择文件
-        btnSelectFile.setOnClickListener(v -> selectFirmwareFile());
-
-        // 查询设备信息
-        btnQueryInfo.setOnClickListener(v -> doQueryInfo());
-
-        // 开始升级
-        btnStartUpgrade.setOnClickListener(v -> startUpgradeProcess());
-
-        // 回退至A区
-        btnRollback.setOnClickListener(v -> doRollback());
-    }
-
-    @Override
-    protected String getToolbarTitle() {
-        return "固件升级";
-    }
-
-    private void initViews() {
-        tvBleStatus = findViewById(R.id.tv_ble_status);
-        tvProtocolVer = findViewById(R.id.tv_protocol_ver);
-        tvActivePart = findViewById(R.id.tv_active_part);
-        tvFwSize = findViewById(R.id.tv_fw_size);
-        tvFileName = findViewById(R.id.tv_file_name);
-        tvFileSize = findViewById(R.id.tv_file_size);
-        tvProgressText = findViewById(R.id.tv_progress_text);
-        tvProgressPct = findViewById(R.id.tv_progress_pct);
-        progressBar = findViewById(R.id.progress_bar);
-        tvLog = findViewById(R.id.tv_log);
-        scrollLog = findViewById(R.id.scroll_log);
-        btnSelectFile = findViewById(R.id.btn_select_file);
-        btnQueryInfo = findViewById(R.id.btn_query_info);
-        btnStartUpgrade = findViewById(R.id.btn_start_upgrade);
-        btnRollback = findViewById(R.id.btn_rollback);
-    }
-
-    private void updateBleStatus() {
-        if (bluetoothHelper.isConnected()) {
-            tvBleStatus.setText("已连接");
-            tvBleStatus.setTextColor(0xFF66CC99);
-            btnSelectFile.setEnabled(true);
-            btnQueryInfo.setEnabled(true);
-        } else {
-            tvBleStatus.setText("未连接");
-            tvBleStatus.setTextColor(0xFFFF6666);
-            btnSelectFile.setEnabled(false);
-            btnQueryInfo.setEnabled(false);
-            btnStartUpgrade.setEnabled(false);
-            btnRollback.setEnabled(false);
-        }
-    }
-
-    // ======================== 文件选择 ========================
-    private void selectFirmwareFile() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        startActivityForResult(intent, 1001);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
-            selectedFileUri = data.getData();
-            if (selectedFileUri != null) {
-                loadFirmwareFile(selectedFileUri);
-            }
-        }
-    }
-
-    private void loadFirmwareFile(Uri uri) {
-        try (InputStream is = getContentResolver().openInputStream(uri)) {
-            firmwareData = new byte[16 * 1024 * 1024];  // Max 16MB
-            int bytesRead = is.read(firmwareData);
-            firmwareSize = bytesRead;
-
-            String fileName = getFileName(uri);
-            tvFileName.setText(fileName != null ? fileName : "固件文件");
-            tvFileSize.setText(String.format("大小: %.1f KB", firmwareSize / 1024.0));
-
-            appendLog("[FILE] 已加载固件: " + firmwareSize + " 字节");
-            btnStartUpgrade.setEnabled(true);
-
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to load firmware file", e);
-            Toast.makeText(this, "读取文件失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private String getFileName(Uri uri) {
-        try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                return cursor.getString(columnIndex);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to get file name", e);
-        }
-        return null;
-    }
-
-    // ======================== 协议方法 ========================
-    // CRC16-CCITT
-    private int crc16(byte[] data, int offset, int len) {
-        int crc = 0xFFFF;
-        for (int i = offset; i < offset + len; i++) {
-            crc ^= (data[i] & 0xFF) << 8;
-            for (int j = 0; j < 8; j++) {
-                if ((crc & 0x8000) != 0) {
-                    crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
-                } else {
-                    crc = (crc << 1) & 0xFFFF;
-                }
-            }
-        }
-        return crc;
-    }
-
-    // 构建数据包
-    private byte[] buildPacket(byte cmd, byte[] payload) {
-        int payloadLen = (payload != null) ? payload.length : 0;
-        int totalLen = 1 + 1 + 2 + 2 + payloadLen + 2;
-        byte[] pkt = new byte[totalLen];
-        int idx = 0;
-
-        pkt[idx++] = SOF;
-        pkt[idx++] = cmd;
-        pkt[idx++] = (byte) ((nextSeq >> 8) & 0xFF);
-        pkt[idx++] = (byte) (nextSeq & 0xFF);
-        pkt[idx++] = (byte) ((payloadLen >> 8) & 0xFF);
-        pkt[idx++] = (byte) (payloadLen & 0xFF);
-
-        if (payload != null) {
-            System.arraycopy(payload, 0, pkt, idx, payloadLen);
-            idx += payloadLen;
-        }
-
-        // CRC over cmd+seq+len+payload
-        int crc = crc16(pkt, 1, 5 + payloadLen);
-        pkt[idx++] = (byte) ((crc >> 8) & 0xFF);
-        pkt[idx++] = (byte) (crc & 0xFF);
-
-        nextSeq = (short) ((nextSeq + 1) & 0xFFFF);
-        return pkt;
-    }
-
-    // ======================== 升级步骤 ========================
-    private void doQueryInfo() {
-        if (!bluetoothHelper.isConnected()) {
-            Toast.makeText(this, "设备未连接", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        upgradeState = UpgradeState.QUERYING;
-        appendLog("[QUERY] 发送查询设备信息...");
-        byte[] pkt = buildPacket(CMD_QUERY_INFO, null);
-        bluetoothHelper.writeCharacteristic("ab01", pkt, success -> {
-            if (!success) appendLog("[ERR] 发送QUERY_INFO失败");
+        btnQueryInfo.setOnClickListener(v -> executor.execute(this::doQueryInfo));
+        btnCheckUpdate.setOnClickListener(v -> executor.execute(this::doCheckUpdate));
+        btnSelectFile.setOnClickListener(v -> openFilePicker());
+        btnStartUpgrade.setOnClickListener(v -> {
+            if (!upgrading) executor.execute(this::doUpgrade);
         });
-    }
+        btnReboot.setOnClickListener(v -> executor.execute(this::doReboot));
 
-    private void startUpgradeProcess() {
-        if (!bluetoothHelper.isConnected()) {
-            Toast.makeText(this, "设备未连接", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (firmwareData == null || firmwareSize == 0) {
-            Toast.makeText(this, "未选择固件文件", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        upgradeState = UpgradeState.SYNCING;
-        uploadedBytes = 0;
-        totalBytes = firmwareSize;
-        nextSeq = 0;
-
-        appendLog("[START] 开始升级流程");
-        appendLog("[SYNC] 发送同步...");
-
-        byte[] pkt = buildPacket(CMD_SYNC, null);
-        bluetoothHelper.writeCharacteristic("ab01", pkt, success -> {
-            if (!success) appendLog("[ERR] 发送SYNC失败");
-        });
-    }
-
-    private void doRollback() {
-        if (!bluetoothHelper.isConnected()) {
-            Toast.makeText(this, "设备未连接", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        appendLog("[ROLLBACK] 将活跃分区切换为A...");
-        byte[] pkt = buildPacket(CMD_SET_PART, new byte[]{0});
-        bluetoothHelper.writeCharacteristic("ab01", pkt, success -> {
-            if (success) {
-                appendLog("[ROLLBACK] 命令已发送，重启生效");
-            } else {
-                appendLog("[ERR] 发送SET_PART失败");
+        bleHelper.setRawDataListener(data -> {
+            synchronized (ackLock) {
+                ackData = data;
+                ackReceived = true;
+                ackLock.notifyAll();
             }
-        });
-    }
-
-    // ======================== 响应处理 ========================
-    private void onRawDataReceived(byte[] data) {
-        if (data == null || data.length < 8) return;
-
-        mainHandler.post(() -> {
-            try {
-                byte sof = data[0];
-                if (sof != SOF) {
-                    appendLog("[WARN] 无效SOF字节: 0x" + String.format("%02X", sof & 0xFF));
-                    return;
-                }
-
-                byte cmd = data[1];
-                int seq = ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
-                int len = ((data[4] & 0xFF) << 8) | (data[5] & 0xFF);
-
-                if (cmd == RSP_ACK) {
-                    handleAck(seq, data, len);
-                } else if (cmd == RSP_NACK) {
-                    byte err = (len > 0) ? data[6] : 0;
-                    handleNack(seq, err);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error processing response", e);
-            }
-        });
-    }
-
-    private void handleAck(int seq, byte[] data, int dataLen) {
-        switch (upgradeState) {
-        case SYNCING:
-            appendLog("[SYNC] ACK收到，协议版本: v" + (dataLen > 0 ? (data[6] & 0xFF) : "?"));
-            upgradeState = UpgradeState.ERASING;
-            appendLog("[ERASE] 正在擦除B分区...");
-            byte[] erasePkt = buildPacket(CMD_ERASE, null);
-            bluetoothHelper.writeCharacteristic("ab01", erasePkt, success -> {
-                if (!success) appendLog("[ERR] 发送ERASE失败");
-            });
-            break;
-
-        case ERASING:
-            appendLog("[ERASE] 完成 ✓");
-            upgradeState = UpgradeState.STARTING;
-            appendLog("[START] 发起升级, 大小=" + totalBytes + "字节");
-            byte[] sizeBuf = new byte[4];
-            sizeBuf[0] = (byte) ((totalBytes >> 24) & 0xFF);
-            sizeBuf[1] = (byte) ((totalBytes >> 16) & 0xFF);
-            sizeBuf[2] = (byte) ((totalBytes >> 8) & 0xFF);
-            sizeBuf[3] = (byte) (totalBytes & 0xFF);
-            byte[] startPkt = buildPacket(CMD_START, sizeBuf);
-            bluetoothHelper.writeCharacteristic("ab01", startPkt, success -> {
-                if (!success) appendLog("[ERR] 发送START失败");
-            });
-            break;
-
-        case STARTING:
-            appendLog("[START] ACK收到, 开始发送数据");
-            upgradeState = UpgradeState.UPLOADING;
-            sendNextChunk();
-            break;
-
-        case UPLOADING:
-            updateProgress();
-            if (uploadedBytes < totalBytes) {
-                sendNextChunk();
-            } else {
-                upgradeState = UpgradeState.FINISHING;
-                appendLog("[FINISH] 发送完成");
-                byte[] szBuf = new byte[4];
-                szBuf[0] = (byte) ((totalBytes >> 24) & 0xFF);
-                szBuf[1] = (byte) ((totalBytes >> 16) & 0xFF);
-                szBuf[2] = (byte) ((totalBytes >> 8) & 0xFF);
-                szBuf[3] = (byte) (totalBytes & 0xFF);
-                byte[] finishPkt = buildPacket(CMD_FINISH, szBuf);
-                bluetoothHelper.writeCharacteristic("ab01", finishPkt, success -> {
-                    if (!success) appendLog("[ERR] 发送FINISH失败");
-                });
-            }
-            break;
-
-        case FINISHING:
-            appendLog("[FINISH] 固件已保存至B分区");
-            upgradeState = UpgradeState.JUMPING;
-            appendLog("[JUMP] 请求设备重启...");
-            byte[] jumpPkt = buildPacket(CMD_JUMP, null);
-            bluetoothHelper.writeCharacteristic("ab01", jumpPkt, success -> {
-                if (!success) appendLog("[ERR] 发送JUMP失败");
-            });
-            break;
-
-        case JUMPING:
-            appendLog("[SUCCESS] ✓✓✓ 升级完成! 设备已重启到B分区");
-            upgradeState = UpgradeState.IDLE;
-            break;
-
-        case QUERYING:
-            if (dataLen >= 12) {
-                byte protVer = data[6];
-                byte bootMode = data[7];
-                byte activePart = data[8];
-                byte pendingUpg = data[9];
-                byte failCnt = data[10];
-                int fwSizeB = ((data[11] & 0xFF) << 24) | ((data[12] & 0xFF) << 16) |
-                              ((data[13] & 0xFF) << 8) | (data[14] & 0xFF);
-                tvProtocolVer.setText("v" + protVer);
-                tvActivePart.setText(activePart == 0 ? "A(工厂)" : "B(用户)");
-                tvFwSize.setText(String.format("%,d 字节", fwSizeB));
-                appendLog(String.format("[QUERY] 协议v%d, 模式=%d, 活跃分区=%s, 待升级=%d, 失败计数=%d, B区大小=%,d",
-                        protVer, bootMode, activePart == 0 ? "A" : "B", pendingUpg, failCnt, fwSizeB));
-            }
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    private void handleNack(int seq, byte err) {
-        String errName = getErrorName(err);
-        appendLog("[NACK] 错误: " + errName + " (0x" + String.format("%02X", err & 0xFF) + ")");
-        upgradeState = UpgradeState.IDLE;
-    }
-
-    private String getErrorName(byte code) {
-        switch (code) {
-        case 0x01: return "CRC错误";
-        case 0x02: return "Flash错误";
-        case 0x03: return "大小溢出";
-        case 0x04: return "状态错误";
-        case 0x05: return "参数错误";
-        default: return "未知错误";
-        }
-    }
-
-    private void sendNextChunk() {
-        if (uploadedBytes >= totalBytes) return;
-
-        int chunkSize = Math.min(CHUNK_SIZE, totalBytes - uploadedBytes);
-        byte[] payload = new byte[4 + chunkSize];
-
-        // 4字节大端序偏移 + 数据
-        payload[0] = (byte) ((uploadedBytes >> 24) & 0xFF);
-        payload[1] = (byte) ((uploadedBytes >> 16) & 0xFF);
-        payload[2] = (byte) ((uploadedBytes >> 8) & 0xFF);
-        payload[3] = (byte) (uploadedBytes & 0xFF);
-        System.arraycopy(firmwareData, uploadedBytes, payload, 4, chunkSize);
-
-        uploadedBytes += chunkSize;
-
-        byte[] pkt = buildPacket(CMD_DATA, payload);
-        bluetoothHelper.writeCharacteristic("ab01", pkt, success -> {
-            if (!success) {
-                appendLog("[ERR] 发送DATA包失败 @ offset=0x" + String.format("%X", uploadedBytes));
-            }
-        });
-    }
-
-    private void updateProgress() {
-        if (totalBytes > 0) {
-            int pct = (int) (100.0 * uploadedBytes / totalBytes);
-            progressBar.setProgress(pct);
-            tvProgressPct.setText(pct + "%");
-            tvProgressText.setText(String.format("已上传: %,d / %,d 字节", uploadedBytes, totalBytes));
-        }
-    }
-
-    // ======================== 日志 ========================
-    private void appendLog(String msg) {
-        mainHandler.post(() -> {
-            String currentText = tvLog.getText().toString();
-            String newText = (currentText.isEmpty() ? "" : currentText + "\n") + msg;
-            tvLog.setText(newText);
-            // 自动滚动到底部
-            scrollLog.post(() -> scrollLog.fullScroll(View.FOCUS_DOWN));
         });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (bluetoothHelper != null) {
-            bluetoothHelper.setRawDataListener(null);
-        }
-    }
-}
-
-/**
- * BluetoothHelper 单例管理器
- */
-class BluetoothHelperSingleton {
-    private static BluetoothHelper instance;
-
-    public static BluetoothHelper getInstance() {
-        if (instance == null) {
-            // 应该由主应用程序初始化实例
-            // 这里作为备选方案
-            Log.w("BluetoothHelper", "getInstance called but instance is null");
-        }
-        return instance;
+        executor.shutdownNow();
+        bleHelper.setRawDataListener(null);
     }
 
-    public static void setInstance(BluetoothHelper helper) {
-        instance = helper;
+    private void updateBleStatus() {
+        boolean connected = bleHelper.isConnected();
+        tvBleStatus.setText(connected ? "已连接" : "未连接");
+        tvBleStatus.setTextColor(getColor(connected ?
+            R.color.primary_accent : R.color.text_error));
+        btnStartUpgrade.setEnabled(connected && firmware != null);
+        btnReboot.setEnabled(connected);
+        btnQueryInfo.setEnabled(connected);
+    }
+
+    private void log(String msg) {
+        uiHandler.post(() -> {
+            tvLog.append(msg + "\n");
+            scrollLog.post(() -> scrollLog.fullScroll(ScrollView.FOCUS_DOWN));
+        });
+    }
+
+    private void setProgress(int pct, String text) {
+        uiHandler.post(() -> {
+            progressBar.setProgress(pct);
+            tvProgressPct.setText(pct + "%");
+            tvProgressText.setText(text);
+        });
+    }
+
+    // ── BLE protocol helpers ───────────────────────────────────────────────
+
+    private int nextSeq() {
+        int s = seq;
+        seq = (seq + 1) & 0xFF;
+        return s;
+    }
+
+    private static int crc16Ccitt(byte[] buf, int off, int len) {
+        int crc = 0xFFFF;
+        for (int i = off; i < off + len; i++) {
+            crc ^= (buf[i] & 0xFF) << 8;
+            for (int j = 0; j < 8; j++) {
+                crc = (crc & 0x8000) != 0 ? ((crc << 1) ^ 0x1021) & 0xFFFF
+                                           : (crc << 1) & 0xFFFF;
+            }
+        }
+        return crc;
+    }
+
+    private byte[] buildPacket(int cmd, int seq, byte[] data) {
+        int dlen = (data != null) ? data.length : 0;
+        byte[] pkt = new byte[2 + 1 + 1 + 2 + dlen + 2];
+        int n = 0;
+        pkt[n++] = (byte) SOF_H;
+        pkt[n++] = (byte) SOF_L;
+        pkt[n++] = (byte) cmd;
+        pkt[n++] = (byte) seq;
+        pkt[n++] = (byte) (dlen >> 8);
+        pkt[n++] = (byte) dlen;
+        if (dlen > 0) System.arraycopy(data, 0, pkt, n, dlen);
+        n += dlen;
+        int crc = crc16Ccitt(pkt, 2, 1 + 1 + 2 + dlen);
+        pkt[n++] = (byte) (crc >> 8);
+        pkt[n++] = (byte) crc;
+        return pkt;
+    }
+
+    private byte[] transact(int cmd, byte[] data, long timeoutMs) throws Exception {
+        for (int attempt = 1; attempt <= MAX_RETRY; attempt++) {
+            int s = nextSeq();
+            byte[] pkt = buildPacket(cmd, s, data);
+            sendBlePackets(pkt);
+
+            synchronized (ackLock) {
+                ackReceived = false;
+                ackData = null;
+                long deadline = System.currentTimeMillis() + timeoutMs;
+                while (!ackReceived && System.currentTimeMillis() < deadline) {
+                    ackLock.wait(Math.max(1, deadline - System.currentTimeMillis()));
+                }
+                if (!ackReceived) {
+                    if (attempt < MAX_RETRY) {
+                        log("  [重试 " + (attempt + 1) + "/" + MAX_RETRY + "]");
+                        continue;
+                    }
+                    throw new Exception("超时");
+                }
+            }
+
+            if (ackData == null || ackData.length < 2) continue;
+
+            int rspCmd = ackData[2] & 0xFF;
+            if (rspCmd == RSP_NACK) {
+                int err = (ackData.length > 6) ? ackData[6] & 0xFF : 0xFF;
+                throw new Exception("NACK error=0x" + Integer.toHexString(err));
+            }
+            if (rspCmd == RSP_ACK) {
+                int rspDlen = ((ackData[4] & 0xFF) << 8) | (ackData[5] & 0xFF);
+                byte[] payload = new byte[rspDlen];
+                if (rspDlen > 0)
+                    System.arraycopy(ackData, 6, payload, 0, rspDlen);
+                return payload;
+            }
+        }
+        throw new Exception("No valid response");
+    }
+
+    private void sendBlePackets(byte[] data) {
+        int offset = 0;
+        while (offset < data.length) {
+            int chunkLen = Math.min(BLE_MTU, data.length - offset);
+            byte[] chunk = new byte[chunkLen];
+            System.arraycopy(data, offset, chunk, 0, chunkLen);
+
+            final byte[] toWrite = chunk;
+            final Object lock = new Object();
+            final boolean[] done = {false};
+
+            uiHandler.post(() -> {
+                bleHelper.writeCharacteristic("0000ab01-0000-1000-8000-00805f9b34fb",
+                    toWrite, success -> {
+                        synchronized (lock) {
+                            done[0] = true;
+                            lock.notifyAll();
+                        }
+                    });
+            });
+
+            synchronized (lock) {
+                try {
+                    while (!done[0]) lock.wait(2000);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+
+            offset += chunkLen;
+        }
+    }
+
+    // ── High-level operations ──────────────────────────────────────────────
+
+    private void doQueryInfo() {
+        try {
+            log("正在查询设备信息...");
+            byte[] resp = transact(CMD_QUERY_INFO, null, 5000);
+            if (resp.length >= 12) {
+                int ver = resp[0] & 0xFF;
+                long appBase = ((long)(resp[4] & 0xFF) << 24)
+                             | ((long)(resp[5] & 0xFF) << 16)
+                             | ((long)(resp[6] & 0xFF) << 8)
+                             |  (resp[7] & 0xFF);
+                long appSize = ((long)(resp[8] & 0xFF) << 24)
+                             | ((long)(resp[9] & 0xFF) << 16)
+                             | ((long)(resp[10] & 0xFF) << 8)
+                             |  (resp[11] & 0xFF);
+                uiHandler.post(() -> {
+                    tvProtocolVer.setText("v" + ver);
+                    tvAppSize.setText((appSize / 1024) + " KB");
+                });
+                log("协议版本: v" + ver + "  APP: 0x" +
+                    Long.toHexString(appBase) + "  容量: " +
+                    (appSize / 1024) + " KB");
+            }
+        } catch (Exception e) {
+            log("查询失败: " + e.getMessage());
+        }
+    }
+
+    private void doSync() throws Exception {
+        byte[] resp = transact(CMD_SYNC, null, 5000);
+        int ver = (resp.length > 0) ? resp[0] & 0xFF : 0;
+        log("握手成功，协议版本 v" + ver);
+    }
+
+    private void doUpgrade() {
+        if (firmware == null) {
+            log("请先选择固件文件");
+            return;
+        }
+        upgrading = true;
+        uiHandler.post(() -> btnStartUpgrade.setEnabled(false));
+        try {
+            doSync();
+
+            int total = firmware.length;
+            CRC32 crc32 = new CRC32();
+            crc32.update(firmware);
+            int fwCrc = (int) crc32.getValue();
+
+            log("固件大小: " + total + " 字节 (" +
+                String.format("%.1f", total / 1024.0) + " KB)");
+
+            log("正在擦除APP分区...");
+            byte[] sizeData = ByteBuffer.allocate(4).putInt(total).array();
+            transact(CMD_START, sizeData, 60000);
+            log("Flash 已擦除，开始传输固件数据...");
+
+            int offset = 0;
+            while (offset < total) {
+                int chunkLen = Math.min(CHUNK_SIZE, total - offset);
+                byte[] payload = new byte[4 + chunkLen];
+                ByteBuffer.wrap(payload, 0, 4).putInt(offset);
+                System.arraycopy(firmware, offset, payload, 4, chunkLen);
+
+                transact(CMD_DATA, payload, 5000);
+                offset += chunkLen;
+
+                int pct = offset * 100 / total;
+                setProgress(pct, "传输中 " + offset + "/" + total);
+
+                if (DATA_DELAY_MS > 0)
+                    Thread.sleep(DATA_DELAY_MS);
+            }
+
+            log("升级完成，正在校验...");
+            byte[] crcData = ByteBuffer.allocate(4).putInt(fwCrc).array();
+            transact(CMD_FINISH, crcData, 5000);
+            log("校验通过！");
+
+            setProgress(100, "升级完成");
+            uiHandler.post(() -> btnReboot.setEnabled(true));
+
+        } catch (Exception e) {
+            log("升级失败: " + e.getMessage());
+            setProgress(0, "升级失败");
+        } finally {
+            upgrading = false;
+            uiHandler.post(() -> {
+                btnStartUpgrade.setEnabled(firmware != null && bleHelper.isConnected());
+            });
+        }
+    }
+
+    private void doReboot() {
+        try {
+            log("正在重启设备...");
+            transact(CMD_REBOOT, null, 3000);
+            log("设备已重启");
+        } catch (Exception e) {
+            log("重启命令已发送 (设备可能已断开)");
+        }
+    }
+
+    // ── Bemfa cloud API ────────────────────────────────────────────────────
+
+    private static class BemfaResponse {
+        int code;
+        String msg;
+        BemfaFirmwareInfo data;
+    }
+
+    private static class BemfaFirmwareInfo {
+        String url;
+        int version;
+        String tag;
+        int size;
+        long unix;
+    }
+
+    private void doCheckUpdate() {
+        try {
+            log("正在检查云端更新...");
+            String apiUrl = BEMFA_API + "?openID=" + BEMFA_OPENID
+                + "&topic=" + BEMFA_TOPIC
+                + "&deviceType=" + BEMFA_DEVTYPE;
+
+            URL url = new URL(apiUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
+
+            int respCode = conn.getResponseCode();
+            if (respCode != 200) {
+                log("API请求失败: HTTP " + respCode);
+                return;
+            }
+
+            InputStream is = conn.getInputStream();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+            is.close();
+
+            String json = baos.toString("UTF-8");
+            Log.d(TAG, "Bemfa response: " + json);
+
+            Gson gson = new Gson();
+            BemfaResponse resp = gson.fromJson(json, BemfaResponse.class);
+
+            if (resp.code != 0 || resp.data == null) {
+                log("云端无可用更新: " + resp.msg);
+                return;
+            }
+
+            cloudFwInfo = resp.data;
+            log("发现新固件: v" + cloudFwInfo.version
+                + "  大小: " + cloudFwInfo.size + " 字节"
+                + (cloudFwInfo.tag != null ? "  备注: " + cloudFwInfo.tag : ""));
+
+            uiHandler.post(() -> {
+                tvCloudInfo.setText("云端固件 v" + cloudFwInfo.version
+                    + " (" + cloudFwInfo.size + " 字节)"
+                    + (cloudFwInfo.tag != null ? " — " + cloudFwInfo.tag : ""));
+                tvCloudInfo.setVisibility(TextView.VISIBLE);
+            });
+
+            log("正在下载固件...");
+            downloadFirmware(cloudFwInfo.url);
+
+        } catch (Exception e) {
+            log("检查更新失败: " + e.getMessage());
+        }
+    }
+
+    private void downloadFirmware(String downloadUrl) throws Exception {
+        URL url = new URL(downloadUrl.trim());
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(60000);
+
+        int respCode = conn.getResponseCode();
+        if (respCode != 200) {
+            log("下载失败: HTTP " + respCode);
+            return;
+        }
+
+        int contentLen = conn.getContentLength();
+        InputStream is = conn.getInputStream();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int totalRead = 0;
+        int n;
+        while ((n = is.read(buf)) != -1) {
+            baos.write(buf, 0, n);
+            totalRead += n;
+            if (contentLen > 0) {
+                int pct = totalRead * 100 / contentLen;
+                setProgress(pct, "下载中 " + totalRead + "/" + contentLen);
+            }
+        }
+        is.close();
+
+        firmware = baos.toByteArray();
+        log("固件下载完成: " + firmware.length + " 字节");
+
+        File fwFile = new File(getCacheDir(), "firmware.bin");
+        FileOutputStream fos = new FileOutputStream(fwFile);
+        fos.write(firmware);
+        fos.close();
+
+        uiHandler.post(() -> {
+            tvFileName.setText(fwFile.getName());
+            tvFileSize.setText(String.format("%.1f KB", firmware.length / 1024.0));
+            btnStartUpgrade.setEnabled(bleHelper.isConnected());
+        });
+        setProgress(0, "下载完成，等待升级");
+    }
+
+    // ── Local file picker ──────────────────────────────────────────────────
+
+    private static final int PICK_BIN_FILE = 1001;
+
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(Intent.createChooser(intent, "选择固件文件"),
+                               PICK_BIN_FILE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_BIN_FILE && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            try {
+                InputStream is = getContentResolver().openInputStream(uri);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+                is.close();
+                firmware = baos.toByteArray();
+
+                String name = uri.getLastPathSegment();
+                uiHandler.post(() -> {
+                    tvFileName.setText(name);
+                    tvFileSize.setText(String.format("%.1f KB",
+                        firmware.length / 1024.0));
+                    btnStartUpgrade.setEnabled(bleHelper.isConnected());
+                });
+                log("已加载固件: " + name + " (" + firmware.length + " 字节)");
+            } catch (Exception e) {
+                log("读取文件失败: " + e.getMessage());
+            }
+        }
     }
 }
