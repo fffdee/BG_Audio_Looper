@@ -15,6 +15,7 @@
 #ifndef __EFFECT_GRAPH_CONFIG_H__
 #define __EFFECT_GRAPH_CONFIG_H__
 
+#include "product_def.h"  /* 需要 EFFECT_GRAPHICS_EN 宏定义 */
 #include "effect_graph.h"
 
 #ifdef __cplusplus
@@ -74,7 +75,7 @@ typedef enum {
     NODE_ID_METRONOME,       /* 节拍器源节点 */
     NODE_ID_LOOPER_PLAY,     /* Looper播放源节点 */
     NODE_ID_LOOPER_RECORD,   /* Looper录制输出节点 */
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
     NODE_ID_SYNTH,           /* BanGTsynth合成器源节点 */
 #endif
     
@@ -134,7 +135,7 @@ typedef enum {
 }
 
 /* BanGTsynth合成器节点配置宏 - 由 BANGTSYNTH_EN 控制是否编译 */
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
 #define BANGTSYNTH_NODE_CONFIG_ENTRY \
     { NODE_ID_SYNTH, EFFECT_NODE_TYPE_SOURCE_SYNTH, "synth_in", true, {{0}} },
 #define BANGTSYNTH_EDGE_CONFIG_ENTRIES \
@@ -363,6 +364,8 @@ typedef enum {
  * API函数
  ******************************************************************************/
 
+#if EFFECT_GRAPHICS_EN
+
 /**
  * @brief 获取预设配置
  * @param preset 预设ID
@@ -388,6 +391,19 @@ GraphPreset_t EffectGraphConfig_GetCurrentPreset(void);
  * @brief 打印所有可用预设
  */
 void EffectGraphConfig_PrintPresets(void);
+
+#else /* !EFFECT_GRAPHICS_EN */
+
+/* Stub functions when effect graph is disabled */
+static inline GraphError_t EffectGraphConfig_GetPreset(GraphPreset_t preset, GraphConfig_t *config) 
+    { (void)preset; (void)config; return GRAPH_OK; }
+static inline GraphError_t EffectGraphConfig_LoadPreset(GraphPreset_t preset) 
+    { (void)preset; return GRAPH_OK; }
+static inline GraphPreset_t EffectGraphConfig_GetCurrentPreset(void) 
+    { return GRAPH_PRESET_DEFAULT; }
+static inline void EffectGraphConfig_PrintPresets(void) { }
+
+#endif /* EFFECT_GRAPHICS_EN */
 
 #ifdef __cplusplus
 }

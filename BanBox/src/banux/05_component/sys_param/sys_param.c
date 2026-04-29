@@ -136,7 +136,7 @@ static void LoadDefaultGraphConfig(void)
 
     /* N9: Expander */
     g_sys_param.audio_chain.node_pool[9].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[9].subtype = 11; /* Expander type */
+    g_sys_param.audio_chain.node_pool[9].subtype = EFFECT_TYPE_EXPANDER;
     g_sys_param.audio_chain.node_pool[9].enabled = 1;
     g_sys_param.audio_chain.node_pool[9].volume = 100;
 
@@ -185,25 +185,25 @@ static void LoadDefaultGraphConfig(void)
 
     /* N17: USB_Out */
     g_sys_param.audio_chain.node_pool[17].node_type = NODE_TYPE_OUTPUT;
-    g_sys_param.audio_chain.node_pool[17].subtype = 2; /* USB output type */
+    g_sys_param.audio_chain.node_pool[17].subtype = OUTPUT_TYPE_USB_OUT;
     g_sys_param.audio_chain.node_pool[17].enabled = 1;
     g_sys_param.audio_chain.node_pool[17].volume = 100;
 
     /* N18: Metronome */
     g_sys_param.audio_chain.node_pool[18].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[18].subtype = 4; /* Metronome type */
+    g_sys_param.audio_chain.node_pool[18].subtype = SOURCE_TYPE_METRONOME;
     g_sys_param.audio_chain.node_pool[18].enabled = 1;
     g_sys_param.audio_chain.node_pool[18].volume = 100;
 
     /* N19: Looper_Play */
     g_sys_param.audio_chain.node_pool[19].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[19].subtype = 5; /* Looper play type */
+    g_sys_param.audio_chain.node_pool[19].subtype = SOURCE_TYPE_LOOPER_PLAY;
     g_sys_param.audio_chain.node_pool[19].enabled = 1;
     g_sys_param.audio_chain.node_pool[19].volume = 100;
 
     /* N20: Looper_Record */
     g_sys_param.audio_chain.node_pool[20].node_type = NODE_TYPE_OUTPUT;
-    g_sys_param.audio_chain.node_pool[20].subtype = 3; /* Looper record type */
+    g_sys_param.audio_chain.node_pool[20].subtype = OUTPUT_TYPE_LOOPER_RECORD;
     g_sys_param.audio_chain.node_pool[20].enabled = 1;
     g_sys_param.audio_chain.node_pool[20].volume = 100;
 
@@ -505,6 +505,14 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.looper.segment_volume[1] = 0xFF;
     g_sys_param.looper.segment_volume[2] = 0xFF;
     g_sys_param.looper.segment_volume[3] = 0xFF;
+    
+    /* 新增：存储抽象层性能参数默认值 */
+    g_sys_param.looper.storage_type = 0;        /* 默认 NOR Flash */
+    g_sys_param.looper.write_speed_kbps = 0;    /* 未测试 */
+    g_sys_param.looper.read_speed_kbps = 0;     /* 未测试 */
+    g_sys_param.looper.max_concurrent_tracks = 1; /* 默认1段 */
+    g_sys_param.looper.bandwidth_tested = 0;    /* 未测试 */
+    g_sys_param.looper.support_overdub = 0;     /* 默认不支持叠录 */
 
     /* Bluetooth defaults */
     g_sys_param.bluetooth.enabled = 1;
@@ -614,7 +622,6 @@ SysParam_Status_t SysParam_SaveModule(const char *module) {
  */
 static void SysParam_PrintEffectParams(GraphNode_t *node, uint8_t node_id) {
     // 从effect_graph获取实时参数，而不是sys_param的静态存储
-    extern EffectNode_t* EffectGraph_FindNodeById(uint8_t id);
     EffectNode_t *live_node = EffectGraph_FindNodeById(node_id);
 
     if (live_node != NULL) {

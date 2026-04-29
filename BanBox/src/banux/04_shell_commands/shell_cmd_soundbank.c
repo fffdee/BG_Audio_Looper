@@ -14,7 +14,7 @@
  */
 
 #include "bg_config.h"
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
 
 #include "shell_cmd_soundbank.h"
 #include "bg_shell.h"

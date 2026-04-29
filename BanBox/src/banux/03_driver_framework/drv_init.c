@@ -14,6 +14,9 @@
 #include "drv_device.h"
 #include "drv_st7735.h"
 #include "drv_w25qxx.h"
+#include "drv_w25n02.h"
+#include "drv_psram.h"
+#include "drv_sdcard.h"
 #include "drv_battery.h"
 #include "drv_usb_cdc.h"
 #include "bt_vfs_driver.h"
@@ -23,6 +26,7 @@
 #include "shell_cmd_audio_vfs.h"
 #include "bg_flash_manager.h"
 #include "BG_FlashMgr.h"
+#include "flash_devices.h"
 #include "debug.h"
 
 /*******************************************************************************
@@ -84,19 +88,11 @@ int DrvFramework_RegisterAll(void)
     
     DBG("[DrvInit] Starting driver registration...\n");
     
-    /* 初始化Flash管理器（先于其他需要Flash的驱动） */
-    DBG("[DrvInit] Initializing Flash Manager...\n");
-    BG_flash_manager.Init();
-    total++;
-    DBG("[DrvInit] Flash Manager initialized OK\n");
-    
-    /* 初始化BG_FlashMgr（Looper使用的应用层接口） */
-    DBG("[DrvInit] Initializing BG_FlashMgr...\n");
-    BG_FlashMgr.Init();
-    total++;
-    DBG("[DrvInit] BG_FlashMgr initialized OK\n");
+    /* Flash 管理器已在 DrvFramework_FullInit() 中初始化，此处跳过 */
+    /* BG_flash_manager.Init() 和 BG_FlashMgr.Init() 已由调用方执行 */
     
     /* 注册ST7735 LCD驱动 */
+#if HW_DRV_LCD_EN
     DBG("[DrvInit] Registering ST7735 LCD driver...\n");
     ret = St7735_DrvRegister();
     if (ret == 0) {
@@ -106,8 +102,11 @@ int DrvFramework_RegisterAll(void)
         failed++;
         DBG("[DrvInit] ST7735 registration FAILED\n");
     }
+#endif /* HW_DRV_LCD_EN */
     
-    /* 注册W25Qxx Flash驱动 */
+
+    /* 注册NOR Flash驱动 (W25Qxx) */
+#if HW_DRV_FLASH_NOR_EN
     DBG("[DrvInit] Registering W25Qxx Flash driver...\n");
     ret = W25qxx_DrvRegister();
     if (ret == 0) {
@@ -117,8 +116,49 @@ int DrvFramework_RegisterAll(void)
         failed++;
         DBG("[DrvInit] W25Qxx registration FAILED\n");
     }
+#endif /* HW_DRV_FLASH_NOR_EN */
+
+/* 注册NAND Flash驱动 (W25N02) */
+#if HW_DRV_FLASH_NAND_EN
+    DBG("[DrvInit] Registering W25N02 NAND Flash driver...\n");
+    ret = W25n02_DrvRegister();
+    if (ret == 0) {
+        total++;
+        DBG("[DrvInit] W25N02 NAND registered OK\n");
+    } else {
+        failed++;
+        DBG("[DrvInit] W25N02 NAND registration FAILED\n");
+    }
+#endif /* HW_DRV_FLASH_NAND_EN */
+    
+/* 注册PSRAM驱动 (ESP-PSRAM64H) */
+#if HW_DRV_PSRAM_EN
+    DBG("[DrvInit] Registering ESP-PSRAM64H driver...\n");
+    ret = Psram_DrvRegister();
+    if (ret == 0) {
+        total++;
+        DBG("[DrvInit] ESP-PSRAM64H registered OK\n");
+    } else {
+        failed++;
+        DBG("[DrvInit] ESP-PSRAM64H registration FAILED\n");
+    }
+#endif /* HW_DRV_PSRAM_EN */
+
+/* 注册SD Card驱动 */
+#if HW_DRV_SDCARD_EN
+    DBG("[DrvInit] Registering SD Card driver...\n");
+    ret = SDCard_DrvRegister();
+    if (ret == 0) {
+        total++;
+        DBG("[DrvInit] SD Card registered OK\n");
+    } else {
+        failed++;
+        DBG("[DrvInit] SD Card registration FAILED\n");
+    }
+#endif /* HW_DRV_SDCARD_EN */
     
     /* 注册电池管理驱动 */
+#if HW_DRV_BATTERY_EN
     DBG("[DrvInit] Registering Battery driver...\n");
     ret = Battery_DrvRegister();
     if (ret == 0) {
@@ -128,8 +168,10 @@ int DrvFramework_RegisterAll(void)
         failed++;
         DBG("[DrvInit] Battery registration FAILED\n");
     }
+#endif /* HW_DRV_BATTERY_EN */
     
     /* 注册USB CDC驱动 */
+#if HW_DRV_USB_CDC_EN
     DBG("[DrvInit] Registering USB CDC driver...\n");
     ret = UsbCdc_DrvRegister();
     if (ret == 0) {
@@ -139,8 +181,10 @@ int DrvFramework_RegisterAll(void)
         failed++;
         DBG("[DrvInit] USB CDC registration FAILED\n");
     }
+#endif /* HW_DRV_USB_CDC_EN */
     
     /* 初始化并挂载蓝牙设备到VFS */
+#if HW_DRV_BT_EN
     DBG("[DrvInit] Initializing Bluetooth VFS drivers...\n");
     
     /* 初始化BT驱动 */
@@ -186,6 +230,7 @@ int DrvFramework_RegisterAll(void)
         failed++;
         DBG("[DrvInit] BLE init FAILED\n");
     }
+#endif /* HW_DRV_BT_EN */
     
     /* 注册系统命令到 /bin */
     DBG("[DrvInit] Registering /bin commands...\n");
@@ -193,6 +238,7 @@ int DrvFramework_RegisterAll(void)
     DBG("[DrvInit] /bin commands registered OK\n");
 
     /* 初始化音频效果图VFS（创建/audio目录） */
+#if EFFECT_GRAPHICS_EN
     DBG("[DrvInit] Initializing Audio Graph VFS...\n");
     ret = EffectGraphVfs_MountDefault();
     if (ret == GRAPH_VFS_OK) {
@@ -205,15 +251,19 @@ int DrvFramework_RegisterAll(void)
 #if USE_EFFECT_GRAPH_VFS
     ShellCmdAudioVfs_Register();
 #endif
+#endif /* EFFECT_GRAPHICS_EN */
 
     /* 初始化蓝牙VFS（创建/bluetooth目录） */
+    /* 注意：BT/BLE设备在应用启动后再初始化，这里跳过以避免卡住 */
     DBG("[DrvInit] Initializing Bluetooth VFS...\n");
-    ret = BtVfsDriver_MountDefault();
+    /* 临时跳过BtVfsDriver_MountDefault()以防止初始化卡住 */
+    /* ret = BtVfsDriver_MountDefault();
     if (ret == BT_VFS_OK) {
         DBG("[DrvInit] Bluetooth VFS mounted OK\n");
     } else {
         DBG("[DrvInit] Bluetooth VFS mount deferred (bluetooth not ready)\n");
-    }
+    } */
+    DBG("[DrvInit] Bluetooth VFS deferred (will init after scheduler starts)\n");
     
     /* TODO: 添加更多驱动注册
      * - Audio Codec

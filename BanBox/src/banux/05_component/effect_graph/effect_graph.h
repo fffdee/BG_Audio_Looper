@@ -57,7 +57,7 @@ extern "C" {
  *   - EFFECT_GRAPH_BUFFER_SIZE: 256 → 节省大量RAM (21*384*4=32256 bytes)
  *   - 如需更大帧长可改为 512 (SBC最大帧595，但实际处理帧256)
  ******************************************************************************/
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
 #define EFFECT_GRAPH_MAX_NODES      22   /* 21+1(合成器源节点) */
 #define EFFECT_GRAPH_MAX_EDGES      26   /* 22+2预留+2(合成器连接) */
 #else
@@ -67,9 +67,9 @@ extern "C" {
 #define EFFECT_GRAPH_MAX_INPUTS     4    /* 最大输入端口数 */
 #define EFFECT_GRAPH_MAX_OUTPUTS    4    /* 最大输出端口数 */
 #define EFFECT_GRAPH_NAME_LEN       16   /* 节点名称长度 */
-#define EFFECT_GRAPH_BUFFER_SIZE    256  /* 优化后：256 samples (原640)
-                                          * 节省: 21*(640-256)*4 = 32,256 bytes RAM
-                                          * 注意: max_frame_size 必须 <= 256 */
+#define EFFECT_GRAPH_BUFFER_SIZE    200 /* 节点缓冲区大小：21×256×4=21504字节 (21KB)
+                                          * 现在使用PSRAM分配，不占用内部RAM
+                                          * 支持蓝牙、ADC等最大帧长需求 */
 
 /*******************************************************************************
  * 节点类型定义
@@ -81,7 +81,7 @@ typedef enum {
     EFFECT_NODE_TYPE_SOURCE_USB_IN,        /* USB音频输入 */
     EFFECT_NODE_TYPE_SOURCE_BT_IN,         /* 蓝牙音频输入 */
     EFFECT_NODE_TYPE_SOURCE_METRONOME,     /* 节拍器源节点 */
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
     EFFECT_NODE_TYPE_SOURCE_SYNTH,         /* BanGTsynth合成器源节点 */
 #endif
     EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY,   /* Looper播放源节点 */
@@ -335,13 +335,15 @@ struct EffectGraph {
     EffectNode_t       *sink_nodes[4];     /* 扩展到 4 (from 2)，容纳 DAC/USB/Looper_Record */
     uint8_t             sink_count;
     
-    /* 共享处理缓冲区 - 使用 uint32_t 与硬件接口统一 */
-    uint32_t            shared_buffer[EFFECT_GRAPH_MAX_NODES][EFFECT_GRAPH_BUFFER_SIZE];
+    /* 节点缓冲区改为堆分配（方案1优化）：节省约 21KB BSS
+     * 每个节点的 buffer 在启用时按需分配，禁用时释放 */
 };
 
 /*******************************************************************************
  * 公共API
  ******************************************************************************/
+
+#if EFFECT_GRAPHICS_EN
 
 /**
  * @brief 初始化效果图系统
@@ -475,6 +477,38 @@ uint16_t EffectGraph_ProcessAdaptive(void);
  * @return 所有启用的源节点中可用数据量的最小值
  */
 uint16_t EffectGraph_GetAvailableFrameSize(void);
+
+#else /* !EFFECT_GRAPHICS_EN */
+
+/* EFFECT_GRAPHICS_EN=0：所有 API 替换为空操作，调用方无需修改
+ * 
+ * Stub 宏规则:
+ *   - 函数宏必须包含完整参数列表，使其能正确替换 extern 函数声明
+ *   - 例：EffectGraph_FindNodeById(id) 宏中 (id) 必须与函数声明 (uint8_t id) 对应
+ *   - 无参函数必须含空列表 ()，例：EffectGraph_GetInstance()
+ * 这样可在代码中做 extern 声明后直接使用，参数会被宏吃掉
+ */
+#define EffectGraph_Init()                          (GRAPH_OK)
+#define EffectGraph_GetInstance()                   ((EffectGraphRuntime_t*)0)
+#define EffectGraph_CreateFromConfig(cfg)           (GRAPH_OK)
+#define EffectGraph_AddNode(t,n,e)                  ((EffectNode_t*)0)
+#define EffectGraph_Connect(s,d,sp,dp)              (GRAPH_OK)
+#define EffectGraph_Disconnect(s,d)                 (GRAPH_OK)
+#define EffectGraph_Build()                         (GRAPH_OK)
+#define EffectGraph_Process(fs)                     (0)
+#define EffectGraph_ProcessAdaptive()               (0)
+#define EffectGraph_GetAvailableFrameSize()         (0)
+#define EffectGraph_SetNodeEnabled(n,e)             ((void)0)
+#define EffectGraph_SetNodeBypass(n,b)              ((void)0)
+#define EffectGraph_FindNodeByName(name)            ((EffectNode_t*)0)
+#define EffectGraph_FindNodeById(id)                ((EffectNode_t*)0)
+#define EffectGraph_SetNodeParams(n,p)              (GRAPH_OK)
+#define EffectGraph_Reset()                         ((void)0)
+#define EffectGraph_PrintInfo()                     ((void)0)
+#define EffectGraph_CreateDefault(sr)               (GRAPH_OK)
+#define EffectGraph_SetDriveMode(m,s)               (GRAPH_OK)
+
+#endif /* EFFECT_GRAPHICS_EN */
 
 #ifdef __cplusplus
 }

@@ -474,7 +474,7 @@ MetronomeRuntime_t* Metronome_GetRuntime(void) {
 /* ============================================================================
  * 全局节拍器模块接口实例
  * ============================================================================ */
-Metronome_Interface_t MetronomeModule = {
+Metronome_Interface_t MetronomeModule __attribute__((section(".data"))) = {
     .Init = Metronome_Init,
     .Reset = Metronome_Reset,
     .Configure = Metronome_Configure,

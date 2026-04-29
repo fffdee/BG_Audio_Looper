@@ -15,6 +15,18 @@
 
 #include "type.h"
 #include "stdint.h"
+#include "usb_audio_api.h"
+
+/* ============================================================================
+ * Looper 采样率定义
+ *
+ * 必须与 DAC/ADC 实际硬件采样率一致 (CFG_PARA_SAMPLE_RATE)，
+ * 否则录制/播放会产生采样率不匹配失真。
+ * 当前 DAC 初始化为 44100 Hz，looper 也必须使用 44100 Hz。
+ * ============================================================================ */
+#ifndef LOOPER_SAMPLE_RATE
+#define LOOPER_SAMPLE_RATE  CFG_PARA_SAMPLE_RATE
+#endif
 
 /* Manually define size_t type (if compiler does not have stddef.h) */
 #ifndef _SIZE_T_DEFINED
@@ -34,10 +46,27 @@ typedef enum {
 typedef enum {
     SONG_MODE = 0,
     FREE_STYLE
-} Paly_Mode_t;
+} Play_Mode_t;
 
 /* Multi-segment recording support */
 #define MAX_SEGMENTS 4          /* Support up to 4 segments */
+
+/* ============================================================================
+ * 存储类型选择常量 (配合 product_def.h 中的 LOOPER_STORAGE_TYPE 使用)
+ *   0 = 自动检测 (根据 HW_PSRAM0_EN / HW_NAND0_EN)
+ *   1 = 强制 PSRAM
+ *   2 = 强制 NAND Flash
+ *   3 = 强制 NOR Flash
+ * ============================================================================ */
+#define LOOPER_STORAGE_TYPE_AUTO   0
+#define LOOPER_STORAGE_TYPE_PSRAM  1
+#define LOOPER_STORAGE_TYPE_NAND   2
+#define LOOPER_STORAGE_TYPE_NOR    3
+
+/* 若 product_def.h 未定义，默认自动检测 */
+#ifndef LOOPER_STORAGE_TYPE
+#define LOOPER_STORAGE_TYPE  LOOPER_STORAGE_TYPE_AUTO
+#endif
 
 /* ============================================================================
  * 多Flash支持宏开关
@@ -61,28 +90,57 @@ typedef enum {
  *   0 = 禁用：录制/播放直接操作Flash（旧行为）
  * ============================================================================ */
 #ifndef LOOPER_IO_BUFFER_ENABLE
-#define LOOPER_IO_BUFFER_ENABLE  1
+#define LOOPER_IO_BUFFER_ENABLE  0
+
 #endif
+
+/* ============================================================================
+ * 存储抽象层宏开关 (启用统一的存储接口，支持 NOR/NAND/PSRAM 自动切换)
+ *
+ * 原理：使用 looper_storage.h 提供的抽象层接口访问存储
+ *   - 录制/播放通过 LooperStorage_Read/Write 访问
+ *   - 自动适配当前选择的存储介质（NOR Flash / NAND Flash / PSRAM）
+ *   - 支持首次启动带宽测试和性能优化
+ *   - PSRAM 模式下支持叠录功能
+ *
+ *   1 = 启用：使用抽象层接口（推荐，支持多种存储介质）
+ *   0 = 禁用：使用传统 FlashPartition_Looper* API（向后兼容）
+ * ============================================================================ */
+#ifndef LOOPER_USE_STORAGE_ABSTRACTION
+#define LOOPER_USE_STORAGE_ABSTRACTION  1
+#endif
+
+/* PSRAM 页大小 = 256 字节
+ * 每个采样 = 4 字节 (双声道16-bit打包在uint32_t)
+ * 每页采样数 = 256 / 4 = 64
+ *
+ * 录制：凑满 64 采样 (256 字节) 才写一页 PSRAM
+ * 播放：每次读一整页 256 字节，消费 64 采样
+ */
+#define LOOPER_PSRAM_PAGE_SIZE      256
+#define LOOPER_SAMPLES_PER_PAGE     (LOOPER_PSRAM_PAGE_SIZE / 4)
 
 #if LOOPER_IO_BUFFER_ENABLE
 
-/* 每页数据大小 (48采样 × 4字节/采样 = 192字节) */
-#define LOOPER_PAGE_DATA_SIZE      192
+#define LOOPER_PAGE_DATA_SIZE      LOOPER_PSRAM_PAGE_SIZE
 
 /* 录制写缓冲深度（页数）
  * 值越大可吸收越多的Flash写入延迟抖动（W25Q64页写最差可达3ms）
- * 每段 RAM 占用 = LOOPER_WRITE_BUF_PAGES × 192 字节
- * 推荐值: 8 (1.5KB/段), 最小: 2 */
+ * 每段 RAM 占用 = LOOPER_WRITE_BUF_PAGES × LOOPER_PSRAM_PAGE_SIZE 字节
+ * 推荐值: 8 (2KB/段 × 4段 = 8KB), 最小: 2
+ * 设为 2 时实际只有 1 个可用槽，任何单帧延迟即溢出，不可用于多段录制 */
 #ifndef LOOPER_WRITE_BUF_PAGES
-#define LOOPER_WRITE_BUF_PAGES    2
+#define LOOPER_WRITE_BUF_PAGES    8
 #endif
 
 /* 播放读缓存深度（页数）
  * 值越大容许更长的Flash IO延迟而不产生播放缺数据
- * 每段 RAM 占用 = LOOPER_READ_CACHE_PAGES × 192 字节
- * 推荐值: 8 (1.5KB/段), 最小: 2 */
+ * 每段 RAM 占用 = LOOPER_READ_CACHE_PAGES × LOOPER_PSRAM_PAGE_SIZE 字节
+ * 推荐值: 8 (2KB/段), 最小: 2
+ * 注意: 2 页时实际只有 1 个可用槽，多段录制时 Flash IO 延迟
+ *       可能超过 1 帧，导致播放缺数据 → 底噪/咔嗒声 */
 #ifndef LOOPER_READ_CACHE_PAGES
-#define LOOPER_READ_CACHE_PAGES    2
+#define LOOPER_READ_CACHE_PAGES    8
 #endif
 
 /* ----- 录制写环形缓冲区 (每段一个) ----- */
@@ -113,7 +171,7 @@ typedef struct {
 #define METRONOME_DEFAULT_REGULAR_BEAT_FREQ 800
 #define METRONOME_DEFAULT_BEAT_DURATION 60
 #define METRONOME_DEFAULT_VOLUME 0.03f
-#define METRONOME_SAMPLE_RATE 48000
+#define METRONOME_SAMPLE_RATE LOOPER_SAMPLE_RATE
 #define METRONOME_MIN_BEATS_PER_MEASURE 2
 #define METRONOME_MAX_BEATS_PER_MEASURE 8
 
@@ -170,6 +228,15 @@ typedef struct {
 #endif
     uint32_t trim_start_page; /* 循环起始页（0=从头播放） */
     uint32_t trim_end_page;   /* 循环终止页（0=播放至末尾） */
+    
+    /* 新增：叠录相关字段 */
+    uint8_t  overdub_enabled; /* 叠录模式使能 (1=启用, 0=禁用) */
+
+    uint16_t rec_partial_count;                                    /* rec_partial_buf中的字节数 (0-255) */
+    uint8_t  rec_partial_buf[LOOPER_PSRAM_PAGE_SIZE];              /* 录制部分页缓冲：凑满256字节写一页 */
+    uint16_t play_page_offset;                                     /* play_page_buf中的采样偏移 (0-63) */
+    uint8_t  play_page_valid;                                      /* 1=play_page_buf有有效数据 */
+    uint8_t  play_page_buf[LOOPER_PSRAM_PAGE_SIZE];                /* 播放页缓冲：读256字节整页，逐帧消费 */
 } SegmentInfo_t;
 
 /* Metronome config structure */
@@ -212,7 +279,7 @@ typedef struct {
 #else
     volatile uint8_t chip_erase_pending;    /* 1=全片擦除进行中，写入须等待 */
 #endif
-    Paly_Mode_t play_mode;
+    Play_Mode_t play_mode;
     SegmentInfo_t segments[MAX_SEGMENTS];
     uint8_t current_segment;
     uint8_t active_segments;
@@ -223,6 +290,12 @@ typedef struct {
     uint8_t boundary_samples_valid;
     MetronomeState_Runtime_t metronome;
     uint8_t segment_volume[MAX_SEGMENTS]; /* 各段播放音量 0-100，默认100 */
+    
+    /* 新增：存储抽象层相关字段 */
+    uint8_t max_concurrent_segments;      /* 硬件支持的最大同时段数 */
+    uint8_t support_overdub;              /* 是否支持叠录 */
+    uint8_t overdub_mix_mode;             /* 叠录混音模式 (0=替换, 1=相加, 2=平均) */
+    uint8_t storage_ready;               /* 存储后端就绪标志 (0=正在准备/擦除, 1=可录制) */
 } LoopManager_t;
 
 /* Global Loop manager */
@@ -298,6 +371,13 @@ typedef struct {
     /* IO缓冲区刷新 (每帧DAC输出后调用) */
     void (*FlushIO)(void);              /* 将写缓冲刷入Flash + 预读数据填充读缓存 */
 #endif
+    
+    /* 新增：叠录功能支持 */
+    uint8_t (*IsOverdubSupported)(void); /* 检查当前存储是否支持叠录 */
+    void (*SetOverdubMode)(uint8_t segment_index, uint8_t enabled); /* 设置段的叠录模式 */
+    uint8_t (*GetOverdubMode)(uint8_t segment_index); /* 获取段的叠录模式 */
+    void (*SetOverdubMixMode)(uint8_t mix_mode); /* 设置叠录混音模式 (0=替换, 1=相加, 2=平均) */
+    uint8_t (*GetOverdubMixMode)(void); /* 获取叠录混音模式 */
 } AudioLooper_t;
 
 /* Global Audio Looper module instance */
@@ -424,6 +504,42 @@ void loop_set_segment_trim(uint8_t segment_index, uint32_t start_page, uint32_t 
  */
 void loop_get_segment_trim(uint8_t segment_index, uint32_t *start_page, uint32_t *end_page);
 
+/* ============================================================================
+ * 叠录功能支持 (仅当存储设备支持时可用)
+ * ============================================================================ */
+
+/**
+ * @brief 检查当前存储设备是否支持叠录
+ * @return 1=支持叠录, 0=不支持
+ */
+uint8_t loop_is_overdub_supported(void);
+
+/**
+ * @brief 设置指定段的叠录模式
+ * @param segment_index 段索引 (0-3)
+ * @param enabled 1=启用叠录, 0=禁用叠录
+ */
+void loop_set_overdub_mode(uint8_t segment_index, uint8_t enabled);
+
+/**
+ * @brief 获取指定段的叠录模式
+ * @param segment_index 段索引 (0-3)
+ * @return 1=叠录模式启用, 0=正常录制模式
+ */
+uint8_t loop_get_overdub_mode(uint8_t segment_index);
+
+/**
+ * @brief 设置叠录混音模式
+ * @param mix_mode 混音模式: 0=替换, 1=相加, 2=平均
+ */
+void loop_set_overdub_mix_mode(uint8_t mix_mode);
+
+/**
+ * @brief 获取叠录混音模式
+ * @return 混音模式: 0=替换, 1=相加, 2=平均
+ */
+uint8_t loop_get_overdub_mix_mode(void);
+
 /* 段与Flash绑定控制 (仅多Flash模式) */
 #if LOOPER_MULTI_FLASH_ENABLE
 void    loop_set_segment_flash(uint8_t segment_index, uint8_t flash_dev_id); /* 将指定段绑定到某颗Flash (须在录制前设置) */
@@ -459,7 +575,7 @@ void looper_flush_write_all(uint8_t segment_index);    /* 将段的写缓冲全�
  *   4. 擦除完成前置 partial_erase_pending，录制被阻塞
  *
  * 常量：
- *   LOOPER_AUDIO_BYTES_PER_SEC = 48000 * 4 = 192000 B/s (双声道 32-bit)
+ *   LOOPER_AUDIO_BYTES_PER_SEC = LOOPER_SAMPLE_RATE * 4 B/s (双声道 32-bit)
  *   LOOPER_SEG_FLASH_SIZE      = 4MB
  *   LOOPER_FLASH_BLOCK_SIZE    = 64KB
  * ============================================================================ */
@@ -468,7 +584,7 @@ void looper_flush_write_all(uint8_t segment_index);    /* 将段的写缓冲全�
 #define LOOPER_SEG1_FLASH_START   0x400000UL  /* Seg1 固定起始地址 */
 #define LOOPER_SEG_FLASH_SIZE     0x400000UL  /* 每段 Flash 大小 (4MB) */
 #define LOOPER_FLASH_BLOCK_SIZE   0x010000UL  /* 64KB 块擦除 */
-#define LOOPER_AUDIO_BYTES_PER_SEC 192000UL   /* 48kHz × 4B/sample (双声道32bit) */
+#define LOOPER_AUDIO_BYTES_PER_SEC ((uint32_t)LOOPER_SAMPLE_RATE * 4u)
 
 /**
  * @brief 对指定段执行局部块擦除并固定 start_address（在 looper_flush_io 里推进）

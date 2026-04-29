@@ -52,6 +52,8 @@ typedef enum {
 typedef enum {
     FLASH_TYPE_NOR = 0,
     FLASH_TYPE_NAND,
+    FLASH_TYPE_PSRAM,       /* PSRAM (ESP-PSRAM64H etc.) */
+    FLASH_TYPE_SDCARD,      /* SD Card (SDIO interface) */
     FLASH_TYPE_MAX
 } FlashType_t;
 #endif /* FLASH_TYPE_DEFINED */

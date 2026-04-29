@@ -28,6 +28,7 @@
 #include "adc.h"
 #include "dac.h"
 #include "gpio.h"
+#include "product_def.h"
 
 /* ---- 音频数据头文件（mp3_to_c_array.py 生成）---- */
 #include "g_remind_on.h"
@@ -169,15 +170,19 @@ int RemindSound_PlayByName(const char *name)
 
 /* ------------------------------------------------------------
  * 读取音量电位器原始值并换算为 DAC 音量寄存器值
- * ADC_CHANNEL_GPIOA28 返回 0~4095，与 SetVolume() 保持一致乘以4
  * ------------------------------------------------------------ */
 static uint16_t remind_read_pot_dac_vol(void)
 {
+#if HW_VOLUME_ADC_EN
     uint16_t adc_val;
-    GPIO_RegOneBitClear(GPIO_A_ANA_EN, GPIO_INDEX28);
-    GPIO_RegOneBitSet(GPIO_A_ANA_EN, GPIO_INDEX28);
-    adc_val = (uint16_t)ADC_SingleModeDataGet(ADC_CHANNEL_GPIOA28);
-    return (uint16_t)(adc_val * 4);  /* 0~16380, DAC 寄存器最大值 0x3FFF=16383 */
+    GPIO_RegOneBitClear(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
+    GPIO_RegOneBitSet(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
+    adc_val = (uint16_t)ADC_SingleModeDataGet(HW_VOLUME_ADC_CHANNEL);
+    return (uint16_t)(adc_val * 4);
+#else
+    /* 无音量旋钮：返回最大音量 16383 */
+    return 16383;
+#endif
 }
 
 /* ============================================================

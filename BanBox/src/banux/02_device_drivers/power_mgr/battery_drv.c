@@ -1,5 +1,5 @@
 #include "battery_drv.h"
-// Include hardware header files according to your platform to ensure GPIO/ADC definitions are valid
+#include "product_def.h"
 #include "gpio.h"
 #include "adc.h"
 
@@ -15,10 +15,9 @@ static uint8_t adc_buf_idx = 0;
 static uint16_t battery_adc_read(void)
 {
     uint16_t bat_adc_val = 0;
-    // Provide ADC read logic
-    GPIO_RegOneBitClear(GPIO_A_ANA_EN, GPIO_INDEX31);  // Disable GPIOA31 analog
-    GPIO_RegOneBitSet(GPIO_A_ANA_EN, GPIO_INDEX31);     // Enable GPIOA31 analog function
-    bat_adc_val = ADC_SingleModeDataGet(ADC_CHANNEL_GPIOA31);  // Get ADC channel value
+    GPIO_RegOneBitClear(HW_BATTERY_ADC_GPIO_PORT, HW_BATTERY_ADC_GPIO_PIN);
+    GPIO_RegOneBitSet(HW_BATTERY_ADC_GPIO_PORT, HW_BATTERY_ADC_GPIO_PIN);
+    bat_adc_val = ADC_SingleModeDataGet(HW_BATTERY_ADC_CHANNEL);
     return bat_adc_val;
 }
 
@@ -60,12 +59,12 @@ static uint8_t volt2soc(float volt)
  */
 uint8_t battery_get_soc(void)
 {
-    // 1. Get raw ADC value from hardware, apply filtering if needed
     uint16_t new_adc_val = battery_adc_read();
-    if(new_adc_val == 0) Shell_Printf("ADC Read Error!\r\n"); // Debug print
-    // 2. Convert to voltage, apply filtering if needed
-    float bat_volt = adc2volt(new_adc_val);
-    // 3. Convert voltage to SOC
+    float bat_volt;
+    if (new_adc_val == 0) {
+        return 50; /* ADC 故障时返回中间值，避免误报低电量 */
+    }
+    bat_volt = adc2volt(new_adc_val);
     return volt2soc(bat_volt);
 }
 /**

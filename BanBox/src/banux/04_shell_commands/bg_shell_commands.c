@@ -27,7 +27,8 @@
 #include "dac.h"
 #include "bt_a2dp_api.h"
 #include "battery_drv.h"
-#include "drv_init.h"  /* 椹卞姩妗嗘灦鍒濆鍖�*/
+#include "drv_init.h"
+#include "flash_boot.h"
 #include "vfs.h"       /* 铏氭嫙鏂囦欢绯荤粺API */
 #include "drv_fs.h"    /* 椹卞姩鏂囦欢绯荤粺API */
 #include "drv_device.h" /* 椹卞姩璁惧绠＄悊 */
@@ -48,8 +49,19 @@
 /* 鍙傛暟淇濆瓨妯″潡 */
 #include "sys_param.h"
 
+/* 瀛樺偍鎶借薄灞�*/
+#include "looper_storage.h"
+
 /* Chain Graph Apply 妯″潡 */
 #include "chain_graph_apply.h"
+
+/* FAT32 文件系统命令 */
+#include "shell_cmd_fat.h"
+
+#if HW_CMD_PSRAM_EN
+/* PSRAM 内存管理命令 */
+#include "shell_cmd_psram.h"
+#endif
 
 /*============================================================================
  * Common save function for modules
@@ -1504,6 +1516,148 @@ DEFINE_MODULE(dbg, "Debug tools", MOD_CAT_DEBUG, dbg_opts);
  * looper module - Audio Looper control and test
  *===========================================================================*/
 
+/*---------------------------------------------------------------------------
+ * 存储抽象层命令 (合并自 storagetest)
+ *---------------------------------------------------------------------------*/
+
+/* looper --storage-init — 手动初始化存储抽象层 */
+static int looper_storage_init_cmd(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    
+    Shell_Print("[Looper] Initializing storage abstraction layer...\r\n");
+    
+    /* 调用 AudioLooper 的初始化函数 */
+    AudioLooper.Init();
+    
+    /* 验证初始化 */
+    if (g_looper_storage.initialized && g_looper_storage.ops != NULL) {
+        Shell_Print("[Looper] Storage layer initialized successfully\r\n");
+        Shell_Printf("Storage type: %s\r\n", g_looper_storage.info.name);
+        return 0;
+    } else {
+        Shell_Print("[Looper] ERROR: Storage initialization failed\r\n");
+        return -1;
+    }
+}
+
+/* looper --storage-info — 显示存储信息和性能 */
+static int looper_storage_info_cmd(int argc, char *argv[])
+{
+    LooperStorageInfo_t info;
+    
+    (void)argc; (void)argv;
+    
+    Shell_Print("[Looper] === Storage Abstraction Layer Info ===\r\n");
+    
+    /* 检查存储层是否已初始化 */
+    if (!g_looper_storage.initialized || g_looper_storage.ops == NULL) {
+        Shell_Print("[Looper] ERROR: Storage layer not initialized\r\n");
+        Shell_Print("Please run 'looper --storage-init' first\r\n");
+        return -1;
+    }
+    
+    if (LooperStorage_GetInfo(&g_looper_storage, &info) != LOOPER_STORAGE_OK) {
+        Shell_Print("[Looper] Failed to get storage info\r\n");
+        return -1;
+    }
+    
+    Shell_Printf("Type: %s\r\n", info.name);
+    Shell_Printf("Total Size: %lu MB\r\n", (unsigned long)(info.total_size / (1024 * 1024)));
+    Shell_Printf("Page Size: %lu bytes\r\n", (unsigned long)info.page_size);
+    Shell_Printf("Block Size: %lu bytes\r\n", (unsigned long)info.block_size);
+    Shell_Printf("Support Overdub: %s\r\n", info.performance.support_overdub ? "Yes" : "No");
+    Shell_Printf("Bandwidth Tested: %s\r\n", info.performance.bandwidth_tested ? "Yes" : "No");
+    
+    if (info.performance.bandwidth_tested) {
+        Shell_Printf("Write Speed: %lu KB/s\r\n", (unsigned long)info.performance.write_speed_kbps);
+        Shell_Printf("Read Speed: %lu KB/s\r\n", (unsigned long)info.performance.read_speed_kbps);
+        Shell_Printf("Max Concurrent Tracks: %u\r\n", info.performance.max_concurrent_tracks);
+    }
+    
+    return 0;
+}
+
+/* looper --storage-bench — 重新执行带宽测试 */
+static int looper_storage_bench_cmd(int argc, char *argv[])
+{
+    LooperStoragePerf_t perf;
+    
+    (void)argc; (void)argv;
+    
+    Shell_Print("[Looper] Running bandwidth benchmark...\r\n");
+    
+    /* 检查存储层是否已初始化 */
+    if (!g_looper_storage.initialized || g_looper_storage.ops == NULL) {
+        Shell_Print("[Looper] ERROR: Storage layer not initialized\r\n");
+        return -1;
+    }
+    
+    if (LooperStorage_Benchmark(&g_looper_storage, &perf) != LOOPER_STORAGE_OK) {
+        Shell_Print("[Looper] Benchmark failed\r\n");
+        return -1;
+    }
+    
+    Shell_Printf("[Looper] Write: %lu KB/s, Read: %lu KB/s, Max Tracks: %u\r\n",
+                 (unsigned long)perf.write_speed_kbps,
+                 (unsigned long)perf.read_speed_kbps,
+                 perf.max_concurrent_tracks);
+    
+    return 0;
+}
+
+/* looper --storage-overdub — 测试叠录功能 */
+static int looper_storage_overdub_cmd(int argc, char *argv[])
+{
+    uint8_t test_data[1024];
+    uint32_t i;
+    
+    (void)argc; (void)argv;
+    
+    Shell_Print("[Looper] Testing overdub functionality...\r\n");
+    
+    /* 检查存储层是否已初始化 */
+    if (!g_looper_storage.initialized || g_looper_storage.ops == NULL) {
+        Shell_Print("[Looper] ERROR: Storage layer not initialized\r\n");
+        return -1;
+    }
+    
+    /* 检查是否支持叠录 */
+    if (!g_looper_storage.info.performance.support_overdub) {
+        Shell_Print("[Looper] Storage does not support overdub\r\n");
+        return -1;
+    }
+    
+    /* 准备测试数据 */
+    for (i = 0; i < sizeof(test_data); i++) {
+        test_data[i] = (uint8_t)(i & 0xFF);
+    }
+    
+    /* 先写入原始数据 */
+    if (LooperStorage_Write(&g_looper_storage, 0x1000, test_data, sizeof(test_data)) != LOOPER_STORAGE_OK) {
+        Shell_Print("[Looper] Initial write failed\r\n");
+        return -1;
+    }
+    
+    /* 修改数据用于叠录 */
+    for (i = 0; i < sizeof(test_data); i++) {
+        test_data[i] = (uint8_t)((i + 128) & 0xFF);
+    }
+    
+    /* 执行叠录 (相加模式) */
+    if (LooperStorage_OverdubWrite(&g_looper_storage, 0x1000, test_data, sizeof(test_data), 1) != LOOPER_STORAGE_OK) {
+        Shell_Print("[Looper] Overdub write failed\r\n");
+        return -1;
+    }
+    
+    Shell_Print("[Looper] Overdub test completed successfully\r\n");
+    return 0;
+}
+
+/*---------------------------------------------------------------------------
+ * Looper 核心命令
+ *---------------------------------------------------------------------------*/
+
 static int looper_init_cmd(int argc, char *argv[])
 {
     int flash_type = 0;
@@ -2264,6 +2418,7 @@ static int looper_query_cmd(int argc, char *argv[])
 }
 
 static const ShellOpt_t looper_opts[] = {
+    /* 核心命令 */
     OPT("i", "init",    "[0|1]",        "Init (0=NOR, 1=NAND)",         looper_init_cmd),
     OPT("s", "status",  NULL,           "Show looper status",           looper_status_cmd),
     OPT("r", "record",  "[seg]",        "Start recording segment",      looper_record_cmd),
@@ -2285,6 +2440,11 @@ static const ShellOpt_t looper_opts[] = {
     OPT("J", "join",    "<start>|cancel",        "Join play at loop boundary (fw-timed)",  looper_join_cmd),
     OPT("W", "wf",      "[seg]",                 "Toggle wait-finish-before-stop for seg", looper_wf_cmd),
     OPT("SR", "sync-rec", "<trig> <rec>|cancel", "Sync-record at boundary (fw-timed)",    looper_sr_cmd),
+    /* 存储抽象层命令 (合并自 storagetest) */
+    OPT("Si", "init-s", NULL,           "Initialize storage layer",            looper_storage_init_cmd),
+    OPT("Ss", "info-s", NULL,           "Show storage information",            looper_storage_info_cmd),
+    OPT("Sb", "bench-s", NULL,          "Run storage benchmark",               looper_storage_bench_cmd),
+    OPT("So", "overdub-s", NULL,        "Test storage overdub",                looper_storage_overdub_cmd),
     /* OPT("S", "save",    NULL,           "Save looper params",           looper_save_param), -- SAVE CMD COMMENTED OUT */
     OPT_END()
 };
@@ -3110,6 +3270,29 @@ static const ShellOpt_t ble_send_opts[] = {
 DEFINE_MODULE(ble_send, "Send string via BLE", MOD_CAT_SYSTEM, ble_send_opts);
 
 /*============================================================================
+ * upg — 进入固件升级模式 (SDK Flash Boot)
+ *===========================================================================*/
+#if FLASH_BOOT_EN
+extern void start_up_grate(uint32_t UpdateResource);
+
+static int cmd_upg_enter(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    Shell_Print("Entering firmware upgrade mode (SDK Flash Boot)...\r\n");
+    Shell_Print("Device will reboot into bootloader.\r\n");
+    start_up_grate(AppResourceUsbDevice);
+    return 0;
+}
+
+static const ShellOpt_t upg_opts[] = {
+    OPT("", "", "", "Enter firmware upgrade mode (SDK Flash Boot)", cmd_upg_enter),
+    OPT_END()
+};
+
+DEFINE_MODULE(upg, "Enter firmware upgrade mode", MOD_CAT_SYSTEM, upg_opts);
+#endif /* FLASH_BOOT_EN */
+
+/*============================================================================
  * Module registration
  *===========================================================================*/
     /* 鍙傛暟淇濆瓨鍛戒护 */
@@ -3130,7 +3313,7 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(bt);
     REGISTER_MODULE(ble);
     REGISTER_MODULE(chain);
-    #ifdef VFS_EN
+    #if VFS_EN
 
     /* 鏂囦欢绯荤粺瀵艰埅鍛戒护 [SHELL_BLE] Calling Shell_Process()*/
     REGISTER_MODULE(ls);
@@ -3143,6 +3326,9 @@ void Shell_RegisterAllModules(void)
     #endif /* VFS_EN */
     REGISTER_MODULE(drivers);
     REGISTER_MODULE(ble_send);
+#if FLASH_BOOT_EN
+    REGISTER_MODULE(upg);
+#endif
     /* 鏁堟灉鍥惧拰鏁堟灉鍣ㄥ懡浠�*/
     ShellCmdEffect_Register();   /* effect 鍛戒护 */
     ShellCmdGraph_Register();    /* graph 鍜�fx 鍛戒护 */
@@ -3167,6 +3353,25 @@ void Shell_RegisterAllModules(void)
     ShellCmdDrum_Register();
 
     ShellCmdRemind_Register();   /* remind 提示音测试命令 */
+
+    /* 硬件相关命令 - 根据板子硬件能力条件编译 */
+#if HW_CMD_FAT_EN
+    /* FAT32 文件系统命令 */
+    extern int ShellCmdFat_Register(void);
+    ShellCmdFat_Register();
+#endif
+
+#if HW_CMD_PSRAM_EN
+    /* PSRAM 堆内存查看命令 */
+    extern int ShellCmdPsram_Register(void);
+    ShellCmdPsram_Register();
+#endif
+
+#if FAT32_EN && HW_DRV_FLASH_NAND_EN
+    /* WAV 文件导出和管理命令 */
+    extern void ShellCmdWav_Register(void);
+    ShellCmdWav_Register();
+#endif
 }
 
 /*============================================================================

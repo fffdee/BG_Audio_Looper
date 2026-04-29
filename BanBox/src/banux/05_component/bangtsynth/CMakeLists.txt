@@ -26,14 +26,19 @@ set(PLATFORM "linux" CACHE STRING "Target platform")
 add_compile_options(-Wall -O2)
 
 # ============================================
-# 头文件目录
+# 头文件目录 (分层架构)
 # ============================================
 set(INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/components
-    ${CMAKE_SOURCE_DIR}/components/BG_HAL
-    ${CMAKE_SOURCE_DIR}/components/BG_HAL/include
-    ${CMAKE_SOURCE_DIR}/components/BG_err_handle
-    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/common
+    ${CMAKE_SOURCE_DIR}/01_hal
+    ${CMAKE_SOURCE_DIR}/02_core/soundbank
+    ${CMAKE_SOURCE_DIR}/02_core/midi
+    ${CMAKE_SOURCE_DIR}/02_core/envelope
+    ${CMAKE_SOURCE_DIR}/03_app/synth_node
+    ${CMAKE_SOURCE_DIR}/03_app/drum_machine
+    ${CMAKE_SOURCE_DIR}/data/soundbank_data
+    ${CMAKE_SOURCE_DIR}/data/drum_data
 )
 
 # ============================================
@@ -50,9 +55,11 @@ set(HARDWARE_SRC
     ${CMAKE_SOURCE_DIR}/hardware/play/src/play.c
 )
 
-# 添加硬件接口层
+# ============================================
+# 硬件接口层源文件 (已整合到 01_hal/)
+# ============================================
 set(COMPONENT_INTERFACE_SRC
-    ${CMAKE_SOURCE_DIR}/components/hardware_interfance.c
+    ${CMAKE_SOURCE_DIR}/01_hal/hardware_interfance.c
 )
 
 # 添加硬件层头文件
@@ -61,27 +68,27 @@ list(APPEND INCLUDE_DIRS
 )
 
 # ============================================
-# 平台 HAL 源文件
+# 平台 HAL 源文件 (01_hal/port/)
 # ============================================
 if(PLATFORM STREQUAL "linux")
     set(HAL_SRC 
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/bg_hal_linux.c
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/src/bg_log.c
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/src/bg_storage.c
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/src/bg_storage_linux.c
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/src/bg_download_port_linux.c
+        ${CMAKE_SOURCE_DIR}/01_hal/port/linux/bg_hal_linux.c
+        ${CMAKE_SOURCE_DIR}/01_hal/bg_log.c
+        ${CMAKE_SOURCE_DIR}/01_hal/bg_storage.c
+        ${CMAKE_SOURCE_DIR}/01_hal/port/linux/bg_storage_linux.c
+        ${CMAKE_SOURCE_DIR}/01_hal/port/linux/bg_download_port_linux.c
     )
     set(PLATFORM_LIBS ev asound m)
 elseif(PLATFORM STREQUAL "stm32")
     set(HAL_SRC 
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/bg_hal_stm32.c
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/src/bg_log.c
+        ${CMAKE_SOURCE_DIR}/01_hal/bg_log.c
+        ${CMAKE_SOURCE_DIR}/01_hal/bg_storage.c
     )
     # 添加 STM32 HAL 库路径
 elseif(PLATFORM STREQUAL "esp32")
     set(HAL_SRC 
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/bg_hal_esp32.c
-        ${CMAKE_SOURCE_DIR}/components/BG_HAL/src/bg_log.c
+        ${CMAKE_SOURCE_DIR}/01_hal/bg_log.c
+        ${CMAKE_SOURCE_DIR}/01_hal/bg_storage.c
     )
     # 添加 ESP-IDF 配置
 else()
@@ -89,42 +96,36 @@ else()
 endif()
 
 # ============================================
-# 组件源文件 (根据功能裁剪)
+# 组件源文件 (分层架构)
 # ============================================
 set(COMPONENT_SRC)
 
-# 音源管理器 (BG格式 + SF2格式)
-file(GLOB SOUNDBANK_SRC ${CMAKE_SOURCE_DIR}/components/BG_Soundbank/src/*.c)
+# 02_core: 音源管理器 (BGS + SF2)
+file(GLOB SOUNDBANK_SRC ${CMAKE_SOURCE_DIR}/02_core/soundbank/*.c)
 list(APPEND COMPONENT_SRC ${SOUNDBANK_SRC})
-list(APPEND INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/components/BG_Soundbank/include)
 message(STATUS "Soundbank Manager: ENABLED (BG + SF2)")
 
-# MIDI 控制器 (通过 bg_config.h 中的 ENABLE_MIDI_CONTROLLER 控制)
-file(GLOB MIDI_SRC ${CMAKE_SOURCE_DIR}/components/BG_Midi_Controller/src/*.c)
+# 02_core: MIDI 控制器
+file(GLOB MIDI_SRC ${CMAKE_SOURCE_DIR}/02_core/midi/*.c)
 list(APPEND COMPONENT_SRC ${MIDI_SRC})
-list(APPEND INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/components/BG_Midi_Controller/include)
 
-# 混音器 (通过 bg_config.h 中的 ENABLE_MIXER 控制)
-file(GLOB MIXER_SRC ${CMAKE_SOURCE_DIR}/components/BG_Mixer/src/*.c)
-list(APPEND COMPONENT_SRC ${MIXER_SRC})
-list(APPEND INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/components/BG_Mixer/include)
-
-# 音频处理器 (通过 bg_config.h 中的 ENABLE_AUDIO_PROCESSOR 控制)
-file(GLOB AUDIO_PROC_SRC 
-    ${CMAKE_SOURCE_DIR}/components/BG_Audio_Processor/src/*.c
-    ${CMAKE_SOURCE_DIR}/components/BG_Audio_Processor/src/effects/*.c
-)
-list(APPEND COMPONENT_SRC ${AUDIO_PROC_SRC})
-list(APPEND INCLUDE_DIRS 
-    ${CMAKE_SOURCE_DIR}/components/BG_Audio_Processor/include
-    ${CMAKE_SOURCE_DIR}/components/BG_Audio_Processor/include/effects
-)
-
-# 包络生成器 (通用模块,供 SF2 和 BGS 使用)
-file(GLOB ENVELOPE_SRC ${CMAKE_SOURCE_DIR}/components/BG_Envelope_Generator/src/*.c)
+# 02_core: 包络生成器
+file(GLOB ENVELOPE_SRC ${CMAKE_SOURCE_DIR}/02_core/envelope/*.c)
 list(APPEND COMPONENT_SRC ${ENVELOPE_SRC})
-list(APPEND INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/components/BG_Envelope_Generator/include)
 message(STATUS "Envelope Generator: ENABLED")
+
+# 03_app: 合成器节点
+file(GLOB SYNTH_NODE_SRC ${CMAKE_SOURCE_DIR}/03_app/synth_node/*.c)
+list(APPEND COMPONENT_SRC ${SYNTH_NODE_SRC})
+
+# 03_app: 鼓机
+file(GLOB DRUM_MACHINE_SRC ${CMAKE_SOURCE_DIR}/03_app/drum_machine/*.c)
+list(APPEND COMPONENT_SRC ${DRUM_MACHINE_SRC})
+
+# data: 嵌入音源数据
+file(GLOB SOUNDBANK_DATA_SRC ${CMAKE_SOURCE_DIR}/data/soundbank_data/*.c)
+file(GLOB DRUM_DATA_SRC ${CMAKE_SOURCE_DIR}/data/drum_data/*.c)
+list(APPEND COMPONENT_SRC ${SOUNDBANK_DATA_SRC} ${DRUM_DATA_SRC})
 
 
 

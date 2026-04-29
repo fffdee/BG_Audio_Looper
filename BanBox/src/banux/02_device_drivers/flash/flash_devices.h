@@ -9,6 +9,9 @@
 
 #include "flash_bus.h"
 #include "flash_nor_w25qxx.h"
+#include "flash_nand_w25n02.h"
+#include "psram_esp64h.h"
+#include "product_def.h"
 #include "gpio.h"
 
 #ifdef __cplusplus
@@ -16,22 +19,46 @@ extern "C" {
 #endif
 
 /*===========================================================================
- * 硬件配置 - CS引脚定义
+ * 硬件配置 - CS引脚定义 (从 product_def.h 获取)
  *===========================================================================*/
 
 /* Flash #0 - Looper专用Flash (全部8MB均给Looper使用，无系统分区)
- * CS引脚: GPIOA21
+ * CS引脚: 根据板子版本从 product_def.h 读取
  */
 #define FLASH0_CS_GPIO_INDEX    GPIO_A_IN
-#define FLASH0_CS_GPIO_MASK     GPIO_INDEX21
-#define FLASH0_CS_PIN           21
+#define FLASH0_CS_GPIO_MASK     (1UL << HW_FLASH0_CS_PIN)
+#define FLASH0_CS_PIN           HW_FLASH0_CS_PIN
 
 /* Flash #1 - 存储Flash (8MB存储)
- * CS引脚: GPIOA22
+ * CS引脚: 根据板子版本从 product_def.h 读取
  */
 #define FLASH1_CS_GPIO_INDEX    GPIO_A_IN
-#define FLASH1_CS_GPIO_MASK     GPIO_INDEX22
-#define FLASH1_CS_PIN           22
+#define FLASH1_CS_GPIO_MASK     (1UL << HW_FLASH1_CS_PIN)
+#define FLASH1_CS_PIN           HW_FLASH1_CS_PIN
+
+/* NAND Flash - W25N02 (256MB)
+ * CS引脚: 根据板子版本从 product_def.h 读取
+ */
+#define NAND0_CS_GPIO_INDEX     GPIO_A_IN
+#define NAND0_CS_GPIO_MASK      (1UL << HW_NAND0_CS_PIN)
+#define NAND0_CS_PIN            HW_NAND0_CS_PIN
+
+/* PSRAM - ESP-PSRAM64H (8MB)
+ * CS引脚: 根据板子版本从 product_def.h 读取
+ * 注意: BanBox_II 使用 GPIO_B6, BANBOX_1_0 使用 GPIO_A24
+ */
+#define PSRAM0_CS_GPIO_INDEX    HW_PSRAM0_CS_GPIO_PORT
+#define PSRAM0_CS_GPIO_MASK     (1UL << HW_PSRAM0_CS_PIN)
+#define PSRAM0_CS_PIN           HW_PSRAM0_CS_PIN
+
+/* SD Card - SDIO接口 (无CS引脚，使用SDIO协议)
+ * SDIO引脚: 根据板子版本从 product_def.h 读取
+ * BanBox_II: GPIO_A15(DAT), A16(CLK), A17(CMD), DET -> A16 (通过1k电阻)
+ * BANBOX_1_0: GPIO_A20(DAT), A21(CLK), A22(CMD)
+ */
+#define SDCARD0_DAT_PIN         HW_SDCARD_DAT_PIN
+#define SDCARD0_CLK_PIN         HW_SDCARD_CLK_PIN
+#define SDCARD0_CMD_PIN         HW_SDCARD_CMD_PIN
 
 /*===========================================================================
  * 分区定义
@@ -53,8 +80,11 @@ extern "C" {
  * 设备ID定义
  *===========================================================================*/
 
-#define FLASH_DEV_ID_SYSTEM     0   /* Flash #0 */
-#define FLASH_DEV_ID_STORAGE    1   /* Flash #1 */
+#define FLASH_DEV_ID_SYSTEM     0   /* Flash #0 - NOR  */
+#define FLASH_DEV_ID_STORAGE    1   /* Flash #1 - NOR  */
+#define FLASH_DEV_ID_NAND       2   /* NAND Flash (W25N02) */
+#define FLASH_DEV_ID_PSRAM      3   /* PSRAM (ESP-PSRAM64H) */
+#define FLASH_DEV_ID_SDCARD     4   /* SD Card (SDIO interface) */
 
 /*===========================================================================
  * 多Flash Looper支持
@@ -91,10 +121,28 @@ void FlashDevices_DeInit(void);
 FlashDevice_t* FlashDevices_GetSystemFlash(void);
 
 /**
+ * @brief 获取PSRAM设备
+ * @return 设备指针
+ */
+FlashDevice_t* FlashDevices_GetPsramFlash(void);
+
+/**
  * @brief 获取存储Flash设备
  * @return 设备指针
  */
 FlashDevice_t* FlashDevices_GetStorageFlash(void);
+
+/**
+ * @brief 获取 NAND Flash 设备 (W25N02)
+ * @return 设备指针，未安装则返回 NULL
+ */
+FlashDevice_t* FlashDevices_GetNandFlash(void);
+
+/**
+ * @brief 获取 SD Card 设备 (SDIO 接口)
+ * @return 设备指针，未安装则返回 NULL
+ */
+FlashDevice_t* FlashDevices_GetSDCardFlash(void);
 
 /**
  * @brief 按dev_id获取Flash设备指针

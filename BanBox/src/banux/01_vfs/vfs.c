@@ -13,17 +13,13 @@
 #include "vfs.h"
 #include "debug.h"
 
+#if VFS_EN  /* 整个文件受 VFS_EN 控制，VFS_EN=0 时不编译任何代码也不分配任何静态内存 */
+
 /*******************************************************************************
- * 闈欐�鍙橀噺
+ * 静态变量
  ******************************************************************************/
-#ifdef VFS_EN
 static VfsNode_t g_NodePool[VFS_MAX_NODES];
 static uint8_t   g_NodeUsed[VFS_MAX_NODES];
-#else
-
-	static VfsNode_t g_NodePool[0];
-	static uint8_t   g_NodeUsed[0];
-#endif
 static uint8_t   g_NodeCount = 0;
 
 static VfsNode_t *g_RootNode = NULL;
@@ -539,3 +535,4 @@ VfsError_t Vfs_RemoveNode(VfsNode_t *node)
     
     return VFS_OK;
 }
+#endif /* VFS_EN */

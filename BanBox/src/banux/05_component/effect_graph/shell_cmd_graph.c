@@ -13,6 +13,8 @@
 #include "effect_graph_config.h"
 #include "sys_param.h"     /* For g_sys_param */
 #include <string.h>
+
+#if EFFECT_GRAPHICS_EN
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug.h"
@@ -2150,3 +2152,5 @@ int ShellCmdEqTest_Execute(int argc, char *argv[])
     Shell_Printf("TIP: Use 'chain -S' to save configuration to flash\n");
     return 0;
 }
+
+#endif /* EFFECT_GRAPHICS_EN */

@@ -33,15 +33,20 @@ extern "C" {
 #define UI_DET_HP_PORT          GPIO_B_IN
 #define UI_DET_HP_PIN           GPIO_INDEX4     /* 耳机检测 (上拉，低电平有效) */
 
-/* 音量旋钮 ADC 引脚 */
-#define UI_VOLUME_ADC_PORT      GPIO_A_ANA_EN
-#define UI_VOLUME_ADC_PIN       GPIO_INDEX28    /* 主音量旋钮 ADC */
-#define UI_VOLUME_ADC_CHANNEL   ADC_CHANNEL_GPIOA28
+/* ADC 引脚配置来自 product_def.h */
+#include "product_def.h"
+
+/* 音量旋钮 ADC 引脚（仅在 HW_VOLUME_ADC_EN 定义时有效） */
+#if HW_VOLUME_ADC_EN
+#define UI_VOLUME_ADC_PORT      HW_VOLUME_ADC_GPIO_PORT
+#define UI_VOLUME_ADC_PIN       HW_VOLUME_ADC_GPIO_PIN
+#define UI_VOLUME_ADC_CHANNEL   HW_VOLUME_ADC_CHANNEL
+#endif
 
 /* 电池 ADC 引脚 */
-#define UI_BATTERY_ADC_PORT     GPIO_A_ANA_EN
-#define UI_BATTERY_ADC_PIN      GPIO_INDEX31    /* 电池电压 ADC */
-#define UI_BATTERY_ADC_CHANNEL  ADC_CHANNEL_GPIOA31
+#define UI_BATTERY_ADC_PORT     HW_BATTERY_ADC_GPIO_PORT
+#define UI_BATTERY_ADC_PIN      HW_BATTERY_ADC_GPIO_PIN
+#define UI_BATTERY_ADC_CHANNEL  HW_BATTERY_ADC_CHANNEL
 
 /* 检测水平 (0=插入时有效低电平，1=插入时有效高电平) */
 #define UI_DET_ACTIVE_LOW       0

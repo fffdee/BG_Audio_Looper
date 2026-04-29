@@ -13,11 +13,21 @@
 #include <string.h>
 #include <stdio.h>
 #include "debug.h"
+#include "rtos_api.h"  /* pvPortMalloc/vPortFree */
+
+#if EFFECT_GRAPHICS_EN  /* 整个文件受 EFFECT_GRAPHICS_EN 控制，=0 时不编译，不分配任何 BSS */
+
 
 /*******************************************************************************
- * 静态变�? ******************************************************************************/
+ * 静态变量
+ ******************************************************************************/
 static EffectGraphRuntime_t g_EffectGraph;
 static bool g_Initialized = false;
+
+/* 静态节点缓冲区池
+ * 21节点 × 256 samples × 4字节 = 21504字节 (21KB)
+ * 位于BSS段，确保蓝牙和ADC有足够的缓冲空间 */
+static uint32_t g_node_buf_pool[EFFECT_GRAPH_MAX_NODES][EFFECT_GRAPH_BUFFER_SIZE];
 
 /*******************************************************************************
  * 内部辅助函数声明
@@ -177,8 +187,6 @@ static GraphError_t TopologicalSort(void)
 // 初始化效果图系统
 GraphError_t EffectGraph_Init(void)
 {
-    int i;
-    
     if (g_Initialized) {
         return GRAPH_OK;
     }
@@ -193,10 +201,10 @@ GraphError_t EffectGraph_Init(void)
     g_EffectGraph.min_frame_size = 48;   /* 默认最小帧长 */
     g_EffectGraph.max_frame_size = 256;  /* 默认最大帧长 */
     
-    /* 分配共享缓冲区给节点 */
-    for (i = 0; i < EFFECT_GRAPH_MAX_NODES; i++) {
-        g_EffectGraph.nodes[i].buffer = g_EffectGraph.shared_buffer[i];
-    }
+    DBG("[EffectGraph] Buffer pool: %u nodes × %u samples × 4 bytes = %u KB\n",
+        EFFECT_GRAPH_MAX_NODES,
+        EFFECT_GRAPH_BUFFER_SIZE,
+        (unsigned)((EFFECT_GRAPH_MAX_NODES * EFFECT_GRAPH_BUFFER_SIZE * sizeof(uint32_t)) / 1024));
     
     g_Initialized = true;
     DBG("[EffectGraph] Initialized\n");
@@ -289,9 +297,13 @@ EffectNode_t* EffectGraph_AddNode(EffectNodeType_t type, const char *name, bool 
     strncpy(node->name, name, EFFECT_GRAPH_NAME_LEN - 1);
     node->name[EFFECT_GRAPH_NAME_LEN - 1] = '\0';
     
-    /* 初始化默认�?*/
+    /* 初始化默认值*/
     InitNodeDefaults(node, type);
     node->enabled = enabled;
+    
+    /* 使用静态缓冲区池 */
+    node->buffer = g_node_buf_pool[g->node_count];
+    memset(node->buffer, 0, EFFECT_GRAPH_BUFFER_SIZE * sizeof(uint32_t));
     
     /* 分类存储 */
     if (IsSourceNode(type)) {
@@ -524,10 +536,17 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
 // 设置节点启用状态
 void EffectGraph_SetNodeEnabled(EffectNode_t *node, bool enabled)
 {
-    if (node) {
-        node->enabled = enabled;
-        DBG("[EffectGraph] Node %s %s\n", node->name, enabled ? "enabled" : "disabled");
+    if (!node) {
+        return;
     }
+    
+    if (node->enabled == enabled) {
+        return;  /* 状态未变，跳过 */
+    }
+    
+    /* 静态缓冲区池：buffer 始终有效，无需 malloc/free，只更新 enabled 标志 */
+    node->enabled = enabled;
+    DBG("[EffectGraph] Node %s %s\n", node->name, enabled ? "enabled" : "disabled");
 }
 
 // 设置节点旁路状态
@@ -593,11 +612,12 @@ void EffectGraph_Reset(void)
         return;
     }
     
-    /* 清除节点 */
+    /* 清除节点（静态缓冲区池，无需 free）*/
     for (i = 0; i < g->node_count; i++) {
         memset(&g->nodes[i], 0, sizeof(EffectNode_t));
-        g->nodes[i].buffer = g->shared_buffer[i]; /* 保留缓冲区指�?*/
     }
+    /* 清零节点缓冲区池，以便下次 AddNode 时持有干净的缓冲区 */
+    memset(g_node_buf_pool, 0, sizeof(g_node_buf_pool));
     
     /* 清除�?*/
     memset(g->edges, 0, sizeof(g->edges));
@@ -924,3 +944,5 @@ uint16_t EffectGraph_ProcessAdaptive(void)
     
     return actual_len;
 }
+
+#endif /* EFFECT_GRAPHICS_EN */

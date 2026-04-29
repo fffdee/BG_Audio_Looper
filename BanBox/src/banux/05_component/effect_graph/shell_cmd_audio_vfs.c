@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include "debug.h"
 
-#if USE_EFFECT_GRAPH_VFS
+#if USE_EFFECT_GRAPH_VFS && EFFECT_GRAPHICS_EN
 
 /*******************************************************************************
  * 内部函数

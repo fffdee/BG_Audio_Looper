@@ -14,6 +14,7 @@
 #include "flash_devices.h"    /* 直接使用底层Flash API */
 #include "flash_nor_w25qxx.h" /* W25Qxx_EraseBlockStart (多Flash路径) */
 #include "BG_FlashMgr.h"      /* 兼容性保留 */
+#include "looper_storage.h"    /* 存储抽象层 */
 #include "sys_param.h"    /* 系统参数持久化存储 */
 #include "type.h"
 #include <nds32_intrinsic.h>
@@ -72,12 +73,200 @@ LoopManager_t g_loop_manager = {
     .is_new_recording = 0,
     .current_segment = 0,
     .active_segments = 0,
-    .page_size = 256,
+    .page_size = LOOPER_PSRAM_PAGE_SIZE,
     .boundary_samples_valid = 0
 };
 
 /** 下位机定时操作状态（音频线程仅写 pending_* 位；主循环写其余字段） */
 LooperTimedOps_t g_looper_timed_ops = {0};
+
+/* ============================================================================
+ * 存储抽象层集成
+ * ============================================================================ */
+
+/**
+ * @brief 初始化存储抽象层
+ * 
+ * @details 执行以下操作：
+ * 1. 根据硬件配置注册对应的存储适配器
+ * 2. 检查是否已执行带宽测试
+ * 3. 如果未测试，执行带宽测试并保存结果到 sys_param
+ * 4. 根据性能参数设置 looper 的最大同时段数
+ */
+static void loop_init_storage_layer(void)
+{
+    LooperStorageStatus_t status;
+    LooperStoragePerf_t perf;
+    const LooperStorageOps_t *ops = NULL;
+    LooperStorageType_t storage_type;
+    
+    DBG("[Looper] Initializing storage abstraction layer...\n");
+    
+    /* 1. 根据编译时宏选择存储类型（LOOPER_STORAGE_TYPE 优先；AUTO 时自动检测硬件）*/
+#if LOOPER_STORAGE_TYPE == LOOPER_STORAGE_TYPE_PSRAM
+    ops = LooperStorageAdapter_GetPsramOps();
+    storage_type = LOOPER_STORAGE_PSRAM;
+    DBG("[Looper] Using PSRAM storage (forced by LOOPER_STORAGE_TYPE)\n");
+#elif LOOPER_STORAGE_TYPE == LOOPER_STORAGE_TYPE_NAND
+    ops = LooperStorageAdapter_GetNandFlashOps();
+    storage_type = LOOPER_STORAGE_NAND_FLASH;
+    DBG("[Looper] Using NAND Flash storage (forced by LOOPER_STORAGE_TYPE)\n");
+#elif LOOPER_STORAGE_TYPE == LOOPER_STORAGE_TYPE_NOR
+    ops = LooperStorageAdapter_GetNorFlashOps();
+    storage_type = LOOPER_STORAGE_NOR_FLASH;
+    DBG("[Looper] Using NOR Flash storage (forced by LOOPER_STORAGE_TYPE)\n");
+#else /* LOOPER_STORAGE_TYPE_AUTO: 根据硬件宏自动检测 */
+    /* 优先 PSRAM（支持叠录），其次 NAND，默认 PSRAM */
+#if HW_PSRAM0_EN
+    ops = LooperStorageAdapter_GetPsramOps();
+    storage_type = LOOPER_STORAGE_PSRAM;
+    DBG("[Looper] Using PSRAM storage (auto-detected)\n");
+#elif HW_NAND0_EN
+    ops = LooperStorageAdapter_GetNandFlashOps();
+    storage_type = LOOPER_STORAGE_NAND_FLASH;
+    DBG("[Looper] Using NAND Flash storage (auto-detected)\n");
+#else
+    ops = LooperStorageAdapter_GetPsramOps();
+    storage_type = LOOPER_STORAGE_PSRAM;
+    DBG("[Looper] Using PSRAM storage as default\n");
+#endif
+#endif /* LOOPER_STORAGE_TYPE */
+    
+    /* 2. 注册存储设备 */
+    status = LooperStorage_Register(&g_looper_storage, ops, storage_type);
+    if (status != LOOPER_STORAGE_OK) {
+        DBG("[Looper] Failed to register storage device: %d\n", status);
+        return;
+    }
+    
+    /* 3. 初始化存储设备 */
+    status = LooperStorage_Init(&g_looper_storage);
+    if (status != LOOPER_STORAGE_OK) {
+        DBG("[Looper] Failed to initialize storage device: %d\n", status);
+        return;
+    }
+    
+    /* 4. 检查是否已执行带宽测试 */
+    if (SYSPARAM_LOOPER()->bandwidth_tested == 0) {
+        /* 未测试，执行带宽测试 */
+        DBG("[Looper] Bandwidth test not performed, running benchmark...\n");
+        
+        status = LooperStorage_Benchmark(&g_looper_storage, &perf);
+        if (status == LOOPER_STORAGE_OK) {
+            /* 测试成功，保存结果到 sys_param */
+            SYSPARAM_LOOPER()->storage_type = (uint8_t)storage_type;
+            SYSPARAM_LOOPER()->write_speed_kbps = perf.write_speed_kbps;
+            SYSPARAM_LOOPER()->read_speed_kbps = perf.read_speed_kbps;
+            SYSPARAM_LOOPER()->max_concurrent_tracks = perf.max_concurrent_tracks;
+            SYSPARAM_LOOPER()->bandwidth_tested = 1;
+            SYSPARAM_LOOPER()->support_overdub = perf.support_overdub;
+            
+            /* 保存到 Flash */
+            SysParam_Save();
+            
+            DBG("[Looper] Benchmark completed: write=%lu KB/s, read=%lu KB/s, max_tracks=%lu, overdub=%u\n",
+                (unsigned long)perf.write_speed_kbps,
+                (unsigned long)perf.read_speed_kbps,
+                perf.max_concurrent_tracks,
+                perf.support_overdub);
+        } else {
+            DBG("[Looper] Benchmark failed: %d, using defaults\n", status);
+            /* 测试失败，使用保守的默认值 */
+            SYSPARAM_LOOPER()->storage_type = (uint8_t)storage_type;
+            SYSPARAM_LOOPER()->max_concurrent_tracks = 1;
+            SYSPARAM_LOOPER()->bandwidth_tested = 0;
+            SYSPARAM_LOOPER()->support_overdub = (storage_type == LOOPER_STORAGE_PSRAM) ? 1 : 0;
+        }
+    } else {
+        /* 已测试，从 sys_param 加载性能参数 */
+        DBG("[Looper] Loading performance data from sys_param\n");
+        DBG("[Looper] Storage type: %u, max tracks: %u, overdub: %u\n",
+            SYSPARAM_LOOPER()->storage_type,
+            SYSPARAM_LOOPER()->max_concurrent_tracks,
+            SYSPARAM_LOOPER()->support_overdub);
+    }
+    
+    /* 5. 根据性能参数设置 looper 限制 */
+    g_loop_manager.max_concurrent_segments = SYSPARAM_LOOPER()->max_concurrent_tracks;
+    g_loop_manager.support_overdub = SYSPARAM_LOOPER()->support_overdub;
+    g_loop_manager.overdub_mix_mode = 1; /* 默认相加混音 */
+    
+    /* 6. 设置存储就绪标志
+     * PSRAM 是 volatile RAM，上电即为空白，无需擦除，立即就绪。
+     * NOR/NAND Flash 可能需要先执行异步整片擦除（由 loop_check_flash_init_on_boot
+     * 管理），在擦除完成前 storage_ready=0 禁止录制写入。 */
+    if (storage_type == LOOPER_STORAGE_PSRAM) {
+        g_loop_manager.storage_ready = 1;
+    } else {
+        g_loop_manager.storage_ready = 0; /* 等待 loop_check_flash_init_on_boot 完成 */
+    }
+    
+    DBG("[Looper] Storage layer initialized successfully\n");
+}
+
+/* ============================================================================
+ * 叠录功能实现
+ * ============================================================================ */
+
+/**
+ * @brief 检查当前存储设备是否支持叠录
+ */
+uint8_t loop_is_overdub_supported(void)
+{
+    return g_loop_manager.support_overdub;
+}
+
+/**
+ * @brief 设置指定段的叠录模式
+ */
+void loop_set_overdub_mode(uint8_t segment_index, uint8_t enabled)
+{
+    if (segment_index >= MAX_SEGMENTS) {
+        DBG("[Looper] Invalid segment index for overdub: %u\n", segment_index);
+        return;
+    }
+    
+    if (!g_loop_manager.support_overdub) {
+        DBG("[Looper] Overdub not supported by current storage\n");
+        return;
+    }
+    
+    g_loop_manager.segments[segment_index].overdub_enabled = enabled ? 1 : 0;
+    DBG("[Looper] Segment %u overdub mode: %s\n", segment_index, enabled ? "ON" : "OFF");
+}
+
+/**
+ * @brief 获取指定段的叠录模式
+ */
+uint8_t loop_get_overdub_mode(uint8_t segment_index)
+{
+    if (segment_index >= MAX_SEGMENTS) {
+        return 0;
+    }
+    
+    return g_loop_manager.segments[segment_index].overdub_enabled;
+}
+
+/**
+ * @brief 设置叠录混音模式
+ */
+void loop_set_overdub_mix_mode(uint8_t mix_mode)
+{
+    if (mix_mode > 2) {
+        mix_mode = 1; /* 默认相加混音 */
+    }
+    
+    g_loop_manager.overdub_mix_mode = mix_mode;
+    DBG("[Looper] Overdub mix mode set to: %u\n", mix_mode);
+}
+
+/**
+ * @brief 获取叠录混音模式
+ */
+uint8_t loop_get_overdub_mix_mode(void)
+{
+    return g_loop_manager.overdub_mix_mode;
+}
 
 // 校验相关变量（归纳到结构体）
 static int16_t ReadBuf[96];
@@ -95,9 +284,17 @@ static struct {
  *
  * 录制写缓冲: 音频回调→RAM→looper_flush_io()→Flash
  * 播放读缓存: Flash→looper_flush_io()→RAM→音频回调
+ *
+ * 注意: s_write_ring 和 s_read_cache 分配到 PSRAM 而非内部 SRAM，
+ *       因为内部 SRAM 仅 192KB，已被其他模块占满 (~190KB)，
  * ============================================================================ */
 #if LOOPER_IO_BUFFER_ENABLE
 
+/* IO 缓冲实例 (放在 BSS 段，内部 SRAM)
+ *
+ * s_write_ring[4]: 8×256 + 6 ≈ 2054 字节/段 × 4 = 8216 字节
+ * s_read_cache[4]: 8×256 + 7 ≈ 2055 字节/段 × 4 = 8220 字节
+ * 总计 ≈ 16.4KB */
 static LooperWriteRing_t  s_write_ring[MAX_SEGMENTS];
 static LooperReadCache_t  s_read_cache[MAX_SEGMENTS];
 
@@ -142,6 +339,22 @@ static void looper_reset_all_buffers(void) {
         looper_reset_write_ring(i);
         looper_reset_read_cache_internal(i);
     }
+}
+
+/**
+ * @brief 清零 IO 缓冲数组（BSS 已由启动代码清零，此处仅保证重入安全）
+ */
+static uint8_t looper_alloc_io_buffers(void)
+{
+    uint32_t write_ring_size = sizeof(LooperWriteRing_t) * MAX_SEGMENTS;
+    uint32_t read_cache_size = sizeof(LooperReadCache_t) * MAX_SEGMENTS;
+
+    memset(s_write_ring, 0, write_ring_size);
+    memset(s_read_cache, 0, read_cache_size);
+
+    DBG("[Looper] IO buffers cleared in SRAM: wr=%lu bytes, rc=%lu bytes\n",
+        (unsigned long)write_ring_size, (unsigned long)read_cache_size);
+    return 1;
 }
 
 #endif /* LOOPER_IO_BUFFER_ENABLE */
@@ -206,7 +419,7 @@ void loop_init(void)
     // 初始化多段录音参数
     g_loop_manager.current_segment = 0;
     g_loop_manager.active_segments = 0;
-    g_loop_manager.page_size = 256;  // Flash页大小
+    g_loop_manager.page_size = LOOPER_PSRAM_PAGE_SIZE;
 
     // 初始化所有段信息
     uint8_t i;
@@ -217,6 +430,9 @@ void loop_init(void)
         g_loop_manager.segments[i].play_position = 0;
         g_loop_manager.segments[i].state = SEGMENT_INACTIVE;
         g_loop_manager.segments[i].is_active = 0;
+        g_loop_manager.segments[i].rec_partial_count = 0;
+        g_loop_manager.segments[i].play_page_offset = 0;
+        g_loop_manager.segments[i].play_page_valid = 0;
 #if LOOPER_MULTI_FLASH_ENABLE
         g_loop_manager.segments[i].flash_dev_id = (uint8_t)(i % LOOPER_FLASH_DEV_COUNT);
 #endif
@@ -247,8 +463,15 @@ void loop_init(void)
     looper_reset_all_buffers();
 #endif
 
-    /* 开机检查Looper Flash是否已初始化，否则触发全片擦除 */
-    loop_check_flash_init_on_boot();
+    /* 先初始化存储抽象层（确定存储类型后，才能决定是否需要 Flash 擦除） */
+    loop_init_storage_layer();
+
+    /* PSRAM 是 volatile RAM，上电即空，无需擦除检查。
+     * NOR/NAND Flash 需检查上次是否干净；若非 CLEAN 则触发异步全片擦除。
+     * storage_ready 由 loop_init_storage_layer() 设置：PSRAM=1，NOR/NAND=0 */
+    if (!g_loop_manager.storage_ready) {
+        loop_check_flash_init_on_boot();
+    }
 
     /* 不再在初始化时擦除Flash，由用户手动触发（编码器右转）*/
     DBG("Loop manager initialized with multi-segment support (Flash erase deferred)\n");
@@ -280,7 +503,7 @@ void loop_init_with_flash_type(FlashType_t flash_type)
     // 初始化多段录音参数
     g_loop_manager.current_segment = 0;
     g_loop_manager.active_segments = 0;
-    g_loop_manager.page_size = 256;  // Flash页大小
+    g_loop_manager.page_size = LOOPER_PSRAM_PAGE_SIZE;
 
     // 初始化所有段信息
     uint8_t i;
@@ -291,6 +514,9 @@ void loop_init_with_flash_type(FlashType_t flash_type)
         g_loop_manager.segments[i].play_position = 0;
         g_loop_manager.segments[i].state = SEGMENT_INACTIVE;
         g_loop_manager.segments[i].is_active = 0;
+        g_loop_manager.segments[i].rec_partial_count = 0;
+        g_loop_manager.segments[i].play_page_offset = 0;
+        g_loop_manager.segments[i].play_page_valid = 0;
 #if LOOPER_MULTI_FLASH_ENABLE
         g_loop_manager.segments[i].flash_dev_id = (uint8_t)(i % LOOPER_FLASH_DEV_COUNT);
 #endif
@@ -320,6 +546,14 @@ void loop_init_with_flash_type(FlashType_t flash_type)
     /* 不再在初始化时擦除Flash，由用户手动触发（编码器右转）*/
     DBG("Loop manager initialized with %s Flash support (Flash erase deferred)\n",
         g_loop_manager.flash_type == FLASH_TYPE_NOR ? "NOR" : "NAND");
+
+#if LOOPER_IO_BUFFER_ENABLE
+    /* 在 PSRAM 中分配 IO 缓冲数组 (避免内部 SRAM 溢出) */
+    if (!looper_alloc_io_buffers()) {
+        DBG("[Looper] WARNING: IO buffer allocation failed, falling back to direct mode\n");
+        /* 分配失败时静默降级为直接写入模式，不影响基本功能 */
+    }
+#endif
 }
 
 /**
@@ -340,6 +574,9 @@ void loop_reset(void)
         g_loop_manager.segments[i].play_position = 0;
         g_loop_manager.segments[i].state         = SEGMENT_INACTIVE;
         g_loop_manager.segments[i].is_active     = 0;
+        g_loop_manager.segments[i].rec_partial_count = 0;
+        g_loop_manager.segments[i].play_page_offset  = 0;
+        g_loop_manager.segments[i].play_page_valid   = 0;
 #if LOOPER_MULTI_FLASH_ENABLE
         g_loop_manager.segments[i].flash_dev_id  = (uint8_t)(i % LOOPER_FLASH_DEV_COUNT);
 #endif
@@ -418,6 +655,9 @@ void loop_flash_erase_reinit(void)
         g_loop_manager.segments[i].play_position = 0;
         g_loop_manager.segments[i].state         = SEGMENT_INACTIVE;
         g_loop_manager.segments[i].is_active     = 0;
+        g_loop_manager.segments[i].rec_partial_count = 0;
+        g_loop_manager.segments[i].play_page_offset  = 0;
+        g_loop_manager.segments[i].play_page_valid   = 0;
 #if LOOPER_MULTI_FLASH_ENABLE
         g_loop_manager.segments[i].flash_dev_id  = (uint8_t)(i % LOOPER_FLASH_DEV_COUNT);
 #endif
@@ -541,8 +781,11 @@ void loop_init_segment_region(uint8_t seg_idx, uint16_t max_sec)
     g_loop_manager.segments[seg_idx].play_position = 0;
     g_loop_manager.segments[seg_idx].state         = SEGMENT_INACTIVE;
     g_loop_manager.segments[seg_idx].is_active      = 0;
-    g_loop_manager.segments[seg_idx].trim_start_page = 0;  /* 清除裁剪信息 */
+    g_loop_manager.segments[seg_idx].trim_start_page = 0;
     g_loop_manager.segments[seg_idx].trim_end_page   = 0;
+    g_loop_manager.segments[seg_idx].rec_partial_count = 0;
+    g_loop_manager.segments[seg_idx].play_page_offset  = 0;
+    g_loop_manager.segments[seg_idx].play_page_valid   = 0;
 
     /* 标记 Flash 已使用 */
     SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
@@ -565,6 +808,7 @@ void loop_init_segment_region(uint8_t seg_idx, uint16_t max_sec)
  * @brief 推进局部擦除状态机（在 looper_flush_io 里每帧调用）
  *        每次：若当前块擦除发出，轮询完成后推进到下一块；否则发出当前块擦除命令。
  */
+#if LOOPER_IO_BUFFER_ENABLE
 static void looper_advance_partial_erase(uint8_t seg_idx)
 {
     LooperPartialErase_t *pe = &s_partial_erase[seg_idx];
@@ -633,6 +877,7 @@ static void looper_advance_partial_erase(uint8_t seg_idx)
         pe->cur_addr += LOOPER_FLASH_BLOCK_SIZE;  /* 跳过出错块继续 */
     }
 }
+#endif /* LOOPER_IO_BUFFER_ENABLE */
 
 uint8_t loop_segment_partial_erase_pending(uint8_t seg_idx)
 {
@@ -669,13 +914,14 @@ void loop_handle_button_press(int8_t segment_index)
         DBG("[Looper] All chip erases done (detected on button), unblocked\n");
     }
 #else
-    /* 全片擦除中先轮询BUSY位 */
+    /* 全片擦除中先通过存储抽象层查询 BUSY */
     if (g_loop_manager.chip_erase_pending) {
-        if (FlashPartition_LooperIsErasing()) {
+        if (LooperStorage_IsBusy(&g_looper_storage)) {
             DBG("[Looper] Flash erase in progress, input ignored\n");
             return;
         }
         g_loop_manager.chip_erase_pending = 0;
+        g_loop_manager.storage_ready = 1;
         SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_CLEAN;
         SysParam_Save();
         DBG("[Looper] Chip erase done (detected on button), status=CLEAN saved\n");
@@ -1200,104 +1446,120 @@ void loop_update_master_segment_info(void)
  */
 void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data, uint8_t* buffer, uint16_t length)
 {
-    static uint32_t rec_call_count = 0;
-    
     if (segment_index >= MAX_SEGMENTS) {
-        return;  // 无效段索引
+        return;
     }
     
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
     if (segment->state != SEGMENT_RECORDING) {
-        return;  // 段不在录制状态
+        return;
     }
 
 #if LOOPER_MULTI_FLASH_ENABLE
-    /* 检查本段绑定的Flash是否正在擦除；是则跳过本帧，不阻塞其他Flash上的段 */
     if (looper_poll_erase_pending(segment->flash_dev_id)) {
         return;
     }
 #else
-    /* 全片擦除中等待完成 */
     if (g_loop_manager.chip_erase_pending) {
-        if (FlashPartition_LooperIsErasing()) {
+        if (LooperStorage_IsBusy(&g_looper_storage)) {
             return;
         }
         g_loop_manager.chip_erase_pending = 0;
+        g_loop_manager.storage_ready = 1;
     }
 #endif
     
-    /* 限制最大长度，避免缓冲区溢出 (192 bytes / 4 = 48 samples max) */
     if (length > 48) {
         length = 48;
     }
     
+    uint8_t incoming_bytes[192];
+    convertUint32ArrayToUint8Array(audio_data, incoming_bytes, length);
+    uint32_t incoming_len = length * 4;
+    uint32_t src_offset = 0;
+    
+    while (src_offset < incoming_len) {
+        uint32_t space = LOOPER_PSRAM_PAGE_SIZE - segment->rec_partial_count;
+        uint32_t to_copy = incoming_len - src_offset;
+        if (to_copy > space) to_copy = space;
+        
+        memcpy(&segment->rec_partial_buf[segment->rec_partial_count],
+               &incoming_bytes[src_offset], to_copy);
+        
+        segment->rec_partial_count += to_copy;
+        src_offset += to_copy;
+        
+        if (segment->rec_partial_count >= LOOPER_PSRAM_PAGE_SIZE) {
+            uint32_t write_offset = segment->start_address + 
+                                    segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+            
 #if LOOPER_IO_BUFFER_ENABLE
-    /* ======== 缓冲模式：写入RAM环形缓冲区，由 looper_flush_io() 延迟写入Flash ======== */
-    {
-        LooperWriteRing_t *ring = &s_write_ring[segment_index];
-        if (wring_space(ring) == 0) {
-            /* 缓冲区满：Flash IO持续落后，丢弃本帧数据（极端情况） */
-            DBG("WARN: Write ring full seg%d, dropping frame!\n", segment_index);
-            return;
-        }
-        convertUint32ArrayToUint8Array(audio_data, ring->buf[ring->head], length);
-        ring->head = (ring->head + 1) % LOOPER_WRITE_BUF_PAGES;
-    }
-    segment->length_pages++;
-    segment->length_bytes = segment->length_pages * g_loop_manager.page_size;
+            {
+                LooperWriteRing_t *ring = &s_write_ring[segment_index];
+                if (wring_space(ring) > 0) {
+                    memcpy(ring->buf[ring->head], segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+                    ring->head = (ring->head + 1) % LOOPER_WRITE_BUF_PAGES;
+                }
+            }
 #else
-    /* ======== 直接模式：立即写入Flash ======== */
-    {
-    uint32_t bytes_to_write = length * 4;  // 实际要写入的字节数
-    uint8_t write_buffer[192];
-    
-    // 直接录制原始音频数据
-    convertUint32ArrayToUint8Array(audio_data, write_buffer, length);
-    uint32_t write_offset = segment->start_address + 
-                            segment->length_pages * g_loop_manager.page_size;
-
-    // 按段绑定的Flash设备写入
-    rec_call_count++;
-    if (rec_call_count % 100 == 1) {
-        // 检查音频数据是否有非零值
-        uint16_t non_zero = 0;
-        uint16_t k;
-        for (k = 0; k < length && k < 48; k++) {
-            if (audio_data[k] != 0) non_zero++;
-        }
-//        DBG("REC[%lu]: seg=%d dev=%d offset=0x%lX pages=%lu nonzero=%d/%d\n",
-//            (unsigned long)rec_call_count, segment_index, segment->flash_dev_id,
-//            (unsigned long)write_offset, (unsigned long)segment->length_pages,
-//            non_zero, length);
-    }
-    
+#if LOOPER_USE_STORAGE_ABSTRACTION
+            {
+                LooperStorageStatus_t write_result;
+                
+                if (segment->overdub_enabled && g_loop_manager.support_overdub) {
+                    write_result = LooperStorage_OverdubWrite(&g_looper_storage, write_offset, 
+                                segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE,
+                                g_loop_manager.overdub_mix_mode);
+                    if (write_result != LOOPER_STORAGE_OK) {
+                        DBG("Overdub write error at offset %lu: %d\n",
+                            (unsigned long)write_offset, write_result);
+                        segment->state = SEGMENT_INACTIVE;
+                        return;
+                    }
+                } else {
+                    write_result = LooperStorage_Write(&g_looper_storage, write_offset, 
+                                segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+                    if (write_result != LOOPER_STORAGE_OK) {
+                        DBG("Storage write error at offset %lu: %d\n",
+                            (unsigned long)write_offset, write_result);
+                        segment->state = SEGMENT_INACTIVE;
+                        return;
+                    }
+                }
+            }
+#else
 #if LOOPER_MULTI_FLASH_ENABLE
-    /* 使用段绑定的Flash设备写入 (dev_id决定CS引脚，即具体哪颗W25Q64) */
-    FlashStatus_t write_result = FlashPartition_LooperWriteByDev(
-        segment->flash_dev_id, write_offset, write_buffer, bytes_to_write);
-    
-    if (write_result != FLASH_OK) {
-        DBG("Flash dev%d write error at offset %lu: %d\n",
-            segment->flash_dev_id, (unsigned long)write_offset, write_result);
+            {
+                FlashStatus_t write_result = FlashPartition_LooperWriteByDev(
+                    segment->flash_dev_id, write_offset, segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+                if (write_result != FLASH_OK) {
+                    DBG("Flash dev%d write error at offset %lu: %d\n",
+                        segment->flash_dev_id, (unsigned long)write_offset, write_result);
+                    segment->state = SEGMENT_INACTIVE;
+                    return;
+                }
+            }
 #else
-    /* 使用单Flash写入 (Flash#0) */
-    FlashStatus_t write_result = FlashPartition_LooperWrite(
-        write_offset, write_buffer, bytes_to_write);
-    
-    if (write_result != FLASH_OK) {
-        DBG("Flash write error at offset %lu: %d\n",
-            (unsigned long)write_offset, write_result);
+            {
+                FlashStatus_t write_result = FlashPartition_LooperWrite(
+                    write_offset, segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+                if (write_result != FLASH_OK) {
+                    DBG("Flash write error at offset %lu: %d\n",
+                        (unsigned long)write_offset, write_result);
+                    segment->state = SEGMENT_INACTIVE;
+                    return;
+                }
+            }
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
-        // 写入失败，停止录制该段
-        segment->state = SEGMENT_INACTIVE;
-        return;
-    }
-    
-    segment->length_pages++;  // 更新段长度
-    segment->length_bytes = segment->length_pages * g_loop_manager.page_size;  // 同步更新字节数
-    }
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
 #endif /* LOOPER_IO_BUFFER_ENABLE */
+            
+            segment->length_pages++;
+            segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+            segment->rec_partial_count = 0;
+        }
+    }
 }
 
 /**
@@ -1318,12 +1580,13 @@ void loop_process_recording_uint32(uint32_t* audio_data, uint8_t* buffer, uint16
         }
     }
 #else
-    /* 全片擦除期间，轮询BUSY位 */
+    /* 全片擦除期间：通过存储抽象层查询 BUSY */
     if (g_loop_manager.chip_erase_pending) {
-        if (FlashPartition_LooperIsErasing()) {
+        if (LooperStorage_IsBusy(&g_looper_storage)) {
             return;
         }
         g_loop_manager.chip_erase_pending = 0;
+        g_loop_manager.storage_ready = 1;  /* 擦除完成，存储后端就绪 */
         SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_CLEAN;
         SysParam_Save();
     }
@@ -1351,204 +1614,194 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
     static uint32_t play_call_count = 0;
     
     if (segment_index >= MAX_SEGMENTS) {
-        return 0;  // 无效段索引
+        return 0;
     }
     
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
     if (segment->state != SEGMENT_PLAYING || !segment->is_active) {
-        return 0;  // 段不在播放状态或未激活
+        return 0;
     }
 
     if (segment->length_pages == 0) {
-        return 0;  // 段没有数据
+        return 0;
     }
 
 #if LOOPER_MULTI_FLASH_ENABLE
-    /* 检查本段绑定的Flash是否正在擦除；是则输出静音，不阻塑其他Flash的段 */
     if (looper_poll_erase_pending(segment->flash_dev_id)) {
-        return 0;  // 该Flash仍在擦除，输出静音
+        return 0;
     }
 #else
-    /* 全片擦除中等待 */
     if (g_loop_manager.chip_erase_pending) {
-        if (FlashPartition_LooperIsErasing()) {
+        if (LooperStorage_IsBusy(&g_looper_storage)) {
             return 0;
         }
         g_loop_manager.chip_erase_pending = 0;
+        g_loop_manager.storage_ready = 1;
     }
-#endif /* LOOPER_MULTI_FLASH_ENABLE */
+#endif
     
-    // 计算本段的有效循环起止页
     uint32_t loop_start = segment->trim_start_page;
     uint32_t loop_end   = (segment->trim_end_page > 0 && segment->trim_end_page <= segment->length_pages)
                           ? segment->trim_end_page : segment->length_pages;
 
-    // 检查播放位置是否需要循环
-    if (segment->play_position >= loop_end) {
-        // 只在循环重置时打印一次
-        if (segment->play_position == loop_end) {
-            DBG("Segment %d loop: reset position from %lu to %lu (loop=%lu..%lu)\n",
-                segment_index, (unsigned long)segment->play_position,
-                (unsigned long)loop_start, (unsigned long)loop_start, (unsigned long)loop_end);
-        }
-        segment->play_position = loop_start;  // 重置到裁剪起始页
-#if LOOPER_IO_BUFFER_ENABLE
-        /* 循环回绕时重新初始化读缓存，确保预读页号与播放位置同步 */
-        {
-            LooperReadCache_t *cache = &s_read_cache[segment_index];
-            if (cache->active) {
-                cache->prefetch_page = loop_start;
-                cache->head = 0;
-                cache->tail = 0;
-                cache->active = 0;  /* 下面会重新初始化 */
-            }
-        }
-#endif
-        /* ── 定时操作回绕触发（仅设置 pending 标志，无 I/O） ──────────────────────
-         * 实际状态切换由主循环 Looper_TimedOps_Process() 负责执行。
-         * 规则：
-         *   chain : 当前段 == chain_stop_seg  → 触发衔接
-         *   join  : 任意 PLAYING 段回绕       → 触发接入
-         *   wait  : deferred_stop 位已置       → 触发延迟停止 */
-        {
-            LooperTimedOps_t *ops = &g_looper_timed_ops;
-            /* 衔接触发：只有 chain_stop_seg 回绕才触发 */
-            if (ops->chain_armed && (ops->chain_stop_seg == (uint8_t)segment_index)) {
-                ops->pending_chain = 1;
-            }
-            /* 接入触发：任意 PLAYING 段回绕即触发 */
-            if (ops->join_armed) {
-                ops->pending_join = 1;
-            }
-            /* 延迟停止触发 */
-            if (ops->deferred_stop_mask & (1u << (uint8_t)segment_index)) {
-                ops->pending_wait_finish |= (1u << (uint8_t)segment_index);
-                ops->deferred_stop_mask  &= (uint8_t)(~(1u << (uint8_t)segment_index));
-            }
-            /* 同步录制触发：只有 sr_trigger_seg 回绕才触发 */
-            if (ops->sr_armed && (ops->sr_trigger_seg == (uint8_t)segment_index)) {
-                ops->pending_sr = 1;
-                ops->sr_armed   = 0;  /* 一次性：触发后自动解除 */
-            }
-            /* 同步录制等长自动停止：SR 已触发录制，等待 trigger_seg 再次回绕时停止 */
-            if (ops->sr_autostop_armed && (ops->sr_trigger_seg == (uint8_t)segment_index)) {
-                ops->pending_sr_stop   = 1;
-                ops->sr_autostop_armed = 0;
-            }
-        }
-    }
-    
+    uint32_t samples_needed = (length < 48) ? length : 48;
     uint32_t segment_data[48];
-    uint32_t samples_to_read = (length < 48) ? length : 48;
-
+    uint32_t samples_served = 0;
+    uint32_t abs_sample_start = segment->play_position * LOOPER_SAMPLES_PER_PAGE + segment->play_page_offset;
+    
+    while (samples_served < samples_needed) {
+        if (!segment->play_page_valid || 
+            segment->play_page_offset >= LOOPER_SAMPLES_PER_PAGE) {
+            
+            if (segment->play_position >= loop_end) {
+                segment->play_position = loop_start;
 #if LOOPER_IO_BUFFER_ENABLE
-    /* ======== 缓冲模式：从RAM读缓存消费数据（~1μs） ======== */
-    {
-        LooperReadCache_t *cache = &s_read_cache[segment_index];
-        if (!cache->active) {
-            /* 首次或回绕后重新初始化缓存（一次性阻塞预填） */
-            looper_init_read_cache(segment_index);
-        }
-        if (rcache_count(cache) == 0) {
-            /* 缓存空：Flash IO落后太多，本帧输出静音 */
-            return 0;
-        }
-        convertUint8ArrayToUint32Array(cache->buf[cache->tail], segment_data, samples_to_read);
-        cache->tail = (cache->tail + 1) % LOOPER_READ_CACHE_PAGES;
-    }
+                {
+                    LooperReadCache_t *cache = &s_read_cache[segment_index];
+                    if (cache->active) {
+                        cache->prefetch_page = loop_start;
+                        cache->head = 0;
+                        cache->tail = 0;
+                        cache->active = 0;
+                    }
+                }
+#endif
+                {
+                    LooperTimedOps_t *ops = &g_looper_timed_ops;
+                    if (ops->chain_armed && (ops->chain_stop_seg == (uint8_t)segment_index)) {
+                        ops->pending_chain = 1;
+                    }
+                    if (ops->join_armed) {
+                        ops->pending_join = 1;
+                    }
+                    if (ops->deferred_stop_mask & (1u << (uint8_t)segment_index)) {
+                        ops->pending_wait_finish |= (1u << (uint8_t)segment_index);
+                        ops->deferred_stop_mask  &= (uint8_t)(~(1u << (uint8_t)segment_index));
+                    }
+                    if (ops->sr_armed && (ops->sr_trigger_seg == (uint8_t)segment_index)) {
+                        ops->pending_sr = 1;
+                        ops->sr_armed   = 0;
+                    }
+                    if (ops->sr_autostop_armed && (ops->sr_trigger_seg == (uint8_t)segment_index)) {
+                        ops->pending_sr_stop   = 1;
+                        ops->sr_autostop_armed = 0;
+                    }
+                }
+            }
+            
+#if LOOPER_IO_BUFFER_ENABLE
+            {
+                LooperReadCache_t *cache = &s_read_cache[segment_index];
+                if (!cache->active) {
+                    looper_init_read_cache(segment_index);
+                }
+                if (rcache_count(cache) == 0) {
+                    memset(&segment_data[samples_served], 0, (samples_needed - samples_served) * 4);
+                    segment->play_position++;
+                    break;
+                }
+                memcpy(segment->play_page_buf, cache->buf[cache->tail], LOOPER_PSRAM_PAGE_SIZE);
+                cache->tail = (cache->tail + 1) % LOOPER_READ_CACHE_PAGES;
+            }
 #else
-    /* ======== 直接模式：从Flash读取 ======== */
-    {
-    // 使用段绑定的Flash设备读取数据  
-    uint32_t segment_offset = segment->start_address + segment->play_position * g_loop_manager.page_size;
-    
+            {
+                uint32_t read_offset = segment->start_address + 
+                                       segment->play_position * LOOPER_PSRAM_PAGE_SIZE;
+#if LOOPER_USE_STORAGE_ABSTRACTION
+                LooperStorageStatus_t read_result = LooperStorage_Read(&g_looper_storage, read_offset, 
+                                                    segment->play_page_buf, LOOPER_PSRAM_PAGE_SIZE);
+                if (read_result != LOOPER_STORAGE_OK) {
+                    DBG("Storage read error at offset %lu: %d\n",
+                        (unsigned long)read_offset, read_result);
+                    memset(&segment_data[samples_served], 0, (samples_needed - samples_served) * 4);
+                    break;
+                }
+#else
 #if LOOPER_MULTI_FLASH_ENABLE
-    /* 使用段绑定的Flash设备读取 (dev_id决定CS引脚，即具体哪颗W25Q64) */
-    FlashStatus_t read_result = FlashPartition_LooperReadByDev(
-        segment->flash_dev_id, segment_offset, buffer, 192);
-    
-    if (read_result != FLASH_OK) {
-        DBG("Flash dev%d read error at offset %lu: %d\n",
-            segment->flash_dev_id, (unsigned long)segment_offset, read_result);
+                {
+                    FlashStatus_t read_result = FlashPartition_LooperReadByDev(
+                        segment->flash_dev_id, read_offset, segment->play_page_buf, LOOPER_PSRAM_PAGE_SIZE);
+                    if (read_result != FLASH_OK) {
+                        DBG("Flash dev%d read error at offset %lu: %d\n",
+                            segment->flash_dev_id, (unsigned long)read_offset, read_result);
+                        memset(&segment_data[samples_served], 0, (samples_needed - samples_served) * 4);
+                        break;
+                    }
+                }
 #else
-    /* 使用单Flash读取 (Flash#0) */
-    FlashStatus_t read_result = FlashPartition_LooperRead(
-        segment_offset, buffer, 192);
-    
-    if (read_result != FLASH_OK) {
-        DBG("Flash read error at offset %lu: %d\n",
-            (unsigned long)segment_offset, read_result);
+                {
+                    FlashStatus_t read_result = FlashPartition_LooperRead(
+                        read_offset, segment->play_page_buf, LOOPER_PSRAM_PAGE_SIZE);
+                    if (read_result != FLASH_OK) {
+                        DBG("Flash read error at offset %lu: %d\n",
+                            (unsigned long)read_offset, read_result);
+                        memset(&segment_data[samples_served], 0, (samples_needed - samples_served) * 4);
+                        break;
+                    }
+                }
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
-        return 0;  // 读取失败
-    }
-    
-    convertUint8ArrayToUint32Array(buffer, segment_data, samples_to_read);
-    }
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
+            }
 #endif /* LOOPER_IO_BUFFER_ENABLE */
-    
-    // Debug: 每100次打印一次播放状态
-    play_call_count++;
-    if (play_call_count % 100 == 1) {
-        uint16_t non_zero = 0;
-        uint16_t k;
-        for (k = 0; k < samples_to_read; k++) {
-            if (segment_data[k] != 0) non_zero++;
+            
+            segment->play_page_offset = 0;
+            segment->play_page_valid = 1;
         }
-//        DBG("PLAY[%lu]: seg=%d offset=0x%lX pos=%lu/%lu nonzero=%d/%lu data0=0x%08lX\n",
-//            (unsigned long)play_call_count, segment_index,
-//            (unsigned long)segment_offset, (unsigned long)segment->play_position,
-//            (unsigned long)segment->length_pages, non_zero, (unsigned long)samples_to_read,
-//            (unsigned long)segment_data[0]);
+        
+        uint32_t available = LOOPER_SAMPLES_PER_PAGE - segment->play_page_offset;
+        uint32_t to_take = samples_needed - samples_served;
+        if (to_take > available) to_take = available;
+        
+        uint32_t *page_samples = (uint32_t*)segment->play_page_buf;
+        uint32_t i;
+        for (i = 0; i < to_take; i++) {
+            segment_data[samples_served + i] = page_samples[segment->play_page_offset + i];
+        }
+        
+        segment->play_page_offset += to_take;
+        samples_served += to_take;
+        
+        if (segment->play_page_offset >= LOOPER_SAMPLES_PER_PAGE) {
+            segment->play_position++;
+            segment->play_page_valid = 0;
+        }
     }
     
-    // 段开头淡入处理
-    if (segment->play_position == 0) {
-        uint16_t fade_samples = (samples_to_read < 16) ? samples_to_read : 16;
+    play_call_count++;
+    
+    if (abs_sample_start < 16) {
         uint16_t j;
-        for (j = 0; j < fade_samples; j++) {
+        for (j = 0; j < samples_needed && (abs_sample_start + j) < 16; j++) {
             int16_t left = (int16_t)(segment_data[j] & 0xFFFF);
             int16_t right = (int16_t)((segment_data[j] >> 16) & 0xFFFF);
-            
-            uint16_t fade_factor = (j * 100) / fade_samples;  // 0-100%淡入
+            uint16_t fade_factor = ((abs_sample_start + j) * 100) / 16;
             left = (int16_t)((int32_t)left * fade_factor / 100);
             right = (int16_t)((int32_t)right * fade_factor / 100);
-            
             segment_data[j] = ((uint32_t)(uint16_t)right << 16) | ((uint32_t)(uint16_t)left & 0xFFFF);
         }
     }
     
-    // 获取该段的播放音量因子 (0-100)
     uint8_t vol = g_loop_manager.segment_volume[segment_index];
     if (vol > 100) vol = 100;
 
-    // 混音到输出数据
     uint16_t j;
-    for (j = 0; j < samples_to_read; j++) {
+    for (j = 0; j < samples_needed; j++) {
         int16_t seg_left = (int16_t)(segment_data[j] & 0xFFFF);
         int16_t seg_right = (int16_t)((segment_data[j] >> 16) & 0xFFFF);
         int16_t out_left = (int16_t)(output_data[j] & 0xFFFF);
         int16_t out_right = (int16_t)((output_data[j] >> 16) & 0xFFFF);
         
-        // 混音：按段音量缩放 (vol: 0-100%)
         int32_t new_left = (int32_t)out_left + ((int32_t)seg_left * vol / 100);
         int32_t new_right = (int32_t)out_right + ((int32_t)seg_right * vol / 100);
         
-        // 软限幅
         new_left = __nds32__clips(new_left, 15);
         new_right = __nds32__clips(new_right, 15);
         
         output_data[j] = ((uint32_t)(uint16_t)new_right << 16) | ((uint32_t)(uint16_t)new_left & 0xFFFF);
     }
-    
-    // 更新段播放位置
-    segment->play_position++;
 
-    // 不频繁打印播放状态，避免卡顿
-    // DBG("Segment %d playback: position %lu/%lu\n",
-    //     segment_index, (unsigned long)segment->play_position, (unsigned long)segment->length_pages);
-
-    return 1;  // 成功播放
+    return 1;
 }
 
 /**
@@ -1569,14 +1822,15 @@ void loop_process_playback_uint32(uint32_t* output_data, uint8_t* buffer, uint16
         }
     }
 #else
-    /* 全片擦除期间，轮询BUSY位，输出静音 */
+    /* 全片擦除期间：通过存储抽象层查询 BUSY，输出静音等待完成 */
     if (g_loop_manager.chip_erase_pending) {
-        if (FlashPartition_LooperIsErasing()) {
+        if (LooperStorage_IsBusy(&g_looper_storage)) {
             uint16_t i;
             for (i = 0; i < length; i++) { output_data[i] = 0; }
             return;
         }
         g_loop_manager.chip_erase_pending = 0;
+        g_loop_manager.storage_ready = 1;  /* 擦除完成，存储后端就绪 */
         SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_CLEAN;
         SysParam_Save();
     }
@@ -1635,8 +1889,9 @@ void loop_start_new_segment(void)
     uint8_t flash_dev_id = (uint8_t)(new_segment % LOOPER_FLASH_DEV_COUNT);
 #else
     uint8_t flash_dev_id = 0; /* 单Flash模式不使用 */
+    (void)flash_dev_id;  /* 消除编译警告：单Flash模式下不使用此变量 */
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
-
+    (void)new_segment;  /* 在单Flash模式下未使用此参数 */
     /* 在该Flash设备内寻找已用空间的末尾，新段紧接其后
      * 每颗Flash内各段独立寻址，互不影响                                  */
     uint32_t max_end_address = 0x000000;
@@ -1690,16 +1945,26 @@ void loop_start_new_segment(void)
     g_loop_manager.segments[new_segment].is_active     = 1;
     g_loop_manager.segments[new_segment].state         = SEGMENT_RECORDING;
     g_loop_manager.segments[new_segment].play_position = 0;
+    g_loop_manager.segments[new_segment].rec_partial_count = 0;
+    g_loop_manager.segments[new_segment].play_page_offset  = 0;
+    g_loop_manager.segments[new_segment].play_page_valid   = 0;
 #if LOOPER_MULTI_FLASH_ENABLE
     g_loop_manager.segments[new_segment].flash_dev_id  = flash_dev_id;
 #endif
     
     // 更新活跃段计数
-    /* 第一段录制开始时，将Flash状态标记为USED并保存 */
+    /* 第一段录制开始时，将存储状态标记为USED并保存
+     * PSRAM 是 volatile（掉电即失），不需要标记 USED，否则下次启动会误擦 NOR Flash */
     if (g_loop_manager.active_segments == 0) {
-        SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
-        SysParam_Save();
-        DBG("[Looper] Flash status saved as USED (first segment recording)\n");
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        if (!g_looper_storage.initialized ||
+            g_looper_storage.info.type != LOOPER_STORAGE_PSRAM)
+#endif
+        {
+            SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
+            SysParam_Save();
+            DBG("[Looper] Flash status saved as USED (first segment recording)\n");
+        }
     }
     g_loop_manager.active_segments++;
     
@@ -1741,13 +2006,40 @@ void loop_stop_current_segment(uint8_t segment_index)
     }
     
 #if LOOPER_IO_BUFFER_ENABLE
-    /* 停止录制前，将写缓冲中所有待写数据刷入Flash */
     looper_flush_write_all(segment_index);
 #endif
 
+    if (segment->rec_partial_count > 0) {
+        memset(&segment->rec_partial_buf[segment->rec_partial_count], 0,
+               LOOPER_PSRAM_PAGE_SIZE - segment->rec_partial_count);
+        uint32_t flush_offset = segment->start_address + 
+                                segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        LooperStorageStatus_t flush_result = LooperStorage_Write(&g_looper_storage, flush_offset, 
+                                            segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+        if (flush_result == LOOPER_STORAGE_OK) {
+            segment->length_pages++;
+            segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+        }
+#else
+#if LOOPER_MULTI_FLASH_ENABLE
+        FlashStatus_t flush_result = FlashPartition_LooperWriteByDev(
+            segment->flash_dev_id, flush_offset, segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+#else
+        FlashStatus_t flush_result = FlashPartition_LooperWrite(
+            flush_offset, segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+#endif
+        if (flush_result == FLASH_OK) {
+            segment->length_pages++;
+            segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+        }
+#endif
+        segment->rec_partial_count = 0;
+    }
+
     // 在录制结尾复制前面的数据，确保循环平滑
     uint8_t copy_pages_to_add = 10;  // 复制前10页数据
-    uint8_t copy_buffer[192];
+    uint8_t copy_buffer[LOOPER_PSRAM_PAGE_SIZE];
     
     // 确保有数据可以复制
     if (segment->length_pages == 0) {
@@ -1765,48 +2057,70 @@ void loop_stop_current_segment(uint8_t segment_index)
     for (page_count = 0; page_count < copy_pages_to_add; page_count++) {
         // 计算要复制的源页地址（循环使用段开头的数据）
         uint32_t source_page_index = page_count % segment->length_pages;
-        uint32_t source_offset = segment->start_address + source_page_index * g_loop_manager.page_size;
+        uint32_t source_offset = segment->start_address + source_page_index * LOOPER_PSRAM_PAGE_SIZE;
         
         /* 读取源页数据（同一颗Flash，读写dev_id相同） */
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        /* 使用存储抽象层 */
+        LooperStorageStatus_t read_result = LooperStorage_Read(&g_looper_storage, source_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
+        if (read_result != LOOPER_STORAGE_OK) {
+            DBG("Storage read error at offset %lu: %d\n",
+                (unsigned long)source_offset, read_result);
+            break;
+        }
+#else
+        /* 使用传统 Flash API */
 #if LOOPER_MULTI_FLASH_ENABLE
         FlashStatus_t read_result = FlashPartition_LooperReadByDev(
-            segment->flash_dev_id, source_offset, copy_buffer, 192);
+            segment->flash_dev_id, source_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
         if (read_result != FLASH_OK) {
             DBG("Flash dev%d read error at offset %lu: %d\n",
                 segment->flash_dev_id, (unsigned long)source_offset, read_result);
 #else
         FlashStatus_t read_result = FlashPartition_LooperRead(
-            source_offset, copy_buffer, 192);
+            source_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
         if (read_result != FLASH_OK) {
             DBG("Flash read error at offset %lu: %d\n",
                 (unsigned long)source_offset, read_result);
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
             break;
         }
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
         
         /* 写入到段结尾（同一颗Flash） */
         uint32_t dest_offset = segment->start_address + 
-                               (segment->length_pages + page_count) * g_loop_manager.page_size;
+                               (segment->length_pages + page_count) * LOOPER_PSRAM_PAGE_SIZE;
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        /* 使用存储抽象层 */
+        LooperStorageStatus_t write_result = LooperStorage_Write(&g_looper_storage, dest_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
+        if (write_result != LOOPER_STORAGE_OK) {
+            DBG("Storage write error at offset %lu: %d\n",
+                (unsigned long)dest_offset, write_result);
+            break;
+        }
+#else
+        /* 使用传统 Flash API */
 #if LOOPER_MULTI_FLASH_ENABLE
         FlashStatus_t write_result = FlashPartition_LooperWriteByDev(
-            segment->flash_dev_id, dest_offset, copy_buffer, 192);
+            segment->flash_dev_id, dest_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
         if (write_result != FLASH_OK) {
             DBG("Flash dev%d write error at offset %lu: %d\n",
                 segment->flash_dev_id, (unsigned long)dest_offset, write_result);
 #else
         FlashStatus_t write_result = FlashPartition_LooperWrite(
-            dest_offset, copy_buffer, 192);
+            dest_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
         if (write_result != FLASH_OK) {
             DBG("Flash write error at offset %lu: %d\n",
                 (unsigned long)dest_offset, write_result);
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
             break;
         }
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
     }
     
     // 更新段长度（包含复制的页）
     segment->length_pages += copy_pages_to_add;
-    segment->length_bytes = segment->length_pages * g_loop_manager.page_size;  // 同步更新字节数
+    segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
     
     DBG("Stop segment %d: recorded %lu pages (%lu bytes) with end-copy (copied %d pages)\n", 
         segment_index, (unsigned long)(segment->length_pages - copy_pages_to_add),
@@ -1820,7 +2134,9 @@ void loop_stop_current_segment(uint8_t segment_index)
     } else {
         // 设置段为播放状态
         segment->state = SEGMENT_PLAYING;
-        segment->play_position = 0;  // 重置播放位置
+        segment->play_position = 0;
+        segment->play_page_offset = 0;
+        segment->play_page_valid = 0;
 
 #if LOOPER_IO_BUFFER_ENABLE
         /* 初始化读缓存，预填播放数据 */
@@ -1856,6 +2172,9 @@ void loop_clear_all_segments(void)
         g_loop_manager.segments[i].is_active = 0;
         g_loop_manager.segments[i].state = SEGMENT_INACTIVE;
         g_loop_manager.segments[i].play_position = 0;
+        g_loop_manager.segments[i].rec_partial_count = 0;
+        g_loop_manager.segments[i].play_page_offset = 0;
+        g_loop_manager.segments[i].play_page_valid = 0;
     }
     
     g_loop_manager.active_segments = 0;
@@ -1905,6 +2224,9 @@ void loop_clear_segment(uint8_t segment_index)
     g_loop_manager.segments[segment_index].play_position  = 0;
     g_loop_manager.segments[segment_index].trim_start_page = 0;
     g_loop_manager.segments[segment_index].trim_end_page   = 0;
+    g_loop_manager.segments[segment_index].rec_partial_count = 0;
+    g_loop_manager.segments[segment_index].play_page_offset  = 0;
+    g_loop_manager.segments[segment_index].play_page_valid   = 0;
 
     /* 重新统计活跃段数 */
     uint8_t i, cnt = 0;
@@ -1945,13 +2267,14 @@ void loop_handle_segment_button(uint8_t segment_index)
         DBG("[Looper] Chip erase done (detected on segment button), unblocked\n");
     }
 #else
-    /* 全片擦除中先轮询BUSY位 */
+    /* 全片擦除中通过存储抽象层查询 BUSY */
     if (g_loop_manager.chip_erase_pending) {
-        if (FlashPartition_LooperIsErasing()) {
+        if (LooperStorage_IsBusy(&g_looper_storage)) {
             DBG("[Looper] Flash erase in progress, input ignored\n");
             return;
         }
         g_loop_manager.chip_erase_pending = 0;
+        g_loop_manager.storage_ready = 1;
         DBG("[Looper] Chip erase done (detected on segment button)\n");
     }
 #endif /* LOOPER_MULTI_FLASH_ENABLE */
@@ -2088,11 +2411,20 @@ void loop_set_segment_recording(uint8_t segment_index)
         segment->is_active     = 1;
         segment->state         = SEGMENT_RECORDING;
         segment->play_position = 0;
+        segment->rec_partial_count = 0;
+        segment->play_page_offset  = 0;
+        segment->play_page_valid   = 0;
 
         if (g_loop_manager.active_segments == 0) {
-            SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
-            SysParam_Save();
-            DBG("[Looper] Flash status saved as USED (seg%d first recording)\n", segment_index);
+#if LOOPER_USE_STORAGE_ABSTRACTION
+            if (!g_looper_storage.initialized ||
+                g_looper_storage.info.type != LOOPER_STORAGE_PSRAM)
+#endif
+            {
+                SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_USED;
+                SysParam_Save();
+                DBG("[Looper] Flash status saved as USED (seg%d first recording)\n", segment_index);
+            }
         }
         g_loop_manager.active_segments++;
 
@@ -2152,7 +2484,9 @@ void loop_set_segment_playing(uint8_t segment_index)
     }
     
     segment->state = SEGMENT_PLAYING;
-    segment->play_position = 0;  // 重置播放位置
+    segment->play_position = 0;
+    segment->play_page_offset = 0;
+    segment->play_page_valid = 0;
 
 #if LOOPER_IO_BUFFER_ENABLE
     /* 初始化读缓存，预填播放数据 */
@@ -2179,11 +2513,28 @@ void loop_set_segment_stopped(uint8_t segment_index)
     
     if (segment->state == SEGMENT_RECORDING) {
 #if LOOPER_IO_BUFFER_ENABLE
-        /* 刷出所有待写数据 */
         looper_flush_write_all(segment_index);
 #endif
-        // 如果是从录制状态停止，需要保存录制信息
-        segment->length_bytes = segment->length_pages * g_loop_manager.page_size;
+        if (segment->rec_partial_count > 0) {
+            memset(&segment->rec_partial_buf[segment->rec_partial_count], 0,
+                   LOOPER_PSRAM_PAGE_SIZE - segment->rec_partial_count);
+            uint32_t flush_offset = segment->start_address + 
+                                    segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+#if LOOPER_USE_STORAGE_ABSTRACTION
+            LooperStorage_Write(&g_looper_storage, flush_offset, 
+                               segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+#else
+#if LOOPER_MULTI_FLASH_ENABLE
+            FlashPartition_LooperWriteByDev(segment->flash_dev_id, flush_offset, 
+                                            segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+#else
+            FlashPartition_LooperWrite(flush_offset, segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
+#endif
+#endif
+            segment->length_pages++;
+            segment->rec_partial_count = 0;
+        }
+        segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
         
         DBG("Segment %d recording stopped: %lu pages\n", 
             segment_index, (unsigned long)segment->length_pages);
@@ -2196,8 +2547,8 @@ void loop_set_segment_stopped(uint8_t segment_index)
 #endif
 
     segment->state = SEGMENT_STOPPED;
-    
-    // 智能更新全局状态：不干扰其他段
+    segment->play_page_valid = 0;
+    segment->play_page_offset = 0;
     loop_update_global_state();
     
     DBG("Segment %d set to STOPPED state\n", segment_index);
@@ -3067,6 +3418,7 @@ uint8_t loop_get_segment_flash(uint8_t segment_index)
 void looper_init_read_cache(uint8_t segment_index)
 {
     if (segment_index >= MAX_SEGMENTS) return;
+    if (!s_read_cache) return;
 
     SegmentInfo_t *seg = &g_loop_manager.segments[segment_index];
     LooperReadCache_t *cache = &s_read_cache[segment_index];
@@ -3097,6 +3449,14 @@ void looper_init_read_cache(uint8_t segment_index)
     for (i = 0; i < fill; i++) {
         uint32_t offset = seg->start_address +
                           cache->prefetch_page * g_loop_manager.page_size;
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        /* 使用存储抽象层：读取失败时终止预填，避免缓存中存放无效数据 */
+        if (LooperStorage_Read(&g_looper_storage, offset, cache->buf[cache->head],
+                               LOOPER_PAGE_DATA_SIZE) != LOOPER_STORAGE_OK) {
+            break;
+        }
+#else
+        /* 使用传统 Flash API */
 #if LOOPER_MULTI_FLASH_ENABLE
         FlashPartition_LooperReadByDev(seg->flash_dev_id, offset,
                                        cache->buf[cache->head],
@@ -3104,7 +3464,8 @@ void looper_init_read_cache(uint8_t segment_index)
 #else
         FlashPartition_LooperRead(offset, cache->buf[cache->head],
                                   LOOPER_PAGE_DATA_SIZE);
-#endif
+#endif /* LOOPER_MULTI_FLASH_ENABLE */
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
         cache->head = (cache->head + 1) % LOOPER_READ_CACHE_PAGES;
         cache->prefetch_page++;
         if (cache->prefetch_page >= trim_end) {
@@ -3126,6 +3487,7 @@ void looper_init_read_cache(uint8_t segment_index)
 void looper_flush_write_all(uint8_t segment_index)
 {
     if (segment_index >= MAX_SEGMENTS) return;
+    if (!s_write_ring) return;
 
     SegmentInfo_t *seg = &g_loop_manager.segments[segment_index];
     LooperWriteRing_t *ring = &s_write_ring[segment_index];
@@ -3177,18 +3539,28 @@ void looper_flush_io(void)
 #endif
 
         {
+        LooperStorageStatus_t wr;
         uint32_t write_offset = seg->start_address +
                                 ring->flush_page * g_loop_manager.page_size;
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        /* 使用存储抽象层 */
+        wr = LooperStorage_Write(&g_looper_storage, write_offset, ring->buf[ring->tail], LOOPER_PAGE_DATA_SIZE);
+#else
+        /* 使用传统 Flash API */
 #if LOOPER_MULTI_FLASH_ENABLE
-        FlashPartition_LooperWriteByDev(seg->flash_dev_id, write_offset,
+        wr = (LooperStorageStatus_t)FlashPartition_LooperWriteByDev(seg->flash_dev_id, write_offset,
                                         ring->buf[ring->tail],
                                         LOOPER_PAGE_DATA_SIZE);
 #else
-        FlashPartition_LooperWrite(write_offset, ring->buf[ring->tail],
+        wr = (LooperStorageStatus_t)FlashPartition_LooperWrite(write_offset, ring->buf[ring->tail],
                                    LOOPER_PAGE_DATA_SIZE);
-#endif
-        ring->tail = (ring->tail + 1) % LOOPER_WRITE_BUF_PAGES;
-        ring->flush_page++;
+#endif /* LOOPER_MULTI_FLASH_ENABLE */
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
+        /* 只有写入成功才推进指针，避免写失败时丢失数据 */
+        if (wr == LOOPER_STORAGE_OK) {
+            ring->tail = (ring->tail + 1) % LOOPER_WRITE_BUF_PAGES;
+            ring->flush_page++;
+        }
         }
     }
 
@@ -3208,23 +3580,33 @@ void looper_flush_io(void)
 #endif
 
         {
+        LooperStorageStatus_t rr;
         uint32_t read_offset = seg->start_address +
                                cache->prefetch_page * g_loop_manager.page_size;
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        /* 使用存储抽象层 */
+        rr = LooperStorage_Read(&g_looper_storage, read_offset, cache->buf[cache->head], LOOPER_PAGE_DATA_SIZE);
+#else
+        /* 使用传统 Flash API */
 #if LOOPER_MULTI_FLASH_ENABLE
-        FlashPartition_LooperReadByDev(seg->flash_dev_id, read_offset,
+        rr = (LooperStorageStatus_t)FlashPartition_LooperReadByDev(seg->flash_dev_id, read_offset,
                                        cache->buf[cache->head],
                                        LOOPER_PAGE_DATA_SIZE);
 #else
-        FlashPartition_LooperRead(read_offset, cache->buf[cache->head],
+        rr = (LooperStorageStatus_t)FlashPartition_LooperRead(read_offset, cache->buf[cache->head],
                                   LOOPER_PAGE_DATA_SIZE);
-#endif
-        cache->head = (cache->head + 1) % LOOPER_READ_CACHE_PAGES;
-        cache->prefetch_page++;
-        {
-            uint32_t te = (seg->trim_end_page > 0 && seg->trim_end_page <= seg->length_pages)
-                          ? seg->trim_end_page : seg->length_pages;
-            if (cache->prefetch_page >= te) {
-                cache->prefetch_page = seg->trim_start_page;
+#endif /* LOOPER_MULTI_FLASH_ENABLE */
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
+        /* 只有读取成功才推进指针，避免缓存中填入无效数据 */
+        if (rr == LOOPER_STORAGE_OK) {
+            cache->head = (cache->head + 1) % LOOPER_READ_CACHE_PAGES;
+            cache->prefetch_page++;
+            {
+                uint32_t te = (seg->trim_end_page > 0 && seg->trim_end_page <= seg->length_pages)
+                              ? seg->trim_end_page : seg->length_pages;
+                if (cache->prefetch_page >= te) {
+                    cache->prefetch_page = seg->trim_start_page;
+                }
             }
         }
         }
@@ -3260,7 +3642,6 @@ void looper_flush_io(void)
 void loop_check_flash_init_on_boot(void)
 {
     uint8_t status;
-    uint8_t dev;
 
     /* 如果SysParam尚未初始化（magic不匹配），视为USED（安全起见需擦除） */
     if (SysParam_Get()->magic != SYS_PARAM_MAGIC) {
@@ -3317,7 +3698,6 @@ void loop_on_app_exit(void)
 {
     uint8_t status;
     uint8_t i;
-    uint8_t dev;
     FlashStatus_t ret;
 
     status = SYSPARAM_LOOPER()->flash_status;
@@ -3332,11 +3712,26 @@ void loop_on_app_exit(void)
             g_loop_manager.segments[i].length_pages = 0;
             g_loop_manager.segments[i].length_bytes = 0;
             g_loop_manager.segments[i].play_position = 0;
+            g_loop_manager.segments[i].rec_partial_count = 0;
+            g_loop_manager.segments[i].play_page_offset  = 0;
+            g_loop_manager.segments[i].play_page_valid   = 0;
         }
         g_loop_manager.active_segments = 0;
         g_loop_manager.sector_address  = 0;
         g_loop_manager.record_length   = 0;
         g_loop_manager.play_position   = 0;
+
+#if LOOPER_USE_STORAGE_ABSTRACTION
+        /* PSRAM 是 volatile，掉电即失，无需擦除。只需更新状态位并设置就绪。 */
+        if (g_looper_storage.initialized &&
+            g_looper_storage.info.type == LOOPER_STORAGE_PSRAM) {
+            SYSPARAM_LOOPER()->flash_status = LOOPER_FLASH_STATUS_CLEAN;
+            SysParam_Save();
+            g_loop_manager.storage_ready = 1;
+            DBG("[Looper] App exit: PSRAM is volatile, marked CLEAN immediately\n");
+            return;
+        }
+#endif /* LOOPER_USE_STORAGE_ABSTRACTION */
 
 #if LOOPER_MULTI_FLASH_ENABLE
         /* 并行异步擦除所有 Looper Flash，完成后由轮询线程保存CLEAN */
@@ -3494,9 +3889,19 @@ static uint8_t AudioLooper_MetronomeGetBeatsPerMeasure(void) {
 }
 
 // ============================================================================
+// 叠录功能接口前向声明
+// ============================================================================
+
+uint8_t AudioLooper_IsOverdubSupported(void);
+void AudioLooper_SetOverdubMode(uint8_t segment_index, uint8_t enabled);
+uint8_t AudioLooper_GetOverdubMode(uint8_t segment_index);
+void AudioLooper_SetOverdubMixMode(uint8_t mix_mode);
+uint8_t AudioLooper_GetOverdubMixMode(void);
+
+// ============================================================================
 // 全局AudioLooper接口实例（类似BG_flash_manager）
 // ============================================================================
-AudioLooper_t AudioLooper = {
+AudioLooper_t AudioLooper __attribute__((section(".data"))) = {
     .Init = AudioLooper_Init,
     .InitWithFlashType = AudioLooper_InitWithFlashType,
     .Reset = AudioLooper_Reset,
@@ -3550,8 +3955,206 @@ AudioLooper_t AudioLooper = {
     .CheckFlashInitOnBoot = AudioLooper_CheckFlashInitOnBoot,
     .OnAppExit = AudioLooper_OnAppExit,
 
+    // 叠录功能支持
+    .IsOverdubSupported = AudioLooper_IsOverdubSupported,
+    .SetOverdubMode = AudioLooper_SetOverdubMode,
+    .GetOverdubMode = AudioLooper_GetOverdubMode,
+    .SetOverdubMixMode = AudioLooper_SetOverdubMixMode,
+    .GetOverdubMixMode = AudioLooper_GetOverdubMixMode,
+
 #if LOOPER_IO_BUFFER_ENABLE
     // IO缓冲区刷新
     .FlushIO = AudioLooper_FlushIO,
 #endif
 };
+
+/* ============================================================================
+ * AudioLooper 接口函数实现 - 叠录功能
+ * ============================================================================ */
+
+/**
+ * @brief 检查是否支持叠录
+ */
+uint8_t AudioLooper_IsOverdubSupported(void)
+{
+    return loop_is_overdub_supported();
+}
+
+/**
+ * @brief 设置段叠录模式
+ */
+void AudioLooper_SetOverdubMode(uint8_t segment_index, uint8_t enabled)
+{
+    loop_set_overdub_mode(segment_index, enabled);
+}
+
+/**
+ * @brief 获取段叠录模式
+ */
+uint8_t AudioLooper_GetOverdubMode(uint8_t segment_index)
+{
+    return loop_get_overdub_mode(segment_index);
+}
+
+/**
+ * @brief 设置叠录混音模式
+ */
+void AudioLooper_SetOverdubMixMode(uint8_t mix_mode)
+{
+    loop_set_overdub_mix_mode(mix_mode);
+}
+
+/**
+ * @brief 获取叠录混音模式
+ */
+uint8_t AudioLooper_GetOverdubMixMode(void)
+{
+    return loop_get_overdub_mix_mode();
+}
+
+/* ============================================================================
+ * 定时器驱动的异步 I/O 实现（解决 PSRAM 总线争用噪声）
+ *
+ * 使用硬件定时器 Timer2Interrupt (1ms) 驱动，每次 tick 执行一次 I/O
+ * ============================================================================ */
+
+#if LOOPER_IO_BUFFER_ENABLE
+
+/* 定时器驱动状态 */
+static volatile uint8_t  s_looper_io_timer_active = 0;   /* 定时器是否激活 */
+
+/**
+ * @brief Looper I/O 定时器 tick 函数（在 Timer2Interrupt 中调用）
+ *
+ * 每 1ms 被硬件定时器中断调用一次，立即执行 I/O 操作。
+ * 在定时器中断上下文中执行，与音频主循环完全隔离。
+ */
+void LooperIO_TimerTick(void)
+{
+    if (!s_looper_io_timer_active) {
+        return;  /* 未激活，直接返回 */
+    }
+    
+    /* 每次tick都执行I/O（1ms间隔足够，不会过载） */
+    looper_flush_io();
+    
+    /* 调试：每1000次打印一次状态 */
+    static uint32_t dbg_cnt = 0;
+    if (++dbg_cnt >= 1000) {
+        dbg_cnt = 0;
+        DBG("[LooperIO] Tick OK, active=%d\n", s_looper_io_timer_active);
+    }
+}
+
+/**
+ * @brief 初始化 Looper I/O 定时器驱动系统
+ *
+ * 仅初始化状态变量，实际驱动由硬件定时器 Timer2Interrupt 提供。
+ * 需要在 Timer2Interrupt 中手动添加 LooperIO_TimerTick() 调用。
+ */
+void LooperIO_TimerInit(void)
+{
+    s_looper_io_timer_active = 0;
+    
+    DBG("[LooperIO] Timer driver initialized (hw: Timer2, 1ms/tick)\n");
+}
+
+/**
+ * @brief 启动 Looper I/O 定时器
+ *
+ * 当录制或播放开始时调用，允许定时器 tick 执行 I/O 操作。
+ */
+void LooperIO_TimerStart(void)
+{
+    s_looper_io_timer_active = 1;
+}
+
+/**
+ * @brief 停止 Looper I/O 定时器
+ *
+ * 当所有录制和播放停止时调用。
+ * 停止后立即执行最后一次 flush，确保缓冲区数据落盘。
+ */
+void LooperIO_TimerStop(void)
+{
+    s_looper_io_timer_active = 0;
+    
+    /* 立即执行最后一次 flush，确保数据完整性 */
+    looper_flush_io();
+}
+
+/**
+ * @brief 紧急 flush 写缓冲区（在音频回调后调用）
+ *
+ * 当定时器驱动 I/O 不足时（缓冲区快满），由音频循环紧急调用此函数。
+ * 只刷写写缓冲区，不执行读缓存预填和擦除，减少耗时。
+ *
+ * 设计原则：
+ * - 尽量快速完成，避免影响下一帧音频
+ * - 每次最多刷 2 页，控制单次耗时 < 0.5ms
+ */
+void looper_emergency_flush(void)
+{
+    uint8_t i;
+    static uint32_t emergency_cnt = 0;
+    
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+        SegmentInfo_t *seg = &g_loop_manager.segments[i];
+        LooperWriteRing_t *ring = &s_write_ring[i];
+
+        if (seg->state != SEGMENT_RECORDING) continue;
+        if (wring_count(ring) == 0) continue;
+
+#if !defined(LOOPER_STORAGE_TYPE) || (LOOPER_STORAGE_TYPE != LOOPER_STORAGE_TYPE_PSRAM)
+        /* Flash 模式：检查擦除状态 */
+#if LOOPER_MULTI_FLASH_ENABLE
+        if (looper_poll_erase_pending(seg->flash_dev_id)) continue;
+#else
+        if (g_loop_manager.chip_erase_pending) continue;
+        if (i < 2 && s_partial_erase[i].pending) continue;
+#endif
+#endif
+
+        {
+            LooperStorageStatus_t wr;
+            uint32_t write_offset = seg->start_address +
+                                    ring->flush_page * g_loop_manager.page_size;
+
+#if LOOPER_USE_STORAGE_ABSTRACTION
+            wr = LooperStorage_Write(&g_looper_storage, write_offset, ring->buf[ring->tail], LOOPER_PAGE_DATA_SIZE);
+#else
+#if LOOPER_MULTI_FLASH_ENABLE
+            wr = (LooperStorageStatus_t)FlashPartition_LooperWriteByDev(seg->flash_dev_id, write_offset,
+                                    ring->buf[ring->tail],
+                                    LOOPER_PAGE_DATA_SIZE);
+#else
+            wr = (LooperStorageStatus_t)FlashPartition_LooperWrite(write_offset, ring->buf[ring->tail],
+                                       LOOPER_PAGE_DATA_SIZE);
+#endif
+#endif
+
+            if (wr == LOOPER_STORAGE_OK) {
+                ring->tail = (ring->tail + 1) % LOOPER_WRITE_BUF_PAGES;
+                ring->flush_page++;
+                emergency_cnt++;
+                
+                /* 调试：每100次打印 */
+                if (emergency_cnt % 100 == 1) {
+                    DBG("[LooperIO] Emergency flush #%lu seg%d ok\n",
+                        (unsigned long)emergency_cnt, i);
+                }
+            } else {
+                /* 写入失败：打印错误但不阻塞 */
+                static uint32_t err_cnt = 0;
+                if (++err_cnt % 200 == 1) {
+                    DBG("[LooperIO] Emergency flush err #%lu seg%d: status=%d\n",
+                        (unsigned long)err_cnt, i, wr);
+                }
+            }
+            
+            /* 每次紧急 flush 最多处理 1 个段，避免超时 */
+            break;
+        }
+    }
+}
+#endif /* LOOPER_IO_BUFFER_ENABLE */

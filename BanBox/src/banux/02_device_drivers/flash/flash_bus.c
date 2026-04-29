@@ -92,7 +92,10 @@ FlashStatus_t FlashBus_Register(FlashDevice_t *dev)
 
     DBG("[FlashBus] Registered: %s (id=%d, type=%s)\n",
         dev->name, dev->id,
-        dev->type == FLASH_TYPE_NOR ? "NOR" : "NAND");
+        dev->type == FLASH_TYPE_NOR    ? "NOR"   :
+        dev->type == FLASH_TYPE_NAND   ? "NAND"  :
+        dev->type == FLASH_TYPE_PSRAM  ? "PSRAM" :
+        dev->type == FLASH_TYPE_SDCARD ? "SDCARD": "UNKNOWN");
 
     return FLASH_OK;
 }
@@ -191,19 +194,26 @@ void FlashBus_ForEach(void (*callback)(FlashDevice_t *dev, void *user_data), voi
 
 FlashStatus_t FlashDev_Init(FlashDevice_t *dev)
 {
+    FlashStatus_t ret;
+
     if (!dev || !dev->ops || !dev->ops->init)
     {
         return FLASH_ERR_PARAM;
     }
 
-    /* 鍒濆鍖朇S寮曡剼 */
+    /* 初始化CS引脚 */
     if (dev->cs.init)
     {
         dev->cs.init();
         dev->cs.deselect();
     }
 
-    return dev->ops->init(dev);
+    ret = dev->ops->init(dev);
+    if (ret == FLASH_OK)
+    {
+        dev->initialized = true;   /* 初始化成功才置位,所有读写保护依赖此标志 */
+    }
+    return ret;
 }
 
 FlashStatus_t FlashDev_Read(FlashDevice_t *dev, uint32_t addr, uint8_t *buf, uint32_t len)
@@ -277,7 +287,11 @@ void FlashDev_PrintInfo(FlashDevice_t *dev)
         return;
 
     DBG("  [%d] %s\n", dev->id, dev->name);
-    DBG("      Type: %s\n", dev->type == FLASH_TYPE_NOR ? "NOR" : "NAND");
+    DBG("      Type: %s\n",
+        dev->type == FLASH_TYPE_NOR    ? "NOR"   :
+        dev->type == FLASH_TYPE_NAND   ? "NAND"  :
+        dev->type == FLASH_TYPE_PSRAM  ? "PSRAM" :
+        dev->type == FLASH_TYPE_SDCARD ? "SDCARD": "UNKNOWN");
     DBG("      Status: %s\n", dev->initialized ? "Ready" : "Not Init");
 
     if (dev->initialized)

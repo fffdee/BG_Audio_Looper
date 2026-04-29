@@ -47,6 +47,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "product_def.h"  /* 需要 EFFECT_GRAPHICS_EN 宏定义 */
 #include "bg_shell.h"  /* 需要 ShellModule_t, OPT 宏等定义 */
 
 #ifdef __cplusplus
@@ -56,6 +57,8 @@ extern "C" {
 /*******************************************************************************
  * 初始化函数
  ******************************************************************************/
+
+#if EFFECT_GRAPHICS_EN
 
 /**
  * @brief 注册效果图Shell命令
@@ -82,6 +85,15 @@ int ShellCmdGraph_Execute(int argc, char *argv[]);
  *   fx <id> <param> <val>- 设置参数值
  */
 int ShellCmdFx_Execute(int argc, char *argv[]);
+
+#else /* !EFFECT_GRAPHICS_EN */
+
+/* Stub functions when effect graph is disabled */
+static inline void ShellCmdGraph_Register(void) { }
+static inline int ShellCmdGraph_Execute(int argc, char *argv[]) { (void)argc; (void)argv; return -1; }
+static inline int ShellCmdFx_Execute(int argc, char *argv[]) { (void)argc; (void)argv; return -1; }
+
+#endif /* EFFECT_GRAPHICS_EN */
 
 #ifdef __cplusplus
 }

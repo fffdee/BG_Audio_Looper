@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "bg_audio_io_manager.h"
+#include "product_def.h"
 #include "audio_adc.h"
 #include "adc_interface.h"
 #include "dac_interface.h"
@@ -49,7 +50,7 @@
 #include "shell_cmd_graph.h"
 
 /* BanGTsynth 合成器源节点 */
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
 #include "bangtsynth_node.h"
 #endif
 
@@ -60,6 +61,7 @@
 #include "shell_cmd_sysmon.h"
 #include "shell_cmd_metronome.h"
 #include "shell_cmd_mode.h"
+#include "shell_cmd_flash.h"
 
 #include "bt_manager.h"
 #include "rtos_api.h"
@@ -87,7 +89,7 @@ void BG_audio_Init(uint16_t SampleRate);
 void Audio_loop(void);
 
 // ==================== 管理器结构体初始化 ====================
-BG_Audio_Io_Manager BG_AudioManager = {
+BG_Audio_Io_Manager BG_AudioManager __attribute__((section(".data"))) = {
 	.Audio_Init = BG_audio_Init,
 	.Audio_Loop = Audio_loop,
 	.Audio_data = {
@@ -334,10 +336,12 @@ static void InitAudioEffects(uint16_t SampleRate)
 // 初始化控制GPIO输出
 static void InitControlGPIO(void)
 {
-	// GPIO_B6: 扬声器/耳机切换
+#ifndef BANBOX_II
+	// GPIO_B6: 扬声器/耳机切换 (BANBOX_II: B6 = PSRAM CS, 不能做扬声器切换)
 	GPIO_RegOneBitClear(GPIO_B_IE, GPIOB6);
 	GPIO_RegOneBitSet(GPIO_B_OE, GPIOB6);
 	GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
+#endif
 
 	// GPIO_A1: 麦克风指示
 	GPIO_RegOneBitClear(GPIO_A_IE, GPIOA1);
@@ -353,17 +357,18 @@ static void InitControlGPIO(void)
 // 初始化GPIO检测引脚
 static void InitDetectionGPIO(void)
 {
-#ifdef LINE1_INPUT_DETECT_EN
+#if LINE1_INPUT_DETECT_EN && !defined(BANBOX_II)
 	// GPIO_A_INDEX29: 吉他检测输入，上拉
+	// (BANBOX_II: A29 = NAND Flash CS, 不能做吉他检测)
 	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX29);
 	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX29);
 	GPIO_RegOneBitSet(GPIO_A_PU, GPIO_INDEX29);
 	GPIO_RegOneBitClear(GPIO_A_PD, GPIO_INDEX29);
 #endif
-#ifdef LINE2_INPUT_DETECT_EN
+#if LINE2_INPUT_DETECT_EN
 	ADC_PowerkeyChannelEnable();
 #endif
-#ifdef MIC_INPUT_DETECT_EN
+#if MIC_INPUT_DETECT_EN
 	// GPIO_A_INDEX30: 麦克风检测输入，下拉
 	GPIO_RegOneBitSet(GPIO_A_IE, GPIO_INDEX30);
 	GPIO_RegOneBitClear(GPIO_A_OE, GPIO_INDEX30);
@@ -392,7 +397,7 @@ void BG_audio_Init(uint16_t SampleRate)
 
 	/* 开机提示音：在此处播放可保证 DAC 已就绪，且堆内存尚未被音效占用
 	 * osPortMalloc(19KB) 在 ~74KB 空闲堆时成功；InitAudioEffects 之后仅剩 ~9KB */
-	RemindSound_PlayByName("on");
+	//RemindSound_PlayByName("on");
 
 	InitAudioEffects(SampleRate);
 	InitControlGPIO();
@@ -404,6 +409,7 @@ void BG_audio_Init(uint16_t SampleRate)
 	ShellIOManager_Init();
 
 	// ========== Effect Graph 初始化 ==========
+#if EFFECT_GRAPHICS_EN
 	DBG("[Audio] Initializing Effect Graph...\n");
 	
 	// 1. 初始化 Effect Graph 核心模块
@@ -419,9 +425,9 @@ void BG_audio_Init(uint16_t SampleRate)
 		}
 
 		// 3. 自动应用保存的chain graphs（如果有的话）
-		// NOTE: 临时禁用自动应用，避免覆盖包含metronome和looper的17节点配置
-		// TODO: 更新sys_param默认配置为17节点后再启用
-		// ChainGraph_AutoApplyOnStartup();
+		// 【修复】启用自动应用，从保存的配置恢复音频链路
+		DBG("[Audio] Auto-applying saved chain graphs...\n");
+		ChainGraph_AutoApplyOnStartup();
 
 		// 4. 自动挂载效果图到VFS（供命令行和文件系统访问）
 		EffectGraphVfs_TryAutoMount();
@@ -429,6 +435,7 @@ void BG_audio_Init(uint16_t SampleRate)
 		// 5. 挂接实际音频设备回调
 		BG_AudioIO_SetupEffectGraphCallbacks();
 	}
+#endif /* EFFECT_GRAPHICS_EN */
 
 	// 6. 注册 Shell 命令（支持 CDC/BLE 远程控制）
 	ShellCmdGraph_Register();
@@ -442,11 +449,12 @@ void BG_audio_Init(uint16_t SampleRate)
 	// 9. 注册模式切换命令（主音箱/副音箱模式）
 	ShellCmdMode_Register();
 
-	DBG("[Audio] Effect Graph initialized successfully\n");
+        // 10. 注册 NAND Flash 测试命令
+        ShellCmdFlash_Register();
 	// ==========================================
 
-	// 初始化Audio Looper（使用NOR Flash）
-	AudioLooper.InitWithFlashType(FLASH_TYPE_NOR);
+	// 开机自动初始化 Audio Looper（存储类型由 LOOPER_STORAGE_TYPE 宏决定，默认自动检测）
+	AudioLooper.Init();
 	
 	// 初始化节拍器模块
 	MetronomeModule.Init();
@@ -475,12 +483,16 @@ void BG_audio_Init(uint16_t SampleRate)
 static void SetVolume(void)
 {
 	uint16_t DC_Data;
-	GPIO_RegOneBitClear(GPIO_A_ANA_EN, GPIO_INDEX28);
-	GPIO_RegOneBitSet(GPIO_A_ANA_EN, GPIO_INDEX28);
-	DC_Data = ADC_SingleModeDataGet(ADC_CHANNEL_GPIOA28) * 4;
+#if HW_VOLUME_ADC_EN
+	GPIO_RegOneBitClear(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
+	GPIO_RegOneBitSet(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
+	DC_Data = ADC_SingleModeDataGet(HW_VOLUME_ADC_CHANNEL) * 4;
+#else
+	/* BANBOX_II: 无音量旋钮，固定最大音量 */
+	DC_Data = 0x3FFF;
+#endif
 	AudioDAC_VolSet(DAC0, DC_Data, DC_Data);
 	AudioDAC_VolSet(DAC1, DC_Data, 0);
-
 }
 
 
@@ -533,6 +545,10 @@ static void SaveDataToSbcBuffer(uint8_t *data, uint16_t dataLen)
  */
 static void ProcessGuitarOutput()
 {
+#ifdef BANBOX_II
+	/* BANBOX_II: A29 = NAND Flash CS, 不能读取吉他检测信号 */
+	(void)0;
+#else
 	if (!GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX29))
 	{
 
@@ -547,7 +563,7 @@ static void ProcessGuitarOutput()
 
 
 	}
-
+#endif /* !BANBOX_II */
 }
 
 /**
@@ -577,13 +593,16 @@ static void ProcessSpeakerSwitch(void)
 {
 	if (GPIO_RegOneBitGet(GPIO_B_IN, GPIO_INDEX4))
 	{
-		GPIO_RegOneBitClear(GPIO_B_OUT, GPIOB6);
+#ifndef BANBOX_II
+		GPIO_RegOneBitClear(GPIO_B_OUT, GPIOB6); /* BANBOX_II: B6 = PSRAM CS */
+#endif
 		BG_AudioManager.Audio_data.det_state  = SPEAKER_DET;
 	}
 	else
 	{
-
-		GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6);
+#ifndef BANBOX_II
+		GPIO_RegOneBitSet(GPIO_B_OUT, GPIOB6); /* BANBOX_II: B6 = PSRAM CS */
+#endif
 		BG_AudioManager.Audio_data.det_state  = EARPHONE_DET;
 	}
 }
@@ -772,6 +791,7 @@ static void OutputAudioData(uint16_t len)
 static void AudioLoopWithBT(uint32_t *bt_audio_buffer)
 {
 	static uint32_t last_bt_sample_rate = 0;  /* 上次蓝牙采样率，用于检测变化 */
+	static uint16_t s_gpio_div_bt = 0;        /* GPIO 检测降频计数器 */
 	uint16_t RealLen = 0;
 	uint16_t n = 0;
 	uint16_t i;
@@ -815,9 +835,13 @@ static void AudioLoopWithBT(uint32_t *bt_audio_buffer)
 
 			ReadAudioData(n, &RealLen);
 			ApplyAudioEffects(RealLen);
-			ProcessGuitarOutput();
-			ProcessMicOutput();
-			ProcessSpeakerSwitch();
+			if (++s_gpio_div_bt >= 50)
+			{
+				s_gpio_div_bt = 0;
+				ProcessGuitarOutput();
+				ProcessMicOutput();
+				ProcessSpeakerSwitch();
+			}
 			BuildFinalOutput(RealLen, bt_audio_buffer);
 			handle_usb_record(RealLen);
 			OutputAudioData(RealLen);
@@ -833,14 +857,21 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 	uint16_t RealLen = 0;
 	uint16_t i;
 	const uint16_t MIN_SAMPLE = 48;
+	/* GPIO 检测降频：插拔事件是慢速 DC 事件，每 50 帧 (~50ms) 检测一次即可，
+	 * 避免每帧 GPIO 写操作产生 ~1kHz 方波，耦合到 ADC 输入造成高频底噪 */
+	static uint16_t s_gpio_div_minimal = 0;
 
-	if (AudioADC_DataLenGet(ADC0_MODULE) >= MIN_SAMPLE)
+	while(AudioADC_DataLenGet(ADC0_MODULE) >= MIN_SAMPLE)
 	{
 		ReadAudioData(MIN_SAMPLE, &RealLen);
 		ApplyAudioEffects(RealLen);
-		ProcessGuitarOutput();
-		ProcessMicOutput();
-		ProcessSpeakerSwitch();
+		if (++s_gpio_div_minimal >= 50)
+		{
+			s_gpio_div_minimal = 0;
+			ProcessGuitarOutput();
+			ProcessMicOutput();
+			ProcessSpeakerSwitch();
+		}
 
 		/* Looper录制处理 - 录制效果处理后的吉他信号（guitar_buf_out）
 		 * guitar_buf_out 是 ApplyAudioEffects + ProcessGuitarOutput 之后的信号，
@@ -977,6 +1008,7 @@ static void AudioLoopWithGraph(void)
 	const uint16_t MIN_FRAME = 48;
 	const uint16_t MAX_FRAME = BT_DECODED_BUFFER_SIZE;  /* 与缓冲区大小对齐 */
 	static bool last_bt_streaming = false;  /* 上一帧的蓝牙状态 */
+	static uint16_t s_gpio_div_graph = 0;   /* GPIO 检测降频计数器 */
 
 	// if(flag_on){
 	// 	const char *cmd = "sb -t 60 20 3000\r";
@@ -1079,12 +1111,11 @@ static void AudioLoopWithGraph(void)
 		graph->drive_mode = DRIVE_MODE_ADC;
 	}
 	
-	/* 6. 【修复加速Bug】Looper 录制/播放时强制 frame_size=48
-	 * 原因：每个 Flash 页固定存储 48 个采样。若 frame_size>48：
-	 *   - 录制端只保存前 48 个采样（丢弃剩余），但时间消耗了 frame_size 个采样
-	 *   - 播放端每次 play_position++ 固定推进 1 页(48采样)，但时间轴走了 frame_size
-	 *   二者均导致音频时间压缩 → 播放加速
-	 * 强制 frame_size=48 使录制和播放速率完全匹配 Flash 页大小
+	/* 6. Looper 录制/播放时强制 frame_size=48
+	 * 原因：Looper 每帧处理 48 个采样，凑满 64 采样(256字节)写一页 PSRAM。
+	 * 若 frame_size>48，录制端只保存前 48 个采样（丢弃剩余），
+	 * 导致音频时间压缩 → 播放加速。
+	 * 强制 frame_size=48 使录制和播放速率匹配
 	 */
 	if (AudioLooper.IsRecording() || AudioLooper.IsPlaying()) {
 		if (frame_size > 48) {
@@ -1092,14 +1123,23 @@ static void AudioLoopWithGraph(void)
 		}
 	}
 
+	/* 【内存保护】frame_size 绝不能超过 EFFECT_GRAPH_BUFFER_SIZE，否则节点缓冲区溢出 */
+	if (frame_size > EFFECT_GRAPH_BUFFER_SIZE) {
+		frame_size = EFFECT_GRAPH_BUFFER_SIZE;
+	}
+
 	/* 调用 Effect Graph 处理 */
 	processed_samples = EffectGraph_Process(frame_size);
 	
 	if (processed_samples > 0) {
-		/* 更新 GPIO 检测状态 */
-		ProcessGuitarOutput();
-		ProcessMicOutput();
-		ProcessSpeakerSwitch();
+		/* 更新 GPIO 检测状态（每 50 帧一次，避免高频 GPIO 切换耦合噪声） */
+		if (++s_gpio_div_graph >= 50)
+		{
+			s_gpio_div_graph = 0;
+			ProcessGuitarOutput();
+			ProcessMicOutput();
+			ProcessSpeakerSwitch();
+		}
 		
 		BG_AudioManager.Audio_data.guitar_count++;
 		BG_AudioManager.Audio_data.mic_count++;
@@ -1117,33 +1157,18 @@ static void AudioLoopWithGraph(void)
  * 音频主循环处理函数
  */
 /**
- * @brief USB 热插拔检测与重初始化（与 UI 系统解耦，直接在音频循环中处理）
+ * @brief USB 状态更新（不再动态 enable/disable，避免 USB 重初始化失败）
  *
- * 每次 Audio_loop 调用时通过计数器限速，约每 100ms 轮询一次 USB 连接状态。
- * 状态变化时立即调用 UsbDeviceEnable / UsbDeviceDisable，无需依赖 UI 更新路径。
+ * USB 在 InitUSBDevice() 中已一次性完整初始化（OTG_DeviceModeSel + UsbDevicePlayInit + UsbDeviceEnable）。
+ * 这里只更新连接状态供状态栏显示，不再对硬件做任何操作。
  */
 static void USB_HotplugCheck(void)
 {
-	static bool last_usb_connected = false;
-	static uint32_t check_counter   = 0;
-
-	/* 限速：不需要每次音频循环都轮询，每 ~100ms 检查一次即可 */
-	if (++check_counter < 100)
-		return;
-	check_counter = 0;
-
+	/* 只记录连接状态，不做 enable/disable操作 */
 	bool now_connected = OTG_PortDeviceIsLink();
-	if (now_connected == last_usb_connected)
-		return;
-
-	last_usb_connected = now_connected;
-	if (now_connected) {
-		DBG("[USB] Device connected - re-enabling USB device\n");
-		UsbDeviceEnable();
-	} else {
-		DBG("[USB] Device disconnected - disabling USB device\n");
-		UsbDeviceDisable();
-	}
+	// if (now_connected) {
+	// 	DBG("[USB] Device linked\n");
+	// }
 }
 
 void Audio_loop(void)
@@ -1152,7 +1177,7 @@ void Audio_loop(void)
 	/* ==== 混合模式：蓝牙用老方案，非蓝牙用 Effect Graph ==== */
 
 	BtStackServiceRun();
-	SetVolume();
+	SetVolume();  /* 【修复】恢复音量设置，否则所有音频静音 */
 	OTG_DeviceRequestProcess();
 
 	/* CDC串口任务处理 - 必须周期性调用以接收数据 */
@@ -2052,13 +2077,18 @@ static void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_co
 		}
 	}
 
-	if (gCtrlVars.reverb_unit.enable && gCtrlVars.reverb_unit.wet_scale > 0) {
+	/* ct==NULL 时无论 enable 状态如何都必须旁通：
+	 * ChainGraph 恢复参数后 enable 可能被重新置 1，但内存申请已经失败(ct=NULL)，
+	 * AudioEffectReverbApply 遇到 ct==NULL 会直接 return 而不写 out_buf，
+	 * 导致 out_buf 全零 → ADC 信号路径静音。 */
+	if (gCtrlVars.reverb_unit.enable && gCtrlVars.reverb_unit.wet_scale > 0
+	    && gCtrlVars.reverb_unit.ct != NULL) {
 		AudioEffectReverbApply(&gCtrlVars.reverb_unit,
 		                       (int16_t *)in_bufs[0],
 		                       (int16_t *)out_buf,
 		                       len);
 	} else {
-		/* 旁路：直接复制 */
+		/* 旁路：直接复制（含 ct==NULL / enable==0 / wet==0 三种情况） */
 		uint16_t i;
 		for (i = 0; i < len; i++) {
 			out_buf[i] = in_bufs[0][i];
@@ -2087,162 +2117,135 @@ void BG_AudioIO_PrepareForShutdown(void)
 
 void BG_AudioIO_SetupEffectGraphCallbacks(void)
 {
-	EffectNode_t* node = NULL;
+	EffectGraphRuntime_t *graph = EffectGraph_GetInstance();
+	EffectNode_t *node;
+	uint8_t i;
+	uint8_t adc_mixer_found = 0;  /* 第一个 mixer 被当作 adc_mixer */
 	
-	DBG("[Audio] Setting up Effect Graph callbacks...\n");
+	DBG("[Audio] Setting up Effect Graph callbacks (by type)...\n");
 	
-	/* ===== 输入源节点回调 ===== */
-	
-	/* 挂接吉他输入节点 */
-	node = EffectGraph_FindNodeByName("guitar_in");
-	if (node) {
-		node->func.source = ADC0_ReadGuitarData;
-		node->avail_func = ADC0_GetAvailableData;
-		DBG("[Audio] Guitar input callback registered\n");
+	if (!graph) {
+		DBG("[Audio] ERROR: No graph instance!\n");
+		return;
 	}
 	
-	/* 挂接麦克风输入节点 */
-	node = EffectGraph_FindNodeByName("mic_in");
-	if (node) {
-		node->func.source = ADC1_ReadMicData;
-		node->avail_func = ADC1_GetAvailableData;
-		DBG("[Audio] Mic input callback registered\n");
-	}
-	
-	/* 挂接 USB 输入节点（Speaker） */
-	node = EffectGraph_FindNodeByName("usb_in");
-	if (node) {
-		node->func.source = USB_ReadAudioData;
-		node->avail_func = USB_GetAvailableData;
-		DBG("[Audio] USB input callback registered\n");
-	}
-	
-	/* 挂接蓝牙输入节点 */
-	node = EffectGraph_FindNodeByName("bt_in");
-	if (node) {
-		node->func.source = BT_ReadAudioData;
-		node->avail_func = BT_GetAvailableData;
-		DBG("[Audio] BT input callback registered\n");
-	}
-	
-	/* ===== 输出节点回调 ===== */
-	
-	/* 挂接 DAC 输出节点 */
-	node = EffectGraph_FindNodeByName("dac_out");
-	if (node) {
-		node->func.sink = DAC0_WriteSpeakerData;
-		DBG("[Audio] DAC output callback registered\n");
-	}
-	
-	/* 挂接 USB 输出节点（Mic） */
-	node = EffectGraph_FindNodeByName("usb_out");
-	if (node) {
-		node->func.sink = USB_WriteAudioData;
-		DBG("[Audio] USB output callback registered\n");
-	}
-	
-	/* ===== 混音器节点回调 ===== */
-	
-	/* ADC 混音器 (专用处理: 4个单声道EQ输出合并成2个32位双声道) */
-	node = EffectGraph_FindNodeByName("adc_mixer");
-	if (node) {
-		node->func.process = ADC_Mixer_Process;
-		DBG("[Audio] ADC mixer callback registered\n");
-	}
-	
-	/* USB/BT 混音器 (包含节拍器输入) */
-	node = EffectGraph_FindNodeByName("usb_bt_mixer");
-	if (node) {
-		node->func.process = Mixer_Process;
-		DBG("[Audio] USB/BT mixer callback registered\n");
-	}
-	
-	/* Pre-Reverb 混音器 (EQ输出 + Looper播放) */
-	node = EffectGraph_FindNodeByName("pre_reverb_mixer");
-	if (node) {
-		node->func.process = Mixer_Process;
-		DBG("[Audio] Pre-Reverb mixer callback registered\n");
-	}
-	
-	/* 最终混音器 */
-	node = EffectGraph_FindNodeByName("final_mixer");
-	if (node) {
-		node->func.process = Mixer_Process;
-		DBG("[Audio] Final mixer callback registered\n");
-	}
-	
-	/* ===== 效果器节点回调 ===== */
-	
-	/* 扩展器 */
-	node = EffectGraph_FindNodeByName("expander");
-	if (node) {
-		node->func.process = Expander_Process;
-		DBG("[Audio] Expander callback registered\n");
-	}
-	
-	/* DRC */
-	node = EffectGraph_FindNodeByName("drc");
-	if (node) {
-		node->func.process = DRC_Process;
-		DBG("[Audio] DRC callback registered\n");
-	}
-	
-	/* 为所有 EQ 节点注册回调 - 遍历整个节点池确保不遗漏 */
-	{
-		EffectGraphRuntime_t *graph = EffectGraph_GetInstance();
-		uint8_t i;
-		if (graph) {
-			for (i = 0; i < graph->node_count; i++) {
-				node = &graph->nodes[i];
-				if (node->type == EFFECT_NODE_TYPE_EFFECT_EQ) {
-					node->func.process = EQ_Process;
-					DBG("[Audio] EQ callback registered for node %d (%s)\n", node->id, node->name);
-				}
+	/* 遍历所有节点，基于 type 注册回调，不依赖 name */
+	for (i = 0; i < graph->node_count; i++) {
+		node = &graph->nodes[i];
+		
+		switch (node->type) {
+		/* ===== 源节点 ===== */
+		case EFFECT_NODE_TYPE_SOURCE_ADC0:
+			node->func.source = ADC0_ReadGuitarData;
+			node->avail_func = ADC0_GetAvailableData;
+			DBG("[Audio] [%d] %s -> ADC0 guitar\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SOURCE_ADC1:
+			node->func.source = ADC1_ReadMicData;
+			node->avail_func = ADC1_GetAvailableData;
+			DBG("[Audio] [%d] %s -> ADC1 mic\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SOURCE_USB_IN:
+			node->func.source = USB_ReadAudioData;
+			node->avail_func = USB_GetAvailableData;
+			DBG("[Audio] [%d] %s -> USB in\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SOURCE_BT_IN:
+			node->func.source = BT_ReadAudioData;
+			node->avail_func = BT_GetAvailableData;
+			DBG("[Audio] [%d] %s -> BT in\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SOURCE_METRONOME:
+			node->func.source = Metronome_SourceCallback;
+			node->avail_func = Metronome_GetAvailCallback;
+			DBG("[Audio] [%d] %s -> Metronome\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY:
+			node->func.source = LooperPlay_SourceCallback;
+			node->avail_func = LooperPlay_GetAvailCallback;
+			DBG("[Audio] [%d] %s -> Looper play\n", i, node->name);
+			break;
+			
+#if BANGTSYNTH_EN
+		case EFFECT_NODE_TYPE_SOURCE_SYNTH:
+			node->func.source = BanGTsynth_SourceCallback;
+			node->avail_func = BanGTsynth_GetAvailCallback;
+			DBG("[Audio] [%d] %s -> Synth\n", i, node->name);
+			break;
+#endif
+			
+		/* ===== 输出节点 ===== */
+		case EFFECT_NODE_TYPE_SINK_DAC0:
+			node->func.sink = DAC0_WriteSpeakerData;
+			DBG("[Audio] [%d] %s -> DAC0 out\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SINK_USB_OUT:
+			node->func.sink = USB_WriteAudioData;
+			DBG("[Audio] [%d] %s -> USB out\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SINK_LOOPER_RECORD:
+			node->func.sink = LooperRecord_SinkCallback;
+			DBG("[Audio] [%d] %s -> Looper record\n", i, node->name);
+			break;
+			
+		/* ===== 效果器节点 ===== */
+		case EFFECT_NODE_TYPE_EFFECT_EQ:
+			node->func.process = EQ_Process;
+			DBG("[Audio] [%d] %s -> EQ\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_EFFECT_DRC:
+			node->func.process = DRC_Process;
+			DBG("[Audio] [%d] %s -> DRC\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_EFFECT_REVERB:
+			node->func.process = Reverb_Process;
+			DBG("[Audio] [%d] %s -> Reverb\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
+			node->func.process = Expander_Process;
+			DBG("[Audio] [%d] %s -> Expander\n", i, node->name);
+			break;
+			
+		/* ===== 混音器节点 ===== */
+		case EFFECT_NODE_TYPE_MIXER:
+			/* 第一个 mixer 如果有 4 个输入则用 ADC_Mixer_Process（合并4个单声道EQ到双声道）
+			 * 其余 mixer 用通用 Mixer_Process */
+			if (!adc_mixer_found && node->input_count >= 4) {
+				node->func.process = ADC_Mixer_Process;
+				adc_mixer_found = 1;
+				DBG("[Audio] [%d] %s -> ADC Mixer (4-ch)\n", i, node->name);
+			} else {
+				node->func.process = Mixer_Process;
+				DBG("[Audio] [%d] %s -> Mixer\n", i, node->name);
 			}
+			break;
+			
+		/* ===== 其他效果器节点 ===== */
+		case EFFECT_NODE_TYPE_EFFECT_HOWLING:
+		case EFFECT_NODE_TYPE_EFFECT_NOISE_GATE:
+		case EFFECT_NODE_TYPE_EFFECT_GAIN:
+		case EFFECT_NODE_TYPE_EFFECT_DELAY:
+		case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+		case EFFECT_NODE_TYPE_LOOPER:
+			node->func.process = Passthrough_Process;
+			DBG("[Audio] [%d] %s -> Passthrough\n", i, node->name);
+			break;
+			
+		default:
+			DBG("[Audio] [%d] %s -> Unknown type %d\n", i, node->name, node->type);
+			break;
 		}
 	}
 	
-	/* 混响 */
-	node = EffectGraph_FindNodeByName("reverb");
-	if (node) {
-		node->func.process = Reverb_Process;
-		DBG("[Audio] Reverb callback registered\n");
-	}
-	
-	/* ===== 节拍器和Looper节点回调 ===== */
-	
-	/* 节拍器源节点 */
-	node = EffectGraph_FindNodeByName("metronome");
-	if (node) {
-		node->func.source = Metronome_SourceCallback;
-		node->avail_func = Metronome_GetAvailCallback;
-		DBG("[Audio] Metronome source callback registered\n");
-	}
-	
-	/* Looper播放源节点 */
-	node = EffectGraph_FindNodeByName("looper_play");
-	if (node) {
-		node->func.source = LooperPlay_SourceCallback;
-		node->avail_func = LooperPlay_GetAvailCallback;
-		DBG("[Audio] Looper play source callback registered\n");
-	}
-	
-	/* Looper录制输出节点 */
-	node = EffectGraph_FindNodeByName("looper_record");
-	if (node) {
-		node->func.sink = LooperRecord_SinkCallback;
-		DBG("[Audio] Looper record sink callback registered\n");
-	}
-	
-#ifdef BANGTSYNTH_EN
-	/* BanGTsynth 合成器源节点 */
-	node = EffectGraph_FindNodeByName("synth_in");
-	if (node) {
-		node->func.source = BanGTsynth_SourceCallback;
-		node->avail_func = BanGTsynth_GetAvailCallback;
-		DBG("[Audio] BanGTsynth source callback registered\n");
-	}
-#endif
-	
-	DBG("[Audio] All Effect Graph callbacks setup completed\n");
+	DBG("[Audio] All %d node callbacks registered by type\n", graph->node_count);
 }

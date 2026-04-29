@@ -39,15 +39,16 @@ extern "C" {
 #endif
 
 #include "type.h"
+#include "product_def.h"   /* VFS_EN 宏定义在此头文件中 */
 
 /*******************************************************************************
- * 閰嶇疆瀹氫箟 - 閽堝宓屽叆寮忕郴缁熶紭鍖栵紝鍑忓皯鍐呭瓨鍗犵敤
+ * 配置定义 - 针对嵌入式系统优化，减少内存占用
  ******************************************************************************/
-#define VFS_MAX_PATH_LEN     64      /* 鏈�ぇ璺緞闀垮害 */
-#define VFS_MAX_NAME_LEN     16      /* 鑺傜偣鍚嶇О鏈�ぇ闀垮害 */
-#define VFS_MAX_CHILDREN     32      /* 姣忎釜鐩綍鏈�ぇ瀛愯妭鐐规暟锛堝鍔犱互鏀寔澶氳妭鐐规晥鏋滃浘锛�*/
-#define VFS_MAX_PARAM_LEN    32      /* 鍙傛暟鍊兼渶澶ч暱搴�*/
-#define VFS_MAX_NODES        256     /* 绯荤粺鏈�ぇ鑺傜偣鏁帮紙澧炲姞浠ユ敮鎸佹晥鏋滃浘VFS锛�*/
+#define VFS_MAX_PATH_LEN     64      /* 最大路径长度 */
+#define VFS_MAX_NAME_LEN     16      /* 节点名称最大长度 */
+#define VFS_MAX_CHILDREN     24      /* 每个目录最大子节点数 (/bin有19个命令) */
+#define VFS_MAX_PARAM_LEN    32      /* 参数值最大长度 */
+#define VFS_MAX_NODES        128     /* 系统最大节点数 */
 
 /*******************************************************************************
  * 鑺傜偣绫诲瀷瀹氫箟
@@ -235,5 +236,27 @@ typedef struct {
 #ifdef __cplusplus
 }
 #endif
+
+/* ============================================================
+ * VFS_EN=0 时：所有 API 替换为空操作宏，调用方无需修改
+ * ============================================================ */
+#if !VFS_EN
+#define Vfs_Init()                                      (VFS_OK)
+#define Vfs_GetRoot()                                   ((VfsNode_t*)NULL)
+#define Vfs_GetCwd()                                    ((VfsNode_t*)NULL)
+#define Vfs_GetCwdPath(buf, maxLen)                     (VFS_OK)
+#define Vfs_Cd(path)                                    (VFS_ERR_NOT_FOUND)
+#define Vfs_FindNode(path)                              ((VfsNode_t*)NULL)
+#define Vfs_CreateDir(parent, name)                     ((VfsNode_t*)NULL)
+#define Vfs_Mkdir(path)                                 ((VfsNode_t*)NULL)
+#define Vfs_CreateParam(par, name, desc, get, set, ud)  ((VfsNode_t*)NULL)
+#define Vfs_CreateDevice(parent, name, ud)              ((VfsNode_t*)NULL)
+#define Vfs_CreateNode(par, name, type, ud)             ((VfsNode_t*)NULL)
+#define Vfs_ReadParam(node, buf, maxLen)                (-1)
+#define Vfs_WriteParam(node, value)                     (VFS_ERR_NOT_FOUND)
+#define Vfs_ListDir(node, cb, ud)                       (VFS_OK)
+#define Vfs_RemoveNode(node)                            (VFS_OK)
+#define Vfs_GetTypeName(type)                           ("")
+#endif /* !VFS_EN */
 
 #endif /* __VFS_H__ */

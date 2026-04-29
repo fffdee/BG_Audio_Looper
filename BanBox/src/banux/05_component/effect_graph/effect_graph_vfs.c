@@ -11,7 +11,7 @@
 #include "effect_graph_vfs.h"
 
 /* 如果 VFS 功能被关闭，整个文件跳过编译 */
-#if USE_EFFECT_GRAPH_VFS
+#if USE_EFFECT_GRAPH_VFS && EFFECT_GRAPHICS_EN
 
 #include "effect_graph.h"
 #include "effect_graph_config.h"

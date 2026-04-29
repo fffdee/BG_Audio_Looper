@@ -59,7 +59,14 @@
 #include "otg_device_audio.h"
 #include "ctrlvars.h"
 #include "product_def.h"
-#include "app_upgrade.h"    /* A/B partition confirm + reboot-to-bootloader */
+#include "flash_boot.h"
+#if CDC_FILE_MANAGER_EN
+#include "cdc_file_manager.h"  /* USB CDC NAND Flash download */
+#endif
+#if FAT32_EN
+#include "fat32_nand.h"         /* NAND FAT32 file system */
+#include "looper_wav_export.h"  /* Audio Looper WAV export */
+#endif
 /* Page Manager - Now in BanGUI core (via bangui.h) */
 /* #include "page_manager.h" - Removed, use bangui.h */
 
@@ -79,14 +86,21 @@
 
 #include "drv_init.h"           /* Driver Framework Initialization */
 
+/* 事件发布-订阅系统 */
+#include "bg_event.h"
+
 /* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
 #include "remind_sound.h"
 
 /* BanGTsynth MIDI 合成器模块 */
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
 #include "bangtsynth_node.h"
 #include "bg_storage.h"
 #include "soundbank_manager.h"
+#include "bg_osal.h"              /* bg_tick_increment() */
+#if SYNTH_SD_NAND_PSRAM_EN
+#include "synth_sdnandpsram.h"    /* SYNTH_LoadTick() */
+#endif
 #endif
 
 //#define UI_EN
@@ -94,6 +108,7 @@
 extern void SysTickInit(void);
 extern void UsbAudioMicDacInit(void);
 extern void OTG_DeviceAudioInit();
+extern bool SYNTH_StartupSequence(void);  /* Synthesizer startup initialization */
 
 extern void UsbAudioTimer1msProcess(void);
 //__attribute__((section(".driver.isr")))
@@ -118,12 +133,6 @@ static uint32_t ble_tick_counter = 0;
 uint8_t power_flag = 0;
 uint8_t count_flag = 0;
 
-/* BLE OTA send adapter: bridges App_OTA_Init callback to BLE_Send. */
-extern uint16_t BLE_Send(uint8_t *data, uint16_t len);
-static void ble_ota_send(const uint8_t *data, uint16_t len)
-{
-    BLE_Send((uint8_t *)data, len);
-}
 uint16_t power_count =0;
 void Timer2Interrupt(void) {
 	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
@@ -148,6 +157,11 @@ void Timer2Interrupt(void) {
 	/* Increment BLE tick counter for sync command timing */
 	ble_tick_counter++;
 
+#if BANGTSYNTH_EN
+	/* 驱动合成器 HAL 毫秒计数器（独立于 FreeRTOS 调度器） */
+	bg_tick_increment();
+#endif
+
 	if(count_flag){
 		power_count++;
 	}
@@ -170,7 +184,7 @@ uint32_t sectorAddress = 0;
 uint32_t record_time;
 #define  MAX_BUF_LEN   4096
 
-uint8_t spimRate = SPIM_CLK_DIV_24M;
+uint8_t spimRate = SPIM_CLK_DIV_12M;
 uint8_t spimMode = 0;
 uint8_t SpimBuf_TX[MAX_BUF_LEN];
 uint8_t SpimBuf_RX[MAX_BUF_LEN];
@@ -183,8 +197,8 @@ static uint8_t DmaChannelMap[29] = {
 		255, //PERIPHERAL_ID_SPIS_RX = 0,		//0
 		255, //PERIPHERAL_ID_SPIS_TX,			//1
 		255, //PERIPHERAL_ID_TIMER3,			//2
-		255, //PERIPHERAL_ID_SDIO_RX,			//3
-		255, //PERIPHERAL_ID_SDIO_TX,			//4
+		8, //PERIPHERAL_ID_SDIO_RX,			//3  shared with SPIM_RX (ch0), half-duplex OK
+		9, //PERIPHERAL_ID_SDIO_TX,			//4  shared with SPIM_TX (ch1), half-duplex OK
 		255, //PERIPHERAL_ID_UART0_RX,			//5
 		255, //PERIPHERAL_ID_TIMER1,				//6
 		255, //PERIPHERAL_ID_TIMER2,				//7
@@ -214,6 +228,7 @@ static uint8_t DmaChannelMap[29] = {
 void spi_init(void) {
 	SPIM_SetDmaEn(1);
 	SPIM_IoConfig(SPIM_PORT0_A5_A6_A7);
+	Clock_SPIMClkDivSet(1);
 	DMA_ChannelAllocTableSet(DmaChannelMap);
 	if (SPIM_Init(spimMode, spimRate)) {
 		DBG("SPI init success!\n");
@@ -244,8 +259,8 @@ void spi_read(uint8_t *data,uint16_t size)
 void power_on()
 {
 
-	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
-	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+	// GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
+	// GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
 	CtrlVarsInit();
 
 	/* SPI and Driver Framework already initialized in main() */
@@ -275,11 +290,10 @@ void power_on()
 		}
 	}
 
-	DBG("[Task] Initializing Audio Manager...\n");
-	/* Initialize Audio Manager (includes AudioLooper which needs Flash) */
-	BG_AudioManager.Audio_Init(44100);
 
-#ifdef BANGTSYNTH_EN
+#if BANGTSYNTH_EN
+	DBG("[Task] Running synthesizer startup sequence...\n");
+	SYNTH_StartupSequence();
 	/*=====================================================
 	 * BanGTsynth MIDI 合成器初始化
 	 * 初始化 MIDI 控制器、音频处理流水线
@@ -305,9 +319,41 @@ void power_on()
 		DBG("[Task] BanGTsynth init FAILED\n");
 	}
 #endif
+	BG_AudioManager.Audio_Init(44100);
+
+#if FAT32_EN
+	/*=====================================================
+	 * NAND FAT32 文件系统初始化
+	 * 用于 WAV 导出和 CDC 文件管理器
+	 *====================================================*/
+	DBG("[Task] Initializing NAND FAT32 file system...\n");
+	{
+		BG_ERR ret = FAT32_NAND_Init();
+		if (ret == SUCCESS) {
+			DBG("[Task] NAND FAT32 initialized OK\n");
+			/* 初始化 WAV 导出功能 */
+			ret = LooperWAV_Init();
+			if (ret == SUCCESS) {
+				DBG("[Task] WAV export initialized (free: %u KB)\n",
+					LooperWAV_GetFreeSpace() / 1024);
+			} else {
+				DBG("[Task] WAV export init failed: %d\n", ret);
+			}
+		} else {
+			DBG("[Task] NAND FAT32 init failed: %d (may need format)\n", ret);
+		}
+	}
+#endif
+
+	/*=====================================================
+	 * 事件发布-订阅系统初始化
+	 * 必须在所有模块 Subscribe 之前调用
+	 *====================================================*/
+	DBG("[Task] Initializing Event System...\n");
+	BG_Event_Init();
 
 	DBG("[Task] Initializing UI System...\n");
-
+#ifdef UI_EN
 
 	BANGUI_QUICK_INIT();
 
@@ -327,14 +373,12 @@ void power_on()
 	DBG("[Main] Starting from Boot Screen...\n");
 
 	/* Initialize Shell LCD console adapter */
-#ifdef UI_EN
+
 	ShellLCD_Adapter_Init();
 #endif
 
 
 	DBG("[Main] Entering main loop...\n");
-	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
-	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
 
 	/* 开机提示音已在 BG_audio_Init() 内部播放（InitDAC 后、InitAudioEffects 前）*/
 
@@ -399,53 +443,6 @@ void pwr_butoon_handler()
 
 
 }
-/*============================================================================
- * Looper 4-Button Control
- * Button mapping:
- *   GPIO_A0  -> Segment 0 (鎸夐敭鎸変笅涓轰綆鐢靛钩)
- *   GPIO_B5  -> Segment 1
- *   GPIO_A15 -> Segment 2
- *   GPIO_A16 -> Segment 3 Sending
- *===========================================================================*/
-
-/* 鎸夐敭鐘舵�璁板綍锛堢敤浜庤竟娌挎娴嬶級 */
-static uint8_t looper_btn_last_state[4] = {1, 1, 1, 1};  /* 涓婃媺锛岄粯璁ら珮鐢靛钩 */
-static uint8_t looper_btn_debounce[4] = {0, 0, 0, 0};
-
-void Looper_ProcessButtons(void)
-{
-	uint8_t btn_current[4];
-	uint8_t i;
-
-	/* 璇诲彇4涓寜閿綋鍓嶇姸鎬侊紙浣庣數骞虫湁鏁堬級 */
-	btn_current[0] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX0) ? 1 : 0;
-	btn_current[1] = GPIO_RegOneBitGet(GPIO_B_IN, GPIO_INDEX5) ? 1 : 0;
-	btn_current[2] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX15) ? 1 : 0;
-	btn_current[3] = GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX16) ? 1 : 0;
-
-	/* 澶勭悊姣忎釜鎸夐敭 */
-	for (i = 0; i < 4; i++)
-	{
-		if (btn_current[i] == 0 && looper_btn_last_state[i] == 1)
-		{
-			/* 涓嬮檷娌挎娴�- 鎸夐敭鎸変笅 */
-			looper_btn_debounce[i]++;
-			if (looper_btn_debounce[i] >= 3)  /* 绠�崟鍘绘姈 */
-			{
-				/* 璋冪敤Looper娈垫寜閿鐞�*/
-				AudioLooper.SegmentButtonPress(i);
-				looper_btn_debounce[i] = 0;
-				looper_btn_last_state[i] = 0;
-			}
-		}
-		else if (btn_current[i] == 1)
-		{
-			/* 鎸夐敭閲婃斁 */
-			looper_btn_last_state[i] = 1;
-			looper_btn_debounce[i] = 0;
-		}
-	}
-}
 
 
 uint8_t time_count = 0;
@@ -464,47 +461,55 @@ void hardware_check()
 	}
 }
 
-void EffectTask() {
+void MainTask() {
 
 
+
+
+#if BUTTON_POWER_ENABLE
 	pwr_button_init();
-
+	/* 按钮开机模式：长按按钮1秒才能开机 */
 	while (!power_flag)
 	{
 		pwr_butoon_handler();
 	}
-	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
-	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+#else
+	/* 直接上电开机模式：无需按钮 */
+	power_on();
+	DBG("Power ON directly (BUTTON_POWER_ENABLE disabled)\n");
+#endif
 
-
-#ifdef BOOTLOADER_EN
-	/*
-	 * Step 8: Confirm A/B boot success.
-	 * Resets boot_fail_cnt to 0 in the partition flags so the bootloader
-	 * won't roll back to the other partition on the next reboot.
-	 * Safe no-op when boot_fail_cnt is already 0.
-	 */
-	App_ConfirmBootSuccess();
-
-	/* Step 9: Initialise BLE OTA engine.
-	 * Upgrade packets arrive via BLE AB01 write (0xAA SOF);
-	 * ACK/NACK responses are sent back via BLE_Send (AB02 notify). */
-	App_OTA_Init(ble_ota_send);
-#endif /* BOOTLOADER_EN */
+#if CDC_FILE_MANAGER_EN
+	/* Step 10: Initialise CDC file manager for NAND Flash download. */
+	CDC_FileManager_Init();
+#endif
 
 	while (1) {
 
-		pwr_butoon_handler();
-		/* Check and send delayed BLE sync responses */
+		//pwr_butoon_handler();
+		/* Check and send delayed BLE sync responses.
+		 * Skip during CDC upgrade mode — BLE API may use USB/BT state
+		 * that is unsafe to touch while CDC data path is active. */
 		extern void BLE_CheckSyncResponse(void);
 		BLE_CheckSyncResponse();
 
-#ifdef BOOTLOADER_EN
-		/* Drive OTA flash-erase and post-FINISH reboot (deferred work) */
-		App_OTA_Process();
-#endif /* BOOTLOADER_EN */
+#if CDC_FILE_MANAGER_EN
+		/* CDC 文件管理模式检测和处理 (NAND Flash 下载) */
+		if (!CDC_FileManager_InMode()) {
+			CDC_FileManager_CheckEnter();  /* 检测上位机 ENTER_NAND 命令 */
+		}
+		if (CDC_FileManager_InMode()) {
+			CDC_FileManager_Process();      /* 处理文件下载命令 */
+			continue;                        /* 跳过 Audio/Shell 循环 */
+		}
+#endif /* CDC_FILE_MANAGER_EN */
 
 		BG_AudioManager.Audio_Loop();
+
+#if BANGTSYNTH_EN && SYNTH_SD_NAND_PSRAM_EN
+		/* 驱动 Program Change 预热状态机（每主循环一步，无阻塞） */
+		SYNTH_LoadTick();
+#endif
 
 		/* Update UI System (handles button input, menu, status bar) */
 		if(UI_flag == 1){
@@ -535,160 +540,6 @@ void EffectTask() {
 		}
 	}
 }
-void FlashTask(void)
-{
-	spi_init();
-	BG_lcd.Init();
-	BG_lcd.Clear(RED);
-	// 鍒濆鍖栭棯瀛樼鐞嗗櫒
-	BG_flash_manager.Init();
-
-	// 璇诲彇涓や釜NOR Flash鐨処D
-	uint8_t manufacturerID, memoryType, deviceID;
-
-	DBG("========== Dual NOR Flash Test ==========\n");
-
-	// 璇诲彇绗竴涓狽OR Flash ID (CS = A21)
-	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID, DEV_NOR1);
-	DBG("NOR1 (CS=A21) ID: 0x%02X 0x%02X 0x%02X\n", manufacturerID, memoryType, deviceID);
-
-	// 璇诲彇绗簩涓狽OR Flash ID (CS = A22)
-	BG_flash_manager.ReadID(&manufacturerID, &memoryType, &deviceID, DEV_NOR2);
-	DBG("NOR2 (CS=A22) ID: 0x%02X 0x%02X 0x%02X\n", manufacturerID, memoryType, deviceID);
-
-	// ================== Flash璇诲啓娴嬭瘯 ==================
-	DBG("========== Flash Sector Test Start ==========\n");
-
-	// 娴嬭瘯鏁版嵁缂撳啿鍖�
-	uint8_t write_buffer[256];
-	uint8_t read_buffer[256];
-	uint32_t test_address = 0x1000; // 浣跨敤绗簩涓�K鎵囧尯锛岄伩寮�湴鍧�
-	uint16_t test_size = 256;		// 娴嬭瘯鏁版嵁澶у皬
-	uint16_t i;
-	bool test_passed = true;
-
-	// 1. 鍑嗗娴嬭瘯鏁版嵁
-	DBG("Preparing test data...\n");
-	for (i = 0; i < test_size; i++)
-	{
-		write_buffer[i] = (uint8_t)(0xA0 + (i & 0x0F)); // 妯″紡锛欰0,A1,A2...AF,A0,A1...
-	}
-
-	// 鎵撳嵃鍐欏叆鏁版嵁锛堝墠32瀛楄妭锛�	DBG("Write data (first 32 bytes):\n");
-	for (i = 0; i < 32 && i < test_size; i++)
-	{
-		if (i % 16 == 0)
-			DBG("\n0x%04X: ", i);
-		DBG("%02X ", write_buffer[i]);
-	}
-	DBG("\n");
-
-	// ========== 娴嬭瘯NOR1 (CS=A21) ==========
-	DBG("\n=== Testing NOR1 (CS=A21) ===\n");
-
-	// 鍗曞瓧鑺傛祴璇�
-	uint8_t test_byte = 0xAA;
-	uint8_t read_byte;
-	BG_flash_manager.SectorErase(test_address, DEV_NOR1);
-	BG_flash_manager.PageProgram(test_address, &test_byte, 1, DEV_NOR1);
-	BG_flash_manager.ReadData(test_address, &read_byte, 1, DEV_NOR1);
-	DBG("NOR1 single byte: wrote 0x%02X, read 0x%02X %s\n",
-	    test_byte, read_byte, (test_byte == read_byte) ? "[OK]" : "[FAIL]");
-	if (test_byte != read_byte) test_passed = false;
-
-	// 256瀛楄妭娴嬭瘯
-	BG_flash_manager.SectorErase(test_address, DEV_NOR1);
-	DBG("Writing %d bytes to NOR1 at 0x%08lX...\n", test_size, (unsigned long)test_address);
-	BG_flash_manager.PageProgram(test_address, write_buffer, test_size, DEV_NOR1);
-
-	memset(read_buffer, 0, sizeof(read_buffer));
-	BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NOR1);
-
-	// 楠岃瘉鏁版嵁
-	bool nor1_ok = true;
-	uint16_t error_count = 0;
-	for (i = 0; i < test_size; i++)
-	{
-		if (read_buffer[i] != write_buffer[i])
-		{
-			if (error_count < 5)
-				DBG("NOR1 mismatch at %d: wrote 0x%02X, read 0x%02X\n", i, write_buffer[i], read_buffer[i]);
-			error_count++;
-			nor1_ok = false;
-		}
-	}
-	if (nor1_ok)
-		DBG("NOR1 verification PASSED - All %d bytes match\n", test_size);
-	else
-	{
-		DBG("NOR1 verification FAILED - %d errors\n", error_count);
-		test_passed = false;
-	}
-
-	// ========== 娴嬭瘯NOR2 (CS=A22) ==========
-	DBG("\n=== Testing NOR2 (CS=A22) ===\n");
-
-	// 鍗曞瓧鑺傛祴璇�
-	test_byte = 0x55;
-	BG_flash_manager.SectorErase(test_address, DEV_NOR2);
-	BG_flash_manager.PageProgram(test_address, &test_byte, 1, DEV_NOR2);
-	BG_flash_manager.ReadData(test_address, &read_byte, 1, DEV_NOR2);
-	DBG("NOR2 single byte: wrote 0x%02X, read 0x%02X %s\n",
-	    test_byte, read_byte, (test_byte == read_byte) ? "[OK]" : "[FAIL]");
-	if (test_byte != read_byte) test_passed = false;
-
-	// 256瀛楄妭娴嬭瘯 - 浣跨敤涓嶅悓鐨勬祴璇曟ā寮�
-	for (i = 0; i < test_size; i++)
-	{
-		write_buffer[i] = (uint8_t)(0x50 + (i & 0x0F)); // 妯″紡锛�0,51,52...5F
-	}
-
-	BG_flash_manager.SectorErase(test_address, DEV_NOR2);
-	DBG("Writing %d bytes to NOR2 at 0x%08lX...\n", test_size, (unsigned long)test_address);
-	BG_flash_manager.PageProgram(test_address, write_buffer, test_size, DEV_NOR2);
-
-	memset(read_buffer, 0, sizeof(read_buffer));
-	BG_flash_manager.ReadData(test_address, read_buffer, test_size, DEV_NOR2);
-
-	// 楠岃瘉鏁版嵁
-	bool nor2_ok = true;
-	error_count = 0;
-	for (i = 0; i < test_size; i++)
-	{
-		if (read_buffer[i] != write_buffer[i])
-		{
-			if (error_count < 5)
-				DBG("NOR2 mismatch at %d: wrote 0x%02X, read 0x%02X\n", i, write_buffer[i], read_buffer[i]);
-			error_count++;
-			nor2_ok = false;
-		}
-	}
-	if (nor2_ok)
-		DBG("NOR2 verification PASSED - All %d bytes match\n", test_size);
-	else
-	{
-		DBG("NOR2 verification FAILED - %d errors\n", error_count);
-		test_passed = false;
-	}
-
-	// ========== 鏄剧ず娴嬭瘯缁撴灉 ==========
-	if (test_passed)
-	{
-		DBG("\n========== Dual NOR Flash Test PASSED ==========\n");
-		BG_lcd.Clear(GREEN);
-	}
-	else
-	{
-		DBG("\n========== Dual NOR Flash Test FAILED ==========\n");
-		BG_lcd.Clear(RED);
-	}
-
-	DBG("Flash Test Summary:\n");
-	DBG("- NOR1 (CS=A21): %s\n", nor1_ok ? "OK" : "FAIL");
-	DBG("- NOR2 (CS=A22): %s\n", nor2_ok ? "OK" : "FAIL");
-	DBG("========== Flash Test End ==========\n");
-}
-
 
 void FlashNewDriverTask(void)
 {
@@ -755,6 +606,10 @@ int main(void) {
 	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
 	DMA_ChannelAllocTableSet(DmaChannelMap);
 
+#if FLASH_BOOT_EN
+	report_up_grate();
+#endif
+
 	GIE_ENABLE();
 //	SysTickInit();
 	Timer_Config(TIMER2, 1000, 0);
@@ -783,12 +638,12 @@ int main(void) {
 	DBG("[Main] Driver Framework initialized successfully\n");
 
 
-	//xTaskCreate( (TaskFunction_t)FlashTask, "FlashTask", 512, NULL, 1, NULL );
+	
 	//xTaskCreate( (TaskFunction_t)FlashNewDriverTask, "FlashNewDriverTask", 1024, NULL, 1, NULL );
 	// xTaskCreate( (TaskFunction_t)InternalFlashTestTask, "InternalFlashTest", 1024, NULL, 1, NULL );
 
 
-	xTaskCreate((TaskFunction_t )EffectTask, "EffectTask", 4096, NULL, 1, NULL);
+	xTaskCreate((TaskFunction_t )MainTask, "MainTask", 4096, NULL, 1, NULL);
 
 
 	DBG("[Main] Starting FreeRTOS scheduler...\n");

@@ -13,6 +13,7 @@
 #include "otg_detect.h"
 #include <string.h>
 #include "battery_drv.h"
+#include "bg_event.h"
 
 /*===========================================================================
  * Icon definitions (8x8 pixel bitmaps)
@@ -355,6 +356,9 @@ void UI_StatusBar_ScanDetect(void)
 {
     uint8_t new_adc = UI_ADC_NONE;
     uint8_t new_dac = UI_DAC_NONE;
+    uint8_t old_adc = statusbar_data.adc_source;
+    uint8_t old_dac = statusbar_data.dac_output;
+    bool    old_usb = statusbar_data.usb_connected;
 
     /* Detect MIC input (A30, pull-down) */
     if (!GPIO_RegOneBitGet(UI_DET_MIC_PORT, UI_DET_MIC_PIN)) {
@@ -376,8 +380,29 @@ void UI_StatusBar_ScanDetect(void)
     /* Update status data */
     statusbar_data.adc_source = new_adc;
     statusbar_data.dac_output = new_dac;
+
+    /* 发布音频检测变化事件 */
+    if ((old_adc ^ new_adc) & UI_ADC_MIC) {
+        BG_EventAudioDetData_t det;
+        det.port_id   = 0;  /* MIC */
+        det.connected = (new_adc & UI_ADC_MIC) ? 1 : 0;
+        BG_EVT_PUB_DATA(EVT_AUDIO_MIC_IN, &det, sizeof(det));
+    }
+    if ((old_adc ^ new_adc) & UI_ADC_GUITAR) {
+        BG_EventAudioDetData_t det;
+        det.port_id   = 1;  /* Guitar */
+        det.connected = (new_adc & UI_ADC_GUITAR) ? 1 : 0;
+        BG_EVT_PUB_DATA(EVT_AUDIO_GUITAR_IN, &det, sizeof(det));
+    }
+    if ((old_dac ^ new_dac) & UI_DAC_HP) {
+        BG_EventAudioDetData_t det;
+        det.port_id   = 2;  /* Headphone */
+        det.connected = (new_dac & UI_DAC_HP) ? 1 : 0;
+        BG_EVT_PUB_DATA(EVT_AUDIO_HP_OUT, &det, sizeof(det));
+    }
     
-    /* Volume detection (ADC28) */
+    /* Volume detection (ADC) - only on boards with volume knob */
+#if HW_VOLUME_ADC_EN
     GPIO_RegOneBitSet(UI_VOLUME_ADC_PORT, UI_VOLUME_ADC_PIN);
     {
         uint16_t adc_val = ADC_SingleModeDataGet(UI_VOLUME_ADC_CHANNEL);
@@ -385,6 +410,10 @@ void UI_StatusBar_ScanDetect(void)
         if (new_volume > 100) new_volume = 100;
         statusbar_data.volume = new_volume;
     }
+#else
+    /* BANBOX_II: 无音量旋钮，固定为 100% */
+    statusbar_data.volume = 100;
+#endif
     
     /* Battery detection */
     statusbar_data.battery_level = battery_get_soc();
@@ -396,6 +425,8 @@ void UI_StatusBar_ScanDetect(void)
     
     /* Update USB connection status */
     statusbar_data.usb_connected = OTG_PortDeviceIsLink();
+
+    /* USB 插拔事件已移除：USB 状态只更新状态栏显示，不再通过事件系统通知 */
 }
 
 void UI_StatusBar_SetBTStatus(UI_BTStatus_t status)

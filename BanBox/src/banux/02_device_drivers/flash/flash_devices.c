@@ -4,6 +4,9 @@
 
 #include "flash_devices.h"
 #include "flash_nor_w25qxx.h"
+#include "flash_nand_w25n02.h"
+#include "psram_esp64h.h"
+#include "sd_card_driver.h"
 #include "debug.h"
 #include "gpio.h"
 #include <string.h>
@@ -13,6 +16,7 @@
  *===========================================================================*/
 
 /* Flash #0 CS控制 */
+#if HW_FLASH0_EN
 static void flash0_cs_init(void)
 {
     /* 配置为GPIO输出模式，初始为高电平（未选中） */
@@ -30,8 +34,10 @@ static void flash0_cs_deselect(void)
 {
     GPIO_RegOneBitSet(GPIO_A_OUT, FLASH0_CS_GPIO_MASK);    /* 输出高电平 */
 }
+#endif /* HW_FLASH0_EN */
 
 /* Flash #1 CS控制 */
+#if HW_FLASH1_EN
 static void flash1_cs_init(void)
 {
     /* 配置为GPIO输出模式，初始为高电平（未选中） */
@@ -49,13 +55,57 @@ static void flash1_cs_deselect(void)
 {
     GPIO_RegOneBitSet(GPIO_A_OUT, FLASH1_CS_GPIO_MASK);
 }
+#endif /* HW_FLASH1_EN */
+
+/* NAND Flash (W25N02) CS控制 */
+#if HW_NAND0_EN
+static void nand0_cs_init(void)
+{
+    GPIO_RegOneBitClear(GPIO_A_IE,  NAND0_CS_GPIO_MASK);
+    GPIO_RegOneBitSet(GPIO_A_OE,    NAND0_CS_GPIO_MASK);
+    GPIO_RegOneBitSet(GPIO_A_OUT,   NAND0_CS_GPIO_MASK); /* 默认高电平（未选中） */
+}
+
+static void nand0_cs_select(void)
+{
+    GPIO_RegOneBitClear(GPIO_A_OUT, NAND0_CS_GPIO_MASK);
+}
+
+static void nand0_cs_deselect(void)
+{
+    GPIO_RegOneBitSet(GPIO_A_OUT, NAND0_CS_GPIO_MASK);
+}
+#endif /* HW_NAND0_EN */
+
+/* PSRAM (ESP-PSRAM64H) CS控制 */
+#if HW_PSRAM0_EN
+static void psram0_cs_init(void)
+{
+    GPIO_RegOneBitClear(HW_PSRAM0_CS_GPIO_IE,  PSRAM0_CS_GPIO_MASK);
+    GPIO_RegOneBitSet(HW_PSRAM0_CS_GPIO_OE,    PSRAM0_CS_GPIO_MASK);
+    GPIO_RegOneBitSet(HW_PSRAM0_CS_GPIO_OUT,   PSRAM0_CS_GPIO_MASK); /* 默认高电平（未选中） */
+}
+
+static void psram0_cs_select(void)
+{
+    GPIO_RegOneBitClear(HW_PSRAM0_CS_GPIO_OUT, PSRAM0_CS_GPIO_MASK);
+}
+
+static void psram0_cs_deselect(void)
+{
+    GPIO_RegOneBitSet(HW_PSRAM0_CS_GPIO_OUT, PSRAM0_CS_GPIO_MASK);
+}
+#endif /* HW_PSRAM0_EN */
 
 /*===========================================================================
  * 设备实例
  *===========================================================================*/
 
-static FlashDevice_t *g_flash0 = NULL;  /* 系统Flash */
-static FlashDevice_t *g_flash1 = NULL;  /* 存储Flash */
+static FlashDevice_t *g_flash0 = NULL;  /* 系统Flash - NOR  */
+static FlashDevice_t *g_flash1 = NULL;  /* 存储Flash - NOR  */
+static FlashDevice_t *g_nand0  = NULL;  /* NAND Flash - W25N02 */
+static FlashDevice_t *g_psram0 = NULL;  /* PSRAM - ESP-PSRAM64H */
+static FlashDevice_t *g_sdcard0 = NULL; /* SD Card - SDIO */
 static bool g_devices_initialized = false;
 
 /*===========================================================================
@@ -76,6 +126,7 @@ FlashStatus_t FlashDevices_Init(void)
     FlashBus_Init();
     
     /* 创建Flash #0 (系统Flash) */
+#if HW_FLASH0_EN
     g_flash0 = W25Qxx_Create("flash0_sys",
                              flash0_cs_select,
                              flash0_cs_deselect,
@@ -100,9 +151,10 @@ FlashStatus_t FlashDevices_Init(void)
         DBG("[FlashDevices] Failed to init flash0\n");
         /* 继续执行，设备可能暂时离线 */
     }
+#endif /* HW_FLASH0_EN */
     
-    /* 创建Flash #1 (存储Flash) - 仅当硬件存在时 */
-#if FLASH1_CS_PIN != 0  /* 如果配置了Flash#1 */
+    /* 创建Flash #1 (存储Flash) - 仅旧板子有两片 NOR Flash */
+#if HW_FLASH1_EN
     g_flash1 = W25Qxx_Create("flash1_stor",
                              flash1_cs_select,
                              flash1_cs_deselect,
@@ -116,13 +168,80 @@ FlashStatus_t FlashDevices_Init(void)
             }
         }
     }
-#endif
-    
-    g_devices_initialized = true;
+#endif /* HW_FLASH1_EN */
+
+    /* 创建NAND Flash (W25N02) */
+#if HW_NAND0_EN
+    g_nand0 = W25N02_Create("nand0",
+                            nand0_cs_select,
+                            nand0_cs_deselect,
+                            nand0_cs_init);
+    if (g_nand0) {
+        ret = FlashBus_Register(g_nand0);
+        if (ret == FLASH_OK) {
+            ret = FlashDev_Init(g_nand0);
+            if (ret == FLASH_OK) {
+                DBG("[FlashDevices] NAND0 (W25N02) init OK\n");
+                /* 异步扫描坏块表（先用 RAM 内的空表，待命令触发或任务批完成后再扫） */
+                DBG("[FlashDevices] Run 'flash -b' to scan bad blocks\n");
+            } else {
+                DBG("[FlashDevices] NAND0 init failed (ret=%d)\n", ret);
+            }
+        } else {
+            DBG("[FlashDevices] NAND0 register failed\n");
+        }
+    } else {
+        DBG("[FlashDevices] Failed to create nand0\n");
+    }
+#endif /* HW_NAND0_EN */
+
+    /* 创建PSRAM (ESP-PSRAM64H) */
+#if HW_PSRAM0_EN
+    g_psram0 = PSRAM64H_Create("psram0",
+                               psram0_cs_select,
+                               psram0_cs_deselect,
+                               psram0_cs_init);
+    if (g_psram0) {
+        ret = FlashBus_Register(g_psram0);
+        if (ret == FLASH_OK) {
+            ret = FlashDev_Init(g_psram0);
+            if (ret == FLASH_OK) {
+                DBG("[FlashDevices] PSRAM0 (ESP-PSRAM64H) init OK\n");
+            } else {
+                DBG("[FlashDevices] PSRAM0 init failed (ret=%d)\n", ret);
+            }
+        } else {
+            DBG("[FlashDevices] PSRAM0 register failed\n");
+        }
+    } else {
+        DBG("[FlashDevices] Failed to create psram0\n");
+    }
+#endif /* HW_PSRAM0_EN */
+
+    /* 创建SD Card (SDIO接口) */
+#if HW_SDCARD0_EN
+    g_sdcard0 = SDCard_Create("sdcard0");
+    if (g_sdcard0) {
+        ret = FlashBus_Register(g_sdcard0);
+        if (ret == FLASH_OK) {
+            ret = FlashDev_Init(g_sdcard0);
+            if (ret == FLASH_OK) {
+                DBG("[FlashDevices] SDCARD0 (SDIO) init OK\n");
+            } else {
+                DBG("[FlashDevices] SDCARD0 init failed (ret=%d, may not present)\n", ret);
+            }
+        } else {
+            DBG("[FlashDevices] SDCARD0 register failed\n");
+        }
+    } else {
+        DBG("[FlashDevices] Failed to create sdcard0\n");
+    }
+#endif /* HW_SDCARD0_EN */
     
     /* 打印设备信息 */
     FlashBus_PrintInfo();
     
+    g_devices_initialized = true;
     DBG("[FlashDevices] Initialized\n");
     return FLASH_OK;
 }
@@ -138,12 +257,38 @@ void FlashDevices_DeInit(void)
         W25Qxx_Destroy(g_flash1);
         g_flash1 = NULL;
     }
+
+#if HW_NAND0_EN
+    if (g_nand0) {
+        FlashBus_Unregister(g_nand0);
+        W25N02_Destroy(g_nand0);
+        g_nand0 = NULL;
+    }
+#endif
+
+#if HW_PSRAM0_EN
+    if (g_psram0) {
+        FlashBus_Unregister(g_psram0);
+        PSRAM64H_Destroy(g_psram0);
+        g_psram0 = NULL;
+    }
+#endif
+
+#if HW_SDCARD0_EN
+    if (g_sdcard0) {
+        FlashBus_Unregister(g_sdcard0);
+        SDCard_Destroy(g_sdcard0);
+        g_sdcard0 = NULL;
+    }
+#endif /* HW_SDCARD0_EN */
     
+#if HW_FLASH0_EN
     if (g_flash0) {
         FlashBus_Unregister(g_flash0);
         W25Qxx_Destroy(g_flash0);
         g_flash0 = NULL;
     }
+#endif /* HW_FLASH0_EN */
     
     FlashBus_DeInit();
     
@@ -161,11 +306,29 @@ FlashDevice_t* FlashDevices_GetStorageFlash(void)
     return g_flash1;
 }
 
+FlashDevice_t* FlashDevices_GetNandFlash(void)
+{
+    return g_nand0;
+}
+
+FlashDevice_t* FlashDevices_GetPsramFlash(void)
+{
+    return g_psram0;
+}
+
+FlashDevice_t* FlashDevices_GetSDCardFlash(void)
+{
+    return g_sdcard0;
+}
+
 FlashDevice_t* FlashDevices_GetDevice(uint8_t dev_id)
 {
     switch (dev_id) {
         case 0: return g_flash0;
         case 1: return g_flash1;
+        case 2: return g_nand0;
+        case 3: return g_psram0;
+        case 4: return g_sdcard0;
         default: return NULL;
     }
 }

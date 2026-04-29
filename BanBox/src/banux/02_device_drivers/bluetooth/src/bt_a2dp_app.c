@@ -25,6 +25,7 @@
 #include "bt_manager.h"
 
 #include "bt_a2dp_api.h"
+#include "bg_event.h"     /* 事件发布-订阅系统 */
 
 
 static void SetA2dpState(BT_A2DP_STATE state);
@@ -45,6 +46,13 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 
 			SetA2dpState(BT_A2DP_STATE_CONNECTED);
 
+			/* 发布蓝牙连接事件 */
+			{
+				BG_EventBtData_t bt_evt;
+				memcpy(bt_evt.addr, param->params.bd_addr, 6);
+				BG_EVT_PUB_DATA(EVT_SYS_BT_CONNECT, &bt_evt, sizeof(bt_evt));
+			}
+
 			memcpy(GetBtManager()->remoteAddr, param->params.bd_addr, 6);
 
 			SetBtConnectedProfile(BT_CONNECTED_A2DP_FLAG);
@@ -60,6 +68,7 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 		{
 			BT_DBG("A2dp disconnect\n");
 			SetA2dpState(BT_A2DP_STATE_NONE);
+			BG_EVT_PUB(EVT_SYS_BT_DISCONNECT);
 			
 			SetBtDisconnectProfile(BT_CONNECTED_A2DP_FLAG);
 
@@ -81,6 +90,7 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 		{
 			BT_DBG("A2dp streaming...\n");
 			SetA2dpState(BT_A2DP_STATE_STREAMING);
+			BG_EVT_PUB(EVT_SYS_BT_STREAMING);
 			
 			//BtMidMessageSend(MSG_BT_MID_PLAY_STATE_CHANGE, 1);
 		}
@@ -90,6 +100,7 @@ void BtA2dpCallback(BT_A2DP_CALLBACK_EVENT event, BT_A2DP_CALLBACK_PARAMS * para
 		{
 			BT_DBG("A2dp suspend\n");
 			SetA2dpState(BT_A2DP_STATE_CONNECTED);
+			BG_EVT_PUB(EVT_SYS_BT_SUSPENDED);
 			
 			//BtMidMessageSend(MSG_BT_MID_PLAY_STATE_CHANGE, 2);
 		}

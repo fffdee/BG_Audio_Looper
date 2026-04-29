@@ -8,9 +8,12 @@
 #ifndef CHAIN_GRAPH_APPLY_H
 #define CHAIN_GRAPH_APPLY_H
 
+#include "product_def.h"
 #include "effect_graph.h"
 #include "effect_graph_config.h"
 #include "sys_param.h"
+
+#if EFFECT_GRAPHICS_EN
 
 /**
  * @brief Apply a chain graph configuration to the running EffectGraph instance
@@ -65,5 +68,23 @@ int ChainGraph_SaveByName(const char *name);
  * @return 0 on success, -1 on failure
  */
 int ChainGraph_SyncParamsToGlobalUnits(void);
+
+#else /* !EFFECT_GRAPHICS_EN */
+
+/* Stub functions when effect graph is disabled */
+static inline int ChainGraph_ApplyToEffectGraph(int graph_idx) { (void)graph_idx; return -1; }
+static inline int ChainGraph_ApplyActiveHP(void) { return -1; }
+static inline int ChainGraph_ApplyActiveSPK(void) { return -1; }
+static inline int ChainGraph_ApplyByName(const char *name) { (void)name; return -1; }
+static inline int ChainGraph_AutoApplyOnStartup(void) { return -1; }
+static inline int ChainGraph_SaveFromEffectGraph(int graph_idx) { (void)graph_idx; return -1; }
+static inline int ChainGraph_SaveByName(const char *name) { (void)name; return -1; }
+static inline int ChainGraph_SyncParamsToGlobalUnits(void) { return -1; }
+
+#endif /* EFFECT_GRAPHICS_EN */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CHAIN_GRAPH_APPLY_H */

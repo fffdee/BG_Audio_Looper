@@ -7,6 +7,7 @@
 
 #include "bg_ui.h"
 #include "bg_lcd.h"
+#include "bg_event.h"
 #include "gpio.h"
 #include <string.h>
 
@@ -45,9 +46,14 @@ typedef struct {
     uint8_t debounce;
     uint16_t press_time;
     bool long_fired;
+    uint16_t dblclick_timer;    /* 双击间隔计时 (ms) */
+    uint8_t  click_pending;     /* 1=等待双击确认 */
 } BtnState_t;
 
 static BtnState_t s_btn_state[UI_BTN_COUNT];
+
+/* 双击判定窗口 (ms) */
+#define BTN_DOUBLE_CLICK_MS     300
 
 /*===========================================================================
  * View ����
@@ -117,7 +123,27 @@ static uint8_t read_btn_gpio(UI_BtnID_t id)
 static void push_btn_event(UI_BtnID_t id, UI_BtnEvent_t event, uint16_t duration)
 {
     UI_BtnEventData_t evt = { id, event, duration };
-    /* ֱ�Ӵ����¼� */
+    BG_EventBtnData_t evtdata;
+
+    /* 发布到事件总线 (所有订阅者都能收到) */
+    evtdata.btn_id = (uint8_t)id;
+    evtdata.duration_ms = duration;
+
+    switch (event) {
+        case UI_BTN_EVT_CLICK:
+            BG_EVT_PUB_DATA(EVT_BTN_CLICK, &evtdata, sizeof(evtdata));
+            break;
+        case UI_BTN_EVT_LONG_PRESS:
+            BG_EVT_PUB_DATA(EVT_BTN_LONG_PRESS, &evtdata, sizeof(evtdata));
+            break;
+        case UI_BTN_EVT_REPEAT:
+            BG_EVT_PUB_DATA(EVT_BTN_REPEAT, &evtdata, sizeof(evtdata));
+            break;
+        default:
+            break;
+    }
+
+    /* 原有 UI 内部派发 */
     BG_UI.HandleButton(&evt);
 }
 
@@ -401,8 +427,18 @@ static void ui_scan_buttons(uint16_t delta_ms)
     for (i = 0; i < UI_BTN_COUNT; i++) {
         BtnState_t* btn = &s_btn_state[i];
         uint8_t cur = read_btn_gpio((UI_BtnID_t)i);
-        
-        /* ȥ�� */
+        BG_EventBtnData_t raw_evt;
+
+        /* 双击超时检查: 如果等待双击但超时了, 发送单击 */
+        if (btn->click_pending) {
+            btn->dblclick_timer += delta_ms;
+            if (btn->dblclick_timer >= BTN_DOUBLE_CLICK_MS) {
+                btn->click_pending = 0;
+                push_btn_event((UI_BtnID_t)i, UI_BTN_EVT_CLICK, 0);
+            }
+        }
+
+        /* 去抖 */
         if (cur != btn->raw) {
             btn->debounce++;
             if (btn->debounce >= (BTN_DEBOUNCE_MS / delta_ms)) {
@@ -410,13 +446,37 @@ static void ui_scan_buttons(uint16_t delta_ms)
                 btn->raw = cur;
                 
                 if (cur == 0) {
-                    /* ���� */
+                    /* 按下 */
                     btn->press_time = 0;
                     btn->long_fired = false;
+
+                    /* 发布原始按下事件 */
+                    raw_evt.btn_id = (uint8_t)i;
+                    raw_evt.duration_ms = 0;
+                    BG_EVT_PUB_DATA(EVT_BTN_RAW_DOWN, &raw_evt, sizeof(raw_evt));
                 } else {
-                    /* �ͷ� */
-                    if (!btn->long_fired) {
-                        push_btn_event((UI_BtnID_t)i, UI_BTN_EVT_CLICK, btn->press_time);
+                    /* 释放 */
+                    /* 发布原始释放事件 */
+                    raw_evt.btn_id = (uint8_t)i;
+                    raw_evt.duration_ms = btn->press_time;
+                    BG_EVT_PUB_DATA(EVT_BTN_RAW_UP, &raw_evt, sizeof(raw_evt));
+
+                    if (btn->long_fired) {
+                        /* 长按后释放 */
+                        BG_EVT_PUB_DATA(EVT_BTN_LONG_RELEASE, &raw_evt, sizeof(raw_evt));
+                    } else {
+                        /* 短按释放: 双击检测 */
+                        if (btn->click_pending) {
+                            /* 第二次点击 → 双击 */
+                            btn->click_pending = 0;
+                            raw_evt.btn_id = (uint8_t)i;
+                            raw_evt.duration_ms = 0;
+                            BG_EVT_PUB_DATA(EVT_BTN_DOUBLE_CLICK, &raw_evt, sizeof(raw_evt));
+                        } else {
+                            /* 第一次点击 → 等待双击窗口 */
+                            btn->click_pending = 1;
+                            btn->dblclick_timer = 0;
+                        }
                     }
                     btn->press_time = 0;
                 }
@@ -425,7 +485,7 @@ static void ui_scan_buttons(uint16_t delta_ms)
             btn->debounce = 0;
         }
         
-        /* ������� */
+        /* 长按检测 */
         if (btn->raw == 0) {
             btn->press_time += delta_ms;
             

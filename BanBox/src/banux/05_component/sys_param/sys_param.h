@@ -75,6 +75,14 @@ typedef struct __attribute__((packed)) {
     uint32_t max_loop_time;     /* Max loop time (ms) */
     uint8_t  flash_status;      /* Looper Flash状态: LOOPER_FLASH_STATUS_CLEAN/USED */
     uint8_t  segment_volume[4]; /* 各段播放音量 0-100，默认100 */
+    
+    /* 新增：存储抽象层性能参数 */
+    uint8_t  storage_type;      /* 存储类型: 0=NOR, 1=NAND, 2=PSRAM, 3=SD */
+    uint32_t write_speed_kbps;  /* 写入速度 (KB/s) */
+    uint32_t read_speed_kbps;   /* 读取速度 (KB/s) */
+    uint8_t  max_concurrent_tracks; /* 支持同时读写的最大段数 */
+    uint8_t  bandwidth_tested;  /* 是否已执行带宽测试 (1=已测试, 0=未测试) */
+    uint8_t  support_overdub;   /* 是否支持叠录 (1=支持, 0=不支持) */
 } SysParam_Looper_t;
 
 /* Bluetooth parameters structure */
@@ -109,23 +117,24 @@ typedef struct __attribute__((packed)) {
 #define MAX_NODES 8
 
 typedef struct {
-
-    char name[BG_PARAM_CHAIN_NAME_LEN]; // 鏁堟灉鑺傜偣鍚嶇О
+    char name[BG_PARAM_CHAIN_NAME_LEN]; // 效果节点名称
     uint8_t enabled;
+    uint8_t padding1;  // Explicit padding for alignment
     uint16_t id;
-
-}BG_EffectNode_t;
+} BG_EffectNode_t;
 
 typedef struct {
-    char name[BG_PARAM_CHAIN_NAME_LEN]; // 閾惧悕绉帮紝濡�"ChainA"銆�ChainB"
-    uint8_t enabled;                    // 鏄惁鍚敤
-    BG_EffectNode_t nodes[MAX_NODES];   // 鑺傜偣ID鏁扮粍锛屾渶澶氭敮鎸�涓妭鐐�
+    char name[BG_PARAM_CHAIN_NAME_LEN]; // 链名称，如"ChainA"、"ChainB"
+    uint8_t enabled;                    // 是否启用
     uint8_t node_count;
+    uint16_t padding2;                  // Explicit padding for alignment
+    BG_EffectNode_t nodes[MAX_NODES];   // 节点ID数组，最多支持8个节点
 } BG_ParamChain_t;
 
 typedef struct {
-    BG_ParamChain_t chains[BG_PARAM_CHAIN_MAX]; // 涓ゆ潯閾�
-    uint8_t active_chain;                       // 褰撳墠婵�椿閾剧储寮曪紙0鎴�锛�
+    BG_ParamChain_t chains[BG_PARAM_CHAIN_MAX]; // 两条链
+    uint8_t active_chain;                       // 当前激活链索引（0或1）
+    uint8_t padding3[3];                        // Explicit padding for alignment
 } BG_ParamChainManager_t;
 
 /* Node types in effect graph */
@@ -139,11 +148,14 @@ typedef enum {
 
 /* Source types for source nodes */
 typedef enum {
-    SOURCE_TYPE_GUITAR = 0,   /* Guitar input */
-    SOURCE_TYPE_MIC,          /* Microphone input */
+    SOURCE_TYPE_GUITAR = 0,   /* Guitar input (ADC0) */
+    SOURCE_TYPE_MIC,          /* Microphone input (ADC1) */
     SOURCE_TYPE_BT,           /* Bluetooth audio */
     SOURCE_TYPE_USB,          /* USB audio */
     SOURCE_TYPE_LINE,         /* Line in */
+    SOURCE_TYPE_METRONOME,    /* Metronome */
+    SOURCE_TYPE_LOOPER_PLAY,  /* Looper playback */
+    SOURCE_TYPE_SYNTH,        /* Synthesizer */
     SOURCE_TYPE_MAX
 } SourceType_t;
 
@@ -160,6 +172,9 @@ typedef enum {
     EFFECT_TYPE_FLANGER,      /* Flanger */
     EFFECT_TYPE_PHASER,       /* Phaser */
     EFFECT_TYPE_TREMOLO,      /* Tremolo */
+    EFFECT_TYPE_EXPANDER,     /* Expander / Noise gate */
+    EFFECT_TYPE_HOWLING,      /* Howling suppression */
+    EFFECT_TYPE_GAIN,         /* Gain control */
     EFFECT_TYPE_MAX
 } EffectType_t;
 
@@ -168,6 +183,8 @@ typedef enum {
     OUTPUT_TYPE_HEADPHONE = 0,
     OUTPUT_TYPE_SPEAKER,
     OUTPUT_TYPE_LINE_OUT,
+    OUTPUT_TYPE_USB_OUT,         /* USB audio output */
+    OUTPUT_TYPE_LOOPER_RECORD,   /* Looper record sink */
     OUTPUT_TYPE_MAX
 } OutputType_t;
 
@@ -211,24 +228,6 @@ typedef struct __attribute__((packed)) {
     uint32_t     node_used_mask;              /* Bitmap of allocated nodes */
     EffectGraph_t graphs[MAX_EFFECT_GRAPHS];  /* Effect graphs (4 x 142 = 568 bytes) */
 } SysParam_AudioChain_t;  /* Total: 4 + 512 + 4 + 568 = 1088 bytes */
-
-typedef struct __attribute__((packed)) {
-
-    uint8_t  contrast;          /* Contrast 0-100 */
-    uint8_t  color_scheme;      /* Color scheme 0:Default 1:Inverted 2:Grayscale */
-    uint8_t  screen_saver;      /* Screen saver timeout (0 = Off) */
-    uint16_t bg_color;          /* Background color RGB565 */
-
-} SysParam_Reverb_t;
-
-typedef struct __attribute__((packed)) {
-
-    uint8_t  contrast;          /* Contrast 0-100 */
-    uint8_t  color_scheme;      /* Color scheme 0:Default 1:Inverted 2:Grayscale */
-    uint8_t  screen_saver;      /* Screen saver timeout (0 = Off) */
-    uint16_t bg_color;          /* Background color RGB565 */
-
-} SysParam_DRC_t;
 
 
 /*===========================================================================

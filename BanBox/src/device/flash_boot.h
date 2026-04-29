@@ -2,23 +2,22 @@
 #define __FLASH_BOOT_H__
 
 #include "flash_config.h"
+#include "type.h"
 /*
-版本说明：当前为V2.1.8版本
-日期：2020年11月26日
+SDK Flash Boot V2.2.3
 */
-//#define FLASH_BOOT_EN      1
+#define FLASH_BOOT_EN      0
 
 //TX PIN
-#define BOOT_UART_TX_OFF	0//关闭串口
+#define BOOT_UART_TX_OFF	0
 #define BOOT_UART_TX_A0		1
 #define BOOT_UART_TX_A1		2
 #define BOOT_UART_TX_A6		3
 #define BOOT_UART_TX_A10	4
 #define BOOT_UART_TX_A19	5
 #define BOOT_UART_TX_A25	6
-#define BOOT_UART_TX_PIN	BOOT_UART_TX_A25
+#define BOOT_UART_TX_PIN	BOOT_UART_TX_OFF
 
-//波特率配置
 #define BOOT_UART_BAUD_RATE_9600	0
 #define BOOT_UART_BAUD_RATE_11520	1
 #define BOOT_UART_BAUD_RATE_256000	2
@@ -30,11 +29,8 @@
 
 #define BOOT_UART_CONFIG	((BOOT_UART_BAUD_RATE<<4)+BOOT_UART_TX_PIN)
 
+#define JUDGEMENT_STANDARD		0x55
 
-#define JUDGEMENT_STANDARD		0x55//此处数值分高4bit与低4bit：高4bit为F则code按版本号升级；为5则按code的CRC进行升级；
-									//低4bit为F则在升级code需要用到多大空间即擦除多大空间；为5时则标识升级code前全部擦除芯片数据，即擦除“全片”（即除开flash开始64K以及最后4K）
-
-///升级接口定义
 #define	SD_OFF				0x00
 #define SD_A15A16A17		0x1
 #define SD_A20A21A22		0x2
@@ -53,16 +49,25 @@
 #define	BTTOOL_OFF			0X00
 #define BTTOOL_ON			0X10
 
-#define UP_PORT				(BTTOOL_OFF + PCTOOL_ON + UDisk_OFF + SD_OFF)//根据应用情况决定打开那些升级接口
-
+#define UP_PORT				(BTTOOL_OFF + PCTOOL_ON + UDisk_OFF + SD_OFF)
 
 #if FLASH_BOOT_EN
 extern const unsigned char flash_data[];
 #endif
 
-#define USER_CODE_RUN_START		0 	//无升级请求直接运行客户代码
-#define UPDAT_OK				1 	//有升级请求，升级成功
-#define NEEDLESS_UPDAT			2	//有升级请求，但无需升级
+#define USER_CODE_RUN_START		0
+#define UPDAT_OK				1
+#define NEEDLESS_UPDAT			2
 
+#if FLASH_BOOT_EN
+extern void report_up_grate(void);
+extern void start_up_grate(uint32_t UpdateResource);
+extern uint8_t Report_Error_Code(void);
+extern void Clear_Error_Code(void);
+
+#define AppResourceCard       0x01
+#define AppResourceUDisk      0x04
+#define AppResourceUsbDevice  0x40
 #endif
 
+#endif

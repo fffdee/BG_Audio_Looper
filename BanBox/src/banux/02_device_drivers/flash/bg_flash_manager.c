@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "spim_interface.h"
 #include "dma.h"
+#include "product_def.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
@@ -81,10 +82,15 @@ void flash_init(void)
 	// 鍒濆鍖栦袱涓�NOR Flash 鐨�CS 寮曡剼
 	FLASH_CS_INIT();   // NOR1 (GPIOA21)
 	NAND_CS_INIT();    // NOR2 (GPIOA22)
+#ifndef BANBOX_II
+	/* BanBox II uses A17 for SDIO CMD — skip WP init to avoid conflict */
 	FLASH_WP_INIT();
+#endif
 	FLASH_CS_DISABLE();
 	NAND_CS_DISABLE();
+#ifndef BANBOX_II
 	FLASH_WP_DISABLE();
+#endif
 
 	DBG("Dual NOR Flash initialized (CS=A21, A22)\n");
 }

@@ -305,7 +305,6 @@ static int param_query(int argc, char *argv[])
         // Query effect node parameters by ID in binary format for app
         if (argc >= 2) {
             int node_id = atoi(argv[1]);
-            extern EffectNode_t* EffectGraph_FindNodeById(uint8_t id);
             EffectNode_t* node = EffectGraph_FindNodeById((uint8_t)node_id);
             
             if (node != NULL) {
@@ -412,7 +411,6 @@ static int param_query(int argc, char *argv[])
             Shell_Printf("{\"status\":\"ok\",\"effects\":[");
             
             // For demonstration, return some example nodes
-            extern EffectGraphRuntime_t* EffectGraph_GetInstance(void);
             EffectGraphRuntime_t* graph = EffectGraph_GetInstance();
             
             if (graph != NULL) {

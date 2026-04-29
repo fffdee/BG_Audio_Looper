@@ -20,7 +20,7 @@ extern BT_CONFIGURATION_PARAMS		*btStackConfigParams;
 #include "ble_process.h"
 #include "shell_io_ble.h"
 #include "debug.h"
-#include "app_upgrade.h"    /* BLE OTA engine */
+#include "bg_event.h"      /* 事件发布-订阅系统 */
 #if (BLE_SUPPORT == ENABLE)
 
 // BLE advertisement data template - name will be replaced dynamically
@@ -466,10 +466,15 @@ int16_t app_att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t t
 	switch(attribute_handle)
 	{
 		case ATT_CHARACTERISTIC_AB01_01_VALUE_HANDLE:
+			/* 发布 BLE 数据接收事件到事件总线 */
+			{
+				BG_EventBleRxData_t ble_rx;
+				ble_rx.data = buffer;
+				ble_rx.len  = buffer_size;
+				BG_EVT_PUB_DATA(EVT_BLE_DATA_RECEIVED, &ble_rx, sizeof(ble_rx));
+			}
 			/* Shell命令行处理 */
 			ShellIO_BLE_OnDataReceived(buffer, buffer_size);
-			/* BLE OTA engine: interprets packets starting with SOF=0xAA */
-			App_OTA_OnData(buffer, buffer_size);
 			BT_DBG("ATT_CHARACTERISTIC_AB01_01_VALUE_HANDLE:\n");
 			break;
 

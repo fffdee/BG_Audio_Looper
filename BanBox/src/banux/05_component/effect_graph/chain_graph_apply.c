@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include "debug.h"
 
+#if EFFECT_GRAPHICS_EN
+
 /**
  * @brief Allocate a free node ID from the node pool
  * @return node ID on success, -1 on failure
@@ -101,35 +103,36 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
                 switch (chain_node->subtype) {
                     case SOURCE_TYPE_GUITAR:
                         node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC0;
-                        break;
-                    case SOURCE_TYPE_MIC:
-                        node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC1;
-                        break;
-                    case SOURCE_TYPE_BT:
-                        node_config->type = EFFECT_NODE_TYPE_SOURCE_BT_IN;
-                        break;
-                    case SOURCE_TYPE_USB:
-                        node_config->type = EFFECT_NODE_TYPE_SOURCE_USB_IN;
-                        break;
-                    default:
-                        node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC0;
-                        break;
-                }
-                // Set source node name
-                switch (chain_node->subtype) {
-                    case SOURCE_TYPE_GUITAR:
                         node_config->name = "guitar_in";
                         break;
                     case SOURCE_TYPE_MIC:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC1;
                         node_config->name = "mic_in";
                         break;
                     case SOURCE_TYPE_BT:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_BT_IN;
                         node_config->name = "bt_in";
                         break;
                     case SOURCE_TYPE_USB:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_USB_IN;
                         node_config->name = "usb_in";
                         break;
+                    case SOURCE_TYPE_METRONOME:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_METRONOME;
+                        node_config->name = "metronome";
+                        break;
+                    case SOURCE_TYPE_LOOPER_PLAY:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY;
+                        node_config->name = "looper_play";
+                        break;
+#if BANGTSYNTH_EN
+                    case SOURCE_TYPE_SYNTH:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_SYNTH;
+                        node_config->name = "synth_in";
+                        break;
+#endif
                     default:
+                        node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC0;
                         node_config->name = "source";
                         break;
                 }
@@ -154,6 +157,22 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
                         node_config->type = EFFECT_NODE_TYPE_EFFECT_DELAY;
                         node_config->name = "delay";
                         break;
+                    case EFFECT_TYPE_EXPANDER:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_EXPANDER;
+                        node_config->name = "expander";
+                        break;
+                    case EFFECT_TYPE_HOWLING:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_HOWLING;
+                        node_config->name = "howling";
+                        break;
+                    case EFFECT_TYPE_GAIN:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_GAIN;
+                        node_config->name = "gain";
+                        break;
+                    case EFFECT_TYPE_CHORUS:
+                        node_config->type = EFFECT_NODE_TYPE_EFFECT_CHORUS;
+                        node_config->name = "chorus";
+                        break;
                     default:
                         node_config->type = EFFECT_NODE_TYPE_EFFECT_GAIN;
                         node_config->name = "effect";
@@ -163,11 +182,7 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
 
             case NODE_TYPE_MIXER:
                 node_config->type = EFFECT_NODE_TYPE_MIXER;
-                if (i == 0) {
-                    node_config->name = "adc_mixer";
-                } else {
-                    node_config->name = "final_mixer";
-                }
+                node_config->name = "mixer";
                 break;
 
             case NODE_TYPE_OUTPUT:
@@ -177,6 +192,14 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
                     case OUTPUT_TYPE_SPEAKER:
                         node_config->type = EFFECT_NODE_TYPE_SINK_DAC0;
                         node_config->name = "dac_out";
+                        break;
+                    case OUTPUT_TYPE_USB_OUT:
+                        node_config->type = EFFECT_NODE_TYPE_SINK_USB_OUT;
+                        node_config->name = "usb_out";
+                        break;
+                    case OUTPUT_TYPE_LOOPER_RECORD:
+                        node_config->type = EFFECT_NODE_TYPE_SINK_LOOPER_RECORD;
+                        node_config->name = "looper_record";
                         break;
                     default:
                         node_config->type = EFFECT_NODE_TYPE_SINK_USB_OUT;
@@ -795,3 +818,5 @@ int ChainGraph_SyncParamsToGlobalUnits(void)
     DBG("[ChainGraph] Synced parameters to global audio effect units\n");
     return 0;
 }
+
+#endif /* EFFECT_GRAPHICS_EN */

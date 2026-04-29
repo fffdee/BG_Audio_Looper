@@ -59,7 +59,7 @@ extern UsbAudio UsbAudioMic;
 static uint32_t FramCount = 0;
 void UsbSraInit(void);
 
-//USBÉù¿¨Ä£Ê½²ÎÊýÅäÖÃ£¬×ÊÔ´³õÊ¼»¯
+//USBï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ê¼ï¿½ï¿½
 bool UsbDevicePlayInit(void)
 {
 	memset(&UsbAudioSpeaker,0,sizeof(UsbAudio));
@@ -72,7 +72,7 @@ bool UsbDevicePlayInit(void)
 	UsbAudioMic.RightVol       = AUDIO_MAX_VOLUME;
 
 
-	//×ª²ÉÑù	
+	//×ªï¿½ï¿½ï¿½ï¿½	
 #ifdef  CFG_RES_AUDIO_USB_IN_EN
 
    #ifdef CFG_RES_AUDIO_USB_SRC_EN
@@ -104,7 +104,7 @@ bool UsbDevicePlayInit(void)
 
 #endif//end of CFG_RES_USB_IN_EN
 
-	//×ª²ÉÑù
+	//×ªï¿½ï¿½ï¿½ï¿½
 #ifdef CFG_RES_AUDIO_USB_OUT_EN
 
     #ifdef CFG_RES_AUDIO_USB_SRC_EN
@@ -175,7 +175,7 @@ void UsbAudioSpeakerSampleRateChange(uint32_t SampleRate)
 
 
 //////////////////////////////////////////////////audio core api/////////////////////////////////////////////////////
-//pc->chip ´Ó»º´æÇø»ñÈ¡Êý¾Ý
+//pc->chip ï¿½Ó»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
 uint16_t UsbAudioSpeakerDataGet(void *Buffer,uint16_t Len)
 {
 	uint16_t Length = 0;
@@ -185,7 +185,7 @@ uint16_t UsbAudioSpeakerDataGet(void *Buffer,uint16_t Len)
 	return Length/4;
 }
 
-//pc->chip »ñÈ¡»º´æÇøÊý¾Ý³¤¶È
+//pc->chip ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½
 uint16_t UsbAudioSpeakerDataLenGet(void)
 {
 	uint16_t Len;
@@ -195,7 +195,7 @@ uint16_t UsbAudioSpeakerDataLenGet(void)
 	return Len;
 }
 
-//chip->pc ±£´æÊý¾Ýµ½»º´æÇø
+//chip->pc ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 uint16_t UsbAudioMicDataSet(void *Buffer,uint16_t Len)
 {
 #ifdef CFG_RES_AUDIO_USB_OUT_EN
@@ -231,7 +231,7 @@ uint16_t UsbAudioMicDataSet(void *Buffer,uint16_t Len)
 }
 
 
-//chip->pc Êý¾Ý»º´æÇøÊ£Óà¿Õ¼ä
+//chip->pc ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½ï¿½Ê£ï¿½ï¿½Õ¼ï¿½
 uint16_t UsbAudioMicSpaceLenGet(void)
 {
 	uint16_t Len;
@@ -241,7 +241,7 @@ uint16_t UsbAudioMicSpaceLenGet(void)
 	return Len;
 }
 
-//usbÉè±¸Ê¹ÄÜ
+//usbï¿½è±¸Ê¹ï¿½ï¿½
 void UsbDeviceEnable(void)
 {
 	DBG("UsbDevice:App enable\n");
@@ -267,7 +267,7 @@ void UsbDeviceEnable(void)
 }
 
 
-//usbÉè±¸¹Ø±Õ
+//usbï¿½è±¸ï¿½Ø±ï¿½
 void UsbDeviceDisable(void)
 {
 	DBG("UsbDevice:Appn disable\n");
@@ -291,7 +291,7 @@ void UsbDeviceDisable(void)
 }
 
 
-//usb Éù¿¨×´Ì¬¼à¿Ø
+//usb ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½
 void UsbAudioTimer1msProcess(void)
 {
 	if(IsUsbAudioMode == FALSE)
@@ -313,7 +313,7 @@ void UsbAudioTimer1msProcess(void)
 #ifdef CFG_RES_AUDIO_USB_IN_EN
 	if(UsbAudioSpeaker.AltSet)//open stream
 	{
-		if(UsbAudioSpeaker.FramCount)//ÕýÔÚ´«Êý¾Ý 1-2Ö¡Êý¾Ý
+		if(UsbAudioSpeaker.FramCount)//ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ 1-2Ö¡ï¿½ï¿½ï¿½ï¿½
 		{
 			if(UsbAudioSpeaker.FramCount != UsbAudioSpeaker.TempFramCount)
 			{
@@ -349,7 +349,7 @@ void UsbAudioTimer1msProcess(void)
 #ifdef CFG_RES_AUDIO_USB_IN_EN
 	if(UsbAudioMic.AltSet)//open stream
 	{
-		if(UsbAudioMic.FramCount)//ÕýÔÚ´«Êý¾Ý ÇÐ´«ÊäÁË1-2Ö¡Êý¾Ý
+		if(UsbAudioMic.FramCount)//ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½1-2Ö¡ï¿½ï¿½ï¿½ï¿½
 		{
 			if(UsbAudioMic.FramCount != UsbAudioMic.TempFramCount)
 			{

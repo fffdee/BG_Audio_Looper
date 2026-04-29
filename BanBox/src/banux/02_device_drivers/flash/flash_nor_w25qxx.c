@@ -10,7 +10,7 @@
 #include "spim_interface.h"
 #include "dma.h"
 #include "gpio.h"
-#include "debug.h"251pp'p'p
+#include "debug.h"
 #include "rtos_api.h"
 #include <string.h>
 #include <stdlib.h>
@@ -152,6 +152,22 @@ static void w25qxx_write_enable(FlashDevice_t *dev)
     w25qxx_send_cmd(dev, W25QXX_CMD_WRITE_ENABLE);
 }
 
+/**
+ * @brief 写使能 + WEL 验证 (调试用)
+ * @return FLASH_OK if WEL is set, FLASH_ERR_WRITE otherwise
+ */
+static FlashStatus_t w25qxx_write_enable_verify(FlashDevice_t *dev)
+{
+    uint8_t sr;
+    w25qxx_write_enable(dev);
+    w25qxx_cmd_read(dev, W25QXX_CMD_READ_STATUS_REG1, &sr, 1);
+    if (!(sr & W25QXX_SR1_WEL)) {
+        W25QXX_LOG("WREN FAILED! SR1=0x%02X (WEL=0)\n", sr);
+        return FLASH_ERR_WRITE;
+    }
+    return FLASH_OK;
+}
+
 /*===========================================================================
  * 驱动实现
  *===========================================================================*/
@@ -205,6 +221,30 @@ static FlashStatus_t W25Qxx_Init(FlashDevice_t *dev)
     dev->info.block_size  = W25QXX_BLOCK_SIZE_64K;
     dev->info.total_size  = total_size;
     
+    /* Clear Block Protect bits in Status Register to allow writes/erases.
+     * PY25Q128 and compatible chips may power up with BP bits set. */
+    {
+        uint8_t sr;
+        w25qxx_cmd_read(dev, W25QXX_CMD_READ_STATUS_REG1, &sr, 1);
+        W25QXX_LOG("SR1 = 0x%02X\n", sr);
+        if (sr & (W25QXX_SR1_BP0 | W25QXX_SR1_BP1 | W25QXX_SR1_BP2
+                | W25QXX_SR1_TB  | W25QXX_SR1_SEC)) {
+            W25QXX_LOG("Clearing BP bits (SR1=0x%02X)...\n", sr);
+            w25qxx_write_enable(dev);
+            dev->cs.select();
+            spi_write_byte(W25QXX_CMD_WRITE_STATUS_REG);
+            spi_write_byte(0x00);  /* SR1: clear all protect bits */
+            dev->cs.deselect();
+            /* Wait for write-status-register to complete (typ. 10-15ms) */
+            {
+                volatile uint32_t dly;
+                for (dly = 0; dly < 200000; dly++);
+            }
+            w25qxx_cmd_read(dev, W25QXX_CMD_READ_STATUS_REG1, &sr, 1);
+            W25QXX_LOG("SR1 after clear = 0x%02X\n", sr);
+        }
+    }
+    
     dev->initialized = true;
     
     W25QXX_LOG("Init OK: %s - MfgID=0x%02X, MemType=0x%02X, DevID=0x%02X, Size=%dMB\n",
@@ -227,6 +267,8 @@ static FlashStatus_t W25Qxx_DeInit(FlashDevice_t *dev)
 
 static FlashStatus_t W25Qxx_Read(FlashDevice_t *dev, uint32_t addr, uint8_t *buf, uint32_t len)
 {
+    FlashStatus_t ret;
+    
     if (!dev || !buf) {
         return FLASH_ERR_PARAM;
     }
@@ -240,18 +282,23 @@ static FlashStatus_t W25Qxx_Read(FlashDevice_t *dev, uint32_t addr, uint8_t *buf
     }
     
     /* 等待就绪 */
-    FlashStatus_t ret = W25Qxx_WaitReady(dev, 100);
+    ret = W25Qxx_WaitReady(dev, 100);
     if (ret != FLASH_OK) {
         return ret;
     }
     
-    /* 使用快速读取命令 */
+    /* 使用快速读取命令 — 合并 cmd+addr+dummy 为单次 DMA burst，
+     * 消除逐字节发送时 SPIM DMA disable/re-enable 间隙导致的时序问题 */
     dev->cs.select();
-    spi_write_byte(W25QXX_CMD_FAST_READ);
-    spi_write_byte((addr >> 16) & 0xFF);
-    spi_write_byte((addr >> 8) & 0xFF);
-    spi_write_byte(addr & 0xFF);
-    spi_write_byte(0xFF);  /* Dummy byte */
+    {
+        uint8_t cmd_buf[5];
+        cmd_buf[0] = W25QXX_CMD_FAST_READ;
+        cmd_buf[1] = (addr >> 16) & 0xFF;
+        cmd_buf[2] = (addr >> 8) & 0xFF;
+        cmd_buf[3] = addr & 0xFF;
+        cmd_buf[4] = 0xFF;  /* Dummy byte */
+        spi_write(cmd_buf, 5);
+    }
     
     /* 使用DMA批量读取 */
     spi_read(buf, (uint16_t)len);
@@ -293,12 +340,23 @@ static FlashStatus_t W25Qxx_Write(FlashDevice_t *dev, uint32_t addr, const uint8
             return ret;
         }
         
-        /* 写使能 */
-        w25qxx_write_enable(dev);
+        /* 写使能 + 验证WEL */
+        ret = w25qxx_write_enable_verify(dev);
+        if (ret != FLASH_OK) {
+            W25QXX_LOG("Write: WREN failed at addr=0x%06X\n", (unsigned)addr);
+            return FLASH_ERR_WRITE;
+        }
         
-        /* 页编程 */
+        /* 页编程 — 合并 cmd+addr 为单次 DMA burst */
         dev->cs.select();
-        w25qxx_cmd_addr(dev, W25QXX_CMD_PAGE_PROGRAM, addr);
+        {
+            uint8_t cmd_buf[4];
+            cmd_buf[0] = W25QXX_CMD_PAGE_PROGRAM;
+            cmd_buf[1] = (addr >> 16) & 0xFF;
+            cmd_buf[2] = (addr >> 8) & 0xFF;
+            cmd_buf[3] = addr & 0xFF;
+            spi_write(cmd_buf, 4);
+        }
         
         /* 使用DMA批量写入 */
         spi_write((uint8_t*)p, (uint16_t)write_len);
@@ -344,18 +402,49 @@ static FlashStatus_t W25Qxx_EraseSector(FlashDevice_t *dev, uint32_t addr)
         return ret;
     }
     
-    /* 写使能 */
-    w25qxx_write_enable(dev);
+    /* 写使能 + 验证WEL */
+    ret = w25qxx_write_enable_verify(dev);
+    if (ret != FLASH_OK) {
+        W25QXX_LOG("EraseSector: WREN failed at addr=0x%06X\n", (unsigned)addr);
+        return FLASH_ERR_ERASE;
+    }
     
-    /* 扇区擦除 */
+    /* 扇区擦除 — 合并 cmd+addr 为单次 DMA burst */
     dev->cs.select();
-    w25qxx_cmd_addr(dev, W25QXX_CMD_SECTOR_ERASE, addr);
+    {
+        uint8_t cmd_buf[4];
+        cmd_buf[0] = W25QXX_CMD_SECTOR_ERASE;
+        cmd_buf[1] = (addr >> 16) & 0xFF;
+        cmd_buf[2] = (addr >> 8) & 0xFF;
+        cmd_buf[3] = addr & 0xFF;
+        spi_write(cmd_buf, 4);
+    }
     dev->cs.deselect();
     
     /* 等待擦除完成 */
     ret = W25Qxx_WaitReady(dev, W25QXX_TIMEOUT_ERASE_SECTOR);
     if (ret != FLASH_OK) {
+        W25QXX_LOG("EraseSector: timeout at addr=0x%06X\n", (unsigned)addr);
         return FLASH_ERR_ERASE;
+    }
+    
+    /* 擦除结果验证 (debug): 读回第一个字节确认为 0xFF */
+    {
+        uint8_t verify;
+        uint8_t vcmd[5];
+        vcmd[0] = W25QXX_CMD_FAST_READ;
+        vcmd[1] = (addr >> 16) & 0xFF;
+        vcmd[2] = (addr >> 8) & 0xFF;
+        vcmd[3] = addr & 0xFF;
+        vcmd[4] = 0xFF;
+        dev->cs.select();
+        spi_write(vcmd, 5);
+        verify = spi_read_byte();
+        dev->cs.deselect();
+        if (verify != 0xFF) {
+            W25QXX_LOG("EraseSector VERIFY FAIL: addr=0x%06X read=0x%02X (expected 0xFF)\n",
+                       (unsigned)addr, verify);
+        }
     }
     
     return FLASH_OK;
@@ -389,9 +478,16 @@ static FlashStatus_t W25Qxx_EraseBlock(FlashDevice_t *dev, uint32_t addr)
     /* 写使能 */
     w25qxx_write_enable(dev);
     
-    /* 块擦除 */
+    /* 块擦除 — 合并 cmd+addr 为单次 DMA burst */
     dev->cs.select();
-    w25qxx_cmd_addr(dev, W25QXX_CMD_BLOCK_ERASE_64K, addr);
+    {
+        uint8_t cmd_buf[4];
+        cmd_buf[0] = W25QXX_CMD_BLOCK_ERASE_64K;
+        cmd_buf[1] = (addr >> 16) & 0xFF;
+        cmd_buf[2] = (addr >> 8) & 0xFF;
+        cmd_buf[3] = addr & 0xFF;
+        spi_write(cmd_buf, 4);
+    }
     dev->cs.deselect();
     
     /* 等待擦除完成 */
@@ -456,11 +552,15 @@ static FlashStatus_t W25Qxx_GetStatus(FlashDevice_t *dev, uint8_t *status)
 static FlashStatus_t W25Qxx_WaitReady(FlashDevice_t *dev, uint32_t timeout_ms)
 {
     uint8_t sr;
-    uint32_t start_tick = xTaskGetTickCount();
+    int rtos_running;
+    uint32_t start_tick;
     
     if (!dev) {
         return FLASH_ERR_PARAM;
     }
+    
+    rtos_running = (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING);
+    start_tick = rtos_running ? xTaskGetTickCount() : 0;
     
     do {
         w25qxx_cmd_read(dev, W25QXX_CMD_READ_STATUS_REG1, &sr, 1);
@@ -469,19 +569,19 @@ static FlashStatus_t W25Qxx_WaitReady(FlashDevice_t *dev, uint32_t timeout_ms)
             return FLASH_OK;
         }
         
-        /* 【录音加速修复】
-         * 页写入 timeout=5ms，W25Q64 典型完成时间 0.7ms。
-         * 若此处调用 vTaskDelay(1)，音频任务将被挂起 ≥1ms，
-         * 导致录音有效帧率从 44100/48≈918帧/s 降为 ~478帧/s（约 2× 加速）。
-         * 解决方案：timeout_ms ≤ 10 时忙等待轮询 SPI 状态寄存器；
-         * 擦除等长操作（timeout_ms > 10）仍 vTaskDelay 让出 CPU。
-         */
-        if (timeout_ms > 10) {
-            vTaskDelay(1);  /* 长操作（擦除）：让出 CPU 给其他任务 */
+        if (rtos_running) {
+            if (timeout_ms > 10) {
+                vTaskDelay(1);
+            }
+        } else {
+            volatile uint32_t dly;
+            for (dly = 0; dly < 10000; dly++);
+            start_tick++;  /* approximate 1ms per iteration */
         }
-        /* 短操作（页写 ≤5ms）：忙等待，总耗时约 0.7ms，不产生任务调度延迟 */
         
-    } while ((xTaskGetTickCount() - start_tick) < (timeout_ms / portTICK_PERIOD_MS + 1));
+    } while (rtos_running
+             ? ((xTaskGetTickCount() - start_tick) < (timeout_ms / portTICK_PERIOD_MS + 1))
+             : (start_tick < timeout_ms));
     
     W25QXX_LOG("Wait ready timeout!\n");
     return FLASH_ERR_TIMEOUT;

@@ -17,7 +17,7 @@ void Gui_update();
 void Gui_ShowCharLarge(uint16_t x0, uint16_t y0, uint8_t chr, uint16_t fc);
 void Gui_ShowStringLarge(uint16_t x0, uint16_t y0, uint8_t *chr, uint16_t fc);
 
-BGUI_Tool BGUI_tool = {
+BGUI_Tool BGUI_tool __attribute__((section(".data"))) = {
 
 
 	.DrawLine = Gui_DrawLine,
