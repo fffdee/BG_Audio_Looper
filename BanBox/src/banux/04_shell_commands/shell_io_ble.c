@@ -2,6 +2,7 @@
 uint16_t BLE_Send(uint8_t *data, uint16_t len);
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
 #ifndef pdMS_TO_TICKS
 #define pdMS_TO_TICKS(x) ((TickType_t)((((uint64_t)(x)) * configTICK_RATE_HZ) / 1000))
 #endif
@@ -57,6 +58,9 @@ void BLE_StopNotifyTest(void)
 
 /* External BLE stack function */
 extern int att_server_can_send(void);
+
+/* Physical BLE connection flag (set in ble_app_callback.c) */
+extern uint8_t BleConnectFlag;
 
 /* BLE Notify Handle - AB02特征值句柄 */
 #define BLE_SHELL_NOTIFY_HANDLE    0x0008
@@ -125,22 +129,47 @@ static uint8_t  g_BleRxBuf[BLE_RX_BUF_SIZE];
 static uint16_t g_BleRxHead = 0;
 static uint16_t g_BleRxTail = 0;
 static uint16_t g_BleRxCount = 0;
-uint8_t g_BLE_CCCD_Enabled = 0;  /* CCCD状态缓存，避免频繁调用att_server_can_send() - 对外暴露->send */
+uint8_t g_BLE_CCCD_Enabled = 0;
+
+static volatile uint8_t g_shell_data_pending = 0;
+
+/* 互斥量：序列化所有对 GattServerNotify 的调用。
+ * 必须在任何 BLE 操作前由 BLE_SendInit() 创建（在 BleProto_Init 中调用）。
+ * 禁止在临界区内懒初始化：FreeRTOS heap 分配不允许在临界区内执行。*/
+static SemaphoreHandle_t g_ble_send_mutex = NULL;
+
+void BLE_SendInit(void)
+{
+    if (g_ble_send_mutex == NULL) {
+        g_ble_send_mutex = xSemaphoreCreateMutex();
+    }
+}
 
 uint16_t BLE_Send(uint8_t *data, uint16_t len)
 {
     uint16_t sent = 0;
     uint16_t chunk_size;
-    const uint16_t max_len = 250;
+    const uint16_t max_len = 200;
     int result;
     int retry_count;
     const int max_retries = 3;
 
-    // 主动检查CCCD/Notify状态
-   if (att_server_can_send() == 0) {
-       DBG("[BLE_TX] WARN: CCCD not ready (att_server_can_send=0), skipping send\n");
-       return 0;
-   }
+    /* mutex 必须由 BLE_SendInit() 提前创建；未创建则跳过保护直接发送 */
+    if (g_ble_send_mutex != NULL) {
+        if (xSemaphoreTake(g_ble_send_mutex, pdMS_TO_TICKS(200)) != pdTRUE) {
+            return 0; /* 200ms 内未获取锁，跳过本次发送，避免阻塞 BLE 回调 */
+        }
+    }
+
+    /* 双重连接守卫：
+     * 1. BleConnectFlag — 物理连接是否建立（最可靠）
+     * 2. att_server_can_send() — CCCD 是否已订阅
+     * att_server_can_send() 在 power-on 时可能因 BLE 栈初始状态返回 1，
+     * 此时调用 GattServerNotify 会以无效连接句柄崩溃。*/
+    if (!BleConnectFlag || att_server_can_send() == 0) {
+        if (g_ble_send_mutex != NULL) xSemaphoreGive(g_ble_send_mutex);
+        return 0;
+    }
 
     while (sent < len)
     {
@@ -185,6 +214,7 @@ uint16_t BLE_Send(uint8_t *data, uint16_t len)
     }
 
     DBG("[BLE_TX] Completed: sent=%d/%d\n", sent, len);
+    if (g_ble_send_mutex != NULL) xSemaphoreGive(g_ble_send_mutex);
     return sent;
 }
 
@@ -233,9 +263,24 @@ void ShellIO_BLE_Init(void)
 void ShellIO_BLE_OnDataReceived(uint8_t *data, uint16_t len)
 {
     uint16_t i;
+    
+    {
+        extern bool BleProto_IsSyncing(void);
+        if (BleProto_IsSyncing()) {
+            for (i = 0; i < len; i++) {
+                if (g_BleRxCount < BLE_RX_BUF_SIZE) {
+                    g_BleRxBuf[g_BleRxHead] = data[i];
+                    g_BleRxHead = (g_BleRxHead + 1) % BLE_RX_BUF_SIZE;
+                    g_BleRxCount++;
+                }
+            }
+            g_shell_data_pending = 1;
+            return;
+        }
+    }
+    
     char cmd_str[256] = {0};
     
-    /* 打印收到的原始命令 */
     DBG("[BLE_RX] Received %d bytes: \"", len);
     for (i = 0; i < len && i < 128; i++) {
         if (data[i] >= 32 && data[i] < 127) {
@@ -251,19 +296,10 @@ void ShellIO_BLE_OnDataReceived(uint8_t *data, uint16_t len)
     }
     DBG("\"\n");
     
-    /* Check if this is a sync command (contains -q) */
     g_is_sync_command = (strstr(cmd_str, " -q") != NULL);
     if (g_is_sync_command) {
         DBG("[BLE_SYNC] Detected sync command: %s\n", cmd_str);
     }
-    
-    /* 
-     * 重要修正：接收命令(Write操作)不需要检查CCCD状态！
-     * - 命令接收通过Write特征值0x0006 (ATT_CHARACTERISTIC_AB01_01_VALUE_HANDLE)
-     * - CCCD仅控制Notify操作(0x0008/0x000b的通知发送)
-     * - 只有在BLE_Send()中发送响应时才需要检查att_server_can_send()
-     * - 否则客户端发送命令后无法得到处理,导致"命令行失效"问题
-     */
     
     for(i = 0; i < len; i++)
     {
@@ -286,11 +322,24 @@ void ShellIO_BLE_OnDataReceived(uint8_t *data, uint16_t len)
     
     DBG("[SHELL_BLE] Switching to BLE IO...\n");
     ShellIOManager_SwitchIO(SHELL_IO_BLE);
+
+    {
+        DBG("[SHELL_BLE] Calling Shell_Process()...\n");
+        Shell_Process();
+        DBG("[SHELL_BLE] Shell_Process() completed\n");
+    }
     
-    DBG("[SHELL_BLE] Calling Shell_Process()...\n");
-    Shell_Process();
-    DBG("[SHELL_BLE] Shell_Process() completed\n");
-    
-    /* Reset sync command flag after processing */
     g_is_sync_command = 0;
+}
+
+void ShellIO_BLE_ProcessPending(void)
+{
+    if (g_shell_data_pending && g_BleRxCount > 0) {
+        g_shell_data_pending = 0;
+        ShellIOManager_UpdateActivity(SHELL_IO_BLE);
+        ShellIOManager_SwitchIO(SHELL_IO_BLE);
+        DBG("[SHELL_BLE] Processing deferred shell data, Count=%d\n", g_BleRxCount);
+        Shell_Process();
+        DBG("[SHELL_BLE] Deferred Shell_Process() completed\n");
+    }
 }

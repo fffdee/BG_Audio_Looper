@@ -63,8 +63,12 @@
 #include "shell_cmd_mode.h"
 #include "shell_cmd_flash.h"
 
+// 低功耗管理
+#include "bg_low_power.h"
+
 #include "bt_manager.h"
 #include "rtos_api.h"
+#include "FreeRTOS.h"
 
 // ==================== 全局缓冲区定义 ====================
 static uint32_t AudioADC1Buf[1024] = {0};
@@ -210,6 +214,7 @@ static void InitADC0LineIn(uint16_t SampleRate)
 	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT);
 	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT, 32, 0);
 	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT, 32, 0);
+	AudioADC_VcomConfig(1);
 	AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void *)AudioADC1Buf, sizeof(AudioADC1Buf));
 }
 
@@ -219,8 +224,8 @@ static void InitADC1Mic(uint16_t SampleRate)
 	AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 12, 2);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1, 12, 2);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 28, 1);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  28, 1);
 	AudioADC_MicBias1Enable(TRUE);
 	AudioADC_VcomConfig(1);
 	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void *)AudioADC2Buf, sizeof(AudioADC2Buf));
@@ -395,8 +400,18 @@ void BG_audio_Init(uint16_t SampleRate)
 	InitADC0LineIn(SampleRate);
 	InitADC1Mic(SampleRate);
 
-	/* 开机提示音：在此处播放可保证 DAC 已就绪，且堆内存尚未被音效占用
-	 * osPortMalloc(19KB) 在 ~74KB 空闲堆时成功；InitAudioEffects 之后仅剩 ~9KB */
+	/* 开机 VCOM/PGA 稳定等待：ADC 模拟前端（VCOM 参考电压、PGA 建立）
+	 * 需要约 200~500ms 才能稳定，期间 ADC 输出包含 DC 偏移 + HPF 瞬态失真。
+	 * 先静音，等 300ms 后再解除，消除开机时几秒钟的失真现象。 */
+	AudioADC_SoftMute(ADC0_MODULE, TRUE, TRUE);
+	AudioADC_SoftMute(ADC1_MODULE, TRUE, TRUE);
+	vTaskDelay((300 + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS);
+	AudioADC_SoftMute(ADC0_MODULE, FALSE, FALSE);
+	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
+
+	/* 开机提示音：InitDAC/ADC 完成后此处堆约 77KB，足够分配 19KB 解码器缓冲
+	 * InitAudioEffects 之后堆仅剩 ~11KB（不够），故必须在此处播放
+	 * FIFO 等待已有超时保护（remind_sound.c），DAC DMA 未就绪时安全跳过 */
 	//RemindSound_PlayByName("on");
 
 	InitAudioEffects(SampleRate);
@@ -458,6 +473,9 @@ void BG_audio_Init(uint16_t SampleRate)
 	
 	// 初始化节拍器模块
 	MetronomeModule.Init();
+
+	// 初始化低功耗管理器（所有音频模块初始化完毕后调用）
+	LowPower_Init();
 
 //	AudioDAC_FadeDisable(DAC0);
 //
@@ -873,9 +891,12 @@ static void AudioLoopMinimal(uint32_t *bt_audio_buffer)
 			ProcessSpeakerSwitch();
 		}
 
-		/* Looper录制处理 - 录制效果处理后的吉他信号（guitar_buf_out）
-		 * guitar_buf_out 是 ApplyAudioEffects + ProcessGuitarOutput 之后的信号，
-		 * 与实际听到的声音一致，是典型踏板式 Looper 的录制源。 */
+		/* Looper录制处理 - 根据各段配置的录制源分别采集:
+		 * ALL_MIX → guitar_buf_out (混音后信号)
+		 * MIC_L/R → mic_buf_in (ADC1 原始)
+		 * LINEIN_L/R → guitar_buf_in (ADC0 原始) */
+		g_looper_src_mic    = BG_AudioManager.Audio_data.mic_buf_in;
+		g_looper_src_linein = BG_AudioManager.Audio_data.guitar_buf_in;
 		if (AudioLooper.IsRecording())
 		{
 			AudioLooper.ProcessRecording32(BG_AudioManager.Audio_data.guitar_buf_out,
@@ -1175,6 +1196,8 @@ void Audio_loop(void)
 {
 #if USE_EFFECT_GRAPH_MODE
 	/* ==== 混合模式：蓝牙用老方案，非蓝牙用 Effect Graph ==== */
+	{
+	uint8_t lp_activity = 0;
 
 	BtStackServiceRun();
 	SetVolume();  /* 【修复】恢复音量设置，否则所有音频静音 */
@@ -1186,11 +1209,31 @@ void Audio_loop(void)
 	/* USB 热插拔检测（与 UI 解耦，直接在音频系统处理） */
 	USB_HotplugCheck();
 
-	AudioLoopWithGraph();
-	/* 消费回绕触发的 pending 标志（衔接/接入/延迟停止），必须在音频处理之后调用 */
-	Looper_TimedOps_Process();
-	/* CDC串口应用处理 - 使用Shell IO管理器（自动切换CDC/BLE） */
+	/* ==================== 低功耗活动检测 ==================== */
+	if (usb_speaker_enable || usb_mic_enable)
+		lp_activity |= LP_ACT_USB_AUDIO;
+	if (GetA2dpState() == BT_A2DP_STATE_STREAMING)
+		lp_activity |= LP_ACT_BT_AUDIO;
+	if (OTG_DeviceCDC_GetRxCount() > 0)
+		lp_activity |= LP_ACT_CDC_COMM;
+	if (ShellIOManager_HasIncomingData())
+		lp_activity |= LP_ACT_BLE_COMM;
+	if (lp_activity)
+		LowPower_FeedActivity(lp_activity);
+	/* ADC 信号活动由 ADC 源节点回调自动喂入（正常模式），
+	 * 低功耗模式下由 LowPower_Tick 内部旁路检测接管 */
+	LowPower_Tick();
+	/* ======================================================= */
+
+	if (!LowPower_IsLowPower()) {
+		/* 正常模式：执行音频图处理 */
+		AudioLoopWithGraph();
+		/* 消费回绕触发的 pending 标志（衔接/接入/延迟停止），必须在音频处理之后调用 */
+		Looper_TimedOps_Process();
+	}
+	/* 低功耗模式下仍处理 Shell，以便接收唤醒命令 */
 	ShellIOManager_Process();
+	} /* end block */
 
 #else
 	/* ==== 传统模式（保留用于对比/回退） ==== */
@@ -1370,6 +1413,10 @@ static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint1
 	/* 读取ADC数据（32位=L/R两个16位声道打包） */
 	if (samples_to_read > 0) {
 		AudioADC_DataGet(ADC0_MODULE, out_buf, samples_to_read);
+		/* 同步到共享缓冲区供 Looper 按源选择时直接访问 */
+		memcpy(BG_AudioManager.Audio_data.guitar_buf_in, out_buf, samples_to_read * sizeof(uint32_t));
+		/* 低功耗：检测吉他输入信号是否超过门限 */
+		LowPower_CheckADCSignal(out_buf, samples_to_read);
 	}
 	return samples_to_read;
 }
@@ -1396,6 +1443,10 @@ static uint16_t ADC1_ReadMicData(EffectNode_t *node, uint32_t *out_buf, uint16_t
 	/* 读取ADC数据（32位=L/R两个16位声道打包） */
 	if (samples_to_read > 0) {
 		AudioADC_DataGet(ADC1_MODULE, out_buf, samples_to_read);
+		/* 同步到共享缓冲区供 Looper 按源选择时直接访问 */
+		memcpy(BG_AudioManager.Audio_data.mic_buf_in, out_buf, samples_to_read * sizeof(uint32_t));
+		/* 低功耗：检测麦克风输入信号是否超过门限 */
+		LowPower_CheckADCSignal(out_buf, samples_to_read);
 	}
 	return samples_to_read;
 }
@@ -1623,36 +1674,28 @@ static void ADC_Mixer_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in
 		return;
 	}
 	
-	/* 合并: 每个输出样本 = [L声道 | R声道] (32位打包) */
+	/* 合并: 所有输入混成单声道后输出到 L/R 双声道（居中声像）
+	 * 原因: 吉他通常接单声道线（TRS/TS），只有 L 声道有信号，R≈0。
+	 * 若分别输出 L/R，则实时监听时 R 耳无声，而 Looper 回放是
+	 * 单声道复制到双声道，导致回放感知响度约 2-4x 强于实时监听。
+	 * 将所有输入混合为单声道后同时送到 L 和 R，与 Looper 回放行为一致。
+	 */
 	for (i = 0; i < len; i++) {
-		int32_t left_sum = 0;
-		int32_t right_sum = 0;
-		
-		/* 累加L声道: guitar_L + mic_L */
-		if (in_bufs[0]) {
-			left_sum += ((int16_t *)in_bufs[0])[i];
-		}
-		if (in_bufs[2]) {
-			left_sum += ((int16_t *)in_bufs[2])[i];
-		}
-		
-		/* 累加R声道: guitar_R + mic_R */
-		if (in_bufs[1]) {
-			right_sum += ((int16_t *)in_bufs[1])[i];
-		}
-		if (in_bufs[3]) {
-			right_sum += ((int16_t *)in_bufs[3])[i];
-		}
-		
+		int32_t mono_sum = 0;
+
+		/* 累加全部4路单声道信号：guitar_L + guitar_R + mic_L + mic_R */
+		if (in_bufs[0]) mono_sum += ((int16_t *)in_bufs[0])[i];
+		if (in_bufs[1]) mono_sum += ((int16_t *)in_bufs[1])[i];
+		if (in_bufs[2]) mono_sum += ((int16_t *)in_bufs[2])[i];
+		if (in_bufs[3]) mono_sum += ((int16_t *)in_bufs[3])[i];
+
 		/* 饱和限制到16位 */
-		if (left_sum > 32767) left_sum = 32767;
-		if (left_sum < -32768) left_sum = -32768;
-		if (right_sum > 32767) right_sum = 32767;
-		if (right_sum < -32768) right_sum = -32768;
-		
-		/* 打包成32位: [低16位=L | 高16位=R] */
-		out_16[i * 2] = (int16_t)left_sum;
-		out_16[i * 2 + 1] = (int16_t)right_sum;
+		if (mono_sum > 32767)  mono_sum =  32767;
+		if (mono_sum < -32768) mono_sum = -32768;
+
+		/* 同时送到 L 和 R，保持与 Looper 单声道回放的响度一致 */
+		out_16[i * 2]     = (int16_t)mono_sum;
+		out_16[i * 2 + 1] = (int16_t)mono_sum;
 	}
 }
 
@@ -1808,6 +1851,10 @@ static void LooperRecord_SinkCallback(EffectNode_t *node, uint32_t *in_buf, uint
 		len = 48;
 	}
 	
+	/* 设置各录制源缓冲区指针 (Effect Graph 路径) */
+	g_looper_src_mic    = BG_AudioManager.Audio_data.mic_buf_in;
+	g_looper_src_linein = BG_AudioManager.Audio_data.guitar_buf_in;
+
 	/* 如果Looper正在录制，写入数据 */
 	if (AudioLooper.IsRecording()) {
 		AudioLooper.ProcessRecording32(in_buf, looper_flash_buffer, len);
@@ -1899,9 +1946,9 @@ static void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
  * EQ 处理回调 - 均衡器
  * 调用 SDK AudioEffectEQApply
  * 
- * ADC EQ节点(eq_guitar_l/r, eq_mic_l/r): 
+ * ADC EQ节点(eq_guitar_l/r, eq_mic_l/r):
  *   - 输入: 32位双声道数据(高16位=R, 低16位=L)
- *   - 根据edge的src_port提取对应声道: 0=L, 1=R  
+ *   - 根据edge的src_port提取对应声道: 0=L, 1=R
  *   - 处理: 单声道16位EQ
  *   - 输出: 单声道16位数据(存储在32位buffer的低16位)
  * 
@@ -1969,7 +2016,7 @@ static void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count,
 			                   len,
 			                   2);  /* 2 = 立体声 */
 		} else {
-			/* ADC EQ: 单声道处理 
+			/* ADC EQ: 单声道处理
 			 * 从32位双声道数据中提取对应声道(L或R) */
 			temp_buf_mono = (int16_t *)in_bufs[0];  /* 重解释为16位数组 */
 			

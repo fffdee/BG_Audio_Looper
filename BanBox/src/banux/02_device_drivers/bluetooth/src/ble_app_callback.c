@@ -44,10 +44,15 @@ void BLEStackCallBackFunc(uint8_t event)
 			BT_DBG("BLE_STACK_DISCONNECTED\n");
 			BleConnectFlag = 0;
 			BG_EVT_PUB(EVT_BLE_DISCONNECTED);
-			/* 蓝牙断开时仅停止正在播放或录制的段（不动 INACTIVE 段） */
+			/* 清除同步任务状态，防止重连后弹窗永不消失 */
+			{
+				extern void BleProto_OnDisconnected(void);
+				BleProto_OnDisconnected();
+			}
+			/* 蓝牙断开时仅停止正在播放或录制的段（不动 INACTIVE/STOPPED 段，不清数据） */
 			{
 				uint8_t i;
-				for (i = 0; i < 2; i++) {
+				for (i = 0; i < MAX_SEGMENTS; i++) {
 					SegmentState_t segState = loop_get_segment_state(i);
 					if (segState == SEGMENT_PLAYING || segState == SEGMENT_RECORDING) {
 						loop_set_segment_stopped(i);

@@ -116,6 +116,13 @@ void ShellIOManager_UpdateActivity(ShellIOType_t io_type);
  */
 const char* ShellIOManager_GetIOName(ShellIOType_t io_type);
 
+/**
+ * @brief  查询 CDC 或 BLE 是否有待处理的输入数据
+ * @return 1=有数据（活跃），0=无数据（静默）
+ * @note   供低功耗管理器判断通信活动状态
+ */
+uint8_t ShellIOManager_HasIncomingData(void);
+
 #ifdef __cplusplus
 }
 #endif

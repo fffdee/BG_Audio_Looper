@@ -187,6 +187,18 @@ struct LooperStorageOps {
      * @return 1=忙, 0=空闲
      */
     uint8_t (*is_busy)(LooperStorageDevice_t *dev);
+
+    /**
+     * @brief 刷新待写缓冲区 (NAND 专用)
+     *
+     * @details 将内部页缓冲区中尚未提交的数据写入物理存储。
+     *          NAND 适配器使用 256B 写入累积为 2048B 物理页，录制结束后
+     *          必须调用此函数以确保最后一个不满页的数据被正确写入。
+     *          其他存储介质可将此接口设为 NULL。
+     * @param dev 存储设备句柄
+     * @return LOOPER_STORAGE_OK=成功
+     */
+    LooperStorageStatus_t (*flush)(LooperStorageDevice_t *dev);
 };
 
 /* ============================================================================
@@ -245,6 +257,16 @@ LooperStorageStatus_t LooperStorage_EraseBlock(LooperStorageDevice_t *dev, uint3
  * @brief 擦除整片
  */
 LooperStorageStatus_t LooperStorage_EraseChip(LooperStorageDevice_t *dev);
+
+/**
+ * @brief 刷新待写缓冲区 (NAND Flash 录制结束后必须调用)
+ *
+ * @details 对于 NAND Flash 适配器，写入操作会先缓存进 2048B 的页缓冲区，
+ *          只有当缓冲区写满一个物理页时才真正写入 Flash。录制结束时需主动
+ *          调用此函数，以强制提交最后一个不满页的数据。
+ *          对于 NOR Flash / PSRAM 等其他介质，此函数是空操作，可安全调用。
+ */
+LooperStorageStatus_t LooperStorage_Flush(LooperStorageDevice_t *dev);
 
 /**
  * @brief 获取设备信息

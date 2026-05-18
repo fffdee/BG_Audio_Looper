@@ -72,12 +72,20 @@
 
 #include "bg_audio_io_manager.h"
 
+#include "battery_drv.h"
+#include "battery_calib.h"
+
+/* Physical BLE connection flag (defined in ble_app_callback.c) */
+extern uint8_t BleConnectFlag;
+
 #include "framebuffer.h"
 #include "audio_looper.h"
 
 /* System Parameter Storage */
-#include "sys_param.h"
+#include "sys_param.h"   
 #include "shell_lcd_adapter.h"  /* Shell LCD console adapter */
+#include "looper_wav_ble_export.h"  /* Audio Looper WAV BLE export */
+#include "ble_protocol.h"           /* BLE protocol types */
 #include "bg_shell.h"           /* Shell console API */
 #include "audio_setting.h"
 /* New UI Architecture - Single entry point */
@@ -88,6 +96,9 @@
 
 /* 事件发布-订阅系统 */
 #include "bg_event.h"
+
+/* 系统状态管理（空闲/正常/数据传输） */
+#include "sys_state.h"
 
 /* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
 #include "remind_sound.h"
@@ -197,8 +208,8 @@ static uint8_t DmaChannelMap[29] = {
 		255, //PERIPHERAL_ID_SPIS_RX = 0,		//0
 		255, //PERIPHERAL_ID_SPIS_TX,			//1
 		255, //PERIPHERAL_ID_TIMER3,			//2
-		8, //PERIPHERAL_ID_SDIO_RX,			//3  shared with SPIM_RX (ch0), half-duplex OK
-		9, //PERIPHERAL_ID_SDIO_TX,			//4  shared with SPIM_TX (ch1), half-duplex OK
+		8, //PERIPHERAL_ID_SDIO_RX,			
+		9, //PERIPHERAL_ID_SDIO_TX,			
 		255, //PERIPHERAL_ID_UART0_RX,			//5
 		255, //PERIPHERAL_ID_TIMER1,				//6
 		255, //PERIPHERAL_ID_TIMER2,				//7
@@ -254,6 +265,25 @@ void spi_read(uint8_t *data,uint16_t size)
 {
 	SPIM_DMA_Recv_Start(data, size);
 	while(!SPIM_DMA_HalfDone(PERIPHERAL_ID_SPIM_RX));
+}
+
+/**
+ * @brief BLE data command dispatcher
+ * Routes incoming BLE data frames to the correct module handler.
+ */
+static void ble_data_cmd_dispatch(const BleProtoFrame_t *frame)
+{
+	switch (frame->cmd) {
+	case BLE_CMD_WAV_EXPORT:
+		LooperWavBle_HandleCommand(frame->payload, frame->len);
+		break;
+	case BLE_CMD_BATTERY_CALIB:
+		BattCalib_HandleBleCmd(frame->payload, frame->len);
+		break;
+	default:
+		DBG("[BLE] Unhandled data cmd: 0x%02X\n", frame->cmd);
+		break;
+	}
 }
 
 void power_on()
@@ -346,13 +376,29 @@ void power_on()
 #endif
 
 	/*=====================================================
-	 * 事件发布-订阅系统初始化
-	 * 必须在所有模块 Subscribe 之前调用
+	 * BLE data command dispatcher
+	 * Route incoming BLE data frames to the correct handler
 	 *====================================================*/
-	DBG("[Task] Initializing Event System...\n");
-	BG_Event_Init();
+	{
+		extern void BleProto_Init(void);
+		BleProto_Init();
+		extern void BleProto_RegisterDataHandler(BleProto_DataHandler_t handler);
+		BleProto_RegisterDataHandler(ble_data_cmd_dispatch);
+		DBG("[Task] BLE data handler registered\n");
+	}
 
-	DBG("[Task] Initializing UI System...\n");
+	/*=====================================================
+	 * Battery calibration — load saved curve from flash
+	 *====================================================*/
+	BattCalib_Init();
+	DBG("[Task] Battery calibration initialized\n");
+
+	/*=====================================================
+	 * System state machine (IDLE / NORMAL / TRANSFER)
+	 *====================================================*/
+	SysState_Init();
+	DBG("[Task] SysState initialized\n");
+
 #ifdef UI_EN
 
 	BANGUI_QUICK_INIT();
@@ -380,7 +426,7 @@ void power_on()
 
 	DBG("[Main] Entering main loop...\n");
 
-	/* 开机提示音已在 BG_audio_Init() 内部播放（InitDAC 后、InitAudioEffects 前）*/
+	/* 开机提示音在 BG_audio_Init() 末尾（所有模块初始化完毕后）播放 */
 
 }
 
@@ -446,6 +492,8 @@ void pwr_butoon_handler()
 
 
 uint8_t time_count = 0;
+/* hardware_check() 被 50ms 定时调用，600次 = 30秒 */
+static uint16_t battery_report_count = 0;
 void hardware_check()
 {
 
@@ -453,12 +501,30 @@ void hardware_check()
 	time_count++;
 	if(time_count>=100){
 		if(ADC_SingleModeDataGet(ADC_CHANNEL_POWERKEY)>4000){
-			 AudioSetting_SetGuitar2VolumePercent(AudioSetting_GetGuitar2VolumePercent) ;
+			 AudioSetting_SetGuitar2VolumePercent(AudioSetting_GetGuitar2VolumePercent()) ;
 		}else{
 			 AudioSetting_SetGuitar2VolumePercent(0) ;
 		}
 		time_count = 0;
 	}
+
+	/* 每 30 秒通过 BLE 上报一次电量（仅在已连接时发送）*/
+	battery_report_count++;
+	if (battery_report_count >= 600) {
+		battery_report_count = 0;
+		if (BleConnectFlag) {
+			uint8_t payload[2];
+			payload[0] = BLE_SYSTEM_SUB_BATTERY;
+			payload[1] = BattCalib_GetSOC();  /* 使用矫正曲线 SOC（无矫正则回退到电压法） */
+			BleProto_SendOnce(BLE_CMD_SYSTEM, payload, 2);
+		}
+	}
+
+	/* Battery calibration voltage tick (每次 hardware_check 调用约 50ms) */
+	BattCalib_Tick();
+
+	/* 系统状态机更新（检测空闲/传输状态，BLE 上报到 App） */
+	SysState_Update();
 }
 
 void MainTask() {
@@ -492,6 +558,12 @@ void MainTask() {
 		 * that is unsafe to touch while CDC data path is active. */
 		extern void BLE_CheckSyncResponse(void);
 		BLE_CheckSyncResponse();
+
+		extern void BleProto_Process(void);
+		BleProto_Process();
+
+		/* WAV BLE export: send one data packet per tick */
+		LooperWavBle_ProcessTick();
 
 #if CDC_FILE_MANAGER_EN
 		/* CDC 文件管理模式检测和处理 (NAND Flash 下载) */

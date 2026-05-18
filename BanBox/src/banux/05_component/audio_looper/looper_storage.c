@@ -165,6 +165,26 @@ LooperStorageStatus_t LooperStorage_EraseChip(LooperStorageDevice_t *dev)
 }
 
 /**
+ * @brief 刷新待写缓冲区
+ */
+LooperStorageStatus_t LooperStorage_Flush(LooperStorageDevice_t *dev)
+{
+    if (dev == NULL || dev->ops == NULL) {
+        return LOOPER_STORAGE_INVALID_PARAM;
+    }
+
+    if (!dev->initialized) {
+        return LOOPER_STORAGE_NOT_READY;
+    }
+
+    if (dev->ops->flush == NULL) {
+        return LOOPER_STORAGE_OK;  /* 不需要flush的存储介质直接返回成功 */
+    }
+
+    return dev->ops->flush(dev);
+}
+
+/**
  * @brief 获取设备信息
  */
 LooperStorageStatus_t LooperStorage_GetInfo(LooperStorageDevice_t *dev, LooperStorageInfo_t *info)

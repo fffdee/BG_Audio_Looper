@@ -252,19 +252,22 @@ static int battery_drv_close(void *priv)
 static int battery_drv_read(void *priv, uint8_t *buf, uint32_t len)
 {
     BatteryPrivData_t *battery_priv = (BatteryPrivData_t *)priv;
+    uint16_t mv;
+    int written;
     
     // 刷新数据
     battery_priv->soc = battery_get_soc();
-    battery_priv->voltage = battery_get_volt();
+    mv = battery_get_volt_mv();
     
-    // 格式化输出
-    int written = snprintf((char *)buf, len,
+    // 格式化输出 (avoid %f which triggers _printf_float -> libm FPU crash)
+    written = snprintf((char *)buf, len,
         "Battery Info:\n"
         "  SOC: %u%%\n"
-        "  Voltage: %.2fV\n"
+        "  Voltage: %u.%02uV\n"
         "  Status: %s\n",
         battery_priv->soc,
-        battery_priv->voltage,
+        (unsigned)(mv / 1000u),
+        (unsigned)((mv % 1000u) / 10u),
         (battery_priv->soc > 20) ? "Normal" :
         (battery_priv->soc >= 10) ? "Low" : "Critical"
     );

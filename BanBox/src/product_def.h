@@ -136,7 +136,7 @@ extern "C" {
 #elif defined(BANBOX_II)
 #define BANGTSYNTH_EN           0   /* 暂未移植到新板 */
 #else
-#define BANGTSYNTH_EN           0
+//#define BANGTSYNTH_EN           0
 #endif
 
 /* 高级合成器功能 (依赖 NAND + PSRAM) */

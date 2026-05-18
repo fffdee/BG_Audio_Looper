@@ -389,10 +389,13 @@ int16_t att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t trans
 				if (cccd_value & 0x0001) {
 					g_BLE_CCCD_Enabled = 1;
 					BT_DBG("[CCCD] ENABLED: Notifications enabled for handle 0x%02x\n", attribute_handle);
-					// Send a test notification to confirm
-					extern uint16_t BLE_Send(uint8_t *data, uint16_t len);
-					char test_msg[] = "[BLE_TEST] Notifications enabled!\r\n";
-					BLE_Send((uint8_t *)test_msg, strlen(test_msg));
+					/* 不在 ATT 回调中调用 BLE_Send（会阻塞 BLE 协议栈），
+					 * 直接触发参数同步请求即可，sync 任务会在主循环中创建。*/
+					{
+						extern void BleProto_RequestSync(void);
+						BT_DBG("[CCCD] Requesting parameter sync (delayed)...\n");
+						BleProto_RequestSync();
+					}
 				} else {
 					g_BLE_CCCD_Enabled = 0;
 					BT_DBG("[CCCD] DISABLED: Notifications disabled for handle 0x%02x\n", attribute_handle);
@@ -473,8 +476,13 @@ int16_t app_att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t t
 				ble_rx.len  = buffer_size;
 				BG_EVT_PUB_DATA(EVT_BLE_DATA_RECEIVED, &ble_rx, sizeof(ble_rx));
 			}
-			/* Shell命令行处理 */
-			ShellIO_BLE_OnDataReceived(buffer, buffer_size);
+			/* 检查是否为协议帧 (0xAA55 header) */
+			if (buffer_size >= 6 && buffer[0] == 0xAA && buffer[1] == 0x55) {
+				extern void BleProto_OnFrameReceived(const uint8_t *data, uint16_t len);
+				BleProto_OnFrameReceived(buffer, buffer_size);
+			} else {
+				ShellIO_BLE_OnDataReceived(buffer, buffer_size);
+			}
 			BT_DBG("ATT_CHARACTERISTIC_AB01_01_VALUE_HANDLE:\n");
 			break;
 
