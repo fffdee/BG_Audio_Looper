@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 按钮基础样式 -->
+    <style name="BaseButton" parent="Widget.AppCompat.Button">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:elevation">4dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="backgroundTint">@null</item>
+    </style>
+
+    <!-- 主要按钮样式 - 青色渐变 -->
+    <style name="PrimaryButton" parent="BaseButton">
+        <item name="android:background">@drawable/button_connect</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <!-- 高亮按钮样式 - 绿色渐变 -->
+    <style name="GlowButton" parent="BaseButton">
+        <item name="android:background">@drawable/button_glow</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <!-- 功能按钮样式 - 深蓝渐变 -->
+    <style name="FunctionButton" parent="BaseButton">
+        <item name="android:background">@drawable/button_function</item>
+    </style>
+
+    <!-- 调试/次要按钮样式 - 深色渐变 -->
+    <style name="DebugButton" parent="BaseButton">
+        <item name="android:background">@drawable/button_debug</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <!-- EQ专用按钮样式 -->
+    <style name="EqPrimaryButton" parent="BaseButton">
+        <item name="android:background">@drawable/button_primary</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="EqSecondaryButton" parent="BaseButton">
+        <item name="android:background">@drawable/button_secondary</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="EqDangerButton" parent="BaseButton">
+        <item name="android:background">@drawable/button_danger</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+</resources>

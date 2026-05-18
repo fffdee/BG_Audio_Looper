@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <include layout="@layout/include_base_toolbar" />
+
+    <!-- 空状态提示 -->
+    <TextView
+        android:id="@+id/tv_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="暂无已保存的项目\n点击 SampleCreator 中的「保存」来创建"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_projects"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
+
+    <!-- 底部导入按鈕 -->
+    <Button
+        android:id="@+id/btn_import_project"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="⬇️ 导入工程 (.zip)"
+        android:textSize="14sp"
+        android:textColor="?attr/colorOnSurface"
+        android:background="?attr/selectableItemBackground"
+        android:layout_margin="8dp" />
+
+</LinearLayout>

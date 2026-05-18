@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 禁用状态 -->
+    <item android:state_enabled="false">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#C0C0C0" />
+                    <corners android:radius="20dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    
+    <!-- 按下状态 -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#008A55" />
+                    <corners android:radius="20dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    
+    <!-- 正常状态 - 绿色渐变 -->
+    <item>
+        <layer-list>
+            <!-- 阴影外层 -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#3000C980" />
+                    <corners android:radius="22dp" />
+                </shape>
+            </item>
+            <!-- 渐变主体 -->
+            <item android:top="2dp" android:bottom="2dp" android:left="2dp" android:right="2dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="135"
+                        android:startColor="#00C980"
+                        android:centerColor="#00A366"
+                        android:endColor="#008855"
+                        android:type="linear" />
+                    <corners android:radius="20dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

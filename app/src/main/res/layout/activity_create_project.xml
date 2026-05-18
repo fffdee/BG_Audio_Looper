@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:padding="20dp">
+
+    <!-- 标题 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="创建乐谱项目"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp" />
+
+    <!-- 项目名输入框（带阴影效果） -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/bg_card"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp"
+        android:layout_marginBottom="16dp">
+
+        <EditText
+            android:id="@+id/et_project_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="输入项目名称"
+            android:textColorHint="@color/text_tertiary"
+            android:textColor="@color/text_primary"
+            android:inputType="text"
+            android:padding="16dp"
+            android:background="@android:color/transparent"
+            android:textSize="16sp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 选择图片按钮（渐变按钮） -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_select_images"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="📷 选择乐谱图片"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/button_primary"
+        app:cornerRadius="12dp"
+        app:elevation="4dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 图片数量显示 -->
+    <TextView
+        android:id="@+id/tv_selected_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="已选择 0 张图片"
+        android:textSize="14sp"
+        android:textColor="@color/text_error"
+        android:gravity="center"
+        android:paddingVertical="8dp" />
+
+    <!-- 图片预览区域（带装饰） -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:cardBackgroundColor="@color/bg_card"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="图片预览"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:gravity="center"
+                android:paddingBottom="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_selected_images"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 操作按钮组 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="取消"
+            android:textSize="16sp"
+            app:backgroundTint="@color/button_secondary"
+            app:cornerRadius="12dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_confirm"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="✓ 创建项目"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/text_error"
+            app:cornerRadius="12dp" />
+    </LinearLayout>
+</LinearLayout>

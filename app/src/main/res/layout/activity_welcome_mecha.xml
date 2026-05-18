@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/gradient_background">
+
+    <include layout="@layout/include_base_toolbar" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp">
+
+        <ImageView
+            android:layout_width="280dp"
+            android:layout_height="140dp"
+            android:src="@mipmap/bg"
+            android:scaleType="fitCenter"
+            android:contentDescription="BG Audio Logo"
+            android:elevation="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="BanBox"
+            android:textColor="@color/primary_accent_glow"
+            android:textSize="48sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.1"
+            android:shadowColor="@color/primary_accent_glow"
+            android:shadowRadius="10"
+            android:shadowDx="0"
+            android:shadowDy="0" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="玩转你的音乐"
+            android:textColor="@color/subtitle_accent"
+            android:textSize="18sp"
+            android:letterSpacing="0.15"
+            android:fontFamily="sans-serif-light" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/card_background"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:elevation="6dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <View
+                    android:id="@+id/status_indicator"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@drawable/slider_thumb"
+                    android:backgroundTint="@color/status_disconnected" />
+
+                <TextView
+                    android:id="@+id/tv_connection_status"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:text="● 未连接"
+                    android:textColor="@color/status_disconnected"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_device_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BanBox 设备"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_bluetooth_connect"
+                style="@style/GlowButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="16dp"
+                android:text="连接蓝牙设备" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/card_background"
+            android:padding="5dp"
+            android:elevation="6dp">
+
+            <ImageButton
+                android:id="@+id/btn_banbox_settings"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/setting"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:contentDescription="设置中心"
+                android:layout_marginEnd="30dp" />
+
+            <ImageButton
+                android:id="@+id/btn_enter"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/viewer"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:contentDescription="自动乐谱" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="v1.0 MECHA BanGO"
+        android:textColor="@color/text_tertiary"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:fontFamily="monospace"
+        android:letterSpacing="0.2" />
+</LinearLayout>
+
+    <View
+        android:id="@+id/app_settings_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone" />
+
+    <include layout="@layout/drawer_app_settings" />
+
+</FrameLayout>

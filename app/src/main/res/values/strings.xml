@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">BanBox</string>
+    <string name="default_notification_channel_id">image_project_channel</string>
+    <string name="notification_channel_name">图片项目管理</string>
+    <string name="notification_title">图片播放器</string>
+    <string name="notification_content">点击创建新项目</string>
+    <string name="create_project">创建项目</string>
+    <string name="project_name_hint">请输入项目名</string>
+    <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
+    <string name="select_images_for_project">选择项目图片</string>
+    <string name="project_created">项目创建成功</string>
+</resources>

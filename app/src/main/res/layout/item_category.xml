@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="52dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:background="@drawable/category_item_selector">
+
+    <!-- 选中指示条 -->
+    <View
+        android:id="@+id/category_selected_bar"
+        android:layout_width="3dp"
+        android:layout_height="20dp"
+        android:background="@color/primary_accent_glow"
+        android:visibility="invisible"
+        android:layout_marginEnd="10dp" />
+
+    <!-- 分类图标 -->
+    <TextView
+        android:id="@+id/tv_category_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="📁"
+        android:textSize="15sp"
+        android:includeFontPadding="false"
+        android:layout_marginEnd="8dp" />
+
+    <!-- 分类名称 -->
+    <TextView
+        android:id="@+id/tv_category_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- 项目数量 -->
+    <TextView
+        android:id="@+id/tv_category_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_tertiary"
+        android:textSize="11sp"
+        android:includeFontPadding="false"
+        android:minWidth="18dp"
+        android:gravity="end" />
+
+</LinearLayout>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/toolbar_height"
+        android:background="@color/primary_darker"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        android:elevation="@dimen/card_elevation"
+        app:title="欢迎"
+        app:titleTextColor="@color/text_primary" />
+
+    <!-- 内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="@dimen/toolbar_padding"
+        android:background="@color/bg_dark">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="欢迎使用我的应用"
+            android:textSize="@dimen/text_size_huge"
+            android:textColor="@color/text_accent"
+            android:textStyle="bold"
+            android:layout_marginBottom="@dimen/spacing_huge" />
+
+        <Button
+            android:id="@+id/btn_enter"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/button_height_medium"
+            android:text="自动乐谱"
+            android:textSize="@dimen/text_size_large"
+            android:textColor="@color/text_primary"
+            android:background="@drawable/button_glow"
+            android:paddingStart="@dimen/spacing_huge"
+            android:paddingEnd="@dimen/spacing_huge"
+            android:layout_marginBottom="@dimen/spacing_medium" />
+
+        <Button
+            android:id="@+id/btn_banbox_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/button_height_medium"
+            android:text="BanBox设置"
+            android:textSize="@dimen/text_size_large"
+            android:textColor="@color/text_primary"
+            android:background="@drawable/button_function"
+            android:paddingStart="@dimen/spacing_huge"
+            android:paddingEnd="@dimen/spacing_huge" />
+
+    </LinearLayout>
+
+</LinearLayout>

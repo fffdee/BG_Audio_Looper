@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:fitsSystemWindows="true">
+
+    <!-- 统一顶部导航栏 -->
+    <include layout="@layout/include_base_toolbar" />
+
+    <!-- 音量操作按钮栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical"
+        android:background="@color/bg_card"
+        android:paddingStart="@dimen/toolbar_padding"
+        android:paddingEnd="@dimen/toolbar_padding"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <ImageButton
+            android:id="@+id/btn_save_volume"
+            android:layout_width="@dimen/icon_size_large"
+            android:layout_height="@dimen/icon_size_large"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_save"
+            android:tint="@color/text_accent"
+            android:contentDescription="保存音量设置"
+            android:scaleType="centerInside"
+            android:padding="8dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/toolbar_padding">
+
+            <!-- 音量控制卡片 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_card"
+                android:padding="@dimen/toolbar_padding"
+                android:elevation="@dimen/card_elevation">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔊 通道音量"
+                    android:textSize="@dimen/text_size_xlarge"
+                    android:textColor="@color/text_error"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/toolbar_padding" />
+
+                <LinearLayout
+                    android:id="@+id/volume_sliders_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="350dp"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:weightSum="5">
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

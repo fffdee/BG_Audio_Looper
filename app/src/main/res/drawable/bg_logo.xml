@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- BG Logo作为矢量图 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="100dp"
+    android:viewportWidth="200"
+    android:viewportHeight="100">
+    
+    <!-- 渐变背景效果 -->
+    <path
+        android:fillColor="#00FFA3"
+        android:pathData="M0,0 L200,0 L200,100 L0,100 Z"
+        android:fillAlpha="0.1" />
+    
+    <!-- BG文字主体 - 使用科技感路径 -->
+    <path
+        android:fillColor="#00FFA3"
+        android:strokeColor="#00D9FF"
+        android:strokeWidth="2"
+        android:pathData="M30,30 L70,30 Q80,30 80,40 L80,50 Q80,55 75,55 L50,55 L50,60 L70,60 Q80,60 80,70 L80,80 Q80,90 70,90 L30,90 L30,30 M40,40 L40,50 L70,50 Q72,50 72,48 L72,42 Q72,40 70,40 L40,40 M40,65 L40,82 L70,82 Q72,82 72,80 L72,67 Q72,65 70,65 L40,65" />
+    
+    <path
+        android:fillColor="#00D9FF"
+        android:strokeColor="#00FFA3"
+        android:strokeWidth="2"
+        android:pathData="M100,30 L140,30 Q150,30 150,40 L150,48 Q150,53 145,55 Q150,57 150,62 L150,80 Q150,90 140,90 L110,90 Q100,90 100,80 L100,40 Q100,30 110,30 M110,40 L110,50 L140,50 Q142,50 142,48 L142,42 Q142,40 140,40 L110,40 M110,60 L110,82 L140,82 Q142,82 142,80 L142,62 Q142,60 140,60 L110,60" />
+    
+    <!-- 音频波形装饰 -->
+    <path
+        android:strokeColor="#00FFA3"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M10,50 L15,35 L20,65 L25,25 L30,75 L35,40 L40,60" />
+    
+    <path
+        android:strokeColor="#00D9FF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M160,50 L165,35 L170,65 L175,25 L180,75 L185,40 L190,60" />
+    
+    <!-- 齿轮装饰 - 左上 -->
+    <path
+        android:fillColor="#00FFA3"
+        android:fillAlpha="0.3"
+        android:pathData="M20,15 A8,8 0 1,1 20,14.99 Z M20,12 L22,8 L18,8 Z M24,15 L28,13 L26,17 Z M20,18 L22,22 L18,22 Z M16,15 L12,13 L14,17 Z" />
+    
+    <!-- 齿轮装饰 - 右上 -->
+    <path
+        android:fillColor="#00D9FF"
+        android:fillAlpha="0.3"
+        android:pathData="M180,15 A8,8 0 1,1 180,14.99 Z M180,12 L182,8 L178,8 Z M184,15 L188,13 L186,17 Z M180,18 L182,22 L178,22 Z M176,15 L172,13 L174,17 Z" />
+</vector>
