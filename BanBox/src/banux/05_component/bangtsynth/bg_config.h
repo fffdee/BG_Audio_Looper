@@ -203,39 +203,41 @@
 #error "BG_CHANNELS must be 1 or 2"
 #endif
 
+#endif /* BANGTSYNTH_EN */
+
 /* ============================================
  * 兼容性别名 (旧代码引用)
+ * 必须放在 BANGTSYNTH_EN 外部，保证始终可用
  * ============================================ */
+#ifndef BG_AUDIO_BIT_DEPTH
 #define BG_AUDIO_BIT_DEPTH          16
+#endif
+#ifndef BG_MAX_CHANNELS
 #define BG_MAX_CHANNELS             BG_CHANNELS
+#endif
+#ifndef BG_MS_SAMPLE
 #define BG_MS_SAMPLE                (BG_SAMPLE_RATE / 1000)
+#endif
+#ifndef BG_BUFFER_SIZE
 #define BG_BUFFER_SIZE              BG_AUDIO_BUFFER_SIZE
+#endif
+#ifndef BG_BYTES_PER_SAMPLE
 #define BG_BYTES_PER_SAMPLE         (sizeof(int16_t) * BG_CHANNELS)
+#endif
+#ifndef BG_ENABLE_KEYBOARD_INPUT
 #define BG_ENABLE_KEYBOARD_INPUT    ENABLE_KEYBOARD_INPUT
-
-/* 错误码类型 */
-typedef enum {
-    BG_OK = 0,
-    BG_ERROR,
-    BG_ERROR_INVALID_PARAM,
-    BG_ERROR_NOT_INITIALIZED,
-    BG_ERROR_BUSY,
-    BG_ERROR_TIMEOUT,
-    BG_ERROR_NO_MEMORY
-} bg_status_t;
-
-/* 平台名称 */
-#if BG_TARGET_PLATFORM == BG_PLATFORM_LINUX
-#define _BG_PLATFORM_NAME "Linux"
-#elif BG_TARGET_PLATFORM == BG_PLATFORM_STM32
-#define _BG_PLATFORM_NAME "STM32"
-#elif BG_TARGET_PLATFORM == BG_PLATFORM_ESP32
-#define _BG_PLATFORM_NAME "ESP32"
-#elif BG_TARGET_PLATFORM == BG_PLATFORM_BP10
-#define _BG_PLATFORM_NAME "BP10"
-#else
-#define _BG_PLATFORM_NAME "Unknown"
+#endif
+#ifndef BG_AUDIO_BUFFER_SIZE
+#define BG_AUDIO_BUFFER_SIZE        48
+#endif
+#ifndef BG_CHANNELS
+#define BG_CHANNELS                 1
+#endif
+#ifndef BG_SAMPLE_RATE
+#define BG_SAMPLE_RATE              44100
+#endif
+#ifndef ENABLE_KEYBOARD_INPUT
+#define ENABLE_KEYBOARD_INPUT       0
 #endif
 
-#endif /* BANGTSYNTH_EN */
 #endif /* _BG_CONFIG_H__ */

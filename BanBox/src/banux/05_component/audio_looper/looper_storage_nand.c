@@ -29,6 +29,29 @@
 #define NAND_BLOCK_SIZE         (128u * 1024u)          /* 块大小 128KB */
 
 /* ============================================================================
+ * NAND 写入页缓冲区
+ * ============================================================================
+ * NAND 规格: 每个物理页 (2048B) 在两次擦除之间只允许被编程一次。
+ * Looper 以 256B 小块写入，若直接调用 FlashDev_Write 会对同一犉理页
+ * 逐次发15次 PROG_EXECUTE，因为 W25N02 的 LOAD_PROG_DATA 命令
+ * 会先将缓冲区复位为 0xFF。后续的编程就会尝试将已编程的位从 0设回 1
+ * (无擦除情况下不可能)，导致 ECC 不可纠正错误。
+ *
+ * 解决方案:
+ *   - 在此适配器层维持一个 2048B 缓冲区，收集 256B 写入直到凑满一个物理页
+ *   - 写入旰物理页时才执行一次 Auto-Erase + Page-Program
+ *   - 录制结束时由调用方显式调用 flush 将最后一个不满页刷出
+ * ============================================================================ */
+typedef struct {
+    uint8_t  data[NAND_PAGE_SIZE]; /* 2048B 页数据缓冲 */
+    uint32_t nand_page_base;       /* 当前缓冲对应的 NAND 物理页字节地址 */
+    uint8_t  valid;                /* 1=缓冲中有待写入的数据 */
+} NandWritePageCtx_t;
+
+static NandWritePageCtx_t s_nand_pg_ctx;
+static uint8_t s_nand_pg_ctx_inited;
+
+/* ============================================================================
  * NAND Flash 操作函数实现
  * ============================================================================ */
 
@@ -86,33 +109,129 @@ static LooperStorageStatus_t nand_flash_read(LooperStorageDevice_t *dev, uint32_
     return (status == FLASH_OK) ? LOOPER_STORAGE_OK : LOOPER_STORAGE_ERROR;
 }
 
-static LooperStorageStatus_t nand_flash_write(LooperStorageDevice_t *dev, uint32_t offset, 
-                                              const uint8_t *buf, uint32_t len)
+/**
+ * @brief 将内部页缓冲区提交到 NAND Flash（自动擦除块 + 整页编程）
+ *
+ * 为什么在这里擦除而不是提前：Looper 以 64KB = LOOPER_FLASH_BLOCK_SIZE 为粒度
+ * 安排存储, 但实际 NAND 块是 128KB。每次 nand_page_base 落在 128KB 块首时擦除。
+ * 如果当前页不是块首页, 则跳过擦除 (前一次写入已擦除过该块)。
+ */
+static LooperStorageStatus_t nand_flush_pending_page(void)
 {
     FlashDevice_t *nand_dev;
     FlashStatus_t status;
-    
+    uint16_t block_num;
+
+    if (!s_nand_pg_ctx.valid) {
+        return LOOPER_STORAGE_OK;
+    }
+
+    nand_dev = FlashDevices_GetNandFlash();
+    if (nand_dev == NULL || !nand_dev->initialized) {
+        s_nand_pg_ctx.valid = 0;
+        return LOOPER_STORAGE_NOT_READY;
+    }
+
+    /* 当写入地址在 NAND 块首时自动擦除 (每块128KB只擦一次) */
+    if ((s_nand_pg_ctx.nand_page_base % NAND_BLOCK_SIZE) == 0) {
+        block_num = (uint16_t)(s_nand_pg_ctx.nand_page_base / NAND_BLOCK_SIZE);
+        status = W25N02_EraseBlock(nand_dev, block_num);
+        if (status != FLASH_OK) {
+            DBG("[LooperStorage NAND] Block %u erase failed: %d\n",
+                (unsigned)block_num, (int)status);
+            W25N02_MarkBadBlock(nand_dev, block_num);
+            s_nand_pg_ctx.valid = 0;
+            return LOOPER_STORAGE_ERROR;
+        }
+    }
+
+    /* 一次性写入完整 NAND 页 (2048B) */
+    status = FlashDev_Write(nand_dev, s_nand_pg_ctx.nand_page_base,
+                            s_nand_pg_ctx.data, NAND_PAGE_SIZE);
+    s_nand_pg_ctx.valid = 0;
+
+    if (status != FLASH_OK) {
+        DBG("[LooperStorage NAND] Page write failed at 0x%lX: %d\n",
+            (unsigned long)s_nand_pg_ctx.nand_page_base, (int)status);
+        return LOOPER_STORAGE_ERROR;
+    }
+
+    return LOOPER_STORAGE_OK;
+}
+
+static LooperStorageStatus_t nand_flash_write(LooperStorageDevice_t *dev, uint32_t offset,
+                                              const uint8_t *buf, uint32_t len)
+{
+    uint32_t cur = offset;
+    const uint8_t *src = buf;
+
     (void)dev;
-    
+
     if (buf == NULL || len == 0) {
         return LOOPER_STORAGE_INVALID_PARAM;
     }
 
-    /* 检查地址范围 */
     if (offset + len > NAND_TOTAL_SIZE) {
         return LOOPER_STORAGE_INVALID_PARAM;
     }
 
-    /* 获取 NAND Flash 设备句柄 */
-    nand_dev = FlashDevices_GetNandFlash();
-    if (nand_dev == NULL || !nand_dev->initialized) {
-        return LOOPER_STORAGE_NOT_READY;
+    /* 初始化页写入上下文 */
+    if (!s_nand_pg_ctx_inited) {
+        s_nand_pg_ctx.valid = 0;
+        s_nand_pg_ctx.nand_page_base = 0xFFFFFFFFUL;
+        s_nand_pg_ctx_inited = 1;
     }
 
-    /* 调用底层驱动 */
-    status = FlashDev_Write(nand_dev, offset, buf, len);
-    
-    return (status == FLASH_OK) ? LOOPER_STORAGE_OK : LOOPER_STORAGE_ERROR;
+    while (cur < offset + len) {
+        /* 计算当前字节所属 NAND 物理页的起始地址和列偏移 */
+        uint32_t nand_page_base = (cur / NAND_PAGE_SIZE) * NAND_PAGE_SIZE;
+        uint32_t col             = cur - nand_page_base;
+        uint32_t page_remain     = NAND_PAGE_SIZE - col;
+        uint32_t to_copy         = (offset + len) - cur;
+        LooperStorageStatus_t ret;
+
+        if (to_copy > page_remain) {
+            to_copy = page_remain;
+        }
+
+        /* 当目标 NAND 页发生变化时, 先把旧页刷出 */
+        if (s_nand_pg_ctx.valid &&
+            s_nand_pg_ctx.nand_page_base != nand_page_base) {
+            ret = nand_flush_pending_page();
+            if (ret != LOOPER_STORAGE_OK) {
+                return ret;
+            }
+        }
+
+        /* 初始化新一页缓冲 (全 0xFF = 未编程状态) */
+        if (!s_nand_pg_ctx.valid) {
+            memset(s_nand_pg_ctx.data, 0xFF, NAND_PAGE_SIZE);
+            s_nand_pg_ctx.nand_page_base = nand_page_base;
+            s_nand_pg_ctx.valid = 1;
+        }
+
+        /* 将数据填入缓冲区 */
+        memcpy(s_nand_pg_ctx.data + col, src, to_copy);
+
+        cur += to_copy;
+        src += to_copy;
+
+        /* 整页填满时立即刷出 */
+        if (col + to_copy >= NAND_PAGE_SIZE) {
+            ret = nand_flush_pending_page();
+            if (ret != LOOPER_STORAGE_OK) {
+                return ret;
+            }
+        }
+    }
+
+    return LOOPER_STORAGE_OK;
+}
+
+static LooperStorageStatus_t nand_flash_flush(LooperStorageDevice_t *dev)
+{
+    (void)dev;
+    return nand_flush_pending_page();
 }
 
 static LooperStorageStatus_t nand_flash_erase_block(LooperStorageDevice_t *dev, uint32_t offset)
@@ -335,7 +454,8 @@ static const LooperStorageOps_t s_nand_flash_ops = {
     .get_info = nand_flash_get_info,
     .benchmark = nand_flash_benchmark,
     .overdub_write = NULL, /* NAND Flash 不支持叠录 */
-    .is_busy = nand_flash_is_busy
+    .is_busy = nand_flash_is_busy,
+    .flush = nand_flash_flush
 };
 
 /**

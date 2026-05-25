@@ -54,22 +54,57 @@ static uint8_t volt2soc(float volt)
 }
 
 /**
- * @brief Battery API: get remaining battery SOC percentage
+ * @brief Convert ADC value to millivolts (integer only, no FPU required)
+ * @param adc_val Raw ADC value (0~4095)
+ * @return Battery voltage in millivolts
+ */
+static uint16_t adc_to_mv(uint16_t adc_val)
+{
+    /* (adc_val * ADC_REF_VOLT_mV * VOLT_DIV_RATIO) / ADC_MAX
+     * = adc_val * 3300 * 2 / 4095 = adc_val * 6600 / 4095
+     * max: 4095 * 6600 / 4095 = 6600 -> fits uint16_t */
+    return (uint16_t)(((uint32_t)adc_val * 6600u) / 4095u);
+}
+
+/**
+ * @brief Battery API: get remaining battery SOC percentage (integer only)
  * @return Battery SOC percentage (0~100)
  */
 uint8_t battery_get_soc(void)
 {
-    uint16_t new_adc_val = battery_adc_read();
-    float bat_volt;
-    if (new_adc_val == 0) {
-        return 50; /* ADC 故障时返回中间值，避免误报低电量 */
+    uint16_t adc_val = battery_adc_read();
+    uint16_t mv;
+    if (adc_val == 0u) {
+        return 50u; /* ADC fault: return mid-value */
     }
-    bat_volt = adc2volt(new_adc_val);
-    return volt2soc(bat_volt);
+    mv = adc_to_mv(adc_val);
+    if (mv >= 4200u)      return 100u;
+    else if (mv >= 4100u) return 90u;
+    else if (mv >= 4000u) return 80u;
+    else if (mv >= 3900u) return 70u;
+    else if (mv >= 3800u) return 60u;
+    else if (mv >= 3750u) return 50u;
+    else if (mv >= 3700u) return 40u;
+    else if (mv >= 3650u) return 30u;
+    else if (mv >= 3600u) return 20u;
+    else if (mv >= 3400u) return 10u;
+    else if (mv >= 3000u) return 5u;
+    else                  return 0u;
 }
+
+/**
+ * @brief Battery API: get voltage in millivolts (integer only, no FPU)
+ * @return Battery voltage in millivolts
+ */
+uint16_t battery_get_volt_mv(void)
+{
+    return adc_to_mv(battery_adc_read());
+}
+
 /**
  * @brief Battery API: get real-time battery voltage (for display)
  * @return Real battery voltage (V)
+ * @note Uses soft-float; prefer battery_get_volt_mv() to avoid FPU
  */
 float battery_get_volt(void)
 {

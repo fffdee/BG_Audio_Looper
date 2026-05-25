@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 白天模式渐变背景 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="135"
+        android:startColor="#E8EDF2"
+        android:centerColor="#F0F4F8"
+        android:endColor="#F5F7FA"
+        android:type="linear" />
+</shape>

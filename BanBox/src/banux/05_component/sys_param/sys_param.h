@@ -48,6 +48,8 @@ typedef enum{
 typedef struct __attribute__((packed)) {
 	uint8_t current_boot_status;
     uint8_t  boot_count;
+    uint8_t  lp_enable;          /* 自动低功耗功能：1=启用（默认），0=用户禁用 */
+    uint8_t  lp_timeout_min;     /* 自动低功耗空闲超时分钟数（1-60，默认5）*/
 } SysParam_System_t;
 
 /* Audio parameters structure */
@@ -83,6 +85,10 @@ typedef struct __attribute__((packed)) {
     uint8_t  max_concurrent_tracks; /* 支持同时读写的最大段数 */
     uint8_t  bandwidth_tested;  /* 是否已执行带宽测试 (1=已测试, 0=未测试) */
     uint8_t  support_overdub;   /* 是否支持叠录 (1=支持, 0=不支持) */
+    uint8_t  segment_rec_source[4]; /* 各段录制源 (LoopRecSource_t), 默认4=ALL_MIX */
+    /* 导出设置 */
+    uint8_t  export_mono_mix;   /* 声道平衡: 0=关闭, 1=开启 (立体声段导出时 L=R=(L+R)/2) */
+    uint16_t export_gain_pct;   /* 导出增益 %, 0-400, 100=原始电平 */
 } SysParam_Looper_t;
 
 /* Bluetooth parameters structure */

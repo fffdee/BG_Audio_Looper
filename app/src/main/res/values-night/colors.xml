@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 夜间模式颜色 (values-night/colors.xml) -->
+<resources>
+    <!-- 主题色 - 炫酷科技风 -->
+    <color name="primary_dark">#0A0E27</color>
+    <color name="primary_darker">#1A1A2E</color>
+    <color name="primary_accent">#00D9FF</color>
+    <color name="primary_accent_glow">#00FFA3</color>
+
+    <!-- 背景色 -->
+    <color name="bg_dark">#0F1419</color>
+    <color name="bg_card">#16213E</color>
+    <color name="bg_card_light">#1F2937</color>
+
+    <!-- 文字颜色 -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="text_tertiary">#808080</color>
+    <color name="text_accent">#00D9FF</color>
+    <color name="text_success">#00FFA3</color>
+    <color name="text_warning">#FFB800</color>
+    <color name="text_error">#FF4444</color>
+
+    <!-- 按钮颜色 -->
+    <color name="button_primary">#00D9FF</color>
+    <color name="button_primary_pressed">#0099BB</color>
+    <color name="button_secondary">#16213E</color>
+    <color name="button_success">#00FFA3</color>
+
+    <!-- 半透明遮罩 -->
+    <color name="overlay_dark">#80000000</color>
+    <color name="overlay_light">#40FFFFFF</color>
+
+    <!-- Toolbar / Surface 颜色 -->
+    <color name="toolbar_bg">#1A1A2E</color>
+    <color name="surface_color">#0F1419</color>
+    <color name="on_surface_color">#FFFFFF</color>
+
+    <!-- 面板/卡片区域 - 夜间模式 -->
+    <color name="panel_bg">#1A2535</color>
+    <color name="panel_bg_alt">#1F2937</color>
+    <color name="input_bg">#2D3748</color>
+    <color name="divider_color">#30FFFFFF</color>
+    <color name="category_header_bg">#0D00FFA3</color>
+    <color name="nav_drawer_bg">#1A1F2E</color>
+    <color name="nav_drawer_header_bg">#141820</color>
+    <color name="countdown_box_bg">#FF2222</color>
+    <color name="looper_seg_fill">#1A2A3A</color>
+    <color name="log_bg">#0A0F16</color>
+    <color name="log_text">#88CCAA</color>
+    <color name="rollback_btn_bg">#443322</color>
+    <color name="rollback_btn_text">#FFAA44</color>
+
+    <!-- 固件升级标签色 -->
+    <color name="label_secondary">#8899AA</color>
+    <color name="value_text">#CCCCCC</color>
+
+    <!-- Looper配置提示色 -->
+    <color name="cfg_hint_color">#60B0C0</color>
+    <color name="chip_text_color">#CCA030</color>
+
+    <!-- 欢迎页副标题 -->
+    <color name="subtitle_accent">#FF6B9D</color>
+
+    <!-- Looper段卡片背景色调 -->
+    <color name="tint_inactive">#1A3040</color>
+    <color name="tint_recording">#3D1010</color>
+    <color name="tint_playing">#0D3020</color>
+    <color name="tint_stopped">#222222</color>
+
+    <!-- 段状态文字颜色 -->
+    <color name="color_inactive">#00D9FF</color>
+    <color name="color_recording">#FF4444</color>
+    <color name="color_playing">#00FFA3</color>
+    <color name="color_stopped">#888888</color>
+
+    <!-- 全局控制按钮 -->
+    <color name="global_btn_active_bg">#1A3A5C</color>
+    <color name="global_btn_active_text">#7EC8E3</color>
+
+    <!-- 段配置提示激活色 -->
+    <color name="seg_cfg_active">#50C8D8</color>
+    <color name="seg_cfg_inactive">#909090</color>
+
+    <!-- 动态对话框颜色 -->
+    <color name="dialog_bg">#16213E</color>
+    <color name="dialog_section_bg">#0F1419</color>
+    <color name="dialog_btn_bg">#1F2937</color>
+    <color name="dialog_hint_text">#808080</color>
+    <color name="dialog_sub_text">#888888</color>
+    <color name="dialog_unit_text">#606060</color>
+
+    <!-- EQ曲线图颜色 -->
+    <color name="eq_grid">#333333</color>
+    <color name="eq_bg">#1a1a1a</color>
+    <color name="eq_text">#888888</color>
+    <color name="eq_zero_line">#666666</color>
+</resources>

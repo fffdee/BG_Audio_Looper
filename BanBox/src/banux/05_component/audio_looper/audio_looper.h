@@ -120,6 +120,31 @@ typedef enum {
 #define LOOPER_PSRAM_PAGE_SIZE      256
 #define LOOPER_SAMPLES_PER_PAGE     (LOOPER_PSRAM_PAGE_SIZE / 4)
 
+/* 单声道模式：每采样 2 字节 (int16_t)，每页 128 采样 */
+#define LOOPER_SAMPLES_PER_PAGE_MONO (LOOPER_PSRAM_PAGE_SIZE / 2)
+
+/* ============================================================================
+ * 录制源选择枚举 (每段可独立选择录制源)
+ *
+ * MIC_L / MIC_R / LINEIN_L / LINEIN_R 为单声道录制，
+ * 存储占用减半 (2字节/采样)，播放时扩展为双声道输出。
+ * ALL_MIX 为所有 ADC 混合信号，双声道 (4字节/采样)。
+ * ============================================================================ */
+typedef enum {
+    LOOP_REC_SRC_MIC_L    = 0,   /* Mic 左声道 (mono) */
+    LOOP_REC_SRC_MIC_R    = 1,   /* Mic 右声道 (mono) */
+    LOOP_REC_SRC_LINEIN_L = 2,   /* LineIn 左声道 (mono) */
+    LOOP_REC_SRC_LINEIN_R = 3,   /* LineIn 右声道 (mono) */
+    LOOP_REC_SRC_ALL_MIX  = 4    /* 所有输入混音 (stereo) */
+} LoopRecSource_t;
+
+#define LOOP_REC_SRC_DEFAULT     LOOP_REC_SRC_ALL_MIX
+#define LOOP_REC_SRC_IS_MONO(s)  ((s) != LOOP_REC_SRC_ALL_MIX)
+
+/* 录制源缓冲区指针 (由 bg_audio_io_manager 在每帧录制前设置) */
+extern uint32_t *g_looper_src_mic;     /* ADC1 原始麦克风立体声数据 */
+extern uint32_t *g_looper_src_linein;  /* ADC0 原始 LineIn 立体声数据 */
+
 #if LOOPER_IO_BUFFER_ENABLE
 
 #define LOOPER_PAGE_DATA_SIZE      LOOPER_PSRAM_PAGE_SIZE
@@ -218,6 +243,13 @@ typedef enum {
 /* Segment info structure */
 typedef struct {
     uint32_t start_address;  /* 相对于所绑定Flash起始地址的偏移 */
+    /* PSRAM 分裂分配支持（NOR Flash 下三字段全为 0）：
+     *   start_address2 = 0 表示单区域；非 0 表示有第二非连续区域
+     *   region1_pages  = region1 最大页容量（= 分裂边界；0 = 无限，NOR Flash）
+     *   region2_pages  = region2 最大页容量（0 = 无第二区域）               */
+    uint32_t start_address2; /* 第二区域起始地址（0=单区域）*/
+    uint32_t region1_pages;  /* 第一区域最大容量（页数，0=NOR Flash 无限制）*/
+    uint32_t region2_pages;  /* 第二区域最大容量（页数，0=无第二区域）*/
     uint32_t length_pages;
     uint32_t length_bytes;
     uint32_t play_position;
@@ -231,6 +263,7 @@ typedef struct {
     
     /* 新增：叠录相关字段 */
     uint8_t  overdub_enabled; /* 叠录模式使能 (1=启用, 0=禁用) */
+    uint8_t  rec_source;      /* 录制源 (LoopRecSource_t)，决定单/双声道存储 */
 
     uint16_t rec_partial_count;                                    /* rec_partial_buf中的字节数 (0-255) */
     uint8_t  rec_partial_buf[LOOPER_PSRAM_PAGE_SIZE];              /* 录制部分页缓冲：凑满256字节写一页 */
@@ -359,6 +392,9 @@ typedef struct {
     /* 段裁剪控制：设置/获取循环起止页，不修改Flash数据，仅影响播放范围 */
     void (*SetSegmentTrim)(uint8_t segment_index, uint32_t start_page, uint32_t end_page);
     void (*GetSegmentTrim)(uint8_t segment_index, uint32_t *start_page, uint32_t *end_page);
+    /* 段录制源控制 */
+    void (*SetSegmentRecSource)(uint8_t segment_index, uint8_t source);
+    uint8_t (*GetSegmentRecSource)(uint8_t segment_index);
 #if LOOPER_MULTI_FLASH_ENABLE
     /* 段Flash绑定控制 (仅多Flash模式) */
     void (*SetSegmentFlash)(uint8_t segment_index, uint8_t flash_dev_id); /* 绑定段到指定Flash */
@@ -505,6 +541,13 @@ void loop_set_segment_trim(uint8_t segment_index, uint32_t start_page, uint32_t 
 void loop_get_segment_trim(uint8_t segment_index, uint32_t *start_page, uint32_t *end_page);
 
 /* ============================================================================
+ * 段录制源控制
+ * ============================================================================ */
+void loop_set_segment_rec_source(uint8_t segment_index, uint8_t source);
+uint8_t loop_get_segment_rec_source(uint8_t segment_index);
+uint8_t loop_is_segment_mono(uint8_t segment_index);
+
+/* ============================================================================
  * 叠录功能支持 (仅当存储设备支持时可用)
  * ============================================================================ */
 
@@ -562,36 +605,37 @@ void looper_flush_write_all(uint8_t segment_index);    /* 将段的写缓冲全�
 #endif /* LOOPER_IO_BUFFER_ENABLE */
 
 /* ============================================================================
- * 分段按时长初始化（局部擦除，取代全片擦除）
+ * 动态 Flash 分配 + 边录边擦（erase-ahead）
  *
- * Flash 固定平分两段：
- *   Seg0 → 0x000000 ~ 0x3FFFFF (4MB)
- *   Seg1 → 0x400000 ~ 0x7FFFFF (4MB)
+ * 不再固定分区，所有段共享整片 Flash（8MB），按实际录制长度占用：
+ *   - 段 N 的 start_address = 前 N-1 段末尾的最大地址（64KB 对齐）
+ *   - 录制开始时擦除首块；写指针距下一块边界 ≤ LOOPER_ERASE_AHEAD_PAGES 时
+ *     异步触发下一块擦除（looper_flush_io 里轮询推进）
+ *   - 若擦除尚未完成而写指针已到达新块，则暂停写入直到擦除完成
  *
- * loop_init_segment_region(seg_idx, max_sec):
- *   1. 将该段 start_address 固定为 LOOPER_SEG_FLASH_START[seg_idx]
- *   2. 计算 max_sec 对应的字节数，向上对齐到 64KB Block
- *   3. 逐块异步擦除（在 looper_flush_io 里轮询推进）
- *   4. 擦除完成前置 partial_erase_pending，录制被阻塞
+ * loop_init_segment_region(seg_idx):
+ *   重置段状态，计算 start_address，触发首块擦除。
+ *   无需提前指定 max_sec，用多少擦多少。
  *
  * 常量：
- *   LOOPER_AUDIO_BYTES_PER_SEC = LOOPER_SAMPLE_RATE * 4 B/s (双声道 32-bit)
- *   LOOPER_SEG_FLASH_SIZE      = 4MB
+ *   LOOPER_FLASH_TOTAL_SIZE    = 8MB (整片可用)
  *   LOOPER_FLASH_BLOCK_SIZE    = 64KB
+ *   LOOPER_ERASE_AHEAD_PAGES   = 提前几页触发下一块擦除（256B/页 → 16页=4KB 提前量）
+ *   LOOPER_AUDIO_BYTES_PER_SEC      = LOOPER_SAMPLE_RATE * 4 B/s (双声道)
+ *   LOOPER_AUDIO_BYTES_PER_SEC_MONO = LOOPER_SAMPLE_RATE * 2 B/s (单声道)
  * ============================================================================ */
 
-#define LOOPER_SEG0_FLASH_START   0x000000UL  /* Seg0 固定起始地址 */
-#define LOOPER_SEG1_FLASH_START   0x400000UL  /* Seg1 固定起始地址 */
-#define LOOPER_SEG_FLASH_SIZE     0x400000UL  /* 每段 Flash 大小 (4MB) */
-#define LOOPER_FLASH_BLOCK_SIZE   0x010000UL  /* 64KB 块擦除 */
-#define LOOPER_AUDIO_BYTES_PER_SEC ((uint32_t)LOOPER_SAMPLE_RATE * 4u)
+#define LOOPER_FLASH_TOTAL_SIZE   LOOPER_FLASH_DEV_SIZE   /* 8MB 整片 */
+#define LOOPER_FLASH_BLOCK_SIZE   0x010000UL              /* 64KB 块擦除粒度 */
+#define LOOPER_ERASE_AHEAD_PAGES  16u                     /* 距块末 16 页时触发下一块擦除 */
+#define LOOPER_AUDIO_BYTES_PER_SEC      ((uint32_t)LOOPER_SAMPLE_RATE * 4u)
+#define LOOPER_AUDIO_BYTES_PER_SEC_MONO ((uint32_t)LOOPER_SAMPLE_RATE * 2u)
 
 /**
- * @brief 对指定段执行局部块擦除并固定 start_address（在 looper_flush_io 里推进）
- * @param seg_idx  段索引 0 或 1
- * @param max_sec  最大录制秒数（10 / 30 / 60），决定需要擦除的块数
+ * @brief 重置指定段并触发首块擦除（动态起始地址，无需预先指定时长）
+ * @param seg_idx  段索引 0-3
  */
-void loop_init_segment_region(uint8_t seg_idx, uint16_t max_sec);
+void loop_init_segment_region(uint8_t seg_idx);
 
 /**
  * @brief 查询指定段的局部擦除是否仍在进行

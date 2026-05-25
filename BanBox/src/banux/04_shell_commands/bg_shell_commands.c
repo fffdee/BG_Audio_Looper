@@ -1896,61 +1896,40 @@ static int looper_erase_cmd(int argc, char *argv[])
 }
 
 /* -----------------------------------------------------------------------
- * looper -I <seg> <max_sec>  — 按最大录制时长局部初始化指定段 Flash
+ * looper -I <seg>  — 动态初始化指定段（边录边擦，无需预先指定时长）
  *
- * 设计：Flash固定平分两段
- *   Seg0 → 0x000000 ~ 0x3FFFFF (4MB)
- *   Seg1 → 0x400000 ~ 0x7FFFFF (4MB)
- * 只擦除该段所需的块（64KB/块），远快于全片擦除（~20s）。
- *   10s →  ~30块 × 150ms ≈  4.5s
- *   30s →  ~90块 × 150ms ≈ 13.5s
- *   60s → ~128块 × 150ms ≈  19s  (接近4MB上限)
- * 擦除由 looper_flush_io() 每音频帧推进，录制被阻塞直到完成。
+ * 设计：动态分配，段起始地址 = 所有已有段末尾最大值（64KB 对齐）
+ *   - 无需指定 max_sec，用多少擦多少，边录边擦（每次 1 块 = 64KB）
+ *   - 首块擦除在录制开始时自动触发，随后随写随擦
+ *   - 录制期间 erased_up_to 始终保持 1 块领先于写指针
  * ---------------------------------------------------------------------- */
 static int looper_init_seg_cmd(int argc, char *argv[])
 {
-    int seg, max_sec;
-    uint32_t bytes_needed, blocks;
+    int seg;
 
-    if (argc < 2) {
-        Shell_Print("Usage: looper -I <seg> <max_sec>\r\n");
-        Shell_Print("  seg    : 0 or 1\r\n");
-        Shell_Print("  max_sec: 10 / 30 / 60 (seconds)\r\n");
-        Shell_Print("  Effect : Partial-erase flash for seg (only needed blocks)\r\n");
-        Shell_Print("  Layout : Seg0=0x000000~0x3FFFFF  Seg1=0x400000~0x7FFFFF\r\n");
+    if (argc < 1) {
+        Shell_Print("Usage: looper -I <seg>\r\n");
+        Shell_Print("  seg    : 0 / 1 / 2 / 3\r\n");
+        Shell_Print("  Effect : Dynamic alloc - resets seg, computes start address\r\n");
+        Shell_Print("           from current max end of all other segs (64KB aligned),\r\n");
+        Shell_Print("           then triggers first-block erase (async, erase-ahead).\r\n");
+        Shell_Print("  Note   : No max_sec needed - Flash used = actual recording length.\r\n");
         return -1;
     }
 
-    seg     = atoi(argv[0]);
-    max_sec = atoi(argv[1]);
+    seg = atoi(argv[0]);
 
-    if (seg < 0 || seg > 1) {
-        Shell_Print("Error: seg must be 0 or 1\r\n");
-        return -1;
-    }
-    if (max_sec <= 0 || max_sec > 300) {
-        Shell_Print("Error: max_sec must be 1-300\r\n");
+    if (seg < 0 || seg >= MAX_SEGMENTS) {
+        Shell_Printf("Error: seg must be 0-%d\r\n", MAX_SEGMENTS - 1);
         return -1;
     }
 
-    bytes_needed = (uint32_t)max_sec * LOOPER_AUDIO_BYTES_PER_SEC;
-    if (bytes_needed > LOOPER_SEG_FLASH_SIZE) bytes_needed = LOOPER_SEG_FLASH_SIZE;
-    blocks = (bytes_needed + LOOPER_FLASH_BLOCK_SIZE - 1u) / LOOPER_FLASH_BLOCK_SIZE;
+    Shell_Printf("Init Seg%d: dynamic alloc, first-block erase started (async).\r\n", seg);
+    Shell_Printf("  REC on seg%d blocked until first 64KB block erased (~45-150ms).\r\n", seg);
 
-    Shell_Printf("Init Seg%d: max_rec=%ds, erase %lu blocks x 64KB (~%lu ms)\r\n",
-        seg, max_sec,
-        (unsigned long)blocks,
-        (unsigned long)(blocks * 150UL));
-    Shell_Printf("  Seg%d flash region: 0x%06lX ~ 0x%06lX\r\n",
-        seg,
-        (unsigned long)((seg == 0) ? LOOPER_SEG0_FLASH_START : LOOPER_SEG1_FLASH_START),
-        (unsigned long)(((seg == 0) ? LOOPER_SEG0_FLASH_START : LOOPER_SEG1_FLASH_START)
-                        + LOOPER_SEG_FLASH_SIZE - 1u));
+    loop_init_segment_region((uint8_t)seg);
 
-    loop_init_segment_region((uint8_t)seg, (uint16_t)max_sec);
-
-    Shell_Print("Partial erase started (async). REC on this seg blocked until done.\r\n");
-    Shell_Print("Use 'looper -s' to monitor erase_pending status.\r\n");
+    Shell_Print("Erase-ahead started. Use 'looper -s' to monitor status.\r\n");
     return 0;
 }
 
@@ -2111,6 +2090,53 @@ static int looper_vol_cmd(int argc, char *argv[])
 
     loop_set_segment_volume((uint8_t)seg, (uint8_t)vol);
     Shell_Printf("Seg%d volume set to %d%% (saved)\r\n", seg, vol);
+    return 0;
+}
+
+/* -----------------------------------------------------------------------
+ * looper -src <seg> [0-4]  — 查询/设置段录制源
+ *   0=MIC_L, 1=MIC_R, 2=LINEIN_L, 3=LINEIN_R, 4=ALL_MIX
+ * ---------------------------------------------------------------------- */
+static int looper_src_cmd(int argc, char *argv[])
+{
+    int seg;
+    int src;
+
+    if (argc < 1) {
+        uint8_t i;
+        static const char * const src_names[] = {
+            "MIC_L", "MIC_R", "LINEIN_L", "LINEIN_R", "ALL_MIX"
+        };
+        Shell_Print("\r\n=== Looper Recording Source ===\r\n");
+        for (i = 0; i < MAX_SEGMENTS; i++) {
+            uint8_t s = loop_get_segment_rec_source(i);
+            Shell_Printf("  Seg%d: %s (%d) %s\r\n", i,
+                (s <= 4) ? src_names[s] : "?", (int)s,
+                loop_is_segment_mono(i) ? "[mono]" : "[stereo]");
+        }
+        Shell_Print("\r\n");
+        return 0;
+    }
+
+    seg = atoi(argv[0]);
+    if (seg < 0 || seg >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment must be 0-3\r\n");
+        return -1;
+    }
+
+    if (argc < 2) {
+        Shell_Printf("Seg%d rec source: %d\r\n", seg, (int)loop_get_segment_rec_source((uint8_t)seg));
+        return 0;
+    }
+
+    src = atoi(argv[1]);
+    if (src < 0 || src > 4) {
+        Shell_Print("Error: source 0=MIC_L 1=MIC_R 2=LINEIN_L 3=LINEIN_R 4=ALL_MIX\r\n");
+        return -1;
+    }
+
+    loop_set_segment_rec_source((uint8_t)seg, (uint8_t)src);
+    Shell_Printf("Seg%d recording source set to %d (saved)\r\n", seg, src);
     return 0;
 }
 
@@ -2349,12 +2375,8 @@ static int looper_sr_cmd(int argc, char *argv[])
         Shell_Printf("Error: seg%d is not PLAYING\r\n", trig);
         return -1;
     }
-    /* 与衔接/接入互斥 */
-    g_looper_timed_ops.chain_armed   = 0;
-    g_looper_timed_ops.pending_chain = 0;
-    g_looper_timed_ops.join_armed    = 0;
-    g_looper_timed_ops.pending_join  = 0;
-    /* 可选第3参数 "match"：录制开始后在 trigger_seg 下次回绕时自动停止（等长模式） */
+    /* SR 与 chain/join 可共存：两者在同一回绕点触发不同操作
+     * (chain 停止参照段+启动目标段, SR 启动录制段)，互不冲突 */
     g_looper_timed_ops.sr_match          = (argc >= 3 && strcmp(argv[2], "match") == 0) ? 1u : 0u;
     g_looper_timed_ops.sr_autostop_armed = 0;
     g_looper_timed_ops.pending_sr_stop   = 0;
@@ -2369,20 +2391,52 @@ static int looper_sr_cmd(int argc, char *argv[])
 
 /* -----------------------------------------------------------------------
  * looper -q  — App专用：以二进制格式返回Looper参数（用于APP读取）
- * 响应格式: [0xAA][0x55][0x21][0x09]
+ * 响应格式: [0xAA][0x55][0x21][0x0D]
  *           [vol0][vol1][vol2][vol3]  — 段音量 0-100 (4字节)
  *           [flash_status]            — 0=CLEAN, 1=USED (1字节)
  *           [bpm_lo][bpm_hi]          — BPM 小端序 (2字节)
  *           [beats]                   — 每小节拍数 (1字节)
  *           [mode]                    — 0=SONG, 1=FREE (1字节)
- * 共 13 字节 (4字节头部 + 9字节数据)
+ *           [src0][src1][src2][src3]  — 段录制源 (4字节)
+ * 共 17 字节 (4字节头部 + 13字节数据)
  * ---------------------------------------------------------------------- */
+static int looper_export_param_cmd(int argc, char *argv[])
+{
+    int mono_mix;
+    int gain_pct;
+
+    if (argc < 2) {
+        Shell_Printf("Export settings: mono_mix=%d  gain_pct=%d\r\n",
+            (int)SYSPARAM_LOOPER()->export_mono_mix,
+            (int)SYSPARAM_LOOPER()->export_gain_pct);
+        return 0;
+    }
+
+    mono_mix = atoi(argv[0]);
+    gain_pct = atoi(argv[1]);
+
+    if (mono_mix < 0 || mono_mix > 1) {
+        Shell_Print("Error: mono_mix must be 0 or 1\r\n");
+        return -1;
+    }
+    if (gain_pct < 0 || gain_pct > 400) {
+        Shell_Print("Error: gain_pct must be 0-400\r\n");
+        return -1;
+    }
+
+    SYSPARAM_LOOPER()->export_mono_mix = (uint8_t)mono_mix;
+    SYSPARAM_LOOPER()->export_gain_pct = (uint16_t)gain_pct;
+    SysParam_Save();
+    Shell_Printf("Export: mono_mix=%d  gain_pct=%d (saved)\r\n", mono_mix, gain_pct);
+    return 0;
+}
+
 static int looper_query_cmd(int argc, char *argv[])
 {
     uint16_t bpm;
     uint8_t  beats;
-    uint8_t  buf[13];
-
+    uint8_t  buf[37];  /* 扩展：+4段 length_bytes 各 4字节 + 导出参数 2字节 */
+    int      i;
     (void)argc; (void)argv;
 
     bpm   = AudioLooper.MetronomeGetBPM();
@@ -2392,7 +2446,7 @@ static int looper_query_cmd(int argc, char *argv[])
     buf[0]  = 0xAA;
     buf[1]  = 0x55;
     buf[2]  = 0x21;  /* type: looper params */
-    buf[3]  = 0x09;  /* length: 9 bytes payload */
+    buf[3]  = 0x21;  /* length: 33 bytes payload (0x21 = 33) */
 
     /* 4段音量 */
     buf[4]  = loop_get_segment_volume(0);
@@ -2413,7 +2467,28 @@ static int looper_query_cmd(int argc, char *argv[])
     /* 模式 */
     buf[12] = (AudioLooper.GetMode() == LOOP_MODE_SONG) ? 0 : 1;
 
-    Shell_WriteRaw(buf, sizeof(buf));
+    /* 各段录制源 */
+    buf[13] = loop_get_segment_rec_source(0);
+    buf[14] = loop_get_segment_rec_source(1);
+    buf[15] = loop_get_segment_rec_source(2);
+    buf[16] = loop_get_segment_rec_source(3);
+
+    /* 各段 length_bytes [17..32]: 4 段 × 4 字节小端序 */
+    for (i = 0; i < 4; i++) {
+        uint32_t len_bytes = g_loop_manager.segments[i].length_bytes;
+        buf[17 + i * 4 + 0] = (uint8_t)(len_bytes & 0xFF);
+        buf[17 + i * 4 + 1] = (uint8_t)((len_bytes >> 8) & 0xFF);
+        buf[17 + i * 4 + 2] = (uint8_t)((len_bytes >> 16) & 0xFF);
+        buf[17 + i * 4 + 3] = (uint8_t)((len_bytes >> 24) & 0xFF);
+    }
+
+    /* 导出设置 [33..36] */
+    buf[33] = SYSPARAM_LOOPER()->export_mono_mix;
+    buf[34] = (uint8_t)(SYSPARAM_LOOPER()->export_gain_pct & 0xFF);        /* gain lo */
+    buf[35] = (uint8_t)((SYSPARAM_LOOPER()->export_gain_pct >> 8) & 0xFF); /* gain hi */
+    buf[36] = 0;  /* reserved */
+
+    Shell_WriteRaw(buf, 37);
     return 0;
 }
 
@@ -2430,8 +2505,10 @@ static const ShellOpt_t looper_opts[] = {
     OPT("e", "erase",   NULL,           "Flash chip erase (async)",     looper_erase_cmd),
     OPT("m", "mode",    "[song|free]",  "Get/Set loop mode",            looper_mode_cmd),
     OPT("M", "metro",   "<cmd> [val]",  "Metronome control",            looper_metro_cmd),
+    OPT("x", "export-param", "[mono_mix gain_pct]", "Get/Set export mono-mix(0/1) and gain%(0-200)", looper_export_param_cmd),
     OPT("q", "query",   NULL,           "Query looper params (binary, for APP use)", looper_query_cmd),
     OPT("V", "vol",     "[seg] [0-100]","Get/Set segment volume",       looper_vol_cmd),
+    OPT("src", "source","<seg> [0-4]", "Get/Set rec source (0=MIC_L..4=ALL_MIX)", looper_src_cmd),
     OPT("T", "trim",    "<seg> [start end]", "Get/Set loop trim points (pages, 0=full)", looper_trim_cmd),
     OPT("cfg", "cfg",   "<seg> autoplay <0|1>", "Set seg config",       looper_cfg_cmd),
     OPT("F", "flash",   "[clean|used]", "Query/Set Flash init status",  looper_flash_status_cmd),
@@ -2785,10 +2862,10 @@ DEFINE_MODULE(flash, "Flash storage management", MOD_CAT_HARDWARE, flash_opts);
  static int raw_battry_info(int argc, char *argv[])
  {
 	(void)argc; (void)argv;
-	float battery_volt;
+	uint16_t battery_mv;
 
-      battery_volt = battery_get_volt();
-	Shell_Printf(" Bat's ADC Value = { %f }\r\n", battery_volt);
+      battery_mv = battery_get_volt_mv();
+	Shell_Printf(" Bat Voltage = { %u mV }\r\n", (unsigned)battery_mv);
 	return 0;
  }
 
@@ -3297,6 +3374,8 @@ DEFINE_MODULE(upg, "Enter firmware upgrade mode", MOD_CAT_SYSTEM, upg_opts);
  *===========================================================================*/
     /* 鍙傛暟淇濆瓨鍛戒护 */
     extern void ShellCmd_Param_Init(void);
+    /* 鐢甸姘斿簳婀濃垂昭正功能 */
+    extern void ShellCmd_BattCalib_Init(void);
     /* 音源管理命令 */
     extern int ShellCmdSoundbank_Register(void);
 void Shell_RegisterAllModules(void)
@@ -3339,6 +3418,8 @@ void Shell_RegisterAllModules(void)
 
     ShellCmd_Param_Init();       /* param 鍛戒护 */
 
+    ShellCmd_BattCalib_Init();   /* batt calib 鍛戒护 */
+
     /* Soundbank management command (BANGTSYNTH_EN) */
     ShellCmdSoundbank_Register();
 
@@ -3372,6 +3453,18 @@ void Shell_RegisterAllModules(void)
     extern void ShellCmdWav_Register(void);
     ShellCmdWav_Register();
 #endif
+
+    /* WAV BLE export test command */
+    {
+        extern void ShellCmdWavBle_Register(void);
+        ShellCmdWavBle_Register();
+    }
+
+    /* 低功耗控制命令 */
+    {
+        extern void ShellCmdLp_Register(void);
+        ShellCmdLp_Register();
+    }
 }
 
 /*============================================================================

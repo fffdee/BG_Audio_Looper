@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 按下状态 -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#00A366"/>
+                    <corners android:radius="16dp"/>
+                </shape>
+            </item>
+            <item android:top="3dp" android:left="3dp" android:right="3dp" android:bottom="3dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="135"
+                        android:startColor="#E8EDF5"
+                        android:endColor="#DCE2EE"/>
+                    <corners android:radius="13dp"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- 正常状态 —— 浅色带青色边框 -->
+    <item>
+        <layer-list>
+            <!-- 外边框 -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#200097B2"/>
+                    <corners android:radius="18dp"/>
+                </shape>
+            </item>
+            <!-- 边框 -->
+            <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#0097B2"/>
+                    <corners android:radius="16dp"/>
+                </shape>
+            </item>
+            <!-- 内部填充 -->
+            <item android:top="4dp" android:left="4dp" android:right="4dp" android:bottom="4dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="135"
+                        android:startColor="#F0F4F8"
+                        android:endColor="#E8EDF5"/>
+                    <corners android:radius="13dp"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+</selector>

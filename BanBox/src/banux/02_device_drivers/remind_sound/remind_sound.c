@@ -214,7 +214,7 @@ void RemindSound_Play(const uint8_t *mp3_data, uint32_t mp3_size, uint8_t vol_pc
     /* 暂停 Effect Graph 的 DAC 写入，独占 DAC FIFO */
     g_remind_sound_active = 1;
 
-    /* 动态分配解码器缓冲区 */
+    /* 动态分配解码器缓冲区（清零防止上次崩溃残留脏数据影响解码器）*/
     s_decoder_buf = (uint8_t *)osPortMalloc(REMIND_DECODER_BUF_SIZE);
     if (s_decoder_buf == NULL) {
         DBG("[Remind] Play: osPortMalloc(%d) FAILED, heap too small\n",
@@ -222,6 +222,7 @@ void RemindSound_Play(const uint8_t *mp3_data, uint32_t mp3_size, uint8_t vol_pc
         g_remind_sound_active = 0;
         return;
     }
+    memset(s_decoder_buf, 0, REMIND_DECODER_BUF_SIZE);  /* 清零，防崩溃后残留脏状态干扰解码器 */
 
     DBG("[Remind] Play: start, size=%lu, buf=%p\n",
         (unsigned long)mp3_size, (void*)s_decoder_buf);
@@ -284,28 +285,56 @@ void RemindSound_Play(const uint8_t *mp3_data, uint32_t mp3_size, uint8_t vol_pc
             if (play_vol == 0) play_vol = 1;
             AudioDAC_VolSet(DAC0, play_vol, play_vol);
 
-            /* 等待 DAC FIFO 有足够空间 */
-            while (AudioDAC0DataSpaceLenGet() <
-                   audio_decoder->song_info->pcm_data_length)
-                ;
+            /* 等待 DAC FIFO 有足够空间（带超时，防 DMA 未就绪时 WDT 复位）
+             * pcm_data_length 可能大于 FIFO 总深度，循环分块等待写入 */
+            {
+                uint32_t remain = (uint32_t)audio_decoder->song_info->pcm_data_length;
+                uint32_t done   = 0;
+                uint32_t fifo_timeout;
 
-            if (audio_decoder->song_info->num_channels == 1)
-            {
-                uint16_t  i;
-                uint16_t *src = (uint16_t *)audio_decoder->song_info->pcm_addr;
-                for (i = 0; i < audio_decoder->song_info->pcm_data_length; i++)
+                if (audio_decoder->song_info->num_channels == 1)
                 {
-                    uint16_t stereo[2];
-                    stereo[0] = *src;
-                    stereo[1] = *src;
-                    AudioDAC0DataSet(stereo, 1);
-                    src++;
+                    /* 单声道：逐样本写，每次等 1 个采样空间 */
+                    uint16_t  i;
+                    uint16_t *src = (uint16_t *)audio_decoder->song_info->pcm_addr;
+                    for (i = 0; i < (uint16_t)remain; i++)
+                    {
+                        uint16_t stereo[2];
+                        fifo_timeout = 2000000;
+                        while (AudioDAC0DataSpaceLenGet() < 1) {
+                            if (--fifo_timeout == 0) {
+                                DBG("[Remind] Play: DAC FIFO timeout, abort\n");
+                                error_cnt = REMIND_ERROR_MAX;
+                                goto remind_done;
+                            }
+                        }
+                        stereo[0] = *src;
+                        stereo[1] = *src;
+                        AudioDAC0DataSet(stereo, 1);
+                        src++;
+                    }
                 }
-            }
-            else
-            {
-                AudioDAC0DataSet(audio_decoder->song_info->pcm_addr,
-                                 audio_decoder->song_info->pcm_data_length);
+                else
+                {
+                    /* 立体声：分块写，每块不超过当前可用空间 */
+                    uint16_t *src = (uint16_t *)audio_decoder->song_info->pcm_addr;
+                    while (done < remain)
+                    {
+                        uint32_t space;
+                        uint32_t chunk;
+                        fifo_timeout = 2000000;
+                        while ((space = (uint32_t)AudioDAC0DataSpaceLenGet()) == 0) {
+                            if (--fifo_timeout == 0) {
+                                DBG("[Remind] Play: DAC FIFO timeout, abort\n");
+                                error_cnt = REMIND_ERROR_MAX;
+                                goto remind_done;
+                            }
+                        }
+                        chunk = (space < (remain - done)) ? space : (remain - done);
+                        AudioDAC0DataSet(src + done * 2, chunk);
+                        done += chunk;
+                    }
+                }
             }
         }
         else
@@ -318,6 +347,7 @@ void RemindSound_Play(const uint8_t *mp3_data, uint32_t mp3_size, uint8_t vol_pc
         }
     }
 
+remind_done:
     /* ---- 释放解码器缓冲区，恢复 Effect Graph DAC 写入权 ---- */
     osPortFree(s_decoder_buf);
     s_decoder_buf = NULL;

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:fitsSystemWindows="true">
+
+    <!-- 统一顶部导航栏 -->
+    <include layout="@layout/include_base_toolbar" />
+
+    <!-- 内容区域 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/spacing_medium"
+        android:background="@color/bg_dark">
+
+        <!-- 重置视图按钮 -->
+        <ImageButton
+            android:id="@+id/btn_reset_view"
+            android:layout_width="@dimen/button_height_small"
+            android:layout_height="@dimen/button_height_small"
+            android:layout_gravity="top|end"
+            android:src="@drawable/ic_refresh"
+            android:contentDescription="重置视图"
+            android:background="@drawable/button_glow"
+            android:scaleType="centerInside"
+            android:padding="@dimen/spacing_small"
+            android:elevation="@dimen/card_elevation" />
+
+        <!-- 图例说明 -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_gravity="top|center_horizontal">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@color/bg_card"
+                android:padding="@dimen/spacing_small"
+                android:elevation="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="■ Source"
+                    android:textColor="@color/node_source"
+                    android:textSize="@dimen/text_size_small"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="@dimen/spacing_small" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="■ Effect"
+                    android:textColor="@color/node_effect"
+                    android:textSize="@dimen/text_size_small"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="@dimen/spacing_small" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="■ Mixer"
+                    android:textColor="@color/node_mixer"
+                    android:textSize="@dimen/text_size_small"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="@dimen/spacing_small" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="■ Sink"
+                    android:textColor="@color/node_sink"
+                    android:textSize="@dimen/text_size_small"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- 链路图显示区域 -->
+        <com.example.myapplication.AudioChainView
+            android:id="@+id/audio_chain_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bg_card"
+            android:elevation="@dimen/card_elevation" />
+
+    </FrameLayout>
+
+</LinearLayout>

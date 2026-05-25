@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 按下状态：填充更亮 -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#30996633"/>
+            <stroke android:width="1dp" android:color="#996633"/>
+            <corners android:radius="6dp"/>
+        </shape>
+    </item>
+    <!-- 正常状态：半透明琥珀边框 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#10996633"/>
+            <stroke android:width="1dp" android:color="#50996633"/>
+            <corners android:radius="6dp"/>
+        </shape>
+    </item>
+</selector>

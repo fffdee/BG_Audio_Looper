@@ -233,7 +233,7 @@ static int BleParam_Read(char *buf, uint16_t maxLen, void *userData)
         
         case BLE_PARAM_MTU: {
             /* MTU澶у皬 */
-            ret = snprintf(buf, maxLen, "23");
+            ret = snprintf(buf, maxLen, "250");
             break;
         }
         

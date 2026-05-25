@@ -60,6 +60,12 @@ void ShellIO_BLE_Init(void);
 void ShellIO_BLE_OnDataReceived(uint8_t *data, uint16_t len);
 
 /**
+ * @brief  处理同步期间延迟的Shell数据
+ * @note   在BleProto_Process()中同步完成后调用
+ */
+void ShellIO_BLE_ProcessPending(void);
+
+/**
  * @brief  缓冲同步命令响应（延迟1秒发送）
  * @param  data: 响应数据
  * @param  len: 数据长度

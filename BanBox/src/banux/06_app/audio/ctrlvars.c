@@ -74,10 +74,10 @@ const int16_t DeltafTable[8] = {
 
 const uint8_t MIC_BOOST_LIST[5]={
 	4,//dis
-	0,//0db
-	1,//6db
-	2,//12db
-	3,//20db
+	0,//0dB
+	1,//9dB
+	2,//18dB
+	3,//27dB
 };
 
 const uint32_t SupportSampleRateList[13]={

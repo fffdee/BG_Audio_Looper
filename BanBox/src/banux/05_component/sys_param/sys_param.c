@@ -54,240 +54,19 @@ static uint8_t g_param_initialized = 0;
  */
 static void LoadDefaultGraphConfig(void)
 {
-    int i;
-
-    /* Clear audio chain */
+    /* 清空音频链配置。
+     * 注意：graph_count 保留为 0（memset 后默认），表示不使用任何保存的图。
+     * ChainGraph_AutoApplyOnStartup 检查 graph_count==0 时会直接返回，
+     * 系统继续使用由 EffectGraphConfig_LoadPreset(GRAPH_PRESET_DEFAULT) 加载的
+     * 硬编码默认图（含正确端口号的 ADC_Mixer 4路输入和 Looper 连接）。
+     *
+     * 历史问题：旧版本在此处构建 graph_count=1 的"默认"保存图，
+     * 但 ChainGraph_ApplyToEffectGraph 丢失了所有边的端口号（强制 dst_port=0），
+     * 导致 EQ_GUITAR_L/R + EQ_MIC_L/R 全部映射到 ADC_Mixer port 0，
+     * 声道路由混乱，引起严重的音频失真。 */
     memset(&g_sys_param.audio_chain, 0, sizeof(SysParam_AudioChain_t));
     g_sys_param.audio_chain.output_mode = 0;
-    g_sys_param.audio_chain.graph_count = 1;
-    g_sys_param.audio_chain.active_graph_hp = 0;
-    g_sys_param.audio_chain.active_graph_spk = 0;
-
-    /* Initialize node pool */
-    memset(g_sys_param.audio_chain.node_pool, 0, sizeof(GraphNode_t) * MAX_GRAPH_NODES);
-
-    /* Set graph name */
-    strcpy(g_sys_param.audio_chain.graphs[0].name, "Default");
-    g_sys_param.audio_chain.graphs[0].node_count = 21;  /* 新架构: 21个节点 */
-    g_sys_param.audio_chain.graphs[0].edge_count = 22;  /* 新架构: 22条边 */
-    memset(g_sys_param.audio_chain.graphs[0].node_ids, 0xFF, MAX_GRAPH_NODES);
-
-    /* ========== 新架构节点定义 (2026-02-04) ========== */
-    /* 
-     * 新的音频处理图:
-     *   ADC0/ADC1 各为双声道，拆分为L/R处理
-     *   每个声道独立EQ: EQ_GUITAR_L, EQ_GUITAR_R, EQ_MIC_L, EQ_MIC_R
-     *   共4个EQ处理后混音，再进入效果链
-     */
-
-    /* N0: ADC0 (Guitar) - 乐器输入 */
-    g_sys_param.audio_chain.node_pool[0].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[0].subtype = SOURCE_TYPE_GUITAR;
-    g_sys_param.audio_chain.node_pool[0].enabled = 1;
-    g_sys_param.audio_chain.node_pool[0].volume = 100;
-
-    /* N1: ADC1 (Mic) - 麦克风输入 */
-    g_sys_param.audio_chain.node_pool[1].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[1].subtype = SOURCE_TYPE_MIC;
-    g_sys_param.audio_chain.node_pool[1].enabled = 1;
-    g_sys_param.audio_chain.node_pool[1].volume = 100;
-
-    /* N2: USB_In */
-    g_sys_param.audio_chain.node_pool[2].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[2].subtype = SOURCE_TYPE_USB;
-    g_sys_param.audio_chain.node_pool[2].enabled = 1;
-    g_sys_param.audio_chain.node_pool[2].volume = 100;
-
-    /* N3: BT_In */
-    g_sys_param.audio_chain.node_pool[3].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[3].subtype = SOURCE_TYPE_BT;
-    g_sys_param.audio_chain.node_pool[3].enabled = 1;
-    g_sys_param.audio_chain.node_pool[3].volume = 100;
-
-    /* N4: EQ_GUITAR_L - 乐器左声道EQ */
-    g_sys_param.audio_chain.node_pool[4].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[4].subtype = EFFECT_TYPE_EQ;
-    g_sys_param.audio_chain.node_pool[4].enabled = 1;
-    g_sys_param.audio_chain.node_pool[4].volume = 100;
-
-    /* N5: EQ_GUITAR_R - 乐器右声道EQ */
-    g_sys_param.audio_chain.node_pool[5].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[5].subtype = EFFECT_TYPE_EQ;
-    g_sys_param.audio_chain.node_pool[5].enabled = 1;
-    g_sys_param.audio_chain.node_pool[5].volume = 100;
-
-    /* N6: EQ_MIC_L - 麦克风左声道EQ */
-    g_sys_param.audio_chain.node_pool[6].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[6].subtype = EFFECT_TYPE_EQ;
-    g_sys_param.audio_chain.node_pool[6].enabled = 1;
-    g_sys_param.audio_chain.node_pool[6].volume = 100;
-
-    /* N7: EQ_MIC_R - 麦克风右声道EQ */
-    g_sys_param.audio_chain.node_pool[7].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[7].subtype = EFFECT_TYPE_EQ;
-    g_sys_param.audio_chain.node_pool[7].enabled = 1;
-    g_sys_param.audio_chain.node_pool[7].volume = 100;
-
-    /* N8: ADC_Mixer - ADC EQ后混音器 */
-    g_sys_param.audio_chain.node_pool[8].node_type = NODE_TYPE_MIXER;
-    g_sys_param.audio_chain.node_pool[8].subtype = 0;
-    g_sys_param.audio_chain.node_pool[8].enabled = 1;
-    g_sys_param.audio_chain.node_pool[8].volume = 100;
-
-    /* N9: Expander */
-    g_sys_param.audio_chain.node_pool[9].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[9].subtype = EFFECT_TYPE_EXPANDER;
-    g_sys_param.audio_chain.node_pool[9].enabled = 1;
-    g_sys_param.audio_chain.node_pool[9].volume = 100;
-
-    /* N10: DRC */
-    g_sys_param.audio_chain.node_pool[10].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[10].subtype = EFFECT_TYPE_COMPRESSOR;
-    g_sys_param.audio_chain.node_pool[10].enabled = 1;
-    g_sys_param.audio_chain.node_pool[10].volume = 100;
-
-    /* N11: Pre_Reverb_Mixer - 混响前混音器 */
-    g_sys_param.audio_chain.node_pool[11].node_type = NODE_TYPE_MIXER;
-    g_sys_param.audio_chain.node_pool[11].subtype = 0;
-    g_sys_param.audio_chain.node_pool[11].enabled = 1;
-    g_sys_param.audio_chain.node_pool[11].volume = 100;
-
-    /* N12: Reverb */
-    g_sys_param.audio_chain.node_pool[12].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[12].subtype = EFFECT_TYPE_REVERB;
-    g_sys_param.audio_chain.node_pool[12].enabled = 1;
-    g_sys_param.audio_chain.node_pool[12].volume = 100;
-    g_sys_param.audio_chain.node_pool[12].preset = 1;
-
-    /* N13: USB_BT_Mixer */
-    g_sys_param.audio_chain.node_pool[13].node_type = NODE_TYPE_MIXER;
-    g_sys_param.audio_chain.node_pool[13].subtype = 0;
-    g_sys_param.audio_chain.node_pool[13].enabled = 1;
-    g_sys_param.audio_chain.node_pool[13].volume = 100;
-
-    /* N14: USB_BT_EQ */
-    g_sys_param.audio_chain.node_pool[14].node_type = NODE_TYPE_EFFECT;
-    g_sys_param.audio_chain.node_pool[14].subtype = EFFECT_TYPE_EQ;
-    g_sys_param.audio_chain.node_pool[14].enabled = 1;
-    g_sys_param.audio_chain.node_pool[14].volume = 100;
-
-    /* N15: Final_Mixer */
-    g_sys_param.audio_chain.node_pool[15].node_type = NODE_TYPE_MIXER;
-    g_sys_param.audio_chain.node_pool[15].subtype = 0;
-    g_sys_param.audio_chain.node_pool[15].enabled = 1;
-    g_sys_param.audio_chain.node_pool[15].volume = 100;
-
-    /* N16: DAC0_Out */
-    g_sys_param.audio_chain.node_pool[16].node_type = NODE_TYPE_OUTPUT;
-    g_sys_param.audio_chain.node_pool[16].subtype = OUTPUT_TYPE_HEADPHONE;
-    g_sys_param.audio_chain.node_pool[16].enabled = 1;
-    g_sys_param.audio_chain.node_pool[16].volume = 100;
-
-    /* N17: USB_Out */
-    g_sys_param.audio_chain.node_pool[17].node_type = NODE_TYPE_OUTPUT;
-    g_sys_param.audio_chain.node_pool[17].subtype = OUTPUT_TYPE_USB_OUT;
-    g_sys_param.audio_chain.node_pool[17].enabled = 1;
-    g_sys_param.audio_chain.node_pool[17].volume = 100;
-
-    /* N18: Metronome */
-    g_sys_param.audio_chain.node_pool[18].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[18].subtype = SOURCE_TYPE_METRONOME;
-    g_sys_param.audio_chain.node_pool[18].enabled = 1;
-    g_sys_param.audio_chain.node_pool[18].volume = 100;
-
-    /* N19: Looper_Play */
-    g_sys_param.audio_chain.node_pool[19].node_type = NODE_TYPE_SOURCE;
-    g_sys_param.audio_chain.node_pool[19].subtype = SOURCE_TYPE_LOOPER_PLAY;
-    g_sys_param.audio_chain.node_pool[19].enabled = 1;
-    g_sys_param.audio_chain.node_pool[19].volume = 100;
-
-    /* N20: Looper_Record */
-    g_sys_param.audio_chain.node_pool[20].node_type = NODE_TYPE_OUTPUT;
-    g_sys_param.audio_chain.node_pool[20].subtype = OUTPUT_TYPE_LOOPER_RECORD;
-    g_sys_param.audio_chain.node_pool[20].enabled = 1;
-    g_sys_param.audio_chain.node_pool[20].volume = 100;
-
-    /* Mark nodes 0-20 as used (21 nodes) */
-    g_sys_param.audio_chain.node_used_mask = 0x1FFFFF; /* 21 bits set: nodes 0-20 used */
-
-    /* Add nodes to graph */
-    for (i = 0; i < 21; i++) {
-        g_sys_param.audio_chain.graphs[0].node_ids[i] = i;
-    }
-
-    /* ========== 新架构边定义 (2026-02-04) - 共22条边 ========== */
-    
-    /* ADC0 (Guitar) 左右声道分别进入独立EQ */
-    g_sys_param.audio_chain.graphs[0].edges[0].from_node = 0;  /* ADC0 L -> EQ_GUITAR_L */
-    g_sys_param.audio_chain.graphs[0].edges[0].to_node = 4;
-    g_sys_param.audio_chain.graphs[0].edges[1].from_node = 0;  /* ADC0 R -> EQ_GUITAR_R */
-    g_sys_param.audio_chain.graphs[0].edges[1].to_node = 5;
-
-    /* ADC1 (Mic) 左右声道分别进入独立EQ */
-    g_sys_param.audio_chain.graphs[0].edges[2].from_node = 1;  /* ADC1 L -> EQ_MIC_L */
-    g_sys_param.audio_chain.graphs[0].edges[2].to_node = 6;
-    g_sys_param.audio_chain.graphs[0].edges[3].from_node = 1;  /* ADC1 R -> EQ_MIC_R */
-    g_sys_param.audio_chain.graphs[0].edges[3].to_node = 7;
-
-    /* 4个EQ输出到ADC混音器 */
-    g_sys_param.audio_chain.graphs[0].edges[4].from_node = 4;  /* EQ_GUITAR_L -> ADC_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[4].to_node = 8;
-    g_sys_param.audio_chain.graphs[0].edges[5].from_node = 5;  /* EQ_GUITAR_R -> ADC_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[5].to_node = 8;
-    g_sys_param.audio_chain.graphs[0].edges[6].from_node = 6;  /* EQ_MIC_L -> ADC_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[6].to_node = 8;
-    g_sys_param.audio_chain.graphs[0].edges[7].from_node = 7;  /* EQ_MIC_R -> ADC_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[7].to_node = 8;
-
-    /* ADC效果链: ADC_Mixer -> Expander -> DRC -> Pre_Reverb_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[8].from_node = 8;  /* ADC_Mixer -> Expander */
-    g_sys_param.audio_chain.graphs[0].edges[8].to_node = 9;
-    g_sys_param.audio_chain.graphs[0].edges[9].from_node = 9;  /* Expander -> DRC */
-    g_sys_param.audio_chain.graphs[0].edges[9].to_node = 10;
-    g_sys_param.audio_chain.graphs[0].edges[10].from_node = 10; /* DRC -> Pre_Reverb_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[10].to_node = 11;
-
-    /* Looper_Play -> Pre_Reverb_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[11].from_node = 19; /* Looper_Play -> Pre_Reverb_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[11].to_node = 11;
-
-    /* Pre_Reverb_Mixer -> Reverb */
-    g_sys_param.audio_chain.graphs[0].edges[12].from_node = 11;
-    g_sys_param.audio_chain.graphs[0].edges[12].to_node = 12;
-
-    /* USB/BT + Metronome -> USB_BT_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[13].from_node = 2;  /* USB_In -> USB_BT_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[13].to_node = 13;
-    g_sys_param.audio_chain.graphs[0].edges[14].from_node = 3;  /* BT_In -> USB_BT_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[14].to_node = 13;
-    g_sys_param.audio_chain.graphs[0].edges[15].from_node = 18; /* Metronome -> USB_BT_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[15].to_node = 13;
-
-    /* USB_BT_Mixer -> USB_BT_EQ */
-    g_sys_param.audio_chain.graphs[0].edges[16].from_node = 13;
-    g_sys_param.audio_chain.graphs[0].edges[16].to_node = 14;
-
-    /* Reverb + USB_BT_EQ -> Final_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[17].from_node = 12; /* Reverb -> Final_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[17].to_node = 15;
-    g_sys_param.audio_chain.graphs[0].edges[18].from_node = 14; /* USB_BT_EQ -> Final_Mixer */
-    g_sys_param.audio_chain.graphs[0].edges[18].to_node = 15;
-
-    /* Final_Mixer -> 输出 */
-    g_sys_param.audio_chain.graphs[0].edges[19].from_node = 15; /* Final_Mixer -> DAC0_Out */
-    g_sys_param.audio_chain.graphs[0].edges[19].to_node = 16;
-    g_sys_param.audio_chain.graphs[0].edges[20].from_node = 15; /* Final_Mixer -> USB_Out */
-    g_sys_param.audio_chain.graphs[0].edges[20].to_node = 17;
-
-    /* ADC_Mixer -> Looper_Record */
-    g_sys_param.audio_chain.graphs[0].edges[21].from_node = 8;
-    g_sys_param.audio_chain.graphs[0].edges[21].to_node = 20;
-
-    /* Clear other graphs */
-    for (i = 1; i < MAX_EFFECT_GRAPHS; i++) {
-        memset(&g_sys_param.audio_chain.graphs[i], 0, sizeof(EffectGraph_t));
-        memset(g_sys_param.audio_chain.graphs[i].node_ids, 0xFF, MAX_GRAPH_NODES);
-    }
+    /* graph_count = 0 (already from memset): no saved graphs, use hardcoded DEFAULT preset */
 }
 
 /* Standard CRC32 implementation (polynomial 0xEDB88320) */
@@ -482,6 +261,8 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     /* System defaults */
     g_sys_param.system.current_boot_status = NORMAL_BOOT;
     g_sys_param.system.boot_count = 0;
+    g_sys_param.system.lp_enable = 1;       /* 默认启用自动低功耗 */
+    g_sys_param.system.lp_timeout_min = 5;   /* 默认5分钟空闲超时 */
 
     /* Volume defaults */
     g_sys_param.volume.guitar1_volume = 80;
@@ -505,6 +286,11 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.looper.segment_volume[1] = 0xFF;
     g_sys_param.looper.segment_volume[2] = 0xFF;
     g_sys_param.looper.segment_volume[3] = 0xFF;
+    /* 默认录制源：LINE_L (2 = LOOP_REC_SRC_LINEIN_L) */
+    g_sys_param.looper.segment_rec_source[0] = 2;
+    g_sys_param.looper.segment_rec_source[1] = 2;
+    g_sys_param.looper.segment_rec_source[2] = 2;
+    g_sys_param.looper.segment_rec_source[3] = 2;
     
     /* 新增：存储抽象层性能参数默认值 */
     g_sys_param.looper.storage_type = 0;        /* 默认 NOR Flash */
@@ -513,6 +299,9 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.looper.max_concurrent_tracks = 1; /* 默认1段 */
     g_sys_param.looper.bandwidth_tested = 0;    /* 未测试 */
     g_sys_param.looper.support_overdub = 0;     /* 默认不支持叠录 */
+    /* 导出默认设置 */
+    g_sys_param.looper.export_mono_mix = 0;     /* 默认关闭声道平衡 */
+    g_sys_param.looper.export_gain_pct = 100;   /* 默认 100% = 原始电平 */
 
     /* Bluetooth defaults */
     g_sys_param.bluetooth.enabled = 1;
@@ -591,6 +380,18 @@ SysParam_Status_t SysParam_ApplyToAudio(void) {
     }
     
     PARAM_DBG("[PARAM] Parameters applied to audio system\n");
+
+    /* Apply system settings */
+    {
+        extern void LowPower_SetEnabled(uint8_t);
+        extern void LowPower_SetTimeoutMin(uint8_t);
+        LowPower_SetEnabled(g_sys_param.system.lp_enable);
+        LowPower_SetTimeoutMin(g_sys_param.system.lp_timeout_min);
+        PARAM_DBG("[PARAM] Auto-LP: %s, timeout=%d min\n",
+                  g_sys_param.system.lp_enable ? "enabled" : "disabled",
+                  g_sys_param.system.lp_timeout_min);
+    }
+
     return SYSPARAM_OK;
 }
 

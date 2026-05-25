@@ -295,6 +295,11 @@ static void SwitchToIO(ShellIOType_t io_type)
     g_io_manager.active_io = io_type;
 }
 
+uint8_t ShellIOManager_HasIncomingData(void)
+{
+    return (CheckCDCAvailable() || CheckBLEAvailable()) ? 1U : 0U;
+}
+
 static uint8_t IsTimeout(uint32_t start_tick, uint32_t timeout_ms)
 {
     uint32_t current = GET_TICK_MS();
