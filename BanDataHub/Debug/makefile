@@ -1,9 +1,9 @@
 ################################################################################
-# Automatically-generated file. Do not edit!
+# 自动生成的文件。不要编辑！
 ################################################################################
 
 ifndef ANDESIGHT_ROOT
-ANDESIGHT_ROOT=/cygdrive/C/Andestech/AndeSight300RDS
+ANDESIGHT_ROOT=/cygdrive/D/app/Andestech/AndeSight300RDS
 endif
 
 ifndef CROSS_COMPILE
@@ -69,9 +69,9 @@ endif
 -include ../makefile.defs
 
 # Add inputs and outputs from these tool invocations to the build variables 
-BUILD_ARTIFACT_FILE_BASE_NAME = BanBox
+BUILD_ARTIFACT_FILE_BASE_NAME = BanDataHub
 
-LINKER_OUTPUTS = BanBox.adx
+LINKER_OUTPUTS = BanDataHub.adx
 
 GCOV_OUT += \
 $(foreach subdir,$(SUBDIRS),$(wildcard $(subdir)/*.gcda) $(wildcard $(subdir)/*.gcno)) \
@@ -95,53 +95,53 @@ SIZE_OUTPUTS += \
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size \
 
 
-# All Target
-all: BanBox.adx secondary-outputs
+# 所有目标
+all: BanDataHub.adx secondary-outputs
 
-# Tool invocations
-BanBox.adx: $(OBJS) $(USER_OBJS)
-	@echo 'Building target: $@'
-	@echo 'Invoking: Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/bluetooth" -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BanBox.adx" $(OBJS) $(USER_OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
+# 工具调用
+BanDataHub.adx: $(OBJS) $(USER_OBJS)
+	@echo '正在构建目标： $@'
+	@echo '正在调用： Andes C Linker'
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/bluetooth" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BanDataHub.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo '已结束构建目标： $@'
 	@echo ' '
 
-$(foreach subdir,$(SUBDIRS),$(wildcard $(subdir)/*.gcda) $(wildcard $(subdir)/*.gcno)): BanBox.adx $(OBJS) $(USER_OBJS)
-../gmon.sum ../gmon.out: BanBox.adx $(OBJS) $(USER_OBJS)
+$(foreach subdir,$(SUBDIRS),$(wildcard $(subdir)/*.gcda) $(wildcard $(subdir)/*.gcno)): BanDataHub.adx $(OBJS) $(USER_OBJS)
+../gmon.sum ../gmon.out: BanDataHub.adx $(OBJS) $(USER_OBJS)
 
 $(SECONDARY_OUTPUT_PATH)/symbol.txt: $(LINKER_OUTPUTS)
-	@echo 'Invoking: NM (symbol listing)'
-	$(CROSS_COMPILE)nm -n -l -C "BanBox.adx" > $(SECONDARY_OUTPUT_PATH)/symbol.txt
-	@echo 'Finished building: $@'
+	@echo '正在调用： NM (symbol listing)'
+	$(CROSS_COMPILE)nm -n -l -C "BanDataHub.adx" > $(SECONDARY_OUTPUT_PATH)/symbol.txt
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/readelf.txt: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Readelf (ELF info listing)'
-	$(CROSS_COMPILE)readelf -a "BanBox.adx" > $(SECONDARY_OUTPUT_PATH)/readelf.txt
-	@echo 'Finished building: $@'
+	@echo '正在调用： Readelf (ELF info listing)'
+	$(CROSS_COMPILE)readelf -a "BanDataHub.adx" > $(SECONDARY_OUTPUT_PATH)/readelf.txt
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/objdump.txt: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Objdump (disassembly)'
-	$(CROSS_COMPILE)objdump -x -d -C "BanBox.adx" > $(SECONDARY_OUTPUT_PATH)/objdump.txt
-	@echo 'Finished building: $@'
+	@echo '正在调用： Objdump (disassembly)'
+	$(CROSS_COMPILE)objdump -x -d -C "BanDataHub.adx" > $(SECONDARY_OUTPUT_PATH)/objdump.txt
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Objcopy (object content copy)'
-	$(CROSS_COMPILE)objcopy -S -O binary "BanBox.adx" $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin
-	@echo 'Finished building: $@'
+	@echo '正在调用： Objcopy (object content copy)'
+	$(CROSS_COMPILE)objcopy -S -O binary "BanDataHub.adx" $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin
+	@echo '已结束构建： $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size: $(LINKER_OUTPUTS)
-	@echo 'Invoking: Size (section size listing)'
-	$(CROSS_COMPILE)size  "BanBox.adx" | tee $(SECONDARY_OUTPUT_PATH)/.PHONY.size
-	@echo 'Finished building: $@'
+	@echo '正在调用： Size (section size listing)'
+	$(CROSS_COMPILE)size  "BanDataHub.adx" | tee $(SECONDARY_OUTPUT_PATH)/.PHONY.size
+	@echo '已结束构建： $@'
 	@echo ' '
 
-# Other Targets
+# 其他目标
 clean:
-	-$(RM) $(OBJCOPY_OUTPUTS)$(OBJS)$(C_DEPS)$(GCOV_OUT)$(SYMBOL_OUTPUTS)$(OBJDUMP_OUTPUTS)$(READELF_OUTPUTS)$(GPROF_OUT)$(SIZE_OUTPUTS)$(EXECUTABLES)$(S_UPPER_DEPS) BanBox.adx
+	-$(RM) $(OBJCOPY_OUTPUTS)$(OBJS)$(C_DEPS)$(GCOV_OUT)$(SYMBOL_OUTPUTS)$(OBJDUMP_OUTPUTS)$(READELF_OUTPUTS)$(GPROF_OUT)$(SIZE_OUTPUTS)$(EXECUTABLES)$(S_UPPER_DEPS) BanDataHub.adx
 	-@echo ' '
 
 secondary-outputs: $(SYMBOL_OUTPUTS) $(READELF_OUTPUTS) $(OBJDUMP_OUTPUTS) $(OBJCOPY_OUTPUTS) $(SIZE_OUTPUTS)

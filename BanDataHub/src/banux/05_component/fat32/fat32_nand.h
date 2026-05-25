@@ -26,11 +26,11 @@
 
 #include "product_def.h"
 
-#if FAT32_EN
+#if FAT32_EN && HW_NAND0_EN
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "err_handle.h"
+#include "fat32_diskio.h"
 
 #ifdef __cplusplus
 extern "C" {

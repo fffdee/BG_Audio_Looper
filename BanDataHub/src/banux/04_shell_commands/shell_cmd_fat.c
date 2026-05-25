@@ -20,14 +20,13 @@
 
 #include "product_def.h"
 
-#if FAT32_EN
+#if FAT32_EN && HW_CMD_FAT_EN
 
 #include "shell_cmd_fat.h"
 #include "bg_shell.h"
 #include "fat32_reader.h"
 #include "fat32_diskio.h"
 #include "hal_sdio.h"
-#include "bg_log.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

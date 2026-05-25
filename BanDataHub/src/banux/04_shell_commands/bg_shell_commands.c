@@ -43,6 +43,7 @@
 
 #include "shell_cmd_fat.h"
 #include "sd_card.h"
+#include "fat32_reader.h"
 
 #if HW_CMD_PSRAM_EN
 /* PSRAM 内存管理命令 */
@@ -1761,10 +1762,32 @@ DEFINE_MODULE(flash, "Flash storage management", MOD_CAT_HARDWARE, flash_opts);
 #include "sd_card.h"
 #include "sd_card_driver.h"
 #include "flash_bus.h"
+#include "hal_sdio.h"
+
+static int sd_require_info(HAL_SD_CardInfo_t *info)
+{
+    HAL_SD_Error_t ret;
+
+    ret = HAL_SD_GetInfo(info);
+    if (ret != HAL_SD_OK || info->block_count == 0) {
+        Shell_Printf("ERROR: SD card not ready (err=%d)\r\n", (int)ret);
+        return -1;
+    }
+
+    if (info->block_size != SD_CARD_BLOCK_SIZE) {
+        Shell_Printf("ERROR: Unsupported block size %lu\r\n",
+                     (unsigned long)info->block_size);
+        return -1;
+    }
+
+    return 0;
+}
 
 static int sd_info(int argc, char *argv[])
 {
     SD_CARD *card;
+    HAL_SD_CardInfo_t info;
+    HAL_SD_Error_t ret;
     (void)argc; (void)argv;
 
     card = SDCard_GetCardInfo();
@@ -1791,6 +1814,21 @@ static int sd_info(int argc, char *argv[])
     Shell_Printf("  Capacity:   %lu MB\r\n",
                  (unsigned long)(card->BlockNum / 2048));
     Shell_Printf("  MaxSpeed:   %d\r\n", card->MaxTransSpeed);
+
+    ret = HAL_SD_GetInfo(&info);
+    if (ret == HAL_SD_OK) {
+        Shell_Print("\r\n=== HAL SD Info ===\r\n");
+        Shell_Printf("  Type:       %s\r\n",
+                     info.type == HAL_SD_CARD_TYPE_SDHC ? "SDHC" :
+                     info.type == HAL_SD_CARD_TYPE_SDXC ? "SDXC" :
+                     info.type == HAL_SD_CARD_TYPE_SDSC ? "SDSC" : "UNKNOWN");
+        Shell_Printf("  Blocks:     %lu\r\n", (unsigned long)info.block_count);
+        Shell_Printf("  Block Size: %lu\r\n", (unsigned long)info.block_size);
+        Shell_Printf("  Capacity:   %lu MB\r\n",
+                     (unsigned long)(info.capacity_bytes / (1024u * 1024u)));
+    } else {
+        Shell_Printf("\r\nHAL_SD_GetInfo failed: %d\r\n", (int)ret);
+    }
     Shell_Print("\r\n");
     return 0;
 }
@@ -1799,10 +1837,10 @@ static int sd_read(int argc, char *argv[])
 {
     uint32_t block;
     uint8_t  count = 1;
-    uint8_t  buf[512];
-    SD_CARD_ERR_CODE ret;
+    uint8_t  buf[SD_CARD_BLOCK_SIZE];
+    HAL_SD_Error_t ret;
+    HAL_SD_CardInfo_t info;
     uint32_t i, j;
-    SD_CARD *card;
 
     if (argc < 1) {
         Shell_Print("Usage: sd -r <block> [count]\r\n");
@@ -1816,15 +1854,20 @@ static int sd_read(int argc, char *argv[])
         count = (uint8_t)c;
     }
 
-    card = SDCard_GetCardInfo();
-    if (!card || card->CardInit != SD_INITED) {
-        Shell_Print("ERROR: SD card not initialized!\r\n");
+    if (sd_require_info(&info) != 0) {
+        return -1;
+    }
+
+    if (block > info.block_count || (uint32_t)count > (info.block_count - block)) {
+        Shell_Printf("ERROR: Block range %lu + %u exceeds max %lu\r\n",
+                     (unsigned long)block, (unsigned)count,
+                     (unsigned long)info.block_count);
         return -1;
     }
 
     for (i = 0; i < count; i++) {
-        ret = SDCard_ReadBlock(block + i, buf, 1);
-        if (ret != NONE_ERR) {
+        ret = HAL_SD_ReadBlocks(block + i, buf, 1);
+        if (ret != HAL_SD_OK) {
             Shell_Printf("ERROR: Read block %lu failed, err=%d\r\n",
                          (unsigned long)(block + i), (int)ret);
             return -1;
@@ -1832,8 +1875,8 @@ static int sd_read(int argc, char *argv[])
 
         Shell_Printf("\r\nBlock %lu (0x%lX):\r\n",
                      (unsigned long)(block + i),
-                     (unsigned long)((block + i) * 512));
-        for (j = 0; j < 512; j += 16) {
+                     (unsigned long)((block + i) * SD_CARD_BLOCK_SIZE));
+        for (j = 0; j < SD_CARD_BLOCK_SIZE; j += 16) {
             uint32_t k;
             Shell_Printf("%04lX: ", (unsigned long)j);
             for (k = 0; k < 16; k++) {
@@ -1854,10 +1897,10 @@ static int sd_write(int argc, char *argv[])
 {
     uint32_t block;
     uint8_t  pattern = 0xA5;
-    uint8_t  buf[512];
-    uint8_t  verify[512];
-    SD_CARD_ERR_CODE ret;
-    SD_CARD *card;
+    uint8_t  buf[SD_CARD_BLOCK_SIZE];
+    uint8_t  verify[SD_CARD_BLOCK_SIZE];
+    HAL_SD_Error_t ret;
+    HAL_SD_CardInfo_t info;
     uint32_t i;
     int fail_at;
 
@@ -1872,40 +1915,38 @@ static int sd_write(int argc, char *argv[])
         pattern = (uint8_t)strtoul(argv[1], NULL, 0);
     }
 
-    card = SDCard_GetCardInfo();
-    if (!card || card->CardInit != SD_INITED) {
-        Shell_Print("ERROR: SD card not initialized!\r\n");
+    if (sd_require_info(&info) != 0) {
         return -1;
     }
 
-    if (block >= card->BlockNum) {
+    if (block >= info.block_count) {
         Shell_Printf("ERROR: Block %lu exceeds max %lu\r\n",
-                     (unsigned long)block, (unsigned long)card->BlockNum);
+                     (unsigned long)block, (unsigned long)info.block_count);
         return -1;
     }
 
     /* Fill buffer with pattern */
-    for (i = 0; i < 512; i++) {
+    for (i = 0; i < SD_CARD_BLOCK_SIZE; i++) {
         buf[i] = (uint8_t)(pattern ^ (i & 0xFF));
     }
 
     Shell_Printf("Writing block %lu, pattern=0x%02X...\r\n",
                  (unsigned long)block, pattern);
-    ret = SDCard_WriteBlock(block, buf, 1);
-    if (ret != NONE_ERR) {
+    ret = HAL_SD_WriteBlocks(block, buf, 1);
+    if (ret != HAL_SD_OK) {
         Shell_Printf("ERROR: Write failed, err=%d\r\n", (int)ret);
         return -1;
     }
     Shell_Print("Write OK, reading back...\r\n");
 
-    ret = SDCard_ReadBlock(block, verify, 1);
-    if (ret != NONE_ERR) {
+    ret = HAL_SD_ReadBlocks(block, verify, 1);
+    if (ret != HAL_SD_OK) {
         Shell_Printf("ERROR: Read back failed, err=%d\r\n", (int)ret);
         return -1;
     }
 
     fail_at = -1;
-    for (i = 0; i < 512; i++) {
+    for (i = 0; i < SD_CARD_BLOCK_SIZE; i++) {
         if (verify[i] != buf[i]) {
             fail_at = (int)i;
             break;
@@ -1924,33 +1965,35 @@ static int sd_write(int argc, char *argv[])
 
 static int sd_test(int argc, char *argv[])
 {
-    uint8_t  buf[512];
-    uint8_t  verify[512];
-    SD_CARD_ERR_CODE ret;
-    SD_CARD *card;
+    uint8_t  original[SD_CARD_BLOCK_SIZE];
+    uint8_t  buf[SD_CARD_BLOCK_SIZE];
+    uint8_t  verify[SD_CARD_BLOCK_SIZE];
+    uint8_t  multi_buf[SD_CARD_BLOCK_SIZE * 4];
+    HAL_SD_Error_t ret;
+    HAL_SD_CardInfo_t info;
     uint32_t block;
     uint32_t i;
     int pass_count = 0;
     int fail_at;
+    int restore_needed = 0;
+    int result = -1;
 
     (void)argc; (void)argv;
 
-    card = SDCard_GetCardInfo();
-    if (!card || card->CardInit != SD_INITED) {
-        Shell_Print("ERROR: SD card not initialized!\r\n");
+    if (sd_require_info(&info) != 0) {
         return -1;
     }
 
     /* Use a block near the end to avoid corrupting important data */
-    block = card->BlockNum - 1;
+    block = info.block_count - 1;
 
     Shell_Printf("\r\n=== SD Card R/W Test (block %lu) ===\r\n\r\n",
                  (unsigned long)block);
 
     /* [1/3] Read test */
     Shell_Print("  [1/3] Read block              ");
-    ret = SDCard_ReadBlock(block, buf, 1);
-    if (ret != NONE_ERR) {
+    ret = HAL_SD_ReadBlocks(block, original, 1);
+    if (ret != HAL_SD_OK) {
         Shell_Printf("[FAIL] err=%d\r\n", (int)ret);
         goto done;
     }
@@ -1959,21 +2002,22 @@ static int sd_test(int argc, char *argv[])
 
     /* [2/3] Write + verify */
     Shell_Print("  [2/3] Write + verify          ");
-    for (i = 0; i < 512; i++) {
+    for (i = 0; i < SD_CARD_BLOCK_SIZE; i++) {
         buf[i] = (uint8_t)(0x5A ^ (i & 0xFF));
     }
-    ret = SDCard_WriteBlock(block, buf, 1);
-    if (ret != NONE_ERR) {
+    ret = HAL_SD_WriteBlocks(block, buf, 1);
+    if (ret != HAL_SD_OK) {
         Shell_Printf("[FAIL] write err=%d\r\n", (int)ret);
         goto done;
     }
-    ret = SDCard_ReadBlock(block, verify, 1);
-    if (ret != NONE_ERR) {
+    restore_needed = 1;
+    ret = HAL_SD_ReadBlocks(block, verify, 1);
+    if (ret != HAL_SD_OK) {
         Shell_Printf("[FAIL] read err=%d\r\n", (int)ret);
         goto done;
     }
     fail_at = -1;
-    for (i = 0; i < 512; i++) {
+    for (i = 0; i < SD_CARD_BLOCK_SIZE; i++) {
         if (verify[i] != buf[i]) { fail_at = (int)i; break; }
     }
     if (fail_at >= 0) {
@@ -1986,9 +2030,9 @@ static int sd_test(int argc, char *argv[])
 
     /* [3/3] Multi-block read */
     Shell_Print("  [3/3] Multi-block read (4)    ");
-    if (card->BlockNum >= 4) {
-        ret = SDCard_ReadBlock(block - 3, buf, 4);
-        if (ret != NONE_ERR) {
+    if (info.block_count >= 4) {
+        ret = HAL_SD_ReadBlocks(block - 3, multi_buf, 4);
+        if (ret != HAL_SD_OK) {
             Shell_Printf("[FAIL] err=%d\r\n", (int)ret);
             goto done;
         }
@@ -1999,9 +2043,108 @@ static int sd_test(int argc, char *argv[])
     }
 
 done:
+    if (restore_needed) {
+        ret = HAL_SD_WriteBlocks(block, original, 1);
+        if (ret != HAL_SD_OK) {
+            Shell_Printf("\r\n  WARNING: Restore block failed, err=%d\r\n", (int)ret);
+        } else {
+            Shell_Print("  Test block restored\r\n");
+        }
+    }
+
+    if (pass_count == 3) {
+        result = 0;
+    }
     Shell_Printf("\r\n  Result: %d/3 tests passed  [%s]\r\n",
-                 pass_count, (pass_count == 3) ? "ALL PASSED" : "FAILED");
-    return (pass_count == 3) ? 0 : -1;
+                 pass_count, (result == 0) ? "ALL PASSED" : "FAILED");
+    return result;
+}
+
+static int sd_diag(int argc, char *argv[])
+{
+    uint8_t buf[SD_CARD_BLOCK_SIZE];
+    uint32_t sector = 0;
+    uint32_t i;
+    HAL_SD_Error_t ret;
+
+    (void)argc; (void)argv;
+
+    ret = HAL_SD_ReadBlocks(0, buf, 1);
+    if (ret != HAL_SD_OK) {
+        Shell_Printf("ERROR: read LBA0 failed, err=%d\r\n", (int)ret);
+        return -1;
+    }
+
+    Shell_Print("\r\n=== SD LBA0 Diagnostic ===\r\n");
+    Shell_Printf("  sig[510..511]: %02X %02X\r\n", buf[510], buf[511]);
+    Shell_Printf("  first bytes: ");
+    for (i = 0; i < 16; i++) {
+        Shell_Printf("%02X ", buf[i]);
+    }
+    Shell_Print("\r\n");
+
+    if (buf[510] == 0x55 && buf[511] == 0xAA &&
+        buf[0] != 0xEB && buf[0] != 0xE9) {
+        Shell_Print("  MBR partition table:\r\n");
+        for (i = 0; i < 4; i++) {
+            uint8_t *p = &buf[0x1BE + i * 16u];
+            uint32_t lba = (uint32_t)p[8] | ((uint32_t)p[9] << 8) |
+                           ((uint32_t)p[10] << 16) | ((uint32_t)p[11] << 24);
+            uint32_t nsec = (uint32_t)p[12] | ((uint32_t)p[13] << 8) |
+                            ((uint32_t)p[14] << 16) | ((uint32_t)p[15] << 24);
+            Shell_Printf("    [%lu] type=0x%02X lba=%lu sectors=%lu\r\n",
+                         (unsigned long)i, p[4],
+                         (unsigned long)lba, (unsigned long)nsec);
+            if (sector == 0 && p[4] != 0 && lba != 0) {
+                sector = lba;
+            }
+        }
+    }
+
+    if (sector != 0) {
+        ret = HAL_SD_ReadBlocks(sector, buf, 1);
+        if (ret != HAL_SD_OK) {
+            Shell_Printf("ERROR: read BPB LBA%lu failed, err=%d\r\n",
+                         (unsigned long)sector, (int)ret);
+            return -1;
+        }
+        Shell_Printf("  partition first bytes @LBA%lu: ", (unsigned long)sector);
+        for (i = 0; i < 64; i++) {
+            Shell_Printf("%02X ", buf[i]);
+            if ((i & 0x0F) == 0x0F && i != 63) {
+                Shell_Print("\r\n                             ");
+            }
+        }
+        Shell_Print("\r\n");
+    }
+
+    if (buf[0] == 0xEB || buf[0] == 0xE9) {
+        uint16_t bps = (uint16_t)buf[0x0B] | ((uint16_t)buf[0x0C] << 8);
+        uint8_t spc = buf[0x0D];
+        uint16_t rsvd = (uint16_t)buf[0x0E] | ((uint16_t)buf[0x0F] << 8);
+        uint8_t fats = buf[0x10];
+        uint32_t total32 = (uint32_t)buf[0x20] | ((uint32_t)buf[0x21] << 8) |
+                           ((uint32_t)buf[0x22] << 16) | ((uint32_t)buf[0x23] << 24);
+        uint32_t fatsz32 = (uint32_t)buf[0x24] | ((uint32_t)buf[0x25] << 8) |
+                           ((uint32_t)buf[0x26] << 16) | ((uint32_t)buf[0x27] << 24);
+        char fs[9];
+        for (i = 0; i < 8; i++) {
+            fs[i] = (buf[0x52 + i] >= 0x20 && buf[0x52 + i] < 0x7F) ? (char)buf[0x52 + i] : '.';
+        }
+        fs[8] = '\0';
+        Shell_Printf("  BPB LBA: %lu\r\n", (unsigned long)sector);
+        Shell_Printf("  bytes/sector=%u sectors/cluster=%u reserved=%u fats=%u\r\n",
+                     bps, spc, rsvd, fats);
+        Shell_Printf("  total32=%lu fatsz32=%lu fs='%s'\r\n",
+                     (unsigned long)total32, (unsigned long)fatsz32, fs);
+    } else if (memcmp(&buf[3], "EXFAT   ", 8) == 0) {
+        Shell_Printf("  BPB LBA: %lu\r\n", (unsigned long)sector);
+        Shell_Print("  exFAT detected (not supported by current FAT library)\r\n");
+    } else {
+        Shell_Print("  No BPB jump signature found\r\n");
+    }
+
+    return 0;
 }
 
 static const ShellOpt_t sd_opts[] = {
@@ -2009,6 +2152,7 @@ static const ShellOpt_t sd_opts[] = {
     OPT("r", "read",  "<blk> [cnt]",   "Read block(s) hex dump",    sd_read),
     OPT("w", "write", "<blk> [pat]",   "Write test pattern + verify",sd_write),
     OPT("t", "test",  NULL,            "Quick R/W test (last block)",sd_test),
+    OPT("d", "diag",  NULL,            "Diagnose MBR/BPB",          sd_diag),
     OPT_END()
 };
 
@@ -2123,6 +2267,179 @@ DEFINE_MODULE(ble, "BLE controller", MOD_CAT_HARDWARE, ble_opts);
  * File system navigation commands (ls, pwd, cd, cat)
  *===========================================================================*/
 
+#if FAT32_EN
+static uint8_t  g_shell_sd_mode = 0;
+static uint32_t g_shell_sd_cwd_cluster = 0;
+static char     g_shell_sd_cwd_path[128] = "/sd";
+
+static int shell_sd_mount(void)
+{
+    BG_ERR ret = FAT32_Init();
+    if (ret != SUCCESS) {
+        Shell_Printf("sd: FAT mount failed: %d\r\n", ret);
+        return -1;
+    }
+    if (g_shell_sd_cwd_cluster == 0) {
+        g_shell_sd_cwd_cluster = FAT32_GetRootCluster();
+    }
+    return 0;
+}
+
+static const char* shell_sd_strip_prefix(const char *path)
+{
+    if (!path) return "";
+    if (strcmp(path, "/sd") == 0) return "";
+    if (strncmp(path, "/sd/", 4) == 0) return path + 4;
+    return path;
+}
+
+static int shell_sd_resolve_parent(const char *path, uint32_t *dir_cluster, const char **name)
+{
+    static char buf[128];
+    char *p;
+    char *slash;
+    uint32_t cluster;
+    FAT32_FileInfo_t info;
+    BG_ERR ret;
+
+    if (!dir_cluster || !name) return -1;
+    if (shell_sd_mount() != 0) return -1;
+
+    path = shell_sd_strip_prefix(path);
+    cluster = (path && path[0] == '/') ? FAT32_GetRootCluster() : g_shell_sd_cwd_cluster;
+    if (path && path[0] == '/') path++;
+    if (!path) path = "";
+
+    strncpy(buf, path, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+    p = buf;
+
+    while (1) {
+        slash = strchr(p, '/');
+        if (!slash) {
+            *dir_cluster = cluster;
+            *name = p;
+            return 0;
+        }
+        *slash = '\0';
+        if (p[0] != '\0') {
+            ret = FAT32_FindEntryInDir(cluster, p, &info);
+            if (ret != SUCCESS || !(info.attr & DIR_ATTR_DIRECTORY)) {
+                return -1;
+            }
+            cluster = info.start_cluster;
+        }
+        p = slash + 1;
+    }
+}
+
+static int shell_sd_list_cb(const FAT32_FileInfo_t *info, void *user)
+{
+    (void)user;
+    Shell_Printf("%c %-24.24s %lu\r\n",
+                 (info->attr & DIR_ATTR_DIRECTORY) ? 'd' : '-',
+                 info->name,
+                 (unsigned long)info->size);
+    return 0;
+}
+
+static int shell_sd_ls(const char *path)
+{
+    uint32_t cluster;
+    const char *name;
+    FAT32_FileInfo_t info;
+    BG_ERR ret;
+
+    if (shell_sd_mount() != 0) return -1;
+    if (!path || strcmp(path, "/sd") == 0 || strcmp(path, "") == 0) {
+        cluster = g_shell_sd_cwd_cluster;
+    } else {
+        if (shell_sd_resolve_parent(path, &cluster, &name) != 0) return -1;
+        if (name[0] != '\0') {
+            ret = FAT32_FindEntryInDir(cluster, name, &info);
+            if (ret != SUCCESS) return -1;
+            if (!(info.attr & DIR_ATTR_DIRECTORY)) {
+                Shell_Printf("%s\r\n", info.name);
+                return 0;
+            }
+            cluster = info.start_cluster;
+        }
+    }
+
+    Shell_Print("Attr Name                     Size\r\n");
+    Shell_Print("-------------------------------------\r\n");
+    ret = FAT32_ListDirByCluster(cluster, shell_sd_list_cb, NULL);
+    return (ret == SUCCESS) ? 0 : -1;
+}
+
+static int shell_sd_cd(const char *path)
+{
+    uint32_t cluster;
+    const char *name;
+    FAT32_FileInfo_t info;
+    BG_ERR ret;
+
+    if (shell_sd_mount() != 0) return -1;
+    if (!path || strcmp(path, "/sd") == 0 || strcmp(path, "/sd/") == 0) {
+        g_shell_sd_mode = 1;
+        g_shell_sd_cwd_cluster = FAT32_GetRootCluster();
+        strcpy(g_shell_sd_cwd_path, "/sd");
+        return 0;
+    }
+    if (strcmp(path, "/") == 0) {
+        g_shell_sd_mode = 0;
+        return 0;
+    }
+    if (strcmp(path, "..") == 0) {
+        g_shell_sd_mode = 0;
+        g_shell_sd_cwd_cluster = FAT32_GetRootCluster();
+        strcpy(g_shell_sd_cwd_path, "/sd");
+        return 0;
+    }
+
+    if (shell_sd_resolve_parent(path, &cluster, &name) != 0) return -1;
+    ret = FAT32_FindEntryInDir(cluster, name, &info);
+    if (ret != SUCCESS || !(info.attr & DIR_ATTR_DIRECTORY)) return -1;
+    g_shell_sd_mode = 1;
+    g_shell_sd_cwd_cluster = info.start_cluster;
+    if (strncmp(path, "/sd", 3) == 0) {
+        strncpy(g_shell_sd_cwd_path, path, sizeof(g_shell_sd_cwd_path) - 1);
+        g_shell_sd_cwd_path[sizeof(g_shell_sd_cwd_path) - 1] = '\0';
+    } else {
+        if (strcmp(g_shell_sd_cwd_path, "/sd") != 0) {
+            strncat(g_shell_sd_cwd_path, "/", sizeof(g_shell_sd_cwd_path) - strlen(g_shell_sd_cwd_path) - 1);
+        } else {
+            strncat(g_shell_sd_cwd_path, "/", sizeof(g_shell_sd_cwd_path) - strlen(g_shell_sd_cwd_path) - 1);
+        }
+        strncat(g_shell_sd_cwd_path, name, sizeof(g_shell_sd_cwd_path) - strlen(g_shell_sd_cwd_path) - 1);
+    }
+    return 0;
+}
+
+static int shell_sd_cat(const char *path)
+{
+    FAT32_FileHandle_t h;
+    uint32_t cluster;
+    const char *name;
+    int32_t n;
+    uint8_t buf[128];
+    BG_ERR ret;
+
+    if (shell_sd_resolve_parent(path, &cluster, &name) != 0) return -1;
+    ret = FAT32_OpenFileInDir(cluster, name, &h);
+    if (ret != SUCCESS) return -1;
+    while ((n = FAT32_ReadFile(&h, buf, sizeof(buf))) > 0) {
+        uint32_t i;
+        for (i = 0; i < (uint32_t)n; i++) {
+            Shell_Printf("%c", (buf[i] >= 0x20 && buf[i] < 0x7f) ? buf[i] : '.');
+        }
+    }
+    Shell_Print("\r\n");
+    FAT32_CloseFile(&h);
+    return 0;
+}
+#endif /* FAT32_EN */
+
 static int cmd_ls(int argc, char *argv[])
 {
     FsNode_t *node;
@@ -2131,6 +2448,12 @@ static int cmd_ls(int argc, char *argv[])
     int lineLen = 0;
     int itemsInLine = 0;
     
+#if FAT32_EN
+    if ((argc > 0 && strncmp(argv[0], "/sd", 3) == 0) || (argc == 0 && g_shell_sd_mode)) {
+        return shell_sd_ls((argc > 0) ? argv[0] : "");
+    }
+#endif
+
     /* 濡傛灉鏈夊弬鏁帮紝浣跨敤鍙傛暟鏌ユ壘鑺傜偣锛涘惁鍒欎娇鐢ㄥ綋鍓嶅伐浣滅洰褰�*/
     if (argc > 0) {
         node = DrvFs_FindNode(argv[0]);
@@ -2219,7 +2542,14 @@ static int cmd_pwd(int argc, char *argv[])
     char path[64];
     
     (void)argc; (void)argv;
-    
+
+#if FAT32_EN
+    if (g_shell_sd_mode) {
+        Shell_Printf("%s\r\n", g_shell_sd_cwd_path);
+        return 0;
+    }
+#endif
+
     if (DrvFs_GetCwdPath(path, sizeof(path)) == FS_OK) {
         Shell_Printf("%s\r\n", path);
     } else {
@@ -2239,6 +2569,16 @@ DEFINE_MODULE(pwd, "Print working directory", MOD_CAT_SYSTEM, pwd_opts);
 
 static int cmd_cd(int argc, char *argv[])
 {
+#if FAT32_EN
+    if (argc >= 1 && (strncmp(argv[0], "/sd", 3) == 0 || g_shell_sd_mode)) {
+        if (shell_sd_cd(argv[0]) != 0) {
+            Shell_Printf("cd: %s: No such directory\r\n", argv[0]);
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
     if (argc < 1) {
         /* 鏃犲弬鏁版椂杩斿洖鏍圭洰褰�*/
         if (DrvFs_Cd("/") != FS_OK) {
@@ -2274,7 +2614,17 @@ static int cmd_cat(int argc, char *argv[])
         Shell_Print("Usage: cat <parameter>\r\n");
         return -1;
     }
-    
+
+#if FAT32_EN
+    if (strncmp(argv[0], "/sd", 3) == 0 || g_shell_sd_mode) {
+        if (shell_sd_cat(argv[0]) != 0) {
+            Shell_Printf("cat: %s: Read error\r\n", argv[0]);
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
     node = DrvFs_FindNode(argv[0]);
     if (!node) {
         Shell_Printf("cat: %s: No such file or directory\r\n", argv[0]);
@@ -2306,6 +2656,49 @@ static const ShellOpt_t cat_opts[] = {
 };
 
 DEFINE_MODULE(cat, "Display file contents", MOD_CAT_SYSTEM, cat_opts);
+
+static int cmd_write_file(int argc, char *argv[])
+{
+#if FAT32_EN
+    uint32_t cluster;
+    const char *name;
+    int32_t written;
+
+    if (argc < 2) {
+        Shell_Print("Usage: write /sd/<file> <text>\r\n");
+        return -1;
+    }
+
+    if (strncmp(argv[0], "/sd", 3) != 0 && !g_shell_sd_mode) {
+        Shell_Print("write: only /sd paths are supported\r\n");
+        return -1;
+    }
+
+    if (shell_sd_resolve_parent(argv[0], &cluster, &name) != 0 || !name || !name[0]) {
+        Shell_Printf("write: bad path: %s\r\n", argv[0]);
+        return -1;
+    }
+
+    written = FAT32_WriteFile(cluster, name, argv[1], strlen(argv[1]));
+    if (written < 0) {
+        Shell_Printf("write: failed: %s\r\n", argv[0]);
+        return -1;
+    }
+    Shell_Printf("written %ld bytes\r\n", (long)written);
+    return 0;
+#else
+    (void)argc; (void)argv;
+    Shell_Print("write: FAT32 disabled\r\n");
+    return -1;
+#endif
+}
+
+static const ShellOpt_t write_opts[] = {
+    OPT("", "", "<file> <text>", "Write text file", cmd_write_file),
+    OPT_END()
+};
+
+DEFINE_MODULE(write, "Write file contents", MOD_CAT_SYSTEM, write_opts);
 
 /*
  * echo鍛戒护 - 鍐欏叆鍙傛暟鍊� * 鐢ㄦ硶: echo <value> > <parameter>
@@ -2556,6 +2949,7 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(pwd);
     REGISTER_MODULE(cd);
     REGISTER_MODULE(cat);
+    REGISTER_MODULE(write);
     REGISTER_MODULE(echo);    /* 鍐欏叆鍙傛暟鍊�*/
     REGISTER_MODULE(tree);
 

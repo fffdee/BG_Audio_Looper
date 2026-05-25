@@ -13,9 +13,6 @@
 #include "otg_device_cdc.h"
 #include "shell_io_manager.h"
 #include "fat32_reader.h"
-#include "nand_store.h"
-#include "bg_log.h"
-#include "bg_osal.h"
 #include <string.h>
 
 /* ============================================

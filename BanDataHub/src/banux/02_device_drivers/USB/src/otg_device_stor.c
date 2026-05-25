@@ -131,6 +131,14 @@ uint8_t	gModeSenseAllPage[] =
 	0x00, 0x02, 0x00,
 };
 
+uint8_t gModeSenseCachingPage[] =
+{
+	0x0F, 0x00, 0x00, 0x00,
+	0x08, 0x0A, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00
+};
+
 const uint8_t gRequestSenseNotReady[] =
 {
 	0x70, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x0A,
@@ -160,6 +168,12 @@ bool DeviceStorIsCardInitOK;
 
 static uint8_t sReaderState = READER_UNREADY;
 
+typedef struct
+{
+	uint32_t block_count;
+	uint32_t block_size;
+} DeviceStorMediaInfo;
+
 uint8_t GetSdReaderState(void)
 {
 	return sReaderState;
@@ -170,25 +184,65 @@ void SetSdReaderState(uint8_t State)
 	sReaderState = State;
 }
 
+static bool DeviceStorGetMediaInfo(DeviceStorMediaInfo *Info)
+{
+	HAL_SD_CardInfo_t SdInfo;
+
+	if(Info == NULL)
+	{
+		return FALSE;
+	}
+
+	memset(Info, 0, sizeof(DeviceStorMediaInfo));
+
+	if(HAL_SD_GetInfo(&SdInfo) != HAL_SD_OK)
+	{
+		if((SDCard.CardInit == SD_INITED) && (SDCard.BlockNum > 0))
+		{
+			Info->block_count = SDCard.BlockNum;
+			Info->block_size = DEVICE_STOR_BLOCK_SIZE;
+			return TRUE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+
+	if((SdInfo.block_count == 0) || (SdInfo.block_size != DEVICE_STOR_BLOCK_SIZE))
+	{
+		return FALSE;
+	}
+
+	Info->block_count = SdInfo.block_count;
+	Info->block_size = SdInfo.block_size;
+	return TRUE;
+}
+
 static uint32_t DeviceStorGetBlockCount(void)
 {
-	return SDCard_CapacityGet();
+	DeviceStorMediaInfo Info;
+
+	if(DeviceStorGetMediaInfo(&Info))
+	{
+		return Info.block_count;
+	}
+
+	return 0;
 }
 
 bool DeviceStorIsCardLink(void)
 {
 #ifdef BANDATAHUB
-	/* BanDataHub: 使用 SDCard.CardInit 状态判断，避免每次调 SDCard_Detect() 打印 "SD link!" */
-	if(SDCard.CardInit == SD_INITED)
+	/* BanDataHub: 用 HAL 统一确认 SD 已初始化且容量有效，避免向主机上报 0 容量介质。 */
+	DeviceStorMediaInfo Info;
+	if(DeviceStorGetMediaInfo(&Info))
 	{
 		DeviceStorIsCardInitOK = TRUE;
 		return TRUE;
 	}
-	else
-	{
-		DeviceStorIsCardInitOK = FALSE;
-		return FALSE;
-	}
+	DeviceStorIsCardInitOK = FALSE;
+	return FALSE;
 #else
 	if(SDCard_Detect() != NONE_ERR)
 	{
@@ -217,6 +271,12 @@ void DeviceStorReadFmtCapacity(void)
 {
 	uint32_t BlockCount = DeviceStorGetBlockCount();
 
+	if(BlockCount == 0)
+	{
+		DeviceStorSendCSW(1);
+		return;
+	}
+
 	((uint32_t*)&gFmtCapacityData[4])[0] = CpuToBe32(BlockCount);
 	OTG_DeviceBulkSend(DEVICE_MSC_IN_EP, gFmtCapacityData, sizeof(gFmtCapacityData), 10000);
 	DeviceStorSendCSW(0);
@@ -228,8 +288,13 @@ void DeviceStorReadCapacity(void)
 {
 	uint32_t BlockCount = DeviceStorGetBlockCount();
 
-	if(BlockCount > 0)
-		BlockCount -= 1;
+	if(BlockCount == 0)
+	{
+		DeviceStorSendCSW(1);
+		return;
+	}
+
+	BlockCount -= 1;
 
 	((uint32_t*)&gCapacityData[0])[0] = CpuToBe32(BlockCount);
 	OTG_DeviceBulkSend(DEVICE_MSC_IN_EP, gCapacityData, sizeof(gCapacityData), 1000);
@@ -390,10 +455,15 @@ void DeviceStorModeSense(void)
 		return;
 	}
 
-	((uint32_t*)&gModeSenseAllPage[4])[0] = CpuToBe32(SDCard_CapacityGet());
+	((uint32_t*)&gModeSenseAllPage[4])[0] = CpuToBe32(DeviceStorGetBlockCount());
 
 	switch(gCBW[17])
 	{
+		case 0x08:
+			OTG_DeviceBulkSend(DEVICE_MSC_IN_EP, gModeSenseCachingPage, sizeof(gModeSenseCachingPage), 10000);
+			DeviceStorSendCSW(0);
+			break;
+
 		case 0x1C:
 			OTG_DeviceBulkSend(DEVICE_MSC_IN_EP, (uint8_t*)gModeSenseProtectPage, sizeof(gModeSenseProtectPage), 10000);
 			DeviceStorSendCSW(0);

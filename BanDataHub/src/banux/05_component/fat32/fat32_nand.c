@@ -5,7 +5,7 @@
 
 #include "product_def.h"
 
-#if FAT32_EN
+#if FAT32_EN && HW_NAND0_EN
 
 #include "fat32_nand.h"
 #include "fat32_reader.h"

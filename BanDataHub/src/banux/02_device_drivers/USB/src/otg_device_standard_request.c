@@ -296,11 +296,16 @@ void OTG_DeviceStandardRequest()
 				}
 #endif
 
-				/* CDC和MSC始终初始化（CDC_READER模式需要） */
-				OTG_DeviceCDC_Init();
-				DBG("CDC Device Initialized\n");
-				OTG_DeviceStorInit();
-				DBG("MSC Device Initialized\n");
+				if(InterfaceNum[CDC_CTL_INTERFACE_NUM] != 0xFF)
+				{
+					OTG_DeviceCDC_Init();
+					DBG("CDC Device Initialized\n");
+				}
+				if(InterfaceNum[MSC_INTERFACE_NUM] != 0xFF)
+				{
+					OTG_DeviceStorInit();
+					DBG("MSC Device Initialized\n");
+				}
 			}
 			break;
 

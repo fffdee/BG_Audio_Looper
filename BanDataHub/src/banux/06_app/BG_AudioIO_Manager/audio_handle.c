@@ -69,12 +69,12 @@ BG_Audio_Io_Manager BG_AudioManager __attribute__((section(".data"))) = {
 
 static uint8_t DmaChannelMap[29] = {
 	255, 255, 255,
-	8, 9,
+	4, 5,
 	255, 255, 255, 255, 255,
 	0, 1,
 	255, 7, 6,
 	255, 255, 255,
-	2, 3, 4, 5,
+	2, 3, 8, 9,
 	255, 255, 255, 255,
 	255, 255, 255,
 };

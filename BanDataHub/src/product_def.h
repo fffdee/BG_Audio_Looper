@@ -132,7 +132,7 @@ extern "C" {
 #endif
 
 /* 核心功能 */
-#define VFS_EN                  0   /* 虚拟文件系统 */
+#define VFS_EN                  1   /* 虚拟文件系统 */
 #define BG_EVENT_EN             0   /* 事件发布-订阅系统 (话题订阅) */
 #ifdef BANDATAHUB
 #define EFFECT_GRAPHICS_EN      0   /* 音效处理图 - BanDataHub不需要 */
@@ -167,7 +167,7 @@ extern "C" {
 
 /* FAT32 文件系统 (依赖 NAND 或 SD Card) */
 #if HW_DRV_FLASH_NAND_EN || HW_DRV_SDCARD_EN
-#define FAT32_EN                0   /* 启用 FAT32 文件系统 (CDC 文件管理器需要) */
+#define FAT32_EN                1   /* 启用 FAT32 文件系统 (SD 文件访问需要) */
 #else
 #define FAT32_EN                0   /* 父级硬件未满足 */
 #endif
@@ -214,7 +214,7 @@ extern "C" {
 #endif
 
 /* FAT32 命令 (依赖 FAT32 功能) */
-#if FAT32_EN
+#if FAT32_EN && !defined(BANDATAHUB)
 #define HW_CMD_FAT_EN           1
 #else
 #define HW_CMD_FAT_EN           0

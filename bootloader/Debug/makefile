@@ -3,7 +3,7 @@
 ################################################################################
 
 ifndef ANDESIGHT_ROOT
-ANDESIGHT_ROOT=/cygdrive/D/ADS
+ANDESIGHT_ROOT=/cygdrive/D/app/Andestech/AndeSight300RDS
 endif
 
 ifndef CROSS_COMPILE
@@ -28,6 +28,26 @@ RM := rm -rf
 -include middleware/mv_utils/src/subdir.mk
 -include middleware/rtos/freertos/src/subdir.mk
 -include middleware/rtos/rtos_api/subdir.mk
+-include src/banux/01_vfs/subdir.mk
+-include src/banux/02_device_drivers/USB/src/subdir.mk
+-include src/banux/02_device_drivers/bluetooth/subdir.mk
+-include src/banux/02_device_drivers/bluetooth/src/subdir.mk
+-include src/banux/02_device_drivers/flash/subdir.mk
+-include src/banux/03_driver_framework/core/subdir.mk
+-include src/banux/03_driver_framework/drivers/subdir.mk
+-include src/banux/04_shell_commands/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Audio_Processor/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Audio_Processor/effects/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Envelope_Generator/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_HAL/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Midi_Controller/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Soundbank/subdir.mk
+-include src/banux/05_component/bangtsynth/subdir.mk
+-include src/banux/05_component/bangtsynth/drum_machine/subdir.mk
+-include src/banux/05_component/bangtsynth/soundbank_data/subdir.mk
+-include src/banux/06_app/audio/subdir.mk
+-include src/banux/06_app/audio/effect_parameter/subdir.mk
+-include src/banux/06_app/audio/music_parameter/subdir.mk
 -include src/subdir.mk
 -include src/drivers/bluetooth/src/subdir.mk
 -include src/drivers/usb/src/subdir.mk
@@ -79,7 +99,7 @@ all: bootloader.adx secondary-outputs
 bootloader.adx: $(OBJS) $(USER_OBJS)
 	@echo '正在构建目标： $@'
 	@echo '正在调用： Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/bluetooth" -L"/cygdrive/F/project_and_dataset/project/BG_Audio_Looper/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "bootloader.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "bootloader.adx" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo '已结束构建目标： $@'
 	@echo ' '
 
