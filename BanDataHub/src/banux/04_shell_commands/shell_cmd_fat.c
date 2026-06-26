@@ -27,6 +27,17 @@
 #include "fat32_reader.h"
 #include "fat32_diskio.h"
 #include "hal_sdio.h"
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+#include "sd_card.h"
+#include "sd_card_driver.h"
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,6 +69,19 @@ static int fat_rmdir_cmd(int argc, char *argv[]);
 static int fat_rename_cmd(int argc, char *argv[]);
 static int fat_info_cmd(int argc, char *argv[]);
 static int fat_diag_cmd(int argc, char *argv[]);
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+static int sd_hw_info(int argc, char *argv[]);
+static int sd_hw_read(int argc, char *argv[]);
+static int sd_hw_write(int argc, char *argv[]);
+static int sd_hw_test(int argc, char *argv[]);
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 
 /* 列目录回调函数 */
 static int fat_list_callback(const FAT32_FileInfo_t *info, void *user);
@@ -67,6 +91,16 @@ static int fat_list_callback(const FAT32_FileInfo_t *info, void *user);
  * ============================================ */
 
 static const ShellOpt_t fat_options[] = {
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    /* FAT32 文件系统命令 */
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     OPT("ls",     "list",    "",             "List current directory contents", fat_ls_cmd),
     OPT("cd",     "cd",      "<dir>",        "Change directory",                fat_cd_cmd),
     OPT("pwd",    "pwd",     "",             "Print working directory",         fat_pwd_cmd),
@@ -78,6 +112,20 @@ static const ShellOpt_t fat_options[] = {
     OPT("rename", "rename",  "<old> <new>",  "Rename file or directory",        fat_rename_cmd),
     OPT("info",   "info",    "",             "Show filesystem info",            fat_info_cmd),
     OPT("diag",   "diag",    "",             "Dump sector 0 / diagnose FAT32 init", fat_diag_cmd),
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    /* SD 卡块级测试命令 */
+    OPT("hw",     "hwinfo",  "",             "Show SD card hardware info",      sd_hw_info),
+    OPT("r",      "read",    "<blk> [cnt]",  "Read block(s) hex dump",         sd_hw_read),
+    OPT("w",      "write",   "<blk> [pat]",  "Write test pattern + verify",    sd_hw_write),
+    OPT("t",      "test",    "",             "Quick R/W test (last block)",     sd_hw_test),
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     OPT_END()
 };
 
@@ -666,4 +714,257 @@ static int fat_list_callback(const FAT32_FileInfo_t *info, void *user)
     return 0; /* 继续遍历 */
 }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+/* ============================================
+ * SD 卡块级测试命令实现
+ * ============================================ */
+
+static int sd_hw_info(int argc, char *argv[])
+{
+    SD_CARD *card;
+    (void)argc; (void)argv;
+
+    card = SDCard_GetCardInfo();
+    if (!card) {
+        Shell_Print("ERROR: Cannot get SD card info\r\n");
+        return -1;
+    }
+
+    Shell_Print("\r\n=== SD Card Hardware Info ===\r\n");
+    Shell_Printf("  Init State: %d", card->CardInit);
+    switch (card->CardInit) {
+        case SD_NOINIT:      Shell_Print(" (NOT INIT)\r\n"); break;
+        case SD_CONTROLER_INIT: Shell_Print(" (CTRL INIT)\r\n"); break;
+        case SD_IDLE:        Shell_Print(" (IDLE)\r\n"); break;
+        case SD_READY:       Shell_Print(" (READY)\r\n"); break;
+        case SD_IDENT:       Shell_Print(" (IDENT)\r\n"); break;
+        case SD_STANDBY:     Shell_Print(" (STANDBY)\r\n"); break;
+        case SD_INITED:      Shell_Print(" (INITED)\r\n"); break;
+        default:             Shell_Print(" (UNKNOWN)\r\n"); break;
+    }
+    Shell_Printf("  Card Type:  %d (%s)\r\n", card->CardType,
+                 card->IsSDHC ? "SDHC" : "SDSC");
+    Shell_Printf("  BlockNum:   %lu\r\n", (unsigned long)card->BlockNum);
+    Shell_Printf("  Capacity:   %lu MB\r\n",
+                 (unsigned long)(card->BlockNum / 2048));
+    Shell_Printf("  MaxSpeed:   %d\r\n", card->MaxTransSpeed);
+    Shell_Print("\r\n");
+    return 0;
+}
+
+static int sd_hw_read(int argc, char *argv[])
+{
+    uint32_t block;
+    uint8_t  count = 1;
+    uint8_t  buf[512];
+    SD_CARD_ERR_CODE ret;
+    SD_CARD *card;
+    uint32_t i, j;
+
+    if (argc < 1) {
+        Shell_Print("Usage: sd -r <block> [count]\r\n");
+        return -1;
+    }
+    block = strtoul(argv[0], NULL, 0);
+    if (argc >= 2) {
+        int c = atoi(argv[1]);
+        if (c < 1) c = 1;
+        if (c > 8) c = 8;
+        count = (uint8_t)c;
+    }
+
+    card = SDCard_GetCardInfo();
+    if (!card || card->CardInit != SD_INITED) {
+        Shell_Print("ERROR: SD card not initialized!\r\n");
+        return -1;
+    }
+
+    for (i = 0; i < count; i++) {
+        ret = SDCard_ReadBlock(block + i, buf, 1);
+        if (ret != NONE_ERR) {
+            Shell_Printf("ERROR: Read block %lu failed, err=%d\r\n",
+                         (unsigned long)(block + i), (int)ret);
+            return -1;
+        }
+
+        Shell_Printf("\r\nBlock %lu (0x%lX):\r\n",
+                     (unsigned long)(block + i),
+                     (unsigned long)((block + i) * 512));
+        for (j = 0; j < 512; j += 16) {
+            uint32_t k;
+            Shell_Printf("%04lX: ", (unsigned long)j);
+            for (k = 0; k < 16; k++) {
+                Shell_Printf("%02X ", buf[j + k]);
+            }
+            Shell_Print(" ");
+            for (k = 0; k < 16; k++) {
+                char c = buf[j + k];
+                Shell_Printf("%c", (c >= 0x20 && c < 0x7F) ? c : '.');
+            }
+            Shell_NewLine();
+        }
+    }
+    return 0;
+}
+
+static int sd_hw_write(int argc, char *argv[])
+{
+    uint32_t block;
+    uint8_t  pattern = 0xA5;
+    uint8_t  buf[512];
+    uint8_t  verify[512];
+    SD_CARD_ERR_CODE ret;
+    SD_CARD *card;
+    uint32_t i;
+    int fail_at;
+
+    if (argc < 1) {
+        Shell_Print("Usage: sd -w <block> [pattern]\r\n");
+        Shell_Print("  Writes test pattern to block, then reads back to verify\r\n");
+        Shell_Print("  WARNING: This overwrites data on the specified block!\r\n");
+        return -1;
+    }
+    block = strtoul(argv[0], NULL, 0);
+    if (argc >= 2) {
+        pattern = (uint8_t)strtoul(argv[1], NULL, 0);
+    }
+
+    card = SDCard_GetCardInfo();
+    if (!card || card->CardInit != SD_INITED) {
+        Shell_Print("ERROR: SD card not initialized!\r\n");
+        return -1;
+    }
+
+    if (block >= card->BlockNum) {
+        Shell_Printf("ERROR: Block %lu exceeds max %lu\r\n",
+                     (unsigned long)block, (unsigned long)card->BlockNum);
+        return -1;
+    }
+
+    for (i = 0; i < 512; i++) {
+        buf[i] = (uint8_t)(pattern ^ (i & 0xFF));
+    }
+
+    Shell_Printf("Writing block %lu, pattern=0x%02X...\r\n",
+                 (unsigned long)block, pattern);
+    ret = SDCard_WriteBlock(block, buf, 1);
+    if (ret != NONE_ERR) {
+        Shell_Printf("ERROR: Write failed, err=%d\r\n", (int)ret);
+        return -1;
+    }
+    Shell_Print("Write OK, reading back...\r\n");
+
+    ret = SDCard_ReadBlock(block, verify, 1);
+    if (ret != NONE_ERR) {
+        Shell_Printf("ERROR: Read back failed, err=%d\r\n", (int)ret);
+        return -1;
+    }
+
+    fail_at = -1;
+    for (i = 0; i < 512; i++) {
+        if (verify[i] != buf[i]) {
+            fail_at = (int)i;
+            break;
+        }
+    }
+
+    if (fail_at >= 0) {
+        Shell_Printf("VERIFY FAIL at offset %d: wrote=0x%02X read=0x%02X\r\n",
+                     fail_at, buf[fail_at], verify[fail_at]);
+        return -1;
+    }
+
+    Shell_Print("Verify OK! Read/write test passed.\r\n");
+    return 0;
+}
+
+static int sd_hw_test(int argc, char *argv[])
+{
+    uint8_t  buf[512];
+    uint8_t  verify[512];
+    SD_CARD_ERR_CODE ret;
+    SD_CARD *card;
+    uint32_t block;
+    uint32_t i;
+    int pass_count = 0;
+    int fail_at;
+
+    (void)argc; (void)argv;
+
+    card = SDCard_GetCardInfo();
+    if (!card || card->CardInit != SD_INITED) {
+        Shell_Print("ERROR: SD card not initialized!\r\n");
+        return -1;
+    }
+
+    block = card->BlockNum - 1;
+
+    Shell_Printf("\r\n=== SD Card R/W Test (block %lu) ===\r\n\r\n",
+                 (unsigned long)block);
+
+    /* [1/3] Read test */
+    Shell_Print("  [1/3] Read block              ");
+    ret = SDCard_ReadBlock(block, buf, 1);
+    if (ret != NONE_ERR) {
+        Shell_Printf("[FAIL] err=%d\r\n", (int)ret);
+        goto done;
+    }
+    Shell_Print("[PASS]\r\n");
+    pass_count++;
+
+    /* [2/3] Write + verify */
+    Shell_Print("  [2/3] Write + verify          ");
+    for (i = 0; i < 512; i++) {
+        buf[i] = (uint8_t)(0x5A ^ (i & 0xFF));
+    }
+    ret = SDCard_WriteBlock(block, buf, 1);
+    if (ret != NONE_ERR) {
+        Shell_Printf("[FAIL] write err=%d\r\n", (int)ret);
+        goto done;
+    }
+    ret = SDCard_ReadBlock(block, verify, 1);
+    if (ret != NONE_ERR) {
+        Shell_Printf("[FAIL] read err=%d\r\n", (int)ret);
+        goto done;
+    }
+    fail_at = -1;
+    for (i = 0; i < 512; i++) {
+        if (verify[i] != buf[i]) { fail_at = (int)i; break; }
+    }
+    if (fail_at >= 0) {
+        Shell_Printf("[FAIL] offset %d: wrote=0x%02X read=0x%02X\r\n",
+                     fail_at, buf[fail_at], verify[fail_at]);
+        goto done;
+    }
+    Shell_Print("[PASS]\r\n");
+    pass_count++;
+
+    /* [3/3] Multi-block read */
+    Shell_Print("  [3/3] Multi-block read (4)    ");
+    if (card->BlockNum >= 4) {
+        ret = SDCard_ReadBlock(block - 3, buf, 4);
+        if (ret != NONE_ERR) {
+            Shell_Printf("[FAIL] err=%d\r\n", (int)ret);
+            goto done;
+        }
+        Shell_Print("[PASS]\r\n");
+        pass_count++;
+    } else {
+        Shell_Print("[SKIP] card too small\r\n");
+    }
+
+done:
+    Shell_Printf("\r\n  Result: %d/3 tests passed  [%s]\r\n",
+                 pass_count, (pass_count == 3) ? "ALL PASSED" : "FAILED");
+    return (pass_count == 3) ? 0 : -1;
+}
+
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 #endif /* FAT32_EN */

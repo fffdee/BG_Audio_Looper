@@ -1,5 +1,33 @@
+<<<<<<< Updated upstream
 Debug: 410 183 nds32.c:3139 nds32_log_callback(): nds32_log_callback: FileSize = 0x0
 
+=======
+<<<<<<< HEAD
+Debug: 410 183 nds32.c:3139 nds32_log_callback(): nds32_log_callback: FileSize = 0x0
+
+=======
+<<<<<<< HEAD
+Debug: 411 1797 nds32.c:3139 nds32_log_callback(): nds32_log_callback: FileSize = 0x0
+
+User : 412 1797 target.c:2332 handle_target(): Polling target nds32.cpu0 failed, GDB will be halted. Polling again in 5ms
+Debug: 413 1797 target.c:1367 target_call_event_callbacks(): target event 0 (gdb-halt)
+Debug: 414 1797 nds32.c:3075 nds32_callback_event_handler(): nds32_callback_event_handler: target_number=0, target->target_number=0, event=0x00000000
+Debug: 416 1797 transport.c:240 handle_transport_init(): handle_transport_init
+Debug: 417 1797 aice_transport.c:396 aice_transport_init(): aice_transport_init
+Debug: 418 1797 aice_transport.c:412 aice_transport_init(): current transport aice_jtag
+Debug: 419 1797 aice_interface.c:242 aice_init_targets(): aice_init_targets
+Debug: 420 1797 openocd.c:145 handle_init_command(): Examining targets...
+Debug: 421 1797 target.c:1367 target_call_event_callbacks(): target event 21 (examine-start)
+Debug: 422 1797 nds32.c:3075 nds32_callback_event_handler(): nds32_callback_event_handler: target_number=0, target->target_number=0, event=0x00000015
+Info : 423 1797 nds32.c:3788 nds32_reset_halt(): reset halt as init
+Debug: 424 1797 aice_print_info.c:284 aice_print_info(): WRITE_MISC: TARGET: 0x00, ADDR: 0x03 [DBGER], DATA: 0x0000001F.
+Debug: 425 1797 aice_apis.c:1554 aice_issue_reset_hold(): aice_issue_reset_hold, coreid = 0
+Debug: 426 1797 aice_apis.c:1561 aice_issue_reset_hold(): aice_issue_reset_hold 0, 0, 0
+=======
+Debug: 410 183 nds32.c:3139 nds32_log_callback(): nds32_log_callback: FileSize = 0x0
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 User : 411 183 target.c:2332 handle_target(): Polling target nds32.cpu0 failed, GDB will be halted. Polling again in 5ms
 Debug: 412 183 target.c:1367 target_call_event_callbacks(): target event 0 (gdb-halt)
 Debug: 413 183 nds32.c:3075 nds32_callback_event_handler(): nds32_callback_event_handler: target_number=0, target->target_number=0, event=0x00000000
@@ -37224,3 +37252,4 @@ Debug: 37604 126947 aice_print_info.c:284 aice_print_info(): READ_MISC: TARGET: 
 Debug: 37605 126963 aice_print_info.c:271 aice_print_info(): READ_CTRL: ADDR: 0x00 [GET_ICE_STATE], DATA: 0x0000000A.
 Debug: 37606 126963 aice_usb.c:207 aice_get_state(): <-- TARGET ERROR! Target is disconnected with AICE. -->
 <-- ICEman exit... -->
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac

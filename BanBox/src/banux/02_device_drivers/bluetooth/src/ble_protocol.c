@@ -1,13 +1,29 @@
 #include "ble_protocol.h"
 #include "shell_io_ble.h"
+<<<<<<< Updated upstream
 #include "sys_param.h"
 #include "effect_graph.h"
+=======
+<<<<<<< HEAD
+#include "sys_param.h"
+#include "effect_graph.h"
+=======
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 #include "debug.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+<<<<<<< Updated upstream
 #include "battery_drv.h"    /* battery_get_soc() for on-connect battery report */
 #include "audio_looper.h"   /* loop_get_segment_state/loop_get_segment_length_pages for reconnect sync */
+=======
+<<<<<<< HEAD
+#include "battery_drv.h"    /* battery_get_soc() for on-connect battery report */
+#include "audio_looper.h"   /* loop_get_segment_state/loop_get_segment_length_pages for reconnect sync */
+=======
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 #include <string.h>
 
 #ifndef pdMS_TO_TICKS
@@ -27,6 +43,26 @@ static uint32_t g_sync_pending_tick = 0;
 static volatile uint32_t g_sync_complete_tick = 0;
 #define BLE_PROTO_ACK_DRAIN_COOLDOWN_MS 300
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+/* 同步提供者回调：由 05_component/ble_app 层注册，
+ * 负责读取应用层参数并调用 BleProto_SendSyncFrame 发送。
+ * 02 层不直接依赖 05 层头文件，通过回调解耦。 */
+typedef void (*BleProto_SyncProvider_t)(void);
+static BleProto_SyncProvider_t g_sync_provider = NULL;
+
+/* Shell待处理数据回调：由 04_shell_commands 层注册，
+ * 替代 extern 声明 ShellIO_BLE_ProcessPending，避免02→04跨层依赖 */
+static BleProto_ShellPendingHandler_t g_shell_pending_handler = NULL;
+
+/* BLE Send初始化回调：由 04_shell_commands 层注册，
+ * 替代 extern 声明 BLE_SendInit，避免02→04跨层依赖 */
+static BleProto_SendInitHandler_t g_send_init_handler = NULL;
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 static TaskHandle_t g_sync_task_handle = NULL;
 
 /* 前向声明：在 BleProto_Process() 中使用 */
@@ -341,10 +377,22 @@ void BleProto_Init(void)
     if (s_frame_mutex == NULL) {
         s_frame_mutex = xSemaphoreCreateMutex();
     }
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
     /* 同步初始化 BLE Send mutex（定义在 shell_io_ble.c) */
     {
         extern void BLE_SendInit(void);
         BLE_SendInit();
+<<<<<<< Updated upstream
+=======
+=======
+    /* 同步初始化 BLE Send mutex（通过回调，避免02→04跨层依赖） */
+    if (g_send_init_handler != NULL) {
+        g_send_init_handler();
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     }
 }
 
@@ -394,8 +442,19 @@ void BleProto_Process(void)
      * 同步期间收到的 BLE 命令被缓冲但未处理（避免 Shell_WriteRaw 与同步帧
      * 并发调用 BLE_Send 导致 BLE 栈崩溃）。需等待冷却期结束后安全处理。*/
     if (!g_syncing && g_sync_complete_tick == 0) {
+<<<<<<< Updated upstream
         extern void ShellIO_BLE_ProcessPending(void);
         ShellIO_BLE_ProcessPending();
+=======
+<<<<<<< HEAD
+        extern void ShellIO_BLE_ProcessPending(void);
+        ShellIO_BLE_ProcessPending();
+=======
+        if (g_shell_pending_handler != NULL) {
+            g_shell_pending_handler();
+        }
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     }
 
 check_sync:
@@ -445,7 +504,22 @@ void BleProto_RequestSync(void)
     DBG("[BLE_PROTO] Sync requested, will start in %dms\n", BLE_PROTO_SYNC_DELAY_MS);
 }
 
+<<<<<<< Updated upstream
 static void send_param_noack(uint8_t cmd, const uint8_t *payload, uint8_t len)
+=======
+<<<<<<< HEAD
+static void send_param_noack(uint8_t cmd, const uint8_t *payload, uint8_t len)
+=======
+/**
+ * @brief 同步帧发送（公共 API，供 05_component/ble_app 层调用）
+ * @param cmd     命令字节
+ * @param payload 负载数据（可为 NULL）
+ * @param len     负载长度
+ * @note 包含重试机制和帧间隔控制，仅在同步任务中调用。
+ */
+void BleProto_SendSyncFrame(uint8_t cmd, const uint8_t *payload, uint8_t len)
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 {
     /* 静态帧缓冲：负载最大只有 200 字节，当前层尢4块 buf 共耗 > 600字节导致栈溢出。
      * send_param_noack 仅在 BleProto_StartSync (单一子任务) 中调用，用 static 安全 */
@@ -486,13 +560,37 @@ static void send_param_noack(uint8_t cmd, const uint8_t *payload, uint8_t len)
 /* 独立任务：执行全量参数同步，结束后自我删除，不阻塞主循环 */
 static void ble_sync_task_fn(void *params)
 {
+<<<<<<< Updated upstream
     BleProto_StartSync();
+=======
+<<<<<<< HEAD
+    BleProto_StartSync();
+=======
+    g_syncing = true;
+    DBG("[BLE_PROTO] Sync task started\n");
+
+    if (g_sync_provider != NULL) {
+        g_sync_provider();
+    } else {
+        DBG("[BLE_PROTO] WARN: No sync provider registered!\n");
+    }
+
+    g_syncing = false;
+    g_sync_complete_tick = xTaskGetTickCount();
+    DBG("[BLE_PROTO] Sync task completed\n");
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     /* 先把全局句柄清掉，再 vTaskDelete，避免主循环在任务删除期间访问已失效句柄 */
     g_sync_task_handle = NULL;
     vTaskDelete(NULL);
     /* 不会执行到这里 */
 }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 void BleProto_StartSync(void)
 {
     SysParam_t *sp = SysParam_Get();
@@ -652,6 +750,31 @@ void BleProto_StartSync(void)
     DBG("[BLE_PROTO] Full parameter sync completed\n");
 
     vTaskDelay(pdMS_TO_TICKS(100));
+<<<<<<< Updated upstream
+=======
+=======
+/**
+ * @brief 注册同步提供者回调（由 05_component/ble_app 层调用）
+ * @param provider  同步提供者函数指针，在同步任务中调用
+ */
+void BleProto_RegisterSyncProvider(void (*provider)(void))
+{
+    g_sync_provider = provider;
+    DBG("[BLE_PROTO] Sync provider registered\n");
+}
+
+void BleProto_RegisterShellPendingHandler(BleProto_ShellPendingHandler_t handler)
+{
+    g_shell_pending_handler = handler;
+    DBG("[BLE_PROTO] Shell pending handler registered\n");
+}
+
+void BleProto_RegisterSendInitHandler(BleProto_SendInitHandler_t handler)
+{
+    g_send_init_handler = handler;
+    DBG("[BLE_PROTO] Send init handler registered\n");
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 }
 
 void BleProto_OnFrameReceived(const uint8_t *data, uint16_t len)

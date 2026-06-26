@@ -2,10 +2,10 @@
 ENTRY(_start)
 SECTIONS
 {
-	PROVIDE (__executable_start = 0x000000);
-	NDS_SAG_LMA_EILM = 0x000000 ;
+	PROVIDE (__executable_start = 0x040000);
+	NDS_SAG_LMA_EILM = 0x040000 ;
 	EILM_BEGIN = NDS_SAG_LMA_EILM;
-	. = 0x000000;
+	. = 0x040000;
 	.vector 	: { KEEP(*(.vector )) }
 	.stub_section 	: { KEEP(*(.stub_section )) }
 	".nds32_init_*spi_flash.o" 	: { KEEP(*spi_flash.o(.nds32_init )) }

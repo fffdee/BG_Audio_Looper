@@ -1,2 +1,14 @@
+<<<<<<< Updated upstream
 RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>true</eraseAll><flashDriver>E\:/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/Tools/b1_download_v1.7.exe</flashDriver><imageFile>E\:\\BanGO_prj\\BG_Audio_Looper\\BanDataHub\\Debug\\output\\BanDataHub.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>false</verify></rseFlashDriverModel>
+=======
+<<<<<<< HEAD
+RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>true</eraseAll><flashDriver>E\:/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/Tools/b1_download_v1.7.exe</flashDriver><imageFile>E\:\\BanGO_prj\\BG_Audio_Looper\\BanDataHub\\Debug\\output\\BanDataHub.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>false</verify></rseFlashDriverModel>
+=======
+<<<<<<< HEAD
+RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>true</eraseAll><flashDriver>E\:/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/Tools/b1_download_v1.7.exe</flashDriver><imageFile>E\:\\project_and_dataset\\project\\BG_Audio_Looper\\BanDataHub\\Debug\\output\\BanDataHub.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>false</verify></rseFlashDriverModel>
+=======
+RseFlashDriverModel=<?xml version\="1.0" encoding\="UTF-8" standalone\="yes"?><rseFlashDriverModel><addr>0x0</addr><eraseAll>true</eraseAll><flashDriver>E\:/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/Tools/b1_download_v1.7.exe</flashDriver><imageFile>E\:\\BanGO_prj\\BG_Audio_Looper\\BanDataHub\\Debug\\output\\BanDataHub.bin</imageFile><lock>false</lock><unlock>false</unlock><verify>false</verify></rseFlashDriverModel>
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 eclipse.preferences.version=1

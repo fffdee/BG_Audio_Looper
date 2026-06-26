@@ -27,18 +27,18 @@
 osMutexId SDIOMutex = NULL;
 #endif
 
-/**<´«Êä×´Ì¬ */
+/**<ï¿½ï¿½ï¿½ï¿½×´Ì¬ */
 #define SD_STATUS_ACCEPTED				0x02
 #define SD_STATUS_CRC_ERROR				0x05
 #define SD_STATUS_WRITE_ERROR			0x06
 
-/**<¿¨ÀàÐÍ*/
+/**<ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 #define	MC_MCDMAS_MMC					1
 #define	MC_MCDMAS_SD					2
 
-#define	SD_BLOCK_SIZE					512             /**<¿é´óÐ¡¹Ì¶¨Îª512×Ö½Ú*/
+#define	SD_BLOCK_SIZE					512             /**<ï¿½ï¿½ï¿½Ð¡ï¿½Ì¶ï¿½Îª512ï¿½Ö½ï¿½*/
 
-/**<¿¨×´Ì¬¶¨Òå*/
+/**<ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½*/
 #define	CURRENT_STATE_IDLE				0
 #define	CURRENT_STATE_READY				1
 #define	CURRENT_STATE_IDENT				2              /**<identification*/
@@ -126,10 +126,10 @@ void SDCardDeinit(uint8_t SdioPort)
 }
 
 /**
- * @brief  ³õÊ¼»¯SDIO¿ØÖÆÆ÷
+ * @brief  ï¿½ï¿½Ê¼ï¿½ï¿½SDIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * @param  NONE
  * @return NONE
- * @note   ÕâÀï½«¶ÁÐ´Ä£Ê½Ä¬ÈÏ³õÊ¼»¯ÎªÁ¬Ðø¶ÁÐ´·½Ê½
+ * @note   ï¿½ï¿½ï¿½ï½«ï¿½ï¿½Ð´Ä£Ê½Ä¬ï¿½Ï³ï¿½Ê¼ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ê½
  */
 void SDCard_ControllerInit(void)
 {
@@ -148,10 +148,10 @@ uint32_t volatile  cmd_timeout_count=0;
 extern uint32_t gSysTick;
 
 /**
- * @brief  SDIO·¢ËÍÃüÁî
- * @param  SDIOÐèÒª·¢ËÍµÄÃüÁî±àºÅ
- * @param  ¶ÔÓÚÃüÁîµÄ²ÎÊý
- * @return ·¢ËÍÃüÁî³É¹¦·µ»ØNO_ERR£¬´íÎó·µ»ØSEND_CMD_TIME_OUT_ERR
+ * @brief  SDIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  SDIOï¿½ï¿½Òªï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½NO_ERRï¿½ï¿½ï¿½ï¿½ï¿½ó·µ»ï¿½SEND_CMD_TIME_OUT_ERR
  * @note
  */
 bool SDIO_CmdSend(uint8_t Cmd, uint32_t Param, uint16_t TimeOut)
@@ -222,7 +222,7 @@ bool SDCard_Ocr_Get(void)
 }
 
 /**
- * @brief  SD¿¨¼ì²â
+ * @brief  SDï¿½ï¿½ï¿½ï¿½ï¿½
  * @param  NONE
  * @return NONE
  * @note
@@ -230,7 +230,7 @@ bool SDCard_Ocr_Get(void)
 SD_CARD_ERR_CODE SDCard_Detect(void)
 {
 
-	if(SDCard.CardInit == SD_INITED)//¿¨ÒÑ³õÊ¼»¯
+	if(SDCard.CardInit == SD_INITED)//ï¿½ï¿½ï¿½Ñ³ï¿½Ê¼ï¿½ï¿½
 	{
 		if(SDIO_CmdSend(CMD13_SEND_STATUS, SDCard.RCA, 20)  == NO_ERR)              	//read card status
 		{
@@ -241,7 +241,7 @@ SD_CARD_ERR_CODE SDCard_Detect(void)
 			return CMD13_SEND_ERR;
 		}
 	}
-	else//¿¨Î´³õÊ¼»¯
+	else//ï¿½ï¿½Î´ï¿½ï¿½Ê¼ï¿½ï¿½
 	{
 		if(SDCard.CardInit < SD_CONTROLER_INIT)
 		{
@@ -279,11 +279,11 @@ SD_CARD_ERR_CODE SDCard_Identify(void)
 	uint8_t  resp[16];
 	uint8_t  i;
 
-	//ÉèÖÃµçÑ¹´°¿Ú
+	//ï¿½ï¿½ï¿½Ãµï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½
 	TimeOutSet(&Timer, 2000);
 	while(SDCard.CardInit == SD_IDLE)
 	{
-		DelayUs(10);//¼æÈÝÐÔÑÓÊ±
+		DelayUs(10);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±
 		if(SDCard.CardType == MC_MCDMAS_SD)// && !Com41Send)
 		{
 			if(SDCard_SendAppCommand(ACMD41_SD_SEND_OP_COND, VOLTAGE_WINDOWS))
@@ -310,7 +310,7 @@ SD_CARD_ERR_CODE SDCard_Identify(void)
 	DelayUs(10);
 	if(SDCard.CardInit == SD_READY)
 	{
-		//»ñÈ¡CID(unique card identification)
+		//ï¿½ï¿½È¡CID(unique card identification)
 		if(SDIO_CmdSend(CMD2_ALL_SEND_CID, 0, 20))      //success card will from ready switch to identification
 		{
 			DBG("SdCardInit() ERROR 005!\n");
@@ -326,7 +326,7 @@ SD_CARD_ERR_CODE SDCard_Identify(void)
 
 	if(SDCard.CardInit >= SD_IDENT)
 	{
-		//»ñÈ¡Ïà¶ÔµØÖ·£¬×î¶àÖØÊÔ10´Î
+		//ï¿½ï¿½È¡ï¿½ï¿½Ôµï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½10ï¿½ï¿½
 		for(i = 0; i < 10; i++)
 		{
 			if(SDIO_CmdSend(CMD3_SEND_RELATIVE_ADDR, 0, 20) == NO_ERR)
@@ -347,13 +347,13 @@ SD_CARD_ERR_CODE SDCard_Identify(void)
 		DBG("RCA: %08lx\n", SDCard.RCA);
 	}
 
-	//»ñÈ¡CSD¼Ä´æÆ÷£¨Card Specific Data£©ÀïÃæµÄÃèÊöÖµ£¬Æ©Èç£¬¿é³¤¶È£¬¿¨ÈÝÁ¿ÐÅÏ¢µÈ¡£
+	//ï¿½ï¿½È¡CSDï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Card Specific Dataï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Æ©ï¿½ç£¬ï¿½é³¤ï¿½È£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½È¡ï¿½
 	if(SDIO_CmdSend(CMD9_SEND_CSD, SDCard.RCA, 20))
 	{
 		return CMD9_SEND_ERR;
 	}
 	SDIO_CmdRespGet(resp, SDIO_RESP_TYPE_R2);
-	//¸ù¾ÝCSD¼ÆËãBlockNum
+	//ï¿½ï¿½ï¿½ï¿½CSDï¿½ï¿½ï¿½ï¿½BlockNum
 	if(resp[14])	//CSD V2
 	{
 		SDCard.BlockNum = (((resp[7] & 0x3F) << 16) + (resp[6] << 8) + resp[5] + 1) << 10;	// memory capacity = (C_SIZE+1) * 512KByte
@@ -379,34 +379,34 @@ SD_CARD_ERR_CODE SDCard_Identify(void)
 	{
 		if(i == 0x0F)//8M
 		{
-			SDCard.MaxTransSpeed = 0x02;	//ÆµÂÊÉèÎª9MHz 36/4
+			SDCard.MaxTransSpeed = 0x02;	//Æµï¿½ï¿½ï¿½ï¿½Îª9MHz 36/4
 		}
 		else if(i > 0x08)//4.0M,4.5M,5.0M,5.5M,6.0M,7.0M
 		{
-			SDCard.MaxTransSpeed = 0x03;	//ÆµÂÊÉèÎª4.5MHz 36/8
+			SDCard.MaxTransSpeed = 0x03;	//Æµï¿½ï¿½ï¿½ï¿½Îª4.5MHz 36/8
 		}
 		else if(i > 0x04)//2.0M,2.5M,3.0M,3.5M
 		{
-			SDCard.MaxTransSpeed = 0x04;	//ÆµÂÊÉèÎª2.25MHz 36/16
+			SDCard.MaxTransSpeed = 0x04;	//Æµï¿½ï¿½ï¿½ï¿½Îª2.25MHz 36/16
 		}
 		else //1.0M,1.2M,1.3M,1.5M
 		{
-			SDCard.MaxTransSpeed = 0x05;	//ÆµÂÊÉèÎª1.125MHz 36/32
+			SDCard.MaxTransSpeed = 0x05;	//Æµï¿½ï¿½ï¿½ï¿½Îª1.125MHz 36/32
 		}
 	}
 	else if((resp[11] & 0x07) == 2)	//base 10M
 	{
 		if(i < 0x04)//10M, 12M, 13M
 		{
-			SDCard.MaxTransSpeed = 0x02;	//10M,ÆµÂÊÉèÎª9MHz  36/4
+			SDCard.MaxTransSpeed = 0x02;	//10M,Æµï¿½ï¿½ï¿½ï¿½Îª9MHz  36/4
 		}
 		else if(i < 0x07)//15M,20M,25M
 		{
-			SDCard.MaxTransSpeed = 0x01;	//ÆµÂÊÉèÎª18MHz  36/2
+			SDCard.MaxTransSpeed = 0x01;	//Æµï¿½ï¿½ï¿½ï¿½Îª18MHz  36/2
 		}
 		else
 		{
-			SDCard.MaxTransSpeed = 0x00;	//ÆµÂÊÉèÎª36MHz
+			SDCard.MaxTransSpeed = 0x00;	//Æµï¿½ï¿½ï¿½ï¿½Îª36MHz
 		}
 	}
 	else
@@ -415,14 +415,14 @@ SD_CARD_ERR_CODE SDCard_Identify(void)
 	}
 
 	DBG("SDCard.MaxTransSpeed:%d\n", SDCard.MaxTransSpeed);
-	//½øÈëtransfer state
+	//ï¿½ï¿½ï¿½ï¿½transfer state
 	if(SDIO_CmdSend(CMD7_SELECT_DESELECT_CARD, SDCard.RCA, 20))
 	{
 		DBG("CMD7_SELECT_DESELECT_CARD\n");
 		return CMD7_SEND_ERR;
 	}
 	DelayUs(5);
-	//»ñÈ¡×´Ì¬
+	//ï¿½ï¿½È¡×´Ì¬
 	if(SDIO_CmdSend(CMD13_SEND_STATUS, SDCard.RCA, 20))
 	{
 		DBG("CMD13_SEND_STATUS\n");
@@ -434,7 +434,7 @@ SD_CARD_ERR_CODE SDCard_Identify(void)
 		DBG("CMD13_SEND_STATUS SDIO_RESP_TYPE_R1\n");
 		return GET_RESPONSE_STATUS_ERR;
 	}
-	//ÉèÖÃ¿é³¤¶È
+	//ï¿½ï¿½ï¿½Ã¿é³¤ï¿½ï¿½
 	if(SDIO_CmdSend(CMD16_SET_BLOCKLEN, SD_BLOCK_SIZE, 20))
 	{
 		DBG("NONSPPORT CMD16_SET_BLOCKLEN  \n");
@@ -451,7 +451,7 @@ SD_CARD_ERR_CODE SDCard_Init(void)
 #endif
 	SDCard_ControllerInit();
 
-	//¸ù¾ÝÒÔÍùSD¿¨¼æÈÝÐÔ¾­Ñé£¬²åÈë¿¨ÐèÑÓÊ±Ò»¶ÎÊ±¼ä
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½SDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¾ï¿½ï¿½é£¬ï¿½ï¿½ï¿½ë¿¨ï¿½ï¿½ï¿½ï¿½Ê±Ò»ï¿½ï¿½Ê±ï¿½ï¿½
 #ifdef FUNC_OS_EN
 	vTaskDelay(150);
 #else
@@ -459,7 +459,7 @@ SD_CARD_ERR_CODE SDCard_Init(void)
 #endif
 	while(1)
 	{
-		SDCard_Detect();//Ö÷ÒªÊÇÌ½²âÊÇ·ñÓÐ¿¨²åÈë
+		SDCard_Detect();//ï¿½ï¿½Òªï¿½ï¿½Ì½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ð¿ï¿½ï¿½ï¿½ï¿½ï¿½
 		if(SDCard_Identify() == NONE_ERR)
 		{
 			DBG("CardGetInfo OK\n");
@@ -497,13 +497,18 @@ SD_CARD_ERR_CODE SDCard_ReadBlock(uint32_t Block, uint8_t* Buffer,uint8_t Size)
 #ifdef FUNC_OS_EN
 		osMutexLock(SDIOMutex);
 #endif
+	SDIO_ClkEnable();
+	SDIO_ClearClkHalt();
+	TimeOutSet(&Timer,50);
+	while(SDIO_IsDataLineBusy() && !IsTimeOut(&Timer));
 	if(!SDCard.IsSDHC)
 	{
 		Block *= SD_BLOCK_SIZE;
 	}
-	TimeOutSet(&Timer, 350 + 20 * Size);  //Ä³ÕÅ¿¨1bit Nac´ï370ms£¬Îª¼æÈÝ£¬Ìá¸ßÉÏÏÞ¡£
+	TimeOutSet(&Timer, 350 + 20 * Size);  //Ä³ï¿½Å¿ï¿½1bit Nacï¿½ï¿½370msï¿½ï¿½Îªï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¡ï¿½
 	if(Size == 1)
 	{
+		SDIO_ClearClkHalt();
 		DMA_ChannelDisable(PERIPHERAL_ID_SDIO_RX);
 		DMA_InterruptFlagClear(PERIPHERAL_ID_SDIO_RX, DMA_DONE_INT);
 		DMA_BlockConfig(PERIPHERAL_ID_SDIO_RX);
@@ -518,6 +523,12 @@ SD_CARD_ERR_CODE SDCard_ReadBlock(uint32_t Block, uint8_t* Buffer,uint8_t Size)
 			{
 				DMA_ChannelDisable(PERIPHERAL_ID_SDIO_RX);
 				DMA_InterruptFlagClear(PERIPHERAL_ID_SDIO_RX, DMA_DONE_INT);
+				/* Invalidate D-Cache for DMA buffer (cache-line aligned) */
+				{
+					uint32_t _a = (uint32_t)Buffer & ~0xF;
+					uint32_t _e = (((uint32_t)Buffer + SD_BLOCK_SIZE) + 0xF) & ~0xF;
+					DataCacheRangeInvalid(_a, _e - _a);
+				}
 				break;
 			}
 			if(IsTimeOut(&Timer))
@@ -540,6 +551,7 @@ SD_CARD_ERR_CODE SDCard_ReadBlock(uint32_t Block, uint8_t* Buffer,uint8_t Size)
 	}
 	else
 	{
+		SDIO_ClearClkHalt();
 		DMA_ChannelDisable(PERIPHERAL_ID_SDIO_RX);
 		DMA_InterruptFlagClear(PERIPHERAL_ID_SDIO_RX, DMA_DONE_INT);
 		DMA_BlockConfig(PERIPHERAL_ID_SDIO_RX);
@@ -554,6 +566,12 @@ SD_CARD_ERR_CODE SDCard_ReadBlock(uint32_t Block, uint8_t* Buffer,uint8_t Size)
 			{
 				DMA_ChannelDisable(PERIPHERAL_ID_SDIO_RX);
 				DMA_InterruptFlagClear(PERIPHERAL_ID_SDIO_RX, DMA_DONE_INT);
+				/* Invalidate D-Cache for DMA buffer (cache-line aligned) */
+				{
+					uint32_t _a = (uint32_t)Buffer & ~0xF;
+					uint32_t _e = (((uint32_t)Buffer + SD_BLOCK_SIZE * Size) + 0xF) & ~0xF;
+					DataCacheRangeInvalid(_a, _e - _a);
+				}
 				break;
 			}
 			if(IsTimeOut(&Timer))
@@ -622,6 +640,13 @@ SD_CARD_ERR_CODE SDCard_WriteBlock(uint32_t Block, uint8_t* Buffer, uint8_t Size
 		if(Size == 1)
 		{
 			SDIO_ClearClkHalt();
+			/* Invalidate D-Cache before DMA reads from memory (WRITE_THROUGH mode
+			 * ensures CPU writes already reached memory, but invalidate to be safe) */
+			{
+				uint32_t _a = (uint32_t)Buffer & ~0xF;
+				uint32_t _e = (((uint32_t)Buffer + SD_BLOCK_SIZE) + 0xF) & ~0xF;
+				DataCacheRangeInvalid(_a, _e - _a);
+			}
 			SDIO_CmdSend(CMD24_WRITE_BLOCK, Block, 50);
 			DMA_ChannelDisable(PERIPHERAL_ID_SDIO_TX);
 			DMA_InterruptFlagClear(PERIPHERAL_ID_SDIO_TX, DMA_DONE_INT);
@@ -665,6 +690,12 @@ SD_CARD_ERR_CODE SDCard_WriteBlock(uint32_t Block, uint8_t* Buffer, uint8_t Size
 		else
 		{
 			SDIO_ClearClkHalt();
+			/* Invalidate D-Cache before DMA reads from memory */
+			{
+				uint32_t _a = (uint32_t)Buffer & ~0xF;
+				uint32_t _e = (((uint32_t)Buffer + SD_BLOCK_SIZE * Size) + 0xF) & ~0xF;
+				DataCacheRangeInvalid(_a, _e - _a);
+			}
 			ret = SDIO_CmdSend(CMD25_WRITE_MULTIPLE_BLOCK, Block, 50);
 			DMA_ChannelDisable(PERIPHERAL_ID_SDIO_TX);
 			DMA_InterruptFlagClear(PERIPHERAL_ID_SDIO_TX, DMA_DONE_INT);

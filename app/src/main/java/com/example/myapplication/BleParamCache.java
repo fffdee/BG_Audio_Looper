@@ -1,8 +1,23 @@
 package com.example.myapplication;
 
 import android.util.Log;
+<<<<<<< Updated upstream
 import java.util.HashMap;
 import java.util.Map;
+=======
+<<<<<<< HEAD
+import java.util.HashMap;
+import java.util.Map;
+=======
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 
 public class BleParamCache {
     private static final String TAG = "BleParamCache";
@@ -13,11 +28,32 @@ public class BleParamCache {
         void onSyncComplete();
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    /** Listener for product feature list updates */
+    public interface OnFeatureListListener {
+        void onFeatureListReceived(ProductFeatures features);
+    }
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     private final Map<Byte, byte[]> cache = new HashMap<>();
     private OnParamUpdateListener listener;
     private boolean syncComplete = false;
     private int productId = 0;
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    /* 产品功能列表 */
+    private ProductFeatures productFeatures = null;
+    private OnFeatureListListener featureListListener;
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     private BleParamCache() {}
 
     public static synchronized BleParamCache getInstance() {
@@ -31,6 +67,16 @@ public class BleParamCache {
         this.listener = listener;
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    public void setFeatureListListener(OnFeatureListListener listener) {
+        this.featureListListener = listener;
+    }
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     public void put(byte cmd, byte[] payload) {
         byte[] copy = new byte[payload.length];
         System.arraycopy(payload, 0, copy, 0, payload.length);
@@ -64,6 +110,13 @@ public class BleParamCache {
         cache.clear();
         syncComplete = false;
         productId = 0;
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+        productFeatures = null;
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     }
 
     public void setProductId(int id) {
@@ -75,6 +128,58 @@ public class BleParamCache {
         return productId;
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    /* ================================================================
+     *  产品功能列表
+     * ================================================================ */
+
+    /**
+     * 从 BLE payload 解析并存储产品功能列表
+     * @param payload  BLE_CMD_SYSTEM 帧 payload, payload[0]=子命令, payload[1..N]=JSON 字符串
+     */
+    public void setFeatureListFromPayload(byte[] payload) {
+        if (payload == null || payload.length < 2) return;
+        String json = new String(payload, 1, payload.length - 1);
+        Log.d(TAG, "Feature list JSON: " + json);
+        try {
+            JSONObject obj = new JSONObject(json);
+            ProductFeatures pf = new ProductFeatures();
+            pf.ver = obj.optInt("ver", 0);
+            pf.pid = obj.optInt("pid", 0);
+            pf.fwVersion = obj.optString("fw", "");
+            pf.hwVersion = obj.optString("hw", "");
+            JSONArray arr = obj.optJSONArray("features");
+            if (arr != null) {
+                pf.features = new HashSet<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    pf.features.add(arr.getString(i));
+                }
+            }
+            productFeatures = pf;
+            Log.d(TAG, "Parsed " + (pf.features != null ? pf.features.size() : 0) + " features");
+            if (featureListListener != null) {
+                featureListListener.onFeatureListReceived(pf);
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to parse feature list JSON", e);
+        }
+    }
+
+    public ProductFeatures getProductFeatures() {
+        return productFeatures;
+    }
+
+    /** 检查是否支持指定功能 */
+    public boolean hasFeature(String name) {
+        return productFeatures != null && productFeatures.features != null
+                && productFeatures.features.contains(name);
+    }
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     public int[] getDrcParams() {
         byte[] data = cache.get(BleProtocol.CMD_DRC);
         if (data == null || data.length < 8) return null;

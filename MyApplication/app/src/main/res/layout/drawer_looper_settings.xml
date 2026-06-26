@@ -63,6 +63,60 @@
             <!-- ============ Looper 设置区（已迁至主界面段底部按钮） ============ -->
             <!-- 跟随录制和录制等长按钮已移到 Loop 卡片下方图标按钮，此处删除 -->
 
+            <!-- ============ 录制模式 ============ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_dark"
+                android:padding="14dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎙 录制模式"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_accent"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@color/bg_card_light"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Solo 模式"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+
+                    <Switch
+                        android:id="@+id/sw_recording_mode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="false"
+                        android:thumbTint="@color/primary_accent"
+                        android:trackTint="@color/bg_card" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_recording_mode_hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Solo：同一时间仅一段录制，其余排队等待"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="11sp"
+                    android:layout_marginTop="6dp" />
+            </LinearLayout>
+
             <!-- ============ 节拍器设置 ============ -->
             <LinearLayout
                 android:layout_width="match_parent"

@@ -48,6 +48,20 @@
 #define CALIB_CMD_STATUS_RSP     0x83u   /* Status notification / reply       */
 
 /**
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+ * @brief Register a low-power activity feed callback (called by 06_app layer)
+ * @param feed_fn  Function pointer to LowPower_FeedActivity or equivalent.
+ *                 Pass NULL to disable.
+ * @note  Decouples 02_device_drivers from 06_app dependency.
+ */
+void BattCalib_RegisterFeedActivity(void (*feed_fn)(uint8_t mask));
+
+/**
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
  * Persisted calibration record (stored in single flash sector).
  *
  * step_duration_s[n] = seconds spent in the voltage band:

@@ -42,6 +42,23 @@
 #include "rotary_encoder.h"
 #endif
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+#if FAT32_EN
+#include "bg_recorder.h"
+#endif
+
+#if HW_DRV_SSD1306_EN
+#include "bg_ui.h"
+#endif
+
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 static uint32_t AudioADC1Buf[1024] = {0};
 static uint32_t AudioADC2Buf[1024] = {0};
 
@@ -192,7 +209,19 @@ static void InitControlGPIO(void)
 	/* 立体声输入模式切换: GPIO_B6 输出，默认低电平 */
 	GPIO_RegOneBitClear(GPIO_B_IE, (1 << HW_STEREO_SWITCH_PIN));
 	GPIO_RegOneBitSet(GPIO_B_OE, (1 << HW_STEREO_SWITCH_PIN));
+<<<<<<< Updated upstream
 	GPIO_RegOneBitClear(GPIO_B_OUT, (1 << HW_STEREO_SWITCH_PIN));
+=======
+<<<<<<< HEAD
+	GPIO_RegOneBitClear(GPIO_B_OUT, (1 << HW_STEREO_SWITCH_PIN));
+=======
+<<<<<<< HEAD
+	GPIO_RegOneBitSet(GPIO_B_OUT, (1 << HW_STEREO_SWITCH_PIN));
+=======
+	GPIO_RegOneBitClear(GPIO_B_OUT, (1 << HW_STEREO_SWITCH_PIN));
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 
 	DBG("[GPIO] Control GPIO initialized (PWR_HOLD=A%d, MIC_DET=A%d, MIC_SW=A%d, STEREO_SW=B%d)\n",
 	    HW_PWR_BTN_HOLD_PIN, HW_MIC_DET_PIN, HW_MIC_SWITCH_PIN, HW_STEREO_SWITCH_PIN);
@@ -302,6 +331,30 @@ void BG_audio_Init(uint16_t SampleRate)
 
 	LowPower_Init();
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+#if FAT32_EN
+	BG_Rec_Init();
+#endif
+
+#if HW_DRV_SSD1306_EN
+	BG_UI_Init();
+#endif
+
+	/* Create MSC (USB Mass Storage) task to avoid blocking audio/UI */
+	{
+		static TaskHandle_t msc_task_handle = NULL;
+		extern void MSC_TaskMain(void *param);
+		xTaskCreate(MSC_TaskMain, "MSC", 1024, NULL, 2, &msc_task_handle);
+	}
+
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 	DBG("[Audio] BanDataHub audio system initialized at %d Hz\n", SampleRate);
 }
 
@@ -317,7 +370,30 @@ void BG_AudioIO_PrepareForShutdown(void)
 
 static void USB_HotplugCheck(void)
 {
+<<<<<<< Updated upstream
 	(void)OTG_PortDeviceIsLink();
+=======
+<<<<<<< HEAD
+	(void)OTG_PortDeviceIsLink();
+=======
+<<<<<<< HEAD
+	static uint8_t s_last_usb_link = 0xFF;
+	uint8_t usb_link = OTG_PortDeviceIsLink() ? 1 : 0;
+
+	if (s_last_usb_link == 0xFF) {
+		s_last_usb_link = usb_link;
+		return;
+	}
+
+	if (usb_link != s_last_usb_link) {
+		s_last_usb_link = usb_link;
+		DBG("[USB] %s\n", usb_link ? "connected" : "disconnected");
+	}
+=======
+	(void)OTG_PortDeviceIsLink();
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 }
 
 void Audio_loop(void)
@@ -353,6 +429,20 @@ void Audio_loop(void)
 	{
 		sd_poll_div = 0;
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+		if (BG_Rec_IsRecording() || OTG_DeviceStorIsLocalAccess()) {
+			sd_debounce = 0;
+			goto sd_hotplug_done;
+		}
+
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 		uint8_t sd_current = GPIO_RegOneBitGet(GPIO_B_IN, (1 << HW_SDCARD_DET_PIN)) ? 0 : 1;
 
 		/* 消抖: 连续3次读到的值相同才认为状态变化 */
@@ -416,13 +506,41 @@ void Audio_loop(void)
 		} else {
 			sd_debounce = 0;
 		}
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+sd_hotplug_done:
+		;
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 	}
 #endif /* BANDATAHUB */
 
 	SetVolume();
+<<<<<<< Updated upstream
 	OTG_DeviceRequestProcess();
 	OTG_DeviceCDC_Task();
 	OTG_DeviceStorProcess();
+=======
+<<<<<<< HEAD
+	OTG_DeviceRequestProcess();
+	OTG_DeviceCDC_Task();
+	OTG_DeviceStorProcess();
+=======
+<<<<<<< HEAD
+	/* OTG_DeviceRequestProcess() and OTG_DeviceStorProcess() moved to MSC task */
+	OTG_DeviceCDC_Task();
+=======
+	OTG_DeviceRequestProcess();
+	OTG_DeviceCDC_Task();
+	OTG_DeviceStorProcess();
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 	USB_HotplugCheck();
 
 	/* MIC 插入检测: 检测到低电平表示MIC插入，切换模拟开关防止MIC电源对信号干扰 */
@@ -445,6 +563,39 @@ void Audio_loop(void)
 		ReadAudioData(MIN_SAMPLE, &RealLen);
 		ApplyAudioEffects(RealLen);
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+#if FAT32_EN
+		/* Feed raw + target audio to recorder */
+		if (BG_Rec_IsRecording()) {
+			static int16_t rec_raw[REC_FRAME_SAMPLES];
+			static int16_t rec_tgt[REC_FRAME_SAMPLES];
+			uint16_t i;
+			const RecInfo_t *ri = BG_Rec_GetInfo();
+
+			for (i = 0; i < RealLen; i++) {
+				if (ri->mode == REC_MODE_DUAL_CH) {
+					/* Dual-ch: MIC=raw, LINE_IN=target */
+					rec_raw[i] = (int16_t)(BG_AudioManager.Audio_data.mic_buf_in[i] & 0xFFFF);
+					rec_tgt[i] = (int16_t)(BG_AudioManager.Audio_data.guitar_buf_in[i] & 0xFFFF);
+				} else {
+					/* Single-ch: LINE_IN L=raw, LINE_IN R=target */
+					uint32_t g = BG_AudioManager.Audio_data.guitar_buf_in[i];
+					rec_raw[i] = (int16_t)(g & 0xFFFF);        /* left channel */
+					rec_tgt[i] = (int16_t)((g >> 16) & 0xFFFF); /* right channel */
+				}
+			}
+			BG_Rec_Feed(rec_raw, rec_tgt, RealLen);
+		}
+#endif
+
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 		if (++s_gpio_div >= 50)
 		{
 			s_gpio_div = 0;
@@ -455,6 +606,60 @@ void Audio_loop(void)
 	}
 
 	ShellIOManager_Process();
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+
+	/* 编码器扫描 + UI 处理 */
+#if HW_DRV_SSD1306_EN
+	{
+		static uint16_t enc_scan_div = 0;
+		if (++enc_scan_div >= 10) {  /* ~10ms per scan */
+			uint8_t evt;
+			enc_scan_div = 0;
+			evt = RotaryEncoder_Scan();
+			BG_UI_HandleEncoder(evt);
+		}
+
+		/* UI 刷新 (~10Hz) */
+		{
+			static uint16_t ui_div = 0;
+			if (++ui_div >= 100) {
+				ui_div = 0;
+				BG_UI_Update();
+			}
+		}
+	}
+#elif HW_DRV_ENCODER_EN
+	/* 无 OLED 时，编码器仅控制录制 */
+	{
+		static uint16_t enc_scan_div = 0;
+		if (++enc_scan_div >= 10) {
+			uint8_t evt;
+			enc_scan_div = 0;
+			evt = RotaryEncoder_Scan();
+			if (evt == ENCODER_EVT_CLICK) {
+#if FAT32_EN
+				if (BG_Rec_IsRecording()) {
+					BG_Rec_Stop();
+				} else {
+					RecMode_t mode = REC_MODE_SINGLE_CH;
+					if (!GPIO_RegOneBitGet(GPIO_A_IN, (1 << HW_MIC_DET_PIN))) {
+						mode = REC_MODE_DUAL_CH;
+					}
+					BG_Rec_Start(mode);
+				}
+#endif
+			}
+		}
+	}
+#endif
+=======
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 }
 
 /*===========================================================================

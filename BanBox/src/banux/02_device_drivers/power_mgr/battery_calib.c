@@ -9,7 +9,14 @@
 #include "battery_calib.h"
 #include "battery_drv.h"
 #include "ble_protocol.h"
+<<<<<<< Updated upstream
 #include "bg_low_power.h"
+=======
+<<<<<<< HEAD
+#include "bg_low_power.h"
+=======
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 #include "spi_flash.h"
 #include "debug.h"
 #include "FreeRTOS.h"
@@ -17,10 +24,30 @@
 #include <string.h>
 #include <stdbool.h>
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+/* 低功耗活动喂狗回调 — 由 06_app 层通过 BattCalib_RegisterFeedActivity() 注册，
+ * 解耦 02_device_drivers 对 06_app 的直接依赖 */
+static void (*g_feed_activity_fn)(uint8_t) = NULL;
+
+void BattCalib_RegisterFeedActivity(void (*feed_fn)(uint8_t mask))
+{
+    g_feed_activity_fn = feed_fn;
+    DBG("[BATT_CALIB] FeedActivity callback registered\n");
+}
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 /* BLE 连接状态检测: 居与 CCCD 状态共地 */
 extern int att_server_can_send(void);
 
 /* ---- Default discharge curve ----
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
  * Typical LiPo at moderate standby drain (~10 h total = 36000 s).
  * Used until user performs a calibration run.
  * Units: seconds per 0.1 V band, step 0 = 4.2→4.1 V, step 1 = 4.1→4.0 V… */
@@ -37,6 +64,32 @@ static const uint32_t c_def_dur_s[BATT_CALIB_MAX_STEPS] = {
      720u,  /* 3.3 -> 3.2 V */
      720u,  /* 3.2 -> 3.1 V */
      360u,  /* 3.1 -> 3.0 V */
+<<<<<<< Updated upstream
+=======
+=======
+ * 单节锂电池典型放电曲线（1500mAh, ~0.2C 放电, 总时长约 7h = 25200s）。
+ * 与 battery_drv.c 中的电压-SOC 线性插值查表一致：
+ *   4200mV→100%, 4080→90%, 3970→80%, 3880→70%, 3800→60%,
+ *   3740→50%, 3690→40%, 3650→30%, 3610→20%, 3520→10%, 3400→5%, 3000→0%
+ *
+ * 每段时长按该段SOC百分比占总时长的比例分配，平台区(3.7-3.8V)容量最大。
+ * Used until user performs a calibration run.
+ * Units: seconds per 0.1 V band, step 0 = 4.2→4.1 V, step 1 = 4.1→4.0 V… */
+static const uint32_t c_def_dur_s[BATT_CALIB_MAX_STEPS] = {
+    1260u,  /* 4.2 -> 4.1 V   100% -> 90%  (10%)  */
+    1764u,  /* 4.1 -> 4.0 V   90%  -> 80%  (10%)  */
+    2268u,  /* 4.0 -> 3.9 V   80%  -> 70%  (10%)  */
+    3024u,  /* 3.9 -> 3.8 V   70%  -> 60%  (10%)  */
+    3780u,  /* 3.8 -> 3.7 V   60%  -> 48%  (12%)  ← 平台区开始 */
+    4536u,  /* 3.7 -> 3.6 V   48%  -> 28%  (20%)  ← 平台区中心, 容量最大 */
+    3024u,  /* 3.6 -> 3.5 V   28%  -> 15%  (13%)  */
+    1764u,  /* 3.5 -> 3.4 V   15%  -> 8%   (7%)   */
+    1008u,  /* 3.4 -> 3.3 V   8%   -> 4%   (4%)   */
+     504u,  /* 3.3 -> 3.2 V   4%   -> 2%   (2%)   */
+     252u,  /* 3.2 -> 3.1 V   2%   -> 1%   (1%)   */
+     252u,  /* 3.1 -> 3.0 V   1%   -> 0%   (1%)   */
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
        0u, 0u, 0u, 0u, 0u, 0u   /* below 3.0 V — hardware auto-shuts down */
 };
 
@@ -286,8 +339,20 @@ void BattCalib_Tick(void)
 
     if (g_state != 1u) return;
 
+<<<<<<< Updated upstream
     /* Suppress low-power mode while calibrating */
     LowPower_FeedActivity(LP_ACT_BATT_CALIB);
+=======
+<<<<<<< HEAD
+    /* Suppress low-power mode while calibrating */
+    LowPower_FeedActivity(LP_ACT_BATT_CALIB);
+=======
+    /* Suppress low-power mode while calibrating (via registered callback) */
+    if (g_feed_activity_fn != NULL) {
+        g_feed_activity_fn(0x20U);  /* LP_ACT_BATT_CALIB */
+    }
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 
     /* Check voltage every ~60 seconds (60000 ticks at 1 ms/tick default) */
     now_tk = xTaskGetTickCount();

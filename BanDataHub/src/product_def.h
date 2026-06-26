@@ -214,7 +214,19 @@ extern "C" {
 #endif
 
 /* FAT32 命令 (依赖 FAT32 功能) */
+<<<<<<< Updated upstream
 #if FAT32_EN && !defined(BANDATAHUB)
+=======
+<<<<<<< HEAD
+#if FAT32_EN && !defined(BANDATAHUB)
+=======
+<<<<<<< HEAD
+#if FAT32_EN
+=======
+#if FAT32_EN && !defined(BANDATAHUB)
+>>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 #define HW_CMD_FAT_EN           1
 #else
 #define HW_CMD_FAT_EN           0

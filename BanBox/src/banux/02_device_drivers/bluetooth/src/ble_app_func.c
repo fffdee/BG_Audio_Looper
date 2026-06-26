@@ -383,7 +383,6 @@ int16_t att_write(uint16_t con_handle, uint16_t attribute_handle, uint16_t trans
 			BT_DBG("\n");
 			
 			// Update CCCD status
-			extern uint8_t g_BLE_CCCD_Enabled;
 			if (buffer_size >= 2) {
 				uint16_t cccd_value = (buffer[1] << 8) | buffer[0];
 				if (cccd_value & 0x0001) {

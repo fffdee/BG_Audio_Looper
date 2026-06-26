@@ -52,5 +52,6 @@ extern BG_Audio_Io_Manager BG_AudioManager;
  */
 void BG_AudioIO_SetupEffectGraphCallbacks(void);
 void BG_AudioIO_PrepareForShutdown(void);
+void BG_AudioIO_SetUsbOutVolume(uint8_t vol, uint8_t mute);
 
 #endif 

@@ -270,6 +270,10 @@ SysParam_Status_t SysParam_LoadDefault(void) {
     g_sys_param.volume.mic1_volume = 80;
     g_sys_param.volume.mic2_volume = 80;
     g_sys_param.volume.output_volume = 80;
+    g_sys_param.volume.bt_max_volume = 100;   /* BT music max at wheel full scale */
+    g_sys_param.volume.usb_max_volume = 100;  /* USB music max at wheel full scale */
+    g_sys_param.volume.usb_out_volume = 100;  /* USB output to PC volume */
+    g_sys_param.volume.usb_out_mute = 0;      /* USB output not muted */
 
     /* Looper defaults */
     g_sys_param.looper.loop_count = 4;
@@ -392,6 +396,19 @@ SysParam_Status_t SysParam_ApplyToAudio(void) {
                   g_sys_param.system.lp_timeout_min);
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    /* Apply USB output volume (device->PC) */
+    {
+        extern void BG_AudioIO_SetUsbOutVolume(uint8_t vol, uint8_t mute);
+        BG_AudioIO_SetUsbOutVolume(g_sys_param.volume.usb_out_volume,
+                                   g_sys_param.volume.usb_out_mute);
+    }
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     return SYSPARAM_OK;
 }
 
@@ -703,6 +720,10 @@ void SysParam_PrintModule(const char *module) {
         Shell_Printf("  Mic1:       %d\n", g_sys_param.volume.mic1_volume);
         Shell_Printf("  Mic2:       %d\n", g_sys_param.volume.mic2_volume);
         Shell_Printf("  Output:     %d\n", g_sys_param.volume.output_volume);
+        Shell_Printf("  BT Max:     %d\n", g_sys_param.volume.bt_max_volume);
+        Shell_Printf("  USB Max:    %d\n", g_sys_param.volume.usb_max_volume);
+        Shell_Printf("  USB Out:    %d\n", g_sys_param.volume.usb_out_volume);
+        Shell_Printf("  USB OutMute:%d\n", g_sys_param.volume.usb_out_mute);
     }
     else if (strcmp(module, "looper") == 0) {
         Shell_Printf("  LoopCount:  %d\n", g_sys_param.looper.loop_count);

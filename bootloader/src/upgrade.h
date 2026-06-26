@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file  upgrade.h
  * @brief Firmware upgrade protocol - bootloader side (USB CDC only)
  *
@@ -66,6 +66,34 @@
  * distinguish a valid firmware image from blank flash or stale data. */
 #define FW_VALID_MAGIC        0x42475046UL  /* "BGPF"                        */
 #define FW_VALID_MAGIC_OFFSET 0x000000A4UL  /* offset into partition          */
+
+/* 鈹€鈹€鈹€ Boot info (embedded in APP's .stub_section) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+/* The APP's stub() in init-default.c appends a BootInfo_t after the standard
+ * stub content.  The bootloader reads this to copy the APP's .data section
+ * from flash to SRAM BEFORE jumping, avoiding the SBus/IBus mutual-exclusion
+ * deadlock that would occur if the APP's __c_init() did the copy itself
+ * (executing from flash IBus while reading .data from flash SBus). */
+#define BOOT_INFO_MAGIC       0x42474F46UL  /* "BGOF" — Boot Info            */
+#define BOOT_INFO_OFFSET      0x00000104UL  /* offset from partition base     */
+
+typedef struct {
+    uint32_t magic;          /* BOOT_INFO_MAGIC ("BGOF")                    */
+    uint32_t data_lma;       /* .data Load Memory Address (in flash)        */
+    uint32_t data_vma;       /* .data Virtual Memory Address (in SRAM)      */
+    uint32_t data_end;       /* .data end VMA (data_end - data_vma = size)  */
+    uint32_t bss_vma;        /* .bss Virtual Memory Address (in SRAM)       */
+    uint32_t bss_end;        /* .bss end VMA (bss_end - bss_vma = size)     */
+} BootInfo_t;
+
+/* 鈹€鈹€鈹€ Bootloader handoff (SRAM magic) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+/* Before jumping to the APP, the bootloader writes BOOT_HANDOFF_MAGIC to
+ * BOOT_HANDOFF_ADDR in SRAM.  The APP's __c_init() checks this location:
+ * if the magic is present, it skips the .data copy (already done by the
+ * bootloader) and clears the magic.  The address is at the very bottom of
+ * SRAM, well below the stack top (0x20004000), so it is never touched by
+ * stack operations during early startup. */
+#define BOOT_HANDOFF_ADDR     0x20000000UL
+#define BOOT_HANDOFF_MAGIC    0xDEADBEEFUL
 
 /* 鈹€鈹€鈹€ Partition flag structure (stored at PART_FLAG_ADDR) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* CRC32 (IEEE 802.3) covers all fields EXCEPT the last crc32 field itself. */

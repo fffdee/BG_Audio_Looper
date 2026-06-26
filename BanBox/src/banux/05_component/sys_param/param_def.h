@@ -2,8 +2,19 @@
 #define __PARAM_DEF_H__
 
 // Version and Magic
+<<<<<<< Updated upstream
 #define SYS_PARAM_VERSION       0x0106      /* Parameter structure version, changes require firmware update */
                                             /* 0x0105: Added lp_enable to SysParam_System_t; default rec source changed to LINE_L */
+=======
+<<<<<<< HEAD
+#define SYS_PARAM_VERSION       0x0106      /* Parameter structure version, changes require firmware update */
+                                            /* 0x0105: Added lp_enable to SysParam_System_t; default rec source changed to LINE_L */
+=======
+#define SYS_PARAM_VERSION       0x0107      /* Parameter structure version, changes require firmware update */
+                                            /* 0x0106: Added storage abstraction params to SysParam_Looper_t */
+                                            /* 0x0107: Added bt_max/usb_max/usb_out/usb_out_mute to SysParam_Volume_t */
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 #define SYS_PARAM_MAGIC         0x50415241  /* "PARA" Magic number*/
 
 // Flash Storage Configuration

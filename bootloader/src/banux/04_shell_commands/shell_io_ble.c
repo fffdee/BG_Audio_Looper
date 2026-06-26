@@ -224,7 +224,7 @@ void ShellIO_BLE_Init(void)
     g_BleRxHead = 0;
     g_BleRxTail = 0;
     g_BleRxCount = 0;
-    
+
     Shell_Init();
     Shell_SetIO(&g_BLE_IO);
     Shell_RegisterAllModules();

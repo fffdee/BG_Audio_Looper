@@ -1,37 +1,37 @@
 /**
  * @file  dual_partition.h
- * @brief No-Bootloader dual-partition layout and data structures.
+ * @brief Bootloader + dual-partition layout and data structures.
  *
- * Architecture (NO separate bootloader)
+ * Architecture (WITH separate bootloader)
  * ─────────────────────────────────────
- * The chip boots from 0x000000 where Partition 1 (factory firmware) lives.
- * Early in startup, boot_check() inspects partition flags:
- *   - If Partition 2 has valid firmware and is marked active →
- *     address remap + jump to Partition 2.
- *   - Otherwise → continue running Partition 1.
- *
- * Partition 1 is NEVER re-written after factory programming.
- * USB CDC / BLE OTA upgrades always write to Partition 2.
+ * Bootloader runs from 0x000000 (256KB). On boot it checks partition
+ * flags and jumps to the active partition (A or B).
+ * The BanBox APP is linked to start at 0x040000 (Partition A).
+ * When Partition B is active, hardware address remap maps
+ * [0x040000, 0x240000) → [0x240000, 0x440000) transparently.
  *
  * Flash layout (chip = 8 MB / 0x800000):
- *   0x000000 - 0x1FFFFF  Partition 1 (Factory)     2 MB  — safety fallback
- *   0x200000 - 0x3FFFFF  Partition 2 (Upgrade)     2 MB  — USB/BLE target
- *   0x400000 - 0x400FFF  Partition flags            4 KB
- *   0x401000 - 0x7FFFFF  System data / BT config  ~4 MB
+ *   0x000000 - 0x03FFFF  Bootloader             256 KB
+ *   0x040000 - 0x23FFFF  Partition A            2 MB  — equal live partition
+ *   0x240000 - 0x43FFFF  Partition B            2 MB  — equal live partition
+ *   0x440000 - 0x440FFF  Partition flags         4 KB
+ *   0x441000 - 0x7FFFFF  System data / BT config ~3.75 MB
  */
 #ifndef __DUAL_PARTITION_H__
 #define __DUAL_PARTITION_H__
 
 #include "type.h"
 
-/* ── Flash partition layout ──────────────────────────────────────────────── */
-#define PART1_BASE          0x00000000UL  /* Partition 1 (factory) base      */
-#define PART1_SIZE          0x00200000UL  /* Partition 1: 2 MB               */
-#define PART2_BASE          0x00200000UL  /* Partition 2 (upgrade) base      */
-#define PART2_SIZE          0x00200000UL  /* Partition 2: 2 MB               */
+/* ── Flash partition layout (aligned with bootloader upgrade.h) ───────────── */
+#define BOOTLOADER_SIZE     0x00040000UL  /* 256 KB                         */
 
-#define PART_FLAG_ADDR      0x00400000UL  /* Partition flags sector (4 KB)   */
-#define PART_FLAG_MAGIC     0x42475057UL  /* "BGPW"                          */
+#define PART_A_BASE         0x00040000UL  /* Partition A base               */
+#define PART_A_SIZE         0x00200000UL  /* Partition A: 2 MB              */
+#define PART_B_BASE         0x00240000UL  /* Partition B base               */
+#define PART_B_SIZE         0x00200000UL  /* Partition B: 2 MB              */
+
+#define PART_FLAG_ADDR      0x00440000UL  /* Partition flags sector (4 KB)  */
+#define PART_FLAG_MAGIC     0x42475057UL  /* "BGPW"                         */
 
 #define FLASH_SECTOR_SZ     0x1000UL      /* 4 KB erase unit                 */
 
@@ -49,16 +49,16 @@
 /* CRC32 (IEEE 802.3) covers all fields EXCEPT the crc32 field itself.       */
 typedef struct {
     uint32_t magic;           /* Must equal PART_FLAG_MAGIC                  */
-    uint8_t  active_part;     /* 0 = Partition 1 (factory), 1 = Partition 2  */
-    uint8_t  upgrade_pending; /* 1 = reboot-to-part1 needed for re-upgrade   */
-    uint8_t  boot_fail_cnt;   /* Incremented before jump to Part 2           */
-    uint8_t  reserved;
+    uint8_t  active_part;     /* 0 = A is active, 1 = B is active           */
+    uint8_t  reserved1;       /* (was upgrade_pending — no longer used)      */
+    uint8_t  boot_fail_cnt;   /* Incremented before each jump; reset on OK  */
+    uint8_t  reserved2;
     uint32_t crc32;           /* CRC32 of preceding 8 bytes                  */
 } PartFlag_t;
 
 /* ── Protocol constants (shared by USB CDC and BLE OTA engines) ──────────── */
 #define UPG_SOF             0xAAU
-#define UPG_VERSION         0x04U   /* v4: no-bootloader dual-partition      */
+#define UPG_VERSION         0x03U   /* v3: aligned with bootloader dual-partition */
 #define UPG_MAX_CHUNK       256U
 
 /* Commands: Host → Device */
@@ -86,17 +86,17 @@ typedef struct {
 
 /* ── Device info (CMD_QUERY_INFO ACK payload) ────────────────────────────── */
 typedef struct {
-    uint8_t  boot_mode;       /* 2 = no-bootloader dual-partition            */
-    uint8_t  active_part;     /* 0 = Part 1 running, 1 = Part 2 running      */
+    uint8_t  boot_mode;       /* BOOT_MODE_DUAL_AB = 1                      */
+    uint8_t  active_part;     /* 0 = A active, 1 = B active                 */
     uint8_t  boot_fail_cnt;
-    uint8_t  protocol_ver;    /* UPG_VERSION (0x04)                          */
-    uint32_t part1_base;
-    uint32_t part1_size;
-    uint32_t part2_base;
-    uint32_t part2_size;
+    uint8_t  protocol_ver;    /* UPG_VERSION (0x03)                         */
+    uint32_t part_a_base;
+    uint32_t part_a_size;
+    uint32_t part_b_base;
+    uint32_t part_b_size;
 } DevInfo_t;
 
-#define BOOT_MODE_NO_BL_DUAL  2   /* No-bootloader dual-partition mode       */
+#define BOOT_MODE_DUAL_AB  1   /* A/B dual-partition with bootloader       */
 
 /* ── Partition flag helpers (implemented in boot_decision.c) ─────────────── */
 int  PartFlag_Read(PartFlag_t *flag);
@@ -105,10 +105,10 @@ void PartFlag_Default(PartFlag_t *flag);
 
 /* ── Boot decision (implemented in boot_decision.c) ──────────────────────── */
 /**
- * @brief  Check partition flags and jump to Partition 2 if valid.
+ * @brief  Check partition flags and jump to Partition B if active.
  *         Call VERY EARLY in main(), before FreeRTOS / peripherals.
- *         If Partition 2 is active and valid, this function never returns.
- *         If it returns, we continue running Partition 1.
+ *         With bootloader, this is called AFTER bootloader has already jumped.
+ *         It handles the case where APP needs to verify its own partition.
  */
 void Boot_CheckAndJump(void);
 
@@ -119,8 +119,8 @@ void Boot_CheckAndJump(void);
 void Boot_ConfirmSuccess(void);
 
 /**
- * @brief  Returns 1 if currently running from Partition 2 (via remap).
- *         Used by upgrade engine to refuse writes when on Partition 2.
+ * @brief  Returns 1 if currently running from Partition B (via remap).
+ *         Used by upgrade engine to refuse writes when on Partition B.
  */
 int Boot_IsRunningPart2(void);
 

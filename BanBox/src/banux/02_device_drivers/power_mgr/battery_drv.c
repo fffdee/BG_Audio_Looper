@@ -67,17 +67,54 @@ static uint16_t adc_to_mv(uint16_t adc_val)
 }
 
 /**
+<<<<<<< Updated upstream
  * @brief Battery API: get remaining battery SOC percentage (integer only)
+=======
+<<<<<<< HEAD
+ * @brief Battery API: get remaining battery SOC percentage (integer only)
+=======
+ * @brief Battery API: get remaining battery SOC percentage (linear interpolation)
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
  * @return Battery SOC percentage (0~100)
+ *
+ * Uses a voltage-SOC lookup table with linear interpolation between points
+ * for smoother SOC transitions compared to step-function approach.
+ *
+ * LiPo discharge curve reference (0.5C rate, typical 3.7V nominal cell):
+ *   4200mV = 100%, 4080 = 90%, 3970 = 80%, 3880 = 70%,
+ *   3800 = 60%, 3740 = 50%, 3690 = 40%, 3650 = 30%,
+ *   3610 = 20%, 3520 = 10%, 3400 = 5%,  3000 = 0%
  */
 uint8_t battery_get_soc(void)
 {
     uint16_t adc_val = battery_adc_read();
     uint16_t mv;
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    uint8_t i;
+    
+    /* Voltage-SOC lookup table (descending voltage, ascending SOC) */
+    static const uint16_t v_table[] = {
+        4200, 4080, 3970, 3880, 3800, 3740, 3690, 3650, 3610, 3520, 3400, 3000
+    };
+    static const uint8_t soc_table[] = {
+        100,  90,   80,   70,   60,   50,   40,   30,   20,   10,    5,    0
+    };
+    #define TABLE_SIZE (sizeof(v_table) / sizeof(v_table[0]))
+    
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     if (adc_val == 0u) {
         return 50u; /* ADC fault: return mid-value */
     }
     mv = adc_to_mv(adc_val);
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
     if (mv >= 4200u)      return 100u;
     else if (mv >= 4100u) return 90u;
     else if (mv >= 4000u) return 80u;
@@ -90,6 +127,29 @@ uint8_t battery_get_soc(void)
     else if (mv >= 3400u) return 10u;
     else if (mv >= 3000u) return 5u;
     else                  return 0u;
+<<<<<<< Updated upstream
+=======
+=======
+    
+    /* Above max: full */
+    if (mv >= v_table[0]) return soc_table[0];
+    /* Below min: empty */
+    if (mv <= v_table[TABLE_SIZE - 1]) return soc_table[TABLE_SIZE - 1];
+    
+    /* Find interval and linear interpolate */
+    for (i = 0; i < TABLE_SIZE - 1; i++) {
+        if (mv >= v_table[i + 1]) {
+            /* mv is in [v_table[i+1], v_table[i]) */
+            /* SOC = soc_table[i+1] + (mv - v_table[i+1]) * (soc_table[i] - soc_table[i+1]) / (v_table[i] - v_table[i+1]) */
+            uint16_t dv = v_table[i] - v_table[i + 1];  /* voltage span */
+            uint16_t ds = soc_table[i] - soc_table[i + 1];  /* SOC span */
+            uint16_t offset = mv - v_table[i + 1];  /* voltage above lower bound */
+            return (uint8_t)(soc_table[i + 1] + (uint16_t)((uint32_t)offset * ds / dv));
+        }
+    }
+    return 0u;
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 }
 
 /**

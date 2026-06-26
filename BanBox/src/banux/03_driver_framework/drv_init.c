@@ -21,9 +21,6 @@
 #include "drv_usb_cdc.h"
 #include "bt_vfs_driver.h"
 #include "shell_fs.h"
-#include "effect_graph.h"
-#include "effect_graph_vfs.h"
-#include "shell_cmd_audio_vfs.h"
 #include "bg_flash_manager.h"
 #include "BG_FlashMgr.h"
 #include "flash_devices.h"
@@ -237,21 +234,8 @@ int DrvFramework_RegisterAll(void)
     ShellFs_RegisterAllCommands();
     DBG("[DrvInit] /bin commands registered OK\n");
 
-    /* 初始化音频效果图VFS（创建/audio目录） */
-#if EFFECT_GRAPHICS_EN
-    DBG("[DrvInit] Initializing Audio Graph VFS...\n");
-    ret = EffectGraphVfs_MountDefault();
-    if (ret == GRAPH_VFS_OK) {
-        DBG("[DrvInit] Audio Graph VFS mounted OK\n");
-    } else {
-        DBG("[DrvInit] Audio Graph VFS mount deferred (graph not ready)\n");
-    }
-    
-    /* 注册audio VFS Shell命令 */
-#if USE_EFFECT_GRAPH_VFS
-    ShellCmdAudioVfs_Register();
-#endif
-#endif /* EFFECT_GRAPHICS_EN */
+    /* EffectGraph VFS 和 ShellCmdAudioVfs 初始化已移至 main.c（05_component 层），
+     * 解耦 03_driver_framework 对 05_component 的直接依赖 */
 
     /* 初始化蓝牙VFS（创建/bluetooth目录） */
     /* 注意：BT/BLE设备在应用启动后再初始化，这里跳过以避免卡住 */

@@ -95,6 +95,19 @@ public class BluetoothHelper {
         return lpTimeoutLiveData;
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    /** 产品功能列表 LiveData：连接同步后从下位机读取，描述硬件支持的功能 */
+    private final MutableLiveData<ProductFeatures> featureListLiveData = new MutableLiveData<>(null);
+
+    public LiveData<ProductFeatures> getFeatureListLiveData() {
+        return featureListLiveData;
+    }
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     // batteryCurveLiveData: each int[] = {soc_pct, mv}
     private final MutableLiveData<int[][]> batteryCurveLiveData = new MutableLiveData<>(null);
 
@@ -667,6 +680,19 @@ public class BluetoothHelper {
                             Log.d("BLE", "[Proto] Product ID received: 0x" + String.format("%04X", pid));
                             BleParamCache.getInstance().setProductId(pid);
                         }
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+                    } else if (subType == (BleProtocol.SYSTEM_SUB_FEATURE_LIST & 0xFF)) {
+                        Log.d("BLE", "[Proto] Feature list received, len=" + (frame.payload.length - 1));
+                        BleParamCache.getInstance().setFeatureListFromPayload(frame.payload);
+                        ProductFeatures pf = BleParamCache.getInstance().getProductFeatures();
+                        if (pf != null) {
+                            featureListLiveData.postValue(pf);
+                        }
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
                     }
                 }
                 break;
@@ -949,6 +975,26 @@ public class BluetoothHelper {
     }
 
     /**
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+     * 请求产品功能列表（按需查询）。
+     * MCU 收到后回复 BLE_CMD_SYSTEM + SYSTEM_SUB_FEATURE_LIST + JSON 字符串。
+     * 连接同步时也会自动推送，此方法用于手动刷新。
+     */
+    public void requestFeatureList() {
+        Log.d("BLE", "[Proto] requestFeatureList queued");
+        new Thread(() -> {
+            sendReliable(BleProtocol.CMD_SYSTEM,
+                    new byte[]{BleProtocol.SYSTEM_SUB_FEATURE_LIST},
+                    success -> Log.d("BLE", "[Proto] requestFeatureList result=" + success));
+        }, "feat-req").start();
+    }
+
+    /**
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
      * Fire-and-forget send (mirrors MCU BleProto_SendOnce).
      * Used to send commands like CALIB_CMD_START to the device.
      */

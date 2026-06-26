@@ -10,9 +10,7 @@
  *   0x600000 - 0x6FFFFF : 保留 / psram_buffer 管理元数据
  *   0x700000 - 0x7FFFFF : PSRAM 通用堆 (本模块管理，1MB)
  *
- * 注：此文件的副本也存在于 01_hal_drivers/psram_heap.h，
- * 供非 bangtsynth 模块（如 shell_cmd_psram.c）使用。
- * 两份文件保持同步，由 #ifndef 保护宏防止重复声明。
+ * 注：此文件从 bangtsynth/02_core/fat32/ 移出，作为通用 PSRAM 堆管理接口。
  */
 
 #ifndef __PSRAM_HEAP_H__
@@ -30,18 +28,39 @@
 extern "C" {
 #endif
 
+/* ============================================
+ * PSRAM 堆区域定义
+ * ============================================ */
+
+/** PSRAM 堆起始地址 (7MB) */
 #define PSRAM_HEAP_BASE     (7u * 1024u * 1024u)
+
+/** PSRAM 堆大小 (1MB) */
 #define PSRAM_HEAP_SIZE     (1u * 1024u * 1024u)
+
+/** 无效句柄 */
 #define PSRAM_HEAP_NULL     (0xFFFFFFFFu)
+
+/** 最大命名分配记录数 */
 #define PSRAM_HEAP_MAX_RECORDS  16
 
+/* ============================================
+ * 类型定义
+ * ============================================ */
+
+/** PSRAM 地址类型（24-bit 物理地址） */
 typedef uint32_t psram_ptr_t;
 
+/** 单条命名分配记录 */
 typedef struct {
-    char        tag[16];
-    psram_ptr_t addr;
-    uint32_t    size;
+    char        tag[16];   /**< 分配标签（最多15字符） */
+    psram_ptr_t addr;      /**< 起始地址 */
+    uint32_t    size;      /**< 请求字节数（未对齐） */
 } PSRAM_AllocRecord_t;
+
+/* ============================================
+ * 接口函数
+ * ============================================ */
 
 BG_ERR PSRAM_HeapInit(void);
 void PSRAM_HeapReset(void);

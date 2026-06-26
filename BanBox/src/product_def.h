@@ -293,6 +293,9 @@ extern "C" {
 #define HW_BATTERY_ADC_GPIO_PIN  GPIO_INDEX31
 #define HW_BATTERY_ADC_CHANNEL   ADC_CHANNEL_GPIOA31
 
+/* LED 指示灯 (GPIO_A16) */
+#define HW_LED_GPIO_PIN          GPIO_INDEX16
+
 #elif defined(BANBOX_II)
 /* 新板子配置 - 只有一片 NOR Flash */
 /* PSRAM CS 在 GPIO_B (B6) */

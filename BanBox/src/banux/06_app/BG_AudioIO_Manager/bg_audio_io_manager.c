@@ -21,6 +21,7 @@
 #include "debug.h"
 #include "type.h"
 #include "remind_sound.h"
+#include "power_on_music.h"
 #include "audio_effect.h"
 #include "ctrlvars.h"
 #include "otg_device_hcd.h"
@@ -56,6 +57,7 @@
 
 #include "otg_device_cdc.h"
 #include "product_def.h"
+#include "sys_param.h"
 
 // System Monitor 模块
 #include "shell_cmd_sysmon.h"
@@ -130,6 +132,14 @@ static uint16_t bt_decoded_len = 0;     /* 预解码数据长度 */
 static bool bt_has_decoded_data = false; /* 是否有预解码数据 */
 static uint32_t bt_current_sample_rate = 0; /* 当前蓝牙音频采样率 */
 static uint32_t system_default_sample_rate = 44100; /* 系统默认采样率（蓝牙断开后恢复） */
+
+// ==================== BT/USB 音量增益（Q8定点数，由SetVolume计算） ====================
+static uint16_t s_bt_gain_q8  = 256;  /* BT音乐增益 256=1.0x，由bt_max_volume和旋钮映射 */
+static uint16_t s_usb_gain_q8 = 256;  /* USB音乐增益 256=1.0x，由usb_max_volume和旋钮映射 */
+
+// ==================== USB输出（device→PC）音量控制 ====================
+static uint16_t s_usb_out_gain_q8 = 256;  /* USB输出增益 256=1.0x，由usb_out_volume映射 */
+static uint8_t  s_usb_out_mute = 0;       /* USB输出静音 0=off 1=on */
 
 // ==================== 前向声明（内部函数） ====================
 static void SaveDataToSbcBuffer(uint8_t *data, uint16_t dataLen);
@@ -400,6 +410,10 @@ void BG_audio_Init(uint16_t SampleRate)
 	InitADC0LineIn(SampleRate);
 	InitADC1Mic(SampleRate);
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 	/* 开机 VCOM/PGA 稳定等待：ADC 模拟前端（VCOM 参考电压、PGA 建立）
 	 * 需要约 200~500ms 才能稳定，期间 ADC 输出包含 DC 偏移 + HPF 瞬态失真。
 	 * 先静音，等 300ms 后再解除，消除开机时几秒钟的失真现象。 */
@@ -408,11 +422,34 @@ void BG_audio_Init(uint16_t SampleRate)
 	vTaskDelay((300 + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS);
 	AudioADC_SoftMute(ADC0_MODULE, FALSE, FALSE);
 	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
+<<<<<<< Updated upstream
+=======
+=======
+	/* 开机消噪：DAC先静音，防止DAC启动时的pop噪声输出到扬声器
+	 * 同时ADC也静音，等VCOM/PGA稳定后再一起解除 */
+	AudioDAC_VolSet(DAC0, 0, 0);  /* DAC0 左右声道静音 */
+	AudioDAC_VolSet(DAC1, 0, 0);  /* DAC1 静音 */
+	AudioADC_SoftMute(ADC0_MODULE, TRUE, TRUE);
+	AudioADC_SoftMute(ADC1_MODULE, TRUE, TRUE);
+
+	/* 开机 VCOM/PGA 稳定等待：ADC 模拟前端（VCOM 参考电压、PGA 建立）
+	 * 需要约 200~500ms 才能稳定，期间 ADC 输出包含 DC 偏移 + HPF 瞬态失真。
+	 * 先静音，等 300ms 后再解除，消除开机时几秒钟的失真现象。 */
+	vTaskDelay((300 + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS);
+	AudioADC_SoftMute(ADC0_MODULE, FALSE, FALSE);
+	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
+	/* DAC音量将在Audio_loop()的SetVolume()中恢复，无需手动解除 */
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 
 	/* 开机提示音：InitDAC/ADC 完成后此处堆约 77KB，足够分配 19KB 解码器缓冲
 	 * InitAudioEffects 之后堆仅剩 ~11KB（不够），故必须在此处播放
 	 * FIFO 等待已有超时保护（remind_sound.c），DAC DMA 未就绪时安全跳过 */
 	//RemindSound_PlayByName("on");
+
+	/* 开机音乐：播放用户自定义 WAV/MP3（默认注释，取消注释即可启用）
+	 * 需要先替换 06_app/power_on_music/g_power_on_wav.c 中的音乐数据 */
+	//PowerOnMusic_Play();
 
 	InitAudioEffects(SampleRate);
 	InitControlGPIO();
@@ -497,10 +534,18 @@ void BG_audio_Init(uint16_t SampleRate)
 }
 /**
  * 设置输出音量（通过ADC读取电位器值）
+ * 同时计算BT/USB音乐的增益映射（Q8定点数）
+ *
+ * 增益映射逻辑：
+ *   wheel_pct = DC_Data / 0x3FFF  (0~1)
+ *   bt_gain   = wheel_pct * bt_max_volume  / 100
+ *   usb_gain  = wheel_pct * usb_max_volume / 100
+ *   Q8 = gain * 256
  */
 static void SetVolume(void)
 {
 	uint16_t DC_Data;
+	uint32_t wheel_pct;  /* 0~16383, 即 wheel_pct = DC_Data */
 #if HW_VOLUME_ADC_EN
 	GPIO_RegOneBitClear(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
 	GPIO_RegOneBitSet(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
@@ -511,6 +556,14 @@ static void SetVolume(void)
 #endif
 	AudioDAC_VolSet(DAC0, DC_Data, DC_Data);
 	AudioDAC_VolSet(DAC1, DC_Data, 0);
+
+	/* 计算BT/USB增益映射 */
+	wheel_pct = DC_Data;  /* 0~16383 */
+	/* bt_gain_q8 = wheel_pct * bt_max_volume / 16383 * 256 / 100
+	 *            = wheel_pct * bt_max_volume * 256 / (16383 * 100)
+	 * 简化: 先算 wheel_pct * 256 / 16383 得到旋钮Q8，再乘 bt_max_volume / 100 */
+	s_bt_gain_q8  = (uint16_t)((uint32_t)wheel_pct * g_sys_param.volume.bt_max_volume  * 256 / (16383 * 100));
+	s_usb_gain_q8 = (uint16_t)((uint32_t)wheel_pct * g_sys_param.volume.usb_max_volume * 256 / (16383 * 100));
 }
 
 
@@ -1482,11 +1535,13 @@ static void DAC0_WriteSpeakerData(EffectNode_t *node, uint32_t *in_buf, uint16_t
 /**
  * USB Audio Source 回调 - 从 USB 读取音频数据
  * 参考老方案 BuildFinalOutput: 数据不足时填零，保证输出长度一致
+ * 应用 usb_max_volume 增益映射（Q8定点数乘法）
  */
 static uint16_t USB_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
 {
 	uint16_t available;
 	uint16_t i;
+	uint16_t ret_len;
 	
 	(void)node;
 	
@@ -1510,7 +1565,7 @@ static uint16_t USB_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_
 	if (available >= max_len) {
 		/* USB 数据充足，直接读取，无需类型转换 */
 		UsbAudioSpeakerDataGet(out_buf, max_len);
-		return max_len;
+		ret_len = max_len;
 	}
 	else if (available > 0) {
 		/* USB 数据不足，读取可用数据，剩余填零 */
@@ -1518,23 +1573,38 @@ static uint16_t USB_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_
 		for (i = available; i < max_len; i++) {
 			out_buf[i] = 0;
 		}
-		return max_len;
+		ret_len = max_len;
 	}
 	else {
 		/* USB 无数据，全部填零避免噪声 */
 		for (i = 0; i < max_len; i++) {
 			out_buf[i] = 0;
 		}
-		return max_len;
+		ret_len = max_len;
 	}
+	
+	/* 应用USB音乐增益映射 (Q8定点数乘法) */
+	if (s_usb_gain_q8 != 256) {
+		int16_t *samples = (int16_t *)out_buf;
+		for (i = 0; i < ret_len * 2; i++) {
+			int32_t s = (int32_t)samples[i] * s_usb_gain_q8 >> 8;
+			if (s > 32767) s = 32767;
+			else if (s < -32768) s = -32768;
+			samples[i] = (int16_t)s;
+		}
+	}
+	
+	return ret_len;
 }
 
 /**
  * USB Audio Sink 回调 - 写入音频数据到 USB
+ * 应用 usb_out_volume 增益和 usb_out_mute 静音控制
  */
 static void USB_WriteAudioData(EffectNode_t *node, uint32_t *in_buf, uint16_t len)
 {
 	uint16_t samples_to_write;
+	uint16_t i;
 	
 	(void)node;
 	
@@ -1548,7 +1618,26 @@ static void USB_WriteAudioData(EffectNode_t *node, uint32_t *in_buf, uint16_t le
 		samples_to_write = 640;
 	}
 	
-	// 直接写入数据，无需类型转换
+	/* USB输出静音：发送零数据 */
+	if (s_usb_out_mute) {
+		uint32_t zero_buf[640];
+		memset(zero_buf, 0, sizeof(uint32_t) * samples_to_write);
+		UsbAudioMicDataSet(zero_buf, samples_to_write);
+		return;
+	}
+	
+	/* 应用USB输出增益 (Q8定点数乘法) */
+	if (s_usb_out_gain_q8 != 256) {
+		int16_t *samples = (int16_t *)in_buf;
+		for (i = 0; i < samples_to_write * 2; i++) {
+			int32_t s = (int32_t)samples[i] * s_usb_out_gain_q8 >> 8;
+			if (s > 32767) s = 32767;
+			else if (s < -32768) s = -32768;
+			samples[i] = (int16_t)s;
+		}
+	}
+	
+	// 写入数据
 	UsbAudioMicDataSet(in_buf, samples_to_write);
 }
 
@@ -1586,9 +1675,22 @@ static uint16_t BT_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t
 		/* 【关键】使用预解码数据长度，不使用 max_len */
 		/* 因为 max_len 就是 BT_GetAvailableData 返回的 bt_decoded_len */
 		
-		/* 直接复制缓存数据到输出缓冲区 */
-		for (i = 0; i < pcm_len; i++) {
-			out_buf[i] = bt_decoded_buffer[i];
+		/* 复制缓存数据到输出缓冲区，同时应用BT音乐增益映射 */
+		if (s_bt_gain_q8 == 256) {
+			/* 增益1.0x，直接复制 */
+			for (i = 0; i < pcm_len; i++) {
+				out_buf[i] = bt_decoded_buffer[i];
+			}
+		} else {
+			/* 应用Q8增益 */
+			int16_t *dst = (int16_t *)out_buf;
+			int16_t *src = (int16_t *)bt_decoded_buffer;
+			for (i = 0; i < pcm_len * 2; i++) {
+				int32_t s = (int32_t)src[i] * s_bt_gain_q8 >> 8;
+				if (s > 32767) s = 32767;
+				else if (s < -32768) s = -32768;
+				dst[i] = (int16_t)s;
+			}
 		}
 		
 		/* 清除预解码标志（数据已被消费） */
@@ -2147,6 +2249,18 @@ static void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_co
  * 挂接 Effect Graph 节点的音频设备回调
  * 注意：此函数在预设加载后需要被重新调用，以确保新节点的回调函数正确注册
  */
+/**
+ * @brief 设置USB输出（device→PC）音量和静音
+ * @param vol 音量 0-100
+ * @param mute 静音 0=off 1=on
+ */
+void BG_AudioIO_SetUsbOutVolume(uint8_t vol, uint8_t mute)
+{
+	s_usb_out_gain_q8 = (uint16_t)((uint32_t)vol * 256 / 100);
+	s_usb_out_mute = mute ? 1 : 0;
+	DBG("[Audio] USB out: vol=%d%% gain_q8=%d mute=%d\n", vol, s_usb_out_gain_q8, s_usb_out_mute);
+}
+
 /**
  * @brief 关机前释放大内存效果器（混响），为口令提示音 pvPortMalloc 计划出堆空间
  * @note  必须在 RemindSound_PlayByName("off") 之前调用。

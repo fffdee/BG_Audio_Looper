@@ -58,7 +58,11 @@ typedef struct __attribute__((packed)) {
     uint8_t  guitar2_volume;     /* Guitar2 volume 0-100 */
     uint8_t  mic1_volume;        /* Mic1 volume 0-100 */
     uint8_t  mic2_volume;        /* Mic2 volume 0-100 */
-    uint8_t  output_volume;
+    uint8_t  output_volume;      /* Output volume 0-100 */
+    uint8_t  bt_max_volume;      /* BT music max volume mapped by wheel 0-100, default 100 */
+    uint8_t  usb_max_volume;     /* USB music max volume mapped by wheel 0-100, default 100 */
+    uint8_t  usb_out_volume;     /* USB output (device->PC) volume 0-100, default 100 */
+    uint8_t  usb_out_mute;       /* USB output mute 0=off 1=on, default 0 */
 } SysParam_Volume_t;
 
 /* Looper Flash status definitions */

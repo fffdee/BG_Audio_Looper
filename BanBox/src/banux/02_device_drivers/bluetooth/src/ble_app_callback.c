@@ -7,8 +7,7 @@
 #include "ble_app_func.h"
 
 #include "shell_io_ble.h" // 引入notify测试接口
-#include "audio_looper.h" // 断开时停止 Looper 和节拍器
-#include "bg_event.h"     // 事件发布-订阅系统
+#include "bg_event.h"     // 事件发布-订阅系统（03_driver_framework，02→03 合法）
 
 /* ⚠️ 生产环境必须设置为0，避免测试任务干扰正常通信 */
 #define AUTO_START_NOTIFY_TEST 0
@@ -45,6 +44,10 @@ void BLEStackCallBackFunc(uint8_t event)
 			BleConnectFlag = 0;
 			BG_EVT_PUB(EVT_BLE_DISCONNECTED);
 			/* 清除同步任务状态，防止重连后弹窗永不消失 */
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 			{
 				extern void BleProto_OnDisconnected(void);
 				BleProto_OnDisconnected();
@@ -61,7 +64,15 @@ void BLEStackCallBackFunc(uint8_t event)
 
 				metronome_disable();
 				BT_DBG("[BLE] Disconnect: looper+metronome stopped\n");
+=======
+			{
+				extern void BleProto_OnDisconnected(void);
+				BleProto_OnDisconnected();
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
 			}
+			/* Looper/节拍器停止逻辑已移至 05_component/ble_app/ble_app_sync.c，
+			 * 通过 BG_EVT_SUB(EVT_BLE_DISCONNECTED) 订阅自动触发，
+			 * 02 层不再直接依赖 05 层的 audio_looper.h / metronome.h */
 #if (AUTO_START_NOTIFY_TEST)
 			BLE_StopNotifyTest(); // 断开时停止notify测试
 #endif

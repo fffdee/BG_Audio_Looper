@@ -17,7 +17,7 @@
 				<configuration artifactExtension="adx" artifactName="${ProjName}" buildArtefactType="nds.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=nds.buildArtefactType.exe" description="" id="config.nds32le-elf-mculib-v3s.exe.debug.825604417" name="Debug" parent="config.nds32le-elf-mculib-v3s.exe.debug" postannouncebuildStep="" postbuildStep="" preannouncebuildStep="" prebuildStep="">
 					<folderInfo id="config.nds32le-elf-mculib-v3s.exe.debug.825604417." name="/" resourcePath="">
 						<toolChain id="nds.nds32le-elf-mculib-v3s.exe.debug.588279773" name="nds32le-elf-mculib-v3s" superClass="nds.nds32le-elf-mculib-v3s.exe.debug">
-							<option id="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET.1178406391" superClass="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET" value="rse://LOCALHOST/~target/ADP-AG101P-4GB-D1088-SPU-32I" valueType="string"/>
+							<option id="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET.1178406391" name="RSE_TARGET" superClass="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET" value="rse://LOCALHOST/~target/ADP-AG101P-4GB-D1088-SPU-32I" valueType="string"/>
 							<targetPlatform id="target.nds32le-elf-mculib-v3s.platform.exe.debug.1758018585" name="Debug Platform" superClass="target.nds32le-elf-mculib-v3s.platform.exe.debug"/>
 							<builder buildPath="${workspace_loc:/Demo_FreeRTOS}/Debug" enableAutoBuild="false" enableCleanBuild="false" enabledIncrementalBuild="true" id="target.nds32le-elf-mculib-v3s.builder.exe.debug.1451230818" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Andes Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="target.nds32le-elf-mculib-v3s.builder.exe.debug"/>
 							<tool id="tool.nds32le-elf-mculib-v3s.archiver.base.2033518229" name="Andes Archiver" superClass="tool.nds32le-elf-mculib-v3s.archiver.base"/>
@@ -41,16 +41,26 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/middleware/fatfs/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/01_hal_drivers}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/01_hal_drivers/adc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/01_hal_drivers/gpio}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/01_hal_drivers/spi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/02_device_drivers/flash}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/02_device_drivers/USB/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/02_device_drivers/bluetooth/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/02_device_drivers/bluetooth}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/03_driver_framework/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/03_driver_framework}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/03_driver_framework/drivers}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/01_vfs}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/driver/driver_api/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/middleware/audio/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/middleware/rtos/freertos/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/middleware/rtos/rtos_api}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/drivers/bluetooth/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/drivers/bluetooth}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/middleware/mv_utils/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/drivers/usb/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/06_app/audio}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/06_app/audio/effect_parameter}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/06_app/audio/music_parameter}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bootloader/src/banux/04_shell_commands}&quot;"/>
 								</option>
 								<option id="nds.c.compiler.option.optimization.lto.934303171" name="Link Time Optimization (-flto)" superClass="nds.c.compiler.option.optimization.lto" value="false" valueType="boolean"/>
 								<option id="nds.c.compiler.option.optimization.removesections.function.489783750" name="Remove unused function sections (-ffunction-sections)" superClass="nds.c.compiler.option.optimization.removesections.function" value="true" valueType="boolean"/>
@@ -112,7 +122,7 @@
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="middleware/rtos/freertos/src/shell.c|FreeRTOS/inc/shell.h|FreeRTOS/src/heap_5.c|DriverAPI/src/adc_interface.c|DriverAPI/src/dac_interface.c|DriverAPI/src/sd_card.c|DriverAPI/src/i2c_interface.c|FreeRTOS/src/shell.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="middleware/rtos/freertos/src/shell.c|FreeRTOS/inc/shell.h|FreeRTOS/src/heap_5.c|DriverAPI/src/adc_interface.c|DriverAPI/src/dac_interface.c|DriverAPI/src/sd_card.c|DriverAPI/src/i2c_interface.c|FreeRTOS/src/shell.c|src/banux/04_shell_commands/shell_cmd_param.c|src/banux/04_shell_commands/shell_cmd_param.h|src/banux/04_shell_commands/shell_cmd_soundbank.c|src/banux/04_shell_commands/shell_cmd_soundbank.h|src/banux/05_component/bangtsynth|src/ble_upgrade.c|src/ble_upgrade.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -134,7 +144,7 @@
 				<configuration artifactExtension="adx" artifactName="${ProjName}" buildArtefactType="nds.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=nds.buildArtefactType.exe" description="" id="config.nds32le-elf-mculib-v3s.exe.release.540219724" name="Release" parent="config.nds32le-elf-mculib-v3s.exe.release" postannouncebuildStep="" postbuildStep="" preannouncebuildStep="" prebuildStep="">
 					<folderInfo id="config.nds32le-elf-mculib-v3s.exe.release.540219724." name="/" resourcePath="">
 						<toolChain id="nds.nds32le-elf-mculib-v3s.exe.release.392347779" name="nds32le-elf-mculib-v3s" superClass="nds.nds32le-elf-mculib-v3s.exe.release">
-							<option id="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET.1045477700" superClass="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET" value="rse://LOCALHOST/~target/ADP-AG101P-4GB-D1088-SPU-32I" valueType="string"/>
+							<option id="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET.1045477700" name="RSE_TARGET" superClass="nds32le-elf-mculib-v3s.managedbuild.option.toolchain.RSE_TARGET" value="rse://LOCALHOST/~target/ADP-AG101P-4GB-D1088-SPU-32I" valueType="string"/>
 							<targetPlatform id="target.nds32le-elf-mculib-v3s.platform.exe.release.382257282" name="Debug Platform" superClass="target.nds32le-elf-mculib-v3s.platform.exe.release"/>
 							<builder buildPath="${workspace_loc:/Demo_FreeRTOS}/Release" id="target.nds32le-elf-mculib-v3s.builder.exe.release.726483652" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Andes Make Builder" superClass="target.nds32le-elf-mculib-v3s.builder.exe.release"/>
 							<tool id="tool.nds32le-elf-mculib-v3s.archiver.base.1729081284" name="Andes Archiver" superClass="tool.nds32le-elf-mculib-v3s.archiver.base"/>
@@ -155,7 +165,7 @@
 								<option defaultValue="-O3" id="nds.c.link.option.optimization.level.1745071377" name="Optimization Level" superClass="nds.c.link.option.optimization.level" value="-Os" valueType="string"/>
 								<option defaultValue="true" id="nds32le-elf-mculib-v3s.c.link.option.noshared.base.1293119214" name="No shared libraries (-static)" superClass="nds32le-elf-mculib-v3s.c.link.option.noshared.base" valueType="boolean"/>
 								<option id="nds.c.linker.option.cmodel.607000116" name="Code Model" superClass="nds.c.linker.option.cmodel" value="-mcmodel=medium" valueType="string"/>
-								<option defaultValue="" id="nds32le-elf-mculib-v3s.c.link.exe.release.option.ldscript.288913370" superClass="nds32le-elf-mculib-v3s.c.link.exe.release.option.ldscript" valueType="string"/>
+								<option defaultValue="" id="nds32le-elf-mculib-v3s.c.link.exe.release.option.ldscript.288913370" name="Linker Script (-T)" superClass="nds32le-elf-mculib-v3s.c.link.exe.release.option.ldscript" valueType="string"/>
 								<inputType id="tool.nds.c.linker.input.757612417" superClass="tool.nds.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>

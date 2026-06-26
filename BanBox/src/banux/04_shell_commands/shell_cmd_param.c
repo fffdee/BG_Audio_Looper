@@ -14,6 +14,7 @@
 #include "spi_flash.h"  /* Flash API for erase operation */
 #include "effect_graph.h"  /* Effect graph API for node queries */
 #include "shell_io_ble.h"  /* BLE sync response buffering */
+#include "bg_audio_io_manager.h"  /* BG_AudioIO_SetUsbOutVolume */
 #include <string.h>
 #include <stdlib.h>
 
@@ -187,6 +188,70 @@ static int param_test(int argc, char *argv[])
 }
 
 /**
+ * @brief Set volume parameters
+ * Usage: param set bt_max <0-100>
+ *        param set usb_max <0-100>
+ *        param set usb_out <0-100>
+ *        param set usb_mute <0|1>
+ */
+static int param_set(int argc, char *argv[])
+{
+    if (argc < 2) {
+        Shell_Print("Usage: param set <key> <value>\r\n");
+        Shell_Print("  bt_max   <0-100>  BT music max volume mapped by wheel\r\n");
+        Shell_Print("  usb_max  <0-100>  USB music max volume mapped by wheel\r\n");
+        Shell_Print("  usb_out  <0-100>  USB output (device->PC) volume\r\n");
+        Shell_Print("  usb_mute <0|1>    USB output mute\r\n");
+        return -1;
+    }
+    
+    const char *key = argv[0];
+    int value = atoi(argv[1]);
+    SysParam_t *p = SysParam_Get();
+    
+    if (strcmp(key, "bt_max") == 0) {
+        if (value < 0 || value > 100) {
+            Shell_Print("Error: value must be 0-100\r\n");
+            return -1;
+        }
+        p->volume.bt_max_volume = (uint8_t)value;
+        Shell_Printf("BT max volume set to %d%%\r\n", value);
+    }
+    else if (strcmp(key, "usb_max") == 0) {
+        if (value < 0 || value > 100) {
+            Shell_Print("Error: value must be 0-100\r\n");
+            return -1;
+        }
+        p->volume.usb_max_volume = (uint8_t)value;
+        Shell_Printf("USB max volume set to %d%%\r\n", value);
+    }
+    else if (strcmp(key, "usb_out") == 0) {
+        if (value < 0 || value > 100) {
+            Shell_Print("Error: value must be 0-100\r\n");
+            return -1;
+        }
+        p->volume.usb_out_volume = (uint8_t)value;
+        BG_AudioIO_SetUsbOutVolume(p->volume.usb_out_volume, p->volume.usb_out_mute);
+        Shell_Printf("USB output volume set to %d%%\r\n", value);
+    }
+    else if (strcmp(key, "usb_mute") == 0) {
+        if (value < 0 || value > 1) {
+            Shell_Print("Error: value must be 0 or 1\r\n");
+            return -1;
+        }
+        p->volume.usb_out_mute = (uint8_t)value;
+        BG_AudioIO_SetUsbOutVolume(p->volume.usb_out_volume, p->volume.usb_out_mute);
+        Shell_Printf("USB output mute set to %s\r\n", value ? "ON" : "OFF");
+    }
+    else {
+        Shell_Printf("Error: unknown key '%s'\r\n", key);
+        return -1;
+    }
+    
+    return 0;
+}
+
+/**
  * @brief Query parameters in binary format for APP (compact BLE transmission)
  * Binary protocol: [0xAA][0x55][type][length][data...]
  * Types: 0x01=volume, 0x02=system, 0x03=looper, 0x04=metronome, 0x05=lcd,
@@ -220,16 +285,21 @@ static int param_query(int argc, char *argv[])
         return 0;
     }
     else if (strcmp(target, "volume") == 0) {
-        // Volume parameters: mic1, mic2, guitar1, guitar2, output = 5 bytes
+        // Volume parameters: mic1, mic2, guitar1, guitar2, output,
+        //                    bt_max, usb_max, usb_out, usb_out_mute = 9 bytes
         buf[idx++] = 0xAA; // header
         buf[idx++] = 0x55;
         buf[idx++] = 0x01; // type: volume
-        buf[idx++] = 5;    // length
+        buf[idx++] = 9;    // length
         buf[idx++] = (uint8_t)g_sys_param.volume.mic1_volume;
         buf[idx++] = (uint8_t)g_sys_param.volume.mic2_volume;
         buf[idx++] = (uint8_t)g_sys_param.volume.guitar1_volume;
         buf[idx++] = (uint8_t)g_sys_param.volume.guitar2_volume;
         buf[idx++] = (uint8_t)g_sys_param.volume.output_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.bt_max_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.usb_max_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.usb_out_volume;
+        buf[idx++] = (uint8_t)g_sys_param.volume.usb_out_mute;
         
         if (g_is_sync_command) {
             BLE_BufferSyncResponse((const char *)buf, idx);
@@ -443,6 +513,7 @@ static const ShellOpt_t param_opts[] = {
     OPT("q", "query",   "<target>", "Query params in binary format (system/volume/looper/bluetooth/lcd/effect/metronome)", param_query),
     OPT("e", "erase",   NULL,       "Erase param sector (danger!)", param_erase),
     OPT("t", "test",    NULL,       "Test flash save/load",         param_test),
+    OPT("",  "set",     "<key> <val>", "Set volume param (bt_max/usb_max/usb_out/usb_mute)", param_set),
     OPT_END()
 };
 

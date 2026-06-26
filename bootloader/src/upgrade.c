@@ -31,12 +31,27 @@
 #include "otg_device_standard_request.h"
 #include "spi_flash.h"
 #include "watchdog.h"
+#include "timer.h"
 #include "debug.h"
 #include "remap.h"
+#include "irqn.h"
+#include "core_d1088.h"
+#include "nds32_defs.h"
 
 /* =========================================================================
  * CRC32 (IEEE 802.3, poly = 0xEDB88320) – used for partition flags
  * ========================================================================= */
+
+/* Direct UART1 write for diagnostics — bypasses DBG/printf.
+ * Works even with interrupts disabled (poll-based). */
+#define DIAG_UART1_STATUS  (*(volatile uint32_t *)0x40006014)
+#define DIAG_UART1_TX      (*(volatile uint32_t *)0x40006018)
+static inline void diag_putc(char c)
+{
+    while (!(DIAG_UART1_STATUS & (1u << 9))) ;  /* wait for TX FIFO ready */
+    DIAG_UART1_TX = (uint32_t)(unsigned char)c;
+}
+
 static uint32_t crc32_calc(const uint8_t *buf, uint32_t len)
 {
     uint32_t crc = 0xFFFFFFFFUL;
@@ -100,17 +115,94 @@ int PartFlag_Write(const PartFlag_t *flag)
  * ========================================================================= */
 void Boot_JumpTo(uint32_t addr)
 {
-    typedef void (*Entry_t)(void);
-    Entry_t entry;
-
-    /* Disable watchdog and interrupts before jumping to application.
-     * NOTE: No USB flushing here – USB is not initialized at normal boot.
-     * USB keepalive is only needed during firmware upgrade (in UpdataTask
-     * when Upgrade_Process calls transmit), not during app launch.       */
+    /* ---- Phase 1: Quiesce all hardware ---- */
     WDG_Disable();
+
+    /* Stop Timer2 (bootloader's 1ms tick) */
+    Timer_Pause(TIMER2, 1);
+    Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
+
+    /* Disable all NVIC interrupt sources (INT_MASK2 = 0) */
+    __nds32__mtsr(0x0, NDS32_SR_INT_MASK2);
+
+    /* Disable global interrupts */
     __nds32__setgie_dis();
-    entry = (Entry_t)addr;
-    entry();
+    __nds32__dsb();
+
+    /* ---- Phase 2: Invalidate D-cache, keep I-Cache ----
+     * CRITICAL: Do NOT invalidate I-Cache.
+     * The bootloader's code is I-Cache resident.  We MUST keep I-Cache
+     * intact so that the .data copy loop below can execute from cache
+     * (no IBus) while reading .data from flash (SBus) — no bus conflict.
+     * The APP cannot safely copy .data itself: when __c_init() runs from
+     * flash (IBus) while reading .data LMA from flash (SBus), the two
+     * buses conflict and the CPU hangs (confirmed by diagnostic output). */
+    DataCacheInvalidAll();
+
+    /* ---- Phase 3: Copy APP's .data from flash to SRAM ----
+     * The bootloader's code is I-Cache resident (warmed up during boot),
+     * so the copy loop below executes from cache (no IBus) while reading
+     * .data from flash (SBus) — no bus conflict.
+     * After copying, write a handoff magic to SRAM.  The APP's __c_init()
+     * checks this magic and skips the .data copy. */
+    {
+        const BootInfo_t *info = (const BootInfo_t *)(addr + BOOT_INFO_OFFSET);
+
+        diag_putc('P');  /* Phase 3 entered */
+
+        if (info->magic == BOOT_INFO_MAGIC)
+        {
+            uint32_t i;
+            uint32_t nwords;
+            volatile uint32_t *dst;
+            const volatile uint32_t *src;
+
+            nwords = (info->data_end - info->data_vma + 3u) / 4u;
+            dst    = (volatile uint32_t *)info->data_vma;
+            src    = (const volatile uint32_t *)info->data_lma;
+            for (i = 0; i < nwords; i++)
+                dst[i] = src[i];
+
+            diag_putc('d');  /* .data copied */
+
+            /* Also clear .bss in SRAM so APP's __c_init() can skip it.
+             * The APP's memset from flash can hang due to I-Bus/S-Bus
+             * mutual exclusion on NDS32 when I-Cache is cold. */
+            {
+                uint32_t bss_nwords;
+                volatile uint32_t *bss_dst;
+                bss_nwords = (info->bss_end - info->bss_vma + 3u) / 4u;
+                bss_dst    = (volatile uint32_t *)info->bss_vma;
+                for (i = 0; i < bss_nwords; i++)
+                    bss_dst[i] = 0u;
+
+                diag_putc('z');  /* .bss cleared */
+            }
+
+            /* Write handoff magic so APP's __c_init() skips .data copy
+             * AND .bss clear.  APP's __c_init must check this magic
+             * and skip BOTH operations. */
+            *(volatile uint32_t *)BOOT_HANDOFF_ADDR = BOOT_HANDOFF_MAGIC;
+            diag_putc('H');  /* handoff magic written */
+        }
+        else
+        {
+            diag_putc('?');  /* BootInfo magic mismatch! */
+        }
+    }
+
+    /* ---- Phase 4: Jump to APP ----
+     * The APP's Reset vector at addr is "j ___start", which runs
+     * nds32_init → __init → __cpu_init (sets IVB to 0x040000) → main().
+     * __c_init() will see the handoff magic and skip the .data copy. */
+    {
+        typedef void (*Entry_t)(void);
+        Entry_t entry = (Entry_t)addr;
+        diag_putc('J');  /* about to jump — confirms Phase 4 reached */
+        entry();
+    }
+
+    /* Should never reach here */
     while (1);
 }
 
@@ -177,6 +269,10 @@ void Boot_CheckAndJumpIfNeeded(void)
         volatile const uint32_t *magic_ptr =
             (volatile const uint32_t *)(jump_addr + FW_VALID_MAGIC_OFFSET);
 
+        DBG("[BOOT] Checking magic @ 0x%08X = 0x%08X (expect 0x%08X)\n",
+            (unsigned)(jump_addr + FW_VALID_MAGIC_OFFSET),
+            (unsigned)*magic_ptr, (unsigned)FW_VALID_MAGIC);
+
         if (*magic_ptr != FW_VALID_MAGIC) {
             if (jump_addr != PART_A_BASE) {
                 /* Stale flags pointed to B which has no valid firmware.
@@ -200,12 +296,15 @@ void Boot_CheckAndJumpIfNeeded(void)
         }
     }
 
-    /* Partition B firmware is physically at PART_B_BASE (0x100000) but
-     * the BanBox binary is linked to run at PART_A_BASE (0x040000).
-     * Use the hardware address remap so that CPU accesses to
-     * [PART_A_BASE, PART_A_BASE+2MB) are transparently served from
-     * [PART_B_BASE, PART_B_BASE+2MB) in flash.  The jump target then
-     * becomes PART_A_BASE – the linked entry address.                    */
+    /* NDS32 uses the IVB register to set the interrupt vector base address.
+     * The APP's __cpu_init() sets IVB.IVBASE to __executable_start (0x040000)
+     * so that the CPU fetches exception vectors from the APP's vector table.
+     *
+     * For Partition B: the APP binary is linked at PART_A_BASE (0x040000) but
+     * physically stored at PART_B_BASE (0x240000).  We use hardware address
+     * remap so that CPU accesses to [0x040000, 0x240000) are transparently
+     * served from [0x240000, 0x440000) in flash.  The jump target remains
+     * PART_A_BASE — the linked entry address.                            */
     if (jump_addr == PART_B_BASE) {
         Remap_AddrRemapSet(ADDR_REMAP0, PART_A_BASE, PART_B_BASE,
                            (uint32_t)(PART_A_SIZE / 1024UL)); /* 2048 KB */
@@ -213,6 +312,7 @@ void Boot_CheckAndJumpIfNeeded(void)
         DBG("[BOOT] Remap 0x040000->0x240000, jumping to 0x040000 (Part B)\n");
     }
 
+    DBG("[BOOT] Jumping to 0x%08X ...\n", (unsigned)jump_addr);
     Boot_JumpTo(jump_addr);   /* never returns when jumping */
 #else
     /* Single-partition legacy mode: just jump to A */

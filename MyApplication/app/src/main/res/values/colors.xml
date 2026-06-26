@@ -81,12 +81,14 @@
     <color name="tint_recording">#F0D0D0</color>
     <color name="tint_playing">#D0F0E0</color>
     <color name="tint_stopped">#E0E0E0</color>
+    <color name="tint_queued">#F0E0B0</color>
 
     <!-- 段状态文字颜色 -->
     <color name="color_inactive">#0097B2</color>
     <color name="color_recording">#D32F2F</color>
     <color name="color_playing">#00A366</color>
     <color name="color_stopped">#808080</color>
+    <color name="color_queued">#CC9300</color>
 
     <!-- 全局控制按钮 -->
     <color name="global_btn_active_bg">#C0D8F0</color>

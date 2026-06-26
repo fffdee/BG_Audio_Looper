@@ -1,9 +1,15 @@
 /**
  * @file  boot_decision.c
- * @brief Boot decision logic for no-bootloader dual-partition scheme.
+ * @brief Boot decision logic for bootloader + dual-partition scheme.
  *
- * Called VERY EARLY in main() before FreeRTOS or peripherals.
- * Decides whether to jump to Partition 2 or continue Partition 1.
+ * With a separate bootloader, the bootloader has already decided which
+ * partition to run and performed the address remap before jumping here.
+ * This module provides:
+ *   1. Boot_CheckAndJump() — currently a no-op (bootloader handles this),
+ *      but kept for API compatibility.
+ *   2. Boot_ConfirmSuccess() — resets boot_fail_cnt after successful startup.
+ *   3. Boot_IsRunningPart2() — detects if running from Partition B via remap.
+ *   4. Partition flag read/write helpers.
  */
 
 #include <string.h>
@@ -56,9 +62,10 @@ int PartFlag_Read(PartFlag_t *flag)
 void PartFlag_Default(PartFlag_t *flag)
 {
     memset(flag, 0, sizeof(PartFlag_t));
-    flag->active_part     = 0;   /* boot Partition 1 (factory) */
-    flag->upgrade_pending = 0;
+    flag->active_part     = 0;   /* boot Partition A */
+    flag->reserved1       = 0;
     flag->boot_fail_cnt   = 0;
+    flag->reserved2       = 0;
     part_flag_seal(flag);
 }
 
@@ -100,72 +107,22 @@ static void Boot_JumpTo(uint32_t addr)
 }
 
 /* =========================================================================
- * Boot_CheckAndJump — early startup decision
+ * Boot_CheckAndJump — with bootloader, this is handled by bootloader.
+ * The APP just needs to detect which partition it's running on.
  * ========================================================================= */
 void Boot_CheckAndJump(void)
 {
     PartFlag_t flag;
-    volatile const uint32_t *magic_ptr;
 
-    if (!PartFlag_Read(&flag)) {
-        /* No valid flag → first power-on or fresh chip.
-         * Stay in Partition 1 (factory). */
-        DBG("[BOOT] No partition flag — running Partition 1\n");
+    /* With bootloader, the jump decision is already made.
+     * Just detect which partition we're running on. */
+    if (PartFlag_Read(&flag) && flag.active_part == 1) {
+        g_running_part2 = 1;
+        DBG("[BOOT] Running from Partition B (via remap)\n");
+    } else {
         g_running_part2 = 0;
-        return;
+        DBG("[BOOT] Running from Partition A\n");
     }
-
-    /* If active_part == 0, stay in Partition 1 (factory). */
-    if (flag.active_part == 0) {
-        DBG("[BOOT] active_part=0 — running Partition 1\n");
-        g_running_part2 = 0;
-        return;
-    }
-
-    /* active_part == 1: want to boot Partition 2.
-     * Check boot failure count first. */
-    if (flag.boot_fail_cnt >= BOOT_FAIL_MAX) {
-        /* Partition 2 failed too many times → revert to Partition 1. */
-        DBG("[BOOT] Part 2 failed %d times — reverting to Part 1\n",
-            (int)flag.boot_fail_cnt);
-        flag.active_part    = 0;
-        flag.boot_fail_cnt  = 0;
-        PartFlag_Write(&flag);
-        g_running_part2 = 0;
-        return;
-    }
-
-    /* Check Partition 2 firmware validity (magic at base + 0xA4). */
-    magic_ptr = (volatile const uint32_t *)(PART2_BASE + FW_VALID_MAGIC_OFFSET);
-    if (*magic_ptr != FW_VALID_MAGIC) {
-        /* Partition 2 has no valid firmware — stay in Partition 1. */
-        DBG("[BOOT] Part 2 firmware invalid (magic=0x%08X) — staying Part 1\n",
-            (unsigned)*magic_ptr);
-        flag.active_part    = 0;
-        flag.boot_fail_cnt  = 0;
-        PartFlag_Write(&flag);
-        g_running_part2 = 0;
-        return;
-    }
-
-    /* Partition 2 is valid. Increment fail count before jumping.
-     * The app will call Boot_ConfirmSuccess() to reset it. */
-    flag.boot_fail_cnt++;
-    PartFlag_Write(&flag);
-
-    DBG("[BOOT] Jumping to Part 2 (attempt %d/%d)\n",
-        (int)flag.boot_fail_cnt, BOOT_FAIL_MAX);
-
-    /* Partition 2 firmware is physically at PART2_BASE (0x200000) but
-     * the binary is linked to run at 0x000000 (= PART1_BASE).
-     * Use hardware address remap so CPU accesses to
-     * [0x000000, 0x000000+2MB) are served from [0x200000, 0x200000+2MB). */
-    Remap_AddrRemapSet(ADDR_REMAP0, PART1_BASE, PART2_BASE,
-                       (uint32_t)(PART2_SIZE / 1024UL));  /* 2048 KB */
-
-    /* Jump to 0x000000 — CPU sees Part 1 address, HW fetches Part 2 data. */
-    Boot_JumpTo(PART1_BASE);
-    /* Never reaches here. */
 }
 
 /* =========================================================================
@@ -180,7 +137,7 @@ void Boot_ConfirmSuccess(void)
         return;
     }
 
-    /* Only need to confirm when running Partition 2. */
+    /* Only need to confirm when running Partition B. */
     if (flag.active_part != 1) {
         return;
     }
@@ -192,5 +149,5 @@ void Boot_ConfirmSuccess(void)
     flag.boot_fail_cnt = 0;
     PartFlag_Write(&flag);
     g_running_part2 = 1;
-    DBG("[BOOT] Boot success confirmed (Part 2, fail_cnt reset)\n");
+    DBG("[BOOT] Boot success confirmed (Part B, fail_cnt reset)\n");
 }

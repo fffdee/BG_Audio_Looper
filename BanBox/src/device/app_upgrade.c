@@ -1,12 +1,12 @@
-﻿/**
+/**
  * @file  app_upgrade.c
- * @brief Firmware upgrade engine — No-Bootloader dual-partition scheme.
+ * @brief Firmware upgrade engine — Bootloader + dual-partition scheme.
  *
  * Handles USB CDC and BLE OTA upgrade channels through a unified state machine.
  * Both channels feed packets into the same engine; only one upgrade at a time.
  *
- * Upgrade ALWAYS writes to Partition 2 (0x200000).
- * If currently running Partition 2, refuses upgrade (returns UPG_ERR_WRONG_PART).
+ * Upgrade ALWAYS writes to Partition B (0x240000).
+ * If currently running Partition B, refuses upgrade (returns UPG_ERR_WRONG_PART).
  */
 
 #include "app_upgrade.h"
@@ -82,16 +82,16 @@ static uint8_t get_running_partition(void)
     if (PartFlag_Read(&flags) != 0) {
         return flags.active_part;
     }
-    /* Default: assume Partition 1 */
+    /* Default: assume Partition A */
     return 0;
 }
 
-/* ── Helper: Check if Partition 2 has valid firmware ──────────────────────── */
-static int is_partition2_valid(void)
+/* ── Helper: Check if Partition B has valid firmware ──────────────────────── */
+static int is_partition_b_valid(void)
 {
     /* Internal flash is memory-mapped — read magic directly */
     volatile const uint32_t *magic_ptr =
-        (volatile const uint32_t *)(PART2_BASE + FW_VALID_MAGIC_OFFSET);
+        (volatile const uint32_t *)(PART_B_BASE + FW_VALID_MAGIC_OFFSET);
     return (*magic_ptr == FW_VALID_MAGIC) ? 1 : 0;
 }
 
@@ -135,7 +135,7 @@ static void handle_query(const UpgradeChannel_t *ch)
     PartFlag_t flags;
     
     memset(&info, 0, sizeof(info));
-    info.boot_mode = BOOT_MODE_NO_BL_DUAL;
+    info.boot_mode = BOOT_MODE_DUAL_AB;
     info.active_part = get_running_partition();
     
     /* Read current boot_fail_cnt */
@@ -144,10 +144,10 @@ static void handle_query(const UpgradeChannel_t *ch)
     }
     
     info.protocol_ver = UPG_VERSION;
-    info.part1_base = PART1_BASE;
-    info.part1_size = PART1_SIZE;
-    info.part2_base = PART2_BASE;
-    info.part2_size = PART2_SIZE;
+    info.part_a_base = PART_A_BASE;
+    info.part_a_size = PART_A_SIZE;
+    info.part_b_base = PART_B_BASE;
+    info.part_b_size = PART_B_SIZE;
     
     buf[0] = UPG_SOF;
     buf[1] = RSP_ACK;
@@ -175,19 +175,19 @@ static void handle_start(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16_
               ((uint32_t)pkt[5]);
     
     /* Validate size */
-    if (fw_size == 0 || fw_size > PART2_SIZE) {
+    if (fw_size == 0 || fw_size > PART_B_SIZE) {
         send_nack(ch, UPG_ERR_SIZE);
         return;
     }
     
-    /* Check if currently running Partition 2 */
+    /* Check if currently running Partition B */
     if (get_running_partition() == 1) {
         send_nack(ch, UPG_ERR_WRONG_PART);
         return;
     }
     
-    /* Erase Partition 2 — FlashErase takes (Offset, Size) in bytes, aligns to sector */
-    if (FlashErase(PART2_BASE, fw_size) != FLASH_NONE_ERR) {
+    /* Erase Partition B — FlashErase takes (Offset, Size) in bytes, aligns to sector */
+    if (FlashErase(PART_B_BASE, fw_size) != FLASH_NONE_ERR) {
         send_nack(ch, UPG_ERR_FLASH);
         return;
     }
@@ -195,7 +195,7 @@ static void handle_start(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16_
     /* Initialize state for firmware writing */
     g_engine.state = STATE_WRITING;
     g_engine.active_ch = ch;
-    g_engine.write_addr = PART2_BASE;
+    g_engine.write_addr = PART_B_BASE;
     g_engine.total_size = fw_size;
     g_engine.written_size = 0;
     g_engine.data_crc = 0;
@@ -270,19 +270,19 @@ static void handle_finish(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16
         return;
     }
     
-    /* Verify firmware has valid magic at Partition 2 + FW_VALID_MAGIC_OFFSET */
-    if (!is_partition2_valid()) {
+    /* Verify firmware has valid magic at Partition B + FW_VALID_MAGIC_OFFSET */
+    if (!is_partition_b_valid()) {
         send_nack(ch, UPG_ERR_CRC);  /* Not a valid magic, treat as invalid */
         return;
     }
     
-    /* Update partition flags: set active_part = 1 (Partition 2) */
+    /* Update partition flags: set active_part = 1 (Partition B) */
     if (PartFlag_Read(&flags) == 0) {
         PartFlag_Default(&flags);
     }
     
-    flags.active_part = 1;           /* Activate Partition 2 */
-    flags.upgrade_pending = 0;
+    flags.active_part = 1;           /* Activate Partition B */
+    flags.reserved1 = 0;
     flags.boot_fail_cnt = 1;         /* Will be reset on successful boot */
     
     if (PartFlag_Write(&flags) != 0) {

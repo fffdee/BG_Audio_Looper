@@ -67,8 +67,13 @@ public class LooperControlActivity extends BaseActivity {
     // 每段独立：录制时自动对齐参考段的录制长度
     private static final boolean[] segMatchEnabled  = {false, false, false, false};
 
+    // -------- 录制模式：0=Solo（同一时间只能一个录制），1=Multi（多人同时录制） --------
+    private static int recordingMode = 0;
+    // Solo 模式下的录制队列（按顺序等待录制的段索引）
+    private static final List<Integer> recordingQueue = new ArrayList<>();
+
     // Segment state enum
-    private enum SegState { INACTIVE, RECORDING, PLAYING, STOPPED }
+    private enum SegState { INACTIVE, RECORDING, PLAYING, STOPPED, QUEUED }
 
     private BluetoothHelper bluetoothHelper;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -94,6 +99,9 @@ public class LooperControlActivity extends BaseActivity {
     private int TINT_RECORDING;
     private int TINT_PLAYING;
     private int TINT_STOPPED;
+    private int TINT_QUEUED;
+
+    private int COLOR_QUEUED;
 
     // -------- 每段独立配置（static：Activity 重建时保留） --------
     /** 录制小节数，0 = 手动停止（无限） */
@@ -258,6 +266,17 @@ public class LooperControlActivity extends BaseActivity {
     private Switch swMetroDuringRec;
     private Switch swCountdownBeforeRec;
     private Switch swCountdownSilent;
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+
+    // 侧边栏：录制模式
+    private Switch swRecordingMode;
+    private TextView tvRecordingModeHint;
+    private boolean syncingDrawerUi = false;
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 
     // 侧边栏：Looper 设置
     private Switch swSeg1FollowSeg0;
@@ -343,10 +362,12 @@ public class LooperControlActivity extends BaseActivity {
         COLOR_RECORDING = clr(R.color.color_recording);
         COLOR_PLAYING   = clr(R.color.color_playing);
         COLOR_STOPPED   = clr(R.color.color_stopped);
+        COLOR_QUEUED    = clr(R.color.color_queued);
         TINT_INACTIVE   = clr(R.color.tint_inactive);
         TINT_RECORDING  = clr(R.color.tint_recording);
         TINT_PLAYING    = clr(R.color.tint_playing);
         TINT_STOPPED    = clr(R.color.tint_stopped);
+        TINT_QUEUED     = clr(R.color.tint_queued);
     }
 
     @Override
@@ -550,6 +571,10 @@ public class LooperControlActivity extends BaseActivity {
         looperDrawerOverlay  = findViewById(R.id.looper_drawer_overlay);
         btnCloseLooperDrawer = findViewById(R.id.btn_close_looper_drawer);
 
+        // 录制模式开关
+        swRecordingMode     = findViewById(R.id.sw_recording_mode);
+        tvRecordingModeHint = findViewById(R.id.tv_recording_mode_hint);
+
         // 节拍器开关
         swMetroDuringRec    = findViewById(R.id.sw_metro_during_rec);
         swCountdownBeforeRec = findViewById(R.id.sw_countdown_before_rec);
@@ -580,6 +605,11 @@ public class LooperControlActivity extends BaseActivity {
 
     /** 将当前状态同步到侧边栏 UI */
     private void syncDrawerUiFromState() {
+        syncingDrawerUi = true;
+        // 录制模式
+        swRecordingMode.setChecked(recordingMode == 1);
+        updateRecordingModeHint();
+
         // 节拍器开关
         swMetroDuringRec.setChecked(metroOnDuringRec);
         swCountdownBeforeRec.setChecked(countdownBeforeRec);
@@ -591,6 +621,16 @@ public class LooperControlActivity extends BaseActivity {
         tvCountdownValue.setText(String.valueOf(countdownBeats));
         tvBeatsValue.setText(String.valueOf(currentBeats));
         tvBpmValue.setText(String.valueOf(currentBpm));
+        syncingDrawerUi = false;
+    }
+
+    private void updateRecordingModeHint() {
+        if (tvRecordingModeHint == null) return;
+        if (recordingMode == 1) {
+            tvRecordingModeHint.setText("多人模式：允许多段同时录制");
+        } else {
+            tvRecordingModeHint.setText("Solo：同一时间仅一段录制，其余排队等待");
+        }
     }
 
     /** 绑定侧边栏各控件的监听器 */
@@ -598,6 +638,23 @@ public class LooperControlActivity extends BaseActivity {
         // 关闭按钮 & 遮罩
         btnCloseLooperDrawer.setOnClickListener(v -> closeDrawer());
         looperDrawerOverlay.setOnClickListener(v -> closeDrawer());
+
+        // 录制模式开关：false=Solo, true=Multi
+        swRecordingMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (syncingDrawerUi) return;
+            recordingMode = isChecked ? 1 : 0;
+            updateRecordingModeHint();
+            if (recordingMode == 1) {
+                for (int i = 0; i < SEG_COUNT; i++) {
+                    if (segStates[i] == SegState.QUEUED) {
+                        segStates[i] = SegState.INACTIVE;
+                        refreshSegUI(i);
+                    }
+                }
+                recordingQueue.clear();
+            }
+            saveSettings();
+        });
 
         // 节拍器开关：录制中是否开启节拍器
         swMetroDuringRec.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -1138,16 +1195,51 @@ public class LooperControlActivity extends BaseActivity {
 
         if (current == SegState.INACTIVE) {
             // INACTIVE → 根据节拍器模式决定是否先倒计时再录制
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
             // 单录制限制：同一时刻只允许一段处于 RECORDING 状态
             for (int j = 0; j < SEG_COUNT; j++) {
                 if (j != idx && segStates[j] == SegState.RECORDING) {
                     Toast.makeText(this,
                             "段 " + (j + 1) + " 正在录制，请先停止后再开始新录制",
                             Toast.LENGTH_SHORT).show();
+<<<<<<< Updated upstream
+=======
+=======
+            if (recordingMode == 0) {
+                // Solo 模式：同一时刻只允许一段处于 RECORDING 状态
+                boolean hasRecording = false;
+                for (int j = 0; j < SEG_COUNT; j++) {
+                    if (j != idx && segStates[j] == SegState.RECORDING) {
+                        hasRecording = true;
+                        break;
+                    }
+                }
+                if (hasRecording) {
+                    if (!recordingQueue.contains(idx)) {
+                        recordingQueue.add(idx);
+                        segStates[idx] = SegState.QUEUED;
+                        refreshSegUI(idx);
+                        Toast.makeText(this,
+                                "LOOP " + (idx + 1) + " 已加入录制队列，等待当前录制结束",
+                                Toast.LENGTH_SHORT).show();
+                    }
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
                     return;
                 }
             }
             startRecordingWithMetronome(idx);
+            return;
+        }
+
+        if (current == SegState.QUEUED) {
+            recordingQueue.remove(Integer.valueOf(idx));
+            segStates[idx] = SegState.INACTIVE;
+            refreshSegUI(idx);
+            Toast.makeText(this, "LOOP " + (idx + 1) + " 已移出录制队列", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1181,6 +1273,9 @@ public class LooperControlActivity extends BaseActivity {
         refreshSegUI(idx);
         refreshTopInfoBar();
         updateControlButtonStates();
+        if (prevState == SegState.RECORDING) {
+            processRecordingQueue();
+        }
         final String fullCmd;
         if (prevState == SegState.RECORDING && nextState == SegState.PLAYING) {
             String trimCmd = buildPreCropUpdate(idx);
@@ -1692,6 +1787,7 @@ public class LooperControlActivity extends BaseActivity {
             refreshSegUI(idx);
             refreshSegCfgHint(idx);
             updateControlButtonStates();
+            processRecordingQueue();
             // 停录命令 + 裁剪命令拼在一起发送
             String preCropCmd = buildPreCropUpdate(idx);
             if (!preCropCmd.isEmpty()) upsertAudioTrackCard(idx); // 用裁剪后的参数刷新音频轨卡片
@@ -1716,6 +1812,7 @@ public class LooperControlActivity extends BaseActivity {
             refreshSegUI(idx);
             refreshSegCfgHint(idx);
             updateControlButtonStates();
+            processRecordingQueue();
             sendCommandWithCallback("looper -t " + idx, success -> {
                 if (!success) {
                     segStates[idx] = SegState.RECORDING;
@@ -1733,6 +1830,26 @@ public class LooperControlActivity extends BaseActivity {
             handler.removeCallbacks(autoStopRunnables[idx]);
             autoStopRunnables[idx] = null;
         }
+    }
+
+    /**
+     * Solo 模式下，当一段录制结束后，检查录制队列并自动启动下一个排队段。
+     * 应在段从 RECORDING 切换到其他状态时调用。
+     */
+    private void processRecordingQueue() {
+        if (recordingMode != 0) return;
+        for (int j = 0; j < SEG_COUNT; j++) {
+            if (segStates[j] == SegState.RECORDING) return;
+        }
+        if (recordingQueue.isEmpty()) return;
+        int nextIdx = recordingQueue.remove(0);
+        if (segStates[nextIdx] != SegState.QUEUED) {
+            processRecordingQueue();
+            return;
+        }
+        segStates[nextIdx] = SegState.INACTIVE;
+        refreshSegUI(nextIdx);
+        startRecordingWithMetronome(nextIdx);
     }
 
     /**
@@ -1785,6 +1902,7 @@ public class LooperControlActivity extends BaseActivity {
         segTrimStartPage[idx]   = 0;
         segTrimEndPage[idx]     = 0;
         removeAudioTrackCard(idx);
+        recordingQueue.remove(Integer.valueOf(idx));
         for (int j = 0; j < SEG_COUNT; j++) {
             if (j != idx && segInSyncWait[j]) {
                 cancelCountdown(j);
@@ -1796,6 +1914,9 @@ public class LooperControlActivity extends BaseActivity {
         refreshSegUI(idx);
         refreshSegCfgHint(idx);
         updateControlButtonStates();
+        if (prevStateForDel == SegState.RECORDING) {
+            processRecordingQueue();
+        }
         Toast.makeText(this, "LOOP " + (idx + 1) + " 录音已删除", Toast.LENGTH_SHORT).show();
         sendCommandWithCallback("looper -c " + idx, success -> {
             if (!success) {
@@ -2036,7 +2157,6 @@ public class LooperControlActivity extends BaseActivity {
                     handler.postDelayed(() -> {
                         for (int i = 0; i < SEG_COUNT; i++) {
                             if (segStates[i] != SegState.INACTIVE) {
-                                // 清理定时器等
                                 cancelAutoStop(i);
                                 cancelCountdown(i);
                                 stopStorageUpdateForRecording(i);
@@ -2046,7 +2166,6 @@ public class LooperControlActivity extends BaseActivity {
                                 }
                                 waitFinishEnabled[i] = false;
 
-                                // 重置状态
                                 segStates[i] = SegState.INACTIVE;
                                 segLoopDurationMs[i] = 0;
                                 segRecordStartTime[i] = 0;
@@ -2054,14 +2173,24 @@ public class LooperControlActivity extends BaseActivity {
                                 segTrimStartPage[i] = 0;
                                 segTrimEndPage[i] = 0;
 
+<<<<<<< HEAD
                                 // 刷新UI
                                 refreshSegUI(i);
                                 refreshSegCfgHint(i);
                             }
                             // 无论当前状态，始终清除音频轨卡片（防止残留）
+<<<<<<< Updated upstream
+=======
+=======
+                                refreshSegUI(i);
+                                refreshSegCfgHint(i);
+                            }
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
                             removeAudioTrackCard(i);
                         }
 
+                        recordingQueue.clear();
                         updateControlButtonStates();
                         updateStorageDisplay();
                         refreshTopInfoBar();
@@ -2132,6 +2261,7 @@ public class LooperControlActivity extends BaseActivity {
                 cmds.append("looper -t ").append(i).append("\r\n");
             }
         }
+        recordingQueue.clear();
         updateControlButtonStates();
         if (cmds.length() > 0) {
             sendCommand(cmds.toString().trim(), null);
@@ -2219,6 +2349,12 @@ public class LooperControlActivity extends BaseActivity {
                 hintLabel  = "Tap to resume";
                 textColor  = COLOR_STOPPED;
                 bgTint     = TINT_STOPPED;
+                break;
+            case QUEUED:
+                stateLabel = "QUEUE";
+                hintLabel  = "Tap to cancel";
+                textColor  = COLOR_QUEUED;
+                bgTint     = TINT_QUEUED;
                 break;
             default:
                 stateLabel = "READY";
@@ -2471,10 +2607,25 @@ public class LooperControlActivity extends BaseActivity {
             cancelCountdown(i);
             stopStorageUpdateForRecording(i);
             if (segStates[i] == SegState.PLAYING || segStates[i] == SegState.RECORDING) {
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
                 // 断连：停止但保留段数据，等重连后同步恢复
                 segStates[i]        = SegState.STOPPED;
                 segPlayStartTime[i] = 0;
             }
+<<<<<<< Updated upstream
+=======
+=======
+                segStates[i]        = SegState.STOPPED;
+                segPlayStartTime[i] = 0;
+            }
+            if (segStates[i] == SegState.QUEUED) {
+                segStates[i] = SegState.INACTIVE;
+            }
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
             segInCountdown[i] = false;
             segInSyncWait[i]  = false;
             refreshSegUI(i);
@@ -2482,6 +2633,7 @@ public class LooperControlActivity extends BaseActivity {
             // 注意：STOPPED 段保留音频轨卡片，等重连同步后决定是否移除
         }
         for (int i = 0; i < SEG_COUNT; i++) { segFollowEnabled[i] = false; segMatchEnabled[i] = false; }
+        recordingQueue.clear();
         srRefSegIdx = -1;
         hideSyncInfoPanel();
 
@@ -2591,8 +2743,8 @@ public class LooperControlActivity extends BaseActivity {
 
             // 段状态：字节 [10..13] → hex 偏移 20
             for (int i = 0; i < SEG_COUNT; i++) {
-                // 倒计时中的段不接受 BLE 状态同步，避免覆盖倒计时 UI
                 if (segInCountdown[i]) continue;
+                if (segStates[i] == SegState.QUEUED) continue;
 
                 int off = 20 + i * 2;
                 int val = Integer.parseInt(hex.substring(off, off + 2), 16);
@@ -2663,8 +2815,8 @@ public class LooperControlActivity extends BaseActivity {
             int    segIdx   = Integer.parseInt(m.group(1));
             String stateStr = m.group(2).toUpperCase();
             if (segIdx < 0 || segIdx >= SEG_COUNT) continue;
-            // 倒计时中的段不接受 BLE 状态同步
             if (segInCountdown[segIdx]) continue;
+            if (segStates[segIdx] == SegState.QUEUED) continue;
             SegState parsed;
             switch (stateStr) {
                 case "RECORDING": parsed = SegState.RECORDING; break;
@@ -2730,14 +2882,30 @@ public class LooperControlActivity extends BaseActivity {
             }
             if (newState != SegState.INACTIVE && lenPages > 0) {
                 segStates[i] = newState;
+<<<<<<< Updated upstream
                 // 若本地时长未知，从 pages 估算
+=======
+<<<<<<< HEAD
+                // 若本地时长未知，从 pages 估算
+=======
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
                 if (segLoopDurationMs[i] <= 0) {
                     segLoopDurationMs[i] = pagesToMs(lenPages, i);
                 }
                 upsertAudioTrackCard(i);
             } else {
+<<<<<<< Updated upstream
                 // MCU 报告段已清除
                 if (segStates[i] != SegState.INACTIVE) {
+=======
+<<<<<<< HEAD
+                // MCU 报告段已清除
+                if (segStates[i] != SegState.INACTIVE) {
+=======
+                if (segStates[i] != SegState.INACTIVE && segStates[i] != SegState.QUEUED) {
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
                     segStates[i]        = SegState.INACTIVE;
                     segLoopDurationMs[i] = 0;
                     removeAudioTrackCard(i);
@@ -2951,7 +3119,15 @@ public class LooperControlActivity extends BaseActivity {
                     long b2 = Long.parseLong(hex.substring(base + 4, base + 6), 16);
                     long b3 = Long.parseLong(hex.substring(base + 6, base + 8), 16);
                     long lenBytes = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+<<<<<<< Updated upstream
                     if (lenBytes > 0 && segStates[i] == SegState.INACTIVE) {
+=======
+<<<<<<< HEAD
+                    if (lenBytes > 0 && segStates[i] == SegState.INACTIVE) {
+=======
+                    if (lenBytes > 0 && (segStates[i] == SegState.INACTIVE || segStates[i] == SegState.QUEUED)) {
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
                         segStates[i] = SegState.STOPPED;
                         // 估算循环时长（48000 Hz，单声道 2B/sample，立体声 4B/sample）
                         long bytesPerSec = (segRecSource[i] != REC_SRC_ALL_MIX) ? 96000L : 192000L;
@@ -3916,14 +4092,16 @@ public class LooperControlActivity extends BaseActivity {
 
     /** 删除 LOOP 段 */
     private void showSegDeleteDialog(int idx) {
-        // 检查要删除的段是否正在播放或录制
         boolean isTargetActive = (segStates[idx] == SegState.PLAYING || segStates[idx] == SegState.RECORDING);
+        boolean isQueued = (segStates[idx] == SegState.QUEUED);
         String warningMsg = "";
 
         if (isTargetActive) {
             warningMsg = (segStates[idx] == SegState.PLAYING) ?
                     "\n⚠️ 该段正在播放，将先停止播放再删除。" :
                     "\n⚠️ 该段正在录制，将停止录制并删除。";
+        } else if (isQueued) {
+            warningMsg = "\n⚠️ 该段正在录制队列中，将从队列中移除。";
         }
 
         new AlertDialog.Builder(this)
@@ -3951,13 +4129,12 @@ public class LooperControlActivity extends BaseActivity {
      * 执行段删除操作（简化版，PSRAM无需擦除）
      */
     private void performSegmentDeletionSimple(int idx) {
+        final SegState prevState = segStates[idx];
         cancelAutoStop(idx);
         cancelCountdown(idx);
 
-        // 停止可能正在运行的存储空间更新任务
         stopStorageUpdateForRecording(idx);
 
-        // 取消等待停止预测定时
         if (waitFinishPredictRunnables[idx] != null) {
             handler.removeCallbacks(waitFinishPredictRunnables[idx]);
             waitFinishPredictRunnables[idx] = null;
@@ -3970,11 +4147,15 @@ public class LooperControlActivity extends BaseActivity {
         segTrimStartPage[idx]   = 0;
         segTrimEndPage[idx]     = 0;
         removeAudioTrackCard(idx);
+        recordingQueue.remove(Integer.valueOf(idx));
         refreshSegUI(idx);
         refreshSegCfgHint(idx);
         updateControlButtonStates();
         updateStorageDisplay();
-        sendCommand("looper -c " + idx, null);  // 使用清除命令
+        if (prevState == SegState.RECORDING) {
+            processRecordingQueue();
+        }
+        sendCommand("looper -c " + idx, null);
         Toast.makeText(this,
                 "LOOP " + (idx + 1) + " 已删除",
                 Toast.LENGTH_SHORT).show();
@@ -4699,6 +4880,7 @@ public class LooperControlActivity extends BaseActivity {
         ed.putBoolean("countdown_before_rec", countdownBeforeRec);
         ed.putInt("countdown_beats", countdownBeats);
         ed.putInt("current_beats",   currentBeats);
+        ed.putInt("recording_mode",  recordingMode);
         for (int i = 0; i < SEG_COUNT; i++) {
             ed.putInt    ("seg_measures_"         + i, segMeasures[i]);
             ed.putBoolean("seg_auto_play_"        + i, segAutoPlay[i]);
@@ -4726,6 +4908,7 @@ public class LooperControlActivity extends BaseActivity {
         countdownBeforeRec = sp.getBoolean("countdown_before_rec", true);
         countdownBeats     = sp.getInt("countdown_beats", 4);
         currentBeats       = sp.getInt("current_beats",   4);
+        recordingMode      = sp.getInt("recording_mode",  0);
         for (int i = 0; i < SEG_COUNT; i++) {
             segMeasures[i]       = sp.getInt    ("seg_measures_"         + i, 0);
             segAutoPlay[i]       = sp.getBoolean("seg_auto_play_"        + i, true);

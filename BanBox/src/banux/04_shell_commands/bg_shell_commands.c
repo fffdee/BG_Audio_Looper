@@ -3429,11 +3429,16 @@ void Shell_RegisterAllModules(void)
     /* 提示音测试命令 */
     extern void ShellCmdRemind_Register(void);
 
+    /* 开机音乐测试命令 */
+    extern void ShellCmdPowerOnMusic_Register(void);
+
     ShellCmdMetronome_Register();
 
     ShellCmdDrum_Register();
 
     ShellCmdRemind_Register();   /* remind 提示音测试命令 */
+
+    ShellCmdPowerOnMusic_Register();  /* pwr_music 开机音乐测试命令 */
 
     /* 硬件相关命令 - 根据板子硬件能力条件编译 */
 #if HW_CMD_FAT_EN
@@ -3465,6 +3470,18 @@ void Shell_RegisterAllModules(void)
         extern void ShellCmdLp_Register(void);
         ShellCmdLp_Register();
     }
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+
+    /* 固件升级命令 (USB CDC) */
+    {
+        extern void ShellCmdUpg_Register(void);
+        ShellCmdUpg_Register();
+    }
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 }
 
 /*============================================================================
@@ -3533,4 +3550,54 @@ DEFINE_MODULE(remind, "Remind sound test", MOD_CAT_DEBUG, remind_opts);
 void ShellCmdRemind_Register(void)
 {
     REGISTER_MODULE(remind);
+}
+
+/*============================================================================
+ * upg 模块 - 固件升级 (USB CDC)
+ *   upg          进入升级模式（停止Audio/Shell，等待协议包）
+ *   upg info     查询当前分区信息
+ *===========================================================================*/
+#include "cdc_upgrade.h"
+#include "dual_partition.h"
+
+static int upg_enter(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    Shell_Printf("[UPG] Entering firmware upgrade mode via USB CDC...\r\n");
+    CDC_Upgrade_EnterMode();
+    return 0;
+}
+
+static int upg_info(int argc, char *argv[])
+{
+    PartFlag_t flags;
+    (void)argc; (void)argv;
+
+    Shell_Printf("=== Partition Info ===\r\n");
+    Shell_Printf("Part A: 0x%06X (%d KB)\r\n", PART_A_BASE, PART_A_SIZE / 1024);
+    Shell_Printf("Part B: 0x%06X (%d KB)\r\n", PART_B_BASE, PART_B_SIZE / 1024);
+    Shell_Printf("Flags:  0x%06X\r\n", PART_FLAG_ADDR);
+
+    if (PartFlag_Read(&flags)) {
+        Shell_Printf("Active: %s\r\n", flags.active_part ? "B" : "A");
+        Shell_Printf("Boot fail count: %d / %d\r\n", flags.boot_fail_cnt, BOOT_FAIL_MAX);
+    } else {
+        Shell_Printf("No valid partition flags\r\n");
+    }
+
+    Shell_Printf("Running: %s\r\n", Boot_IsRunningPart2() ? "Part B (remap)" : "Part A");
+    return 0;
+}
+
+static const ShellOpt_t upg_opts[] = {
+    OPT("", "", NULL, "Enter upgrade mode (default action)", upg_enter),
+    OPT("i", "info", NULL, "Show partition info", upg_info),
+    OPT_END()
+};
+
+DEFINE_MODULE(upg, "Firmware upgrade (USB CDC)", MOD_CAT_SYSTEM, upg_opts);
+
+void ShellCmdUpg_Register(void)
+{
+    REGISTER_MODULE(upg);
 }

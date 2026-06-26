@@ -8,6 +8,9 @@
 #include <nds32_intrinsic.h>
 #include "debug.h"
 
+/* Linker-defined symbol: start of executable (vector table base) */
+extern char __executable_start;
+
 /* It will use Default_Handler if you don't have one */
 //#pragma weak ExceptionCommHandler = Default_Handler
 
@@ -57,7 +60,7 @@ void ExceptionCommHandler(unsigned stack, unsigned exception_num)
 	unsigned int *pstack;
 
 	  pstack = (unsigned int *)stack;
-	  DBG("Error exception happened\r\n");
+	  DBG("Error exception happened\r
 
 	  mask_itype = __nds32__mfsr(NDS32_SR_ITYPE);
 	  mask_ipc = __nds32__mfsr(NDS32_SR_IPC);
@@ -183,6 +186,42 @@ void ExceptionCommHandler(unsigned stack, unsigned exception_num)
 	while(1) ;
 }
 
+/* Bootloader handoff: bootloader writes this magic to SRAM before jumping
+ * to signal that .data has already been copied.  The APP's __c_init() will
+ * check this magic and skip its own .data copy.
+ *
+ * Why this is needed: the APP cannot safely copy .data from flash to SRAM
+ * by itself because of the SBus/IBus conflict on the BP10 flash controller.
+ * When the APP's __c_init() executes from flash (IBus) while reading .data
+ * LMA from flash (SBus), the two buses conflict and the CPU hangs.
+ *
+ * The bootloader's code is I-Cache resident (warmed up during boot), so
+ * the copy loop in Boot_JumpTo() executes from cache (no IBus) while
+ * reading .data from flash (SBus) â€” no bus conflict. */
+#define BOOT_HANDOFF_ADDR  0x20000000UL
+#define BOOT_HANDOFF_MAGIC 0xDEADBEEFUL
+
+/* Direct UART1 write for early diagnostics â€” bypasses DBG/printf entirely.
+ * UART1 is already initialized by the bootloader, so we can write directly
+ * to the MMIO registers.  This works even before __c_init() and with
+ * interrupts disabled.
+ *   UART1 base:   0x40006000
+ *   Status reg:   base+0x14, bit 9 = TX FIFO ready
+ *   TX data reg:  base+0x18 */
+#define UART1_STATUS  (*(volatile uint32_t *)0x40006014)
+#define UART1_TX      (*(volatile uint32_t *)0x40006018)
+static inline void diag_putc(char c)
+{
+	while (!(UART1_STATUS & (1u << 9))) ;  /* wait for TX FIFO ready */
+	UART1_TX = (uint32_t)(unsigned char)c;
+}
+
+/* Returns 1 if this is the APP (linked at 0x040000+), 0 if bootloader */
+static inline int is_app(void)
+{
+	return ((uint32_t)&__executable_start >= 0x040000UL);
+}
+
 void __c_init()
 {
 
@@ -200,13 +239,38 @@ void __c_init()
 	extern char __data_start;
 	extern char _edata;
 
-	/* Copy data section to RAM */
-	size = &_edata - &__data_start;
-	MEMCPY(&__data_start, &__data_lmastart, size);
+	if (is_app())
+	{
+		diag_putc('c');  /* __c_init entered */
 
-	/* Clear bss section */
+		/* Check if bootloader already did .data copy + .bss clear.
+		 * Handoff magic at 0x20000000 signals bootloader has already done
+		 * all SRAM init.  If magic is NOT present, we fall through to the
+		 * legacy path below to do .bss clear ourselves.
+		 *
+		 * NOTE: __c_init runs BEFORE HardwareStackProtectEnable so that
+		 * reading 0x20000000 (below SP_BOUND=0x20003000) does not trigger
+		 * a Hardware Stack Protection fault. */
+		if (*(volatile uint32_t *)BOOT_HANDOFF_ADDR == BOOT_HANDOFF_MAGIC)
+		{
+			diag_putc('h');  /* bootloader handoff OK â€” skip .data copy & .bss clear */
+			diag_putc('r');  /* __c_init returning (skip path) */
+			return;
+		}
+		/* Magic NOT present: fall through to clear .bss ourselves */
+	}
+	else
+	{
+		/* Non-APP (standalone/bootloader) path: copy .data from flash to SRAM.
+		 * NO diag_putc here â€” bootloader UART may not be initialized yet. */
+		size = &_edata - &__data_start;
+		MEMCPY(&__data_start, &__data_lmastart, size);
+	}
+
+	/* Clear bss section â€” safe: only writes to SRAM, no flash access */
 	size = &_end - &__bss_start;
 	MEMSET(&__bss_start, 0, size);
+
 	return;
 }
 
@@ -230,26 +294,26 @@ void __cpu_init()
 #endif
 
 #if defined(CFG_EVIC)
-	/* set EVIC, vector size: 4 bytes, base: 0x0 */
-	__nds32__mtsr(0x1<<13, NDS32_SR_IVB);
+	/* set EVIC, vector size: 4 bytes, base: APP vector table */
+	__nds32__mtsr((0x1<<13) | ((uint32_t)&__executable_start & 0xFFFF0000UL), NDS32_SR_IVB);
 #else
 # if defined(USE_C_EXT)
 	/* If we use v3/v3m toolchain and want to use
 	 * C extension please use USE_C_EXT in CFLAGS
 	 */
 #ifdef __NDS32_ISA_V3__
-	/* set IVIC, vector size: 4 bytes, base: 0x0 */
-	__nds32__mtsr(0x0, NDS32_SR_IVB);
+	/* set IVIC, vector size: 4 bytes, base: APP vector table */
+	__nds32__mtsr((uint32_t)&__executable_start & 0xFFFF0000UL, NDS32_SR_IVB);
 #else
-	/* set IVIC, vector size: 16 bytes, base: 0x0 */
-	__nds32__mtsr(0x1<<14, NDS32_SR_IVB);
+	/* set IVIC, vector size: 16 bytes, base: APP vector table */
+	__nds32__mtsr((0x1<<14) | ((uint32_t)&__executable_start & 0xFFFF0000UL), NDS32_SR_IVB);
 #endif
 # else
-	/* set IVIC, vector size: 4 bytes, base: 0x0
+	/* set IVIC, vector size: 4 bytes, base: APP vector table
 	 * If we use v3/v3m toolchain and want to use
 	 * assembly version please don't use USE_C_EXT
 	 * in CFLAGS */
-	__nds32__mtsr(0x0000, NDS32_SR_IVB);
+	__nds32__mtsr((uint32_t)&__executable_start & 0xFFFF0000UL, NDS32_SR_IVB);
 # endif
 #endif
 	/* Set PSW INTL to 0 */
@@ -298,7 +362,7 @@ void __cpu_init()
 	}
 #endif
 
-	__nds32__mtsr(__nds32__mfsr(NDS32_SR_INT_PEND2), NDS32_SR_INT_PEND2);  //Çå³ýpending
+	__nds32__mtsr(__nds32__mfsr(NDS32_SR_INT_PEND2), NDS32_SR_INT_PEND2);  //ï¿½ï¿½ï¿½pending
 
 	return;
 }
@@ -333,16 +397,54 @@ void HardwareStackProtectEnable(void)
 
 void EnableIDCache(void);
 void Chip_MemInit(void);
+/* Re-initialize UART driver after __c_init() clears .bss.
+ * The .bss clear zeroes all global variables including the UART driver's
+ * software state (ring buffer pointers, baud rate config, etc.).  Without
+ * re-init, subsequent DBG/printf output is garbled because the driver
+ * operates with zeroed state.  DbgUartInit only resets the software side;
+ * the hardware is already configured by the bootloader.
+ * (Declaration is in debug.h, included above.) */
 void __init()
 {
 /*----------------------------------------------------------
    !!  Users should NOT add any code before this comment  !!
 ------------------------------------------------------------*/
+	if (is_app()) diag_putc('A');  /* __init entered */
 	__cpu_init();
-	EnableIDCache(); //add by peter
-	HardwareStackProtectEnable();
+	if (is_app()) diag_putc('B');  /* __cpu_init done */
+
+	/* If bootloader already did .data copy + .bss clear (handoff magic
+	 * present), __c_init() has nothing to do.  Moreover, __c_init()'s
+	 * return epilogue crashes on APP side â€” skip the call entirely. */
+	if (!is_app() || *(volatile uint32_t *)BOOT_HANDOFF_ADDR != BOOT_HANDOFF_MAGIC)
+	{
+		if (is_app()) diag_putc('y');  /* need __c_init (no handoff) */
+		__c_init();     //copy data section, clean bss
+		if (is_app()) diag_putc('z');  /* __c_init done */
+	}
+	else
+	{
+		if (is_app()) diag_putc('x');  /* skipping __c_init (bootloader handoff OK) */
+	}
+
+	/* TEMPORARY: Skip EnableIDCache to isolate TLB hang */
+	if (is_app()) diag_putc('!');  /* SKIPPING EnableIDCache & DataCacheInvalidAll */
+	// EnableIDCache(); // SKIPPED â€” test if TLB programming is the root cause
+	// DataCacheInvalidAll(); // SKIPPED
+
+	HardwareStackProtectEnable();  // AFTER __c_init to avoid blocking SRAM reads below SP_BOUND
+	if (is_app()) diag_putc('D');  /* HardwareStackProtectEnable done */
 	Chip_MemInit();
-	__c_init();     //copy data section, clean bss
+	if (is_app()) diag_putc('E');  /* Chip_MemInit done */
+
+	/* Re-init UART driver software state â€” .bss was just cleared above,
+	 * zeroing the driver's internal variables.  Only needed when started
+	 * by bootloader (the standalone cold-start path initializes UART later
+	 * in main(), before any .bss-dependent code runs). */
+	if (is_app()) {
+		DbgUartInit(1, 115200, 8, 0, 1);
+		diag_putc('S');  /* UART driver re-initialized */
+	}
 }
 
 __attribute__ ((section(".stub_section"),used)) __attribute__((naked))
@@ -350,12 +452,12 @@ void stub(void)
 {
 __asm__ __volatile__(
 
-    		".long 0xFFFFFFFF \n\n"	//0xA4
+    		".long 0x42475046 \n\n"	//0xA4 FW_VALID_MAGIC "BGPF" â€” bootloader checks this
     		".long 0xFFFFFFFF \n\n" //0xA8
     		".long 0xFFFFFFFF \n\n" //0xAC
     		".long 0x100000 \n\n"		//0xB0 constant data @ 0x8C
     		".long 0x1D0000 \n\n"		//0xB4 user data
-    		".byte 0x01 \n\n"				//0xB8 0x01´ú±íB1X
+    		".byte 0x01 \n\n"				//0xB8 0x01ï¿½ï¿½ï¿½ï¿½B1X
     		".byte 0 \n\n"					//0xB9
     		".byte 0 \n\n"					//0xBA
     		".byte 1 \n\n"					//0xBB
@@ -371,7 +473,14 @@ __asm__ __volatile__(
 		    ".endr \n\n"
 			".long 0x00FFFFFF \n\n"
 		    ".short 0xFFFF \n\n"
-
+		    /* ---- Boot info for bootloader (offset 0x104 from image base) ---- */
+		    ".balign 4 \n\n"
+		    ".long 0x42474F46 \n\n"    /* "BGOF" magic â€” Boot Info */
+		    ".long __data_lmastart \n\n"  /* .data LMA in flash */
+		    ".long __data_start \n\n"     /* .data VMA in SRAM   */
+		    ".long _edata \n\n"           /* .data end VMA       */
+		    ".long __bss_start \n\n"     /* .bss VMA in SRAM    */
+		    ".long _end \n\n"             /* .bss end VMA        */
     );
 }
 

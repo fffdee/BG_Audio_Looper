@@ -1,5 +1,2 @@
 eclipse.preferences.version=1
-encoding//src/drivers/bluetooth/src/ble_app_callback.c=UTF-8
-encoding//src/drivers/bluetooth/src/ble_app_func.c=UTF-8
-encoding//src/drivers/usb/src/otg_device_standard_request.c=UTF-8
 encoding//src/main.c=UTF-8

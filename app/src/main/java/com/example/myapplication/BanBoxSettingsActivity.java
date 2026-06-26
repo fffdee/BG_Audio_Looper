@@ -121,6 +121,34 @@ public class BanBoxSettingsActivity extends BaseActivity {
         // 设置ViewPager适配器
         setupFunctionViewPager();
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+        // ========== 设备功能列表显示 ==========
+        TextView tvFeatureList = findViewById(R.id.tv_feature_list);
+        if (tvFeatureList != null && bluetoothHelper != null) {
+            bluetoothHelper.getFeatureListLiveData().observe(this, features -> {
+                if (features == null) {
+                    tvFeatureList.setText("连接设备后显示支持的功能");
+                    return;
+                }
+                StringBuilder sb = new StringBuilder();
+                sb.append("固件版本: ").append(features.fwVersion).append("\n");
+                sb.append("硬件版本: ").append(features.hwVersion).append("\n");
+                sb.append("支持功能:\n");
+                if (features.features != null) {
+                    java.util.TreeSet<String> sorted = new java.util.TreeSet<>(features.features);
+                    for (String feat : sorted) {
+                        sb.append("  • ").append(featName(feat)).append("\n");
+                    }
+                }
+                tvFeatureList.setText(sb.toString().trim());
+            });
+        }
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
         // ========== 初始化侧边栏相关控件 ==========
         initSideDrawer();
 
@@ -229,6 +257,33 @@ public class BanBoxSettingsActivity extends BaseActivity {
         }
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+    /** 将功能名称（英文）转换为中文显示 */
+    private String featName(String feat) {
+        if (feat == null) return "";
+        switch (feat) {
+            case "eq":            return "EQ 均衡器";
+            case "reverb":        return "混响";
+            case "delay":         return "延迟";
+            case "drc":           return "动态压缩";
+            case "gain":          return "增益调节";
+            case "looper":        return "循环录音";
+            case "metronome":     return "节拍器";
+            case "drum":          return "鼓机";
+            case "wav_export":    return "WAV 导出";
+            case "battery_calib": return "电池校准";
+            case "usb_audio":     return "USB 声卡";
+            case "ble":           return "BLE 蓝牙";
+            case "fw_upgrade":    return "固件升级";
+            default:              return feat;
+        }
+    }
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
     /**
      * 初始化侧边栏控件和交互逻辑
      */

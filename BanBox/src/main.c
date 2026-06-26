@@ -93,6 +93,7 @@ extern uint8_t BleConnectFlag;
 
 
 #include "drv_init.h"           /* Driver Framework Initialization */
+#include "app_config.h"         /* HAS_BOOTLOADER, FLASH_BOOT_EN */
 
 /* 事件发布-订阅系统 */
 #include "bg_event.h"
@@ -100,6 +101,19 @@ extern uint8_t BleConnectFlag;
 /* 系统状态管理（空闲/正常/数据传输） */
 #include "sys_state.h"
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+/* Boot partition detection and confirmation */
+#include "dual_partition.h"
+
+/* Firmware upgrade engine */
+#include "app_upgrade.h"
+#include "cdc_upgrade.h"
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 /* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
 #include "remind_sound.h"
 
@@ -291,6 +305,12 @@ void power_on()
 
 	// GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
 	// GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+
+	/* LED 指示灯初始化: GPIO_A16 输出，默认常亮 */
+	GPIO_RegOneBitClear(GPIO_A_IE, HW_LED_GPIO_PIN);
+	GPIO_RegOneBitSet(GPIO_A_OE, HW_LED_GPIO_PIN);
+	GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
+
 	CtrlVarsInit();
 
 	/* SPI and Driver Framework already initialized in main() */
@@ -376,6 +396,10 @@ void power_on()
 #endif
 
 	/*=====================================================
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 	 * BLE data command dispatcher
 	 * Route incoming BLE data frames to the correct handler
 	 *====================================================*/
@@ -385,12 +409,41 @@ void power_on()
 		extern void BleProto_RegisterDataHandler(BleProto_DataHandler_t handler);
 		BleProto_RegisterDataHandler(ble_data_cmd_dispatch);
 		DBG("[Task] BLE data handler registered\n");
+<<<<<<< Updated upstream
+=======
+=======
+	 * BLE application layer — sync provider + data handler
+	 * 注册 05_component/ble_app 层的同步提供者和数据命令处理器，
+	 * 解耦 02_device_drivers 与 05_component 的直接依赖。
+	 *====================================================*/
+	{
+		/* 先注册回调（BleApp_Init），再初始化协议（BleProto_Init），
+		 * 确保 BleProto_Init 中的 g_send_init_handler 回调已就绪 */
+		extern void BleApp_Init(void);
+		BleApp_Init();
+		extern void BleProto_Init(void);
+		BleProto_Init();
+		DBG("[Task] BLE app layer initialized (sync + data handler)\n");
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 	}
 
 	/*=====================================================
 	 * Battery calibration — load saved curve from flash
 	 *====================================================*/
 	BattCalib_Init();
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+	/* Register LowPower_FeedActivity callback for battery calibration (02→06 decoupling) */
+	{
+		extern void BattCalib_RegisterFeedActivity(void (*feed_fn)(uint8_t));
+		extern void LowPower_FeedActivity(uint8_t mask);
+		BattCalib_RegisterFeedActivity(LowPower_FeedActivity);
+	}
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 	DBG("[Task] Battery calibration initialized\n");
 
 	/*=====================================================
@@ -434,10 +487,17 @@ void power_off()
 {
 	/* 释放混响内存，为关机提示音腾出 ~57KB 堆空间 */
 	BG_AudioIO_PrepareForShutdown();
+	/* 关机前保存已修改的参数到 Flash，避免用户设置丢失 */
+	if (SysParam_IsModified()) {
+		DBG("[PowerOff] Saving modified parameters to flash...\n");
+		SysParam_Save();
+	}
 	/* 关机提示音 */
 	RemindSound_PlayByName("off");
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX20);
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX24);
+	/* 关机熄灭LED */
+	GPIO_RegOneBitClear(GPIO_A_OUT, HW_LED_GPIO_PIN);
 }
 void pwr_button_init()
 {
@@ -494,6 +554,68 @@ void pwr_butoon_handler()
 uint8_t time_count = 0;
 /* hardware_check() 被 50ms 定时调用，600次 = 30秒 */
 static uint16_t battery_report_count = 0;
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+
+/* LED 指示灯状态 */
+static uint16_t led_blink_count = 0;   /* 闪烁计数器 */
+static uint8_t  led_last_state = 0;    /* 上次LED状态，用于变化检测 */
+
+/**
+ * @brief LED 指示灯更新（在 hardware_check 中每 50ms 调用）
+ *
+ * 逻辑：
+ *   - 充电完成（USB连接 + SOC>=100%）→ 熄灭
+ *   - 电量 < 15% 且未充电 → 闪烁（500ms亮 / 500ms灭）
+ *   - 其他（正常状态）→ 常亮
+ */
+static void led_update(void)
+{
+	uint8_t soc = BattCalib_GetSOC();
+	bool usb_connected = OTG_PortDeviceIsLink();
+	uint8_t desired;  /* 0=灭, 1=亮, 2=闪烁 */
+
+	/* 充电完成：USB连接且电量满 → 熄灭 */
+	if (usb_connected && soc >= 100) {
+		desired = 0;
+	}
+	/* 低电量闪烁（仅未充电时，充电中低电量也闪烁提醒） */
+	else if (soc < 15) {
+		desired = 2;
+	}
+	/* 正常状态：常亮 */
+	else {
+		desired = 1;
+	}
+
+	/* 执行LED控制 */
+	if (desired == 2) {
+		/* 闪烁模式：500ms亮 / 500ms灭 = 10次50ms */
+		led_blink_count++;
+		if (led_blink_count >= 10) {
+			led_blink_count = 0;
+			led_last_state = !led_last_state;
+		}
+		if (led_last_state) {
+			GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
+		} else {
+			GPIO_RegOneBitClear(GPIO_A_OUT, HW_LED_GPIO_PIN);
+		}
+	} else {
+		led_blink_count = 0;
+		led_last_state = desired;
+		if (desired) {
+			GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
+		} else {
+			GPIO_RegOneBitClear(GPIO_A_OUT, HW_LED_GPIO_PIN);
+		}
+	}
+}
+
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 void hardware_check()
 {
 
@@ -525,6 +647,15 @@ void hardware_check()
 
 	/* 系统状态机更新（检测空闲/传输状态，BLE 上报到 App） */
 	SysState_Update();
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+
+	/* LED 指示灯状态更新 */
+	led_update();
+>>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
+>>>>>>> Stashed changes
 }
 
 void MainTask() {
@@ -544,6 +675,15 @@ void MainTask() {
 	power_on();
 	DBG("Power ON directly (BUTTON_POWER_ENABLE disabled)\n");
 #endif
+
+	/* Confirm boot success — reset boot_fail_cnt in partition flags.
+	 * This tells the bootloader that the current partition booted OK. */
+	Boot_ConfirmSuccess();
+
+	/* Initialize firmware upgrade engine (CDC + BLE OTA) */
+	App_Upgrade_Init();
+	CDC_Upgrade_Init();
+	DBG("[Main] Upgrade engine initialized\n");
 
 #if CDC_FILE_MANAGER_EN
 	/* Step 10: Initialise CDC file manager for NAND Flash download. */
@@ -575,6 +715,12 @@ void MainTask() {
 			continue;                        /* 跳过 Audio/Shell 循环 */
 		}
 #endif /* CDC_FILE_MANAGER_EN */
+
+		/* CDC firmware upgrade mode — process upgrade packets */
+		if (CDC_Upgrade_InMode()) {
+			CDC_Upgrade_Process();
+			continue;  /* Skip Audio/Shell during upgrade */
+		}
 
 		BG_AudioManager.Audio_Loop();
 
@@ -644,7 +790,52 @@ uint8_t BLE_IsDelayElapsed(uint32_t start_tick, uint32_t delay_ms) {
 }
 
 void prvInitialiseHeap(void);
+
+/* Direct UART1 write for early diagnostics — bypasses DBG/printf.
+ * UART1 is already initialized by the bootloader. */
+#define DIAG_UART1_STATUS  (*(volatile uint32_t *)0x40006014)
+#define DIAG_UART1_TX      (*(volatile uint32_t *)0x40006018)
+static inline void diag_putc(char c)
+{
+	while (!(DIAG_UART1_STATUS & (1u << 9))) ;
+	DIAG_UART1_TX = (uint32_t)(unsigned char)c;
+}
+
 int main(void) {
+#if HAS_BOOTLOADER
+	diag_putc('M');  /* main() entered — confirms startup completed */
+	/* When started by bootloader, Chip_Init, clock, UART, SPI flash, DMA,
+	 * and TCM are already configured.  Re-initializing them can hang
+	 * (e.g. PLL re-lock failure) or break the running UART.              */
+	WDG_Disable();
+	diag_putc('1');  /* WDG_Disable done */
+
+	/* Re-initialize UART driver software state.
+	 * __c_init() just cleared .bss and copied .data from flash, wiping out
+	 * the UART driver's runtime state that the bootloader had set up.
+	 * Without re-init, DBG/printf hangs on the first call because the
+	 * driver's internal variables (ring buffer pointers, init flags, etc.)
+	 * are reset to zero.  The hardware is fine — DbgUartInit just resets
+	 * the software side.                                                    */
+	DbgUartInit(1, 115200, 8, 0, 1);
+	diag_putc('U');  /* DbgUartInit done */
+
+	/* Re-init SPI flash and DMA driver state (same reason as UART above).
+	 * The bootloader configured the hardware, but __c_init() wiped the
+	 * driver's software state in .bss/.data.                               */
+	Remap_InitTcm(0, 12);
+	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
+	DMA_ChannelAllocTableSet(DmaChannelMap);
+	diag_putc('R');  /* Remap/SPI/DMA re-init done */
+
+	/* Quick heartbeat: toggle GPIOA16 so we can confirm main() is reached
+	 * even if UART output is lost.                                         */
+	GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX16);
+	diag_putc('2');  /* GPIO toggle done */
+
+	DBG("[APP] main() entered (from bootloader)\n");
+	diag_putc('3');  /* DBG done */
+#else
 	Chip_Init(1);
 	WDG_Disable();
 
@@ -677,37 +868,62 @@ int main(void) {
 	Remap_InitTcm(0, 12);
 	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
 	DMA_ChannelAllocTableSet(DmaChannelMap);
+#endif
+
+	/* Boot partition detection — detect which partition we're running on.
+	 * With bootloader, the jump decision is already made by bootloader.
+	 * This just sets the internal tracking flag. */
+	diag_putc('4');  /* before Boot_CheckAndJump */
+	Boot_CheckAndJump();
+	diag_putc('5');  /* Boot_CheckAndJump done */
 
 #if FLASH_BOOT_EN
 	report_up_grate();
 #endif
 
 	GIE_ENABLE();
+	diag_putc('6');  /* GIE_ENABLE done */
 //	SysTickInit();
 	Timer_Config(TIMER2, 1000, 0);
 	Timer_Start(TIMER2);
 	NVIC_EnableIRQ(Timer2_IRQn);
+	diag_putc('7');  /* Timer2 done */
 
 	DBG("****************************************************************\n");
 	DBG("                          BG_CARD SDK                           \n");
 	DBG("****************************************************************\n");
 
 	prvInitialiseHeap();
+	diag_putc('8');  /* heap init done */
 
 	NVIC_EnableIRQ(SWI_IRQn);
 
 	SarADC_Init();
+	diag_putc('9');  /* SarADC done */
 	xQueue = xQueueCreate(4, sizeof(uint32_t));
 
 	/* Initialize SPI hardware BEFORE driver framework (drivers need it) */
 	DBG("[Main] Initializing SPI hardware...\n");
 	spi_init();
-	DBG("[Main] SPI initialized successfully\n");
+	diag_putc('a');  /* spi_init done */
 
 	/* Initialize Driver Framework BEFORE RTOS */
 	DBG("[Main] Initializing Driver Framework (before RTOS)...\n");
 	DrvFramework_FullInit();
-	DBG("[Main] Driver Framework initialized successfully\n");
+	diag_putc('b');  /* DrvFramework done */
+
+	/* EffectGraph VFS initialization (moved from drv_init.c to decouple 03→05) */
+#if EFFECT_GRAPHICS_EN
+	{
+		extern int EffectGraphVfs_MountDefault(void);
+		int eg_ret = EffectGraphVfs_MountDefault();
+		DBG("[Main] Audio Graph VFS %s\n", eg_ret == 0 ? "mounted OK" : "deferred");
+#if USE_EFFECT_GRAPH_VFS
+		extern void ShellCmdAudioVfs_Register(void);
+		ShellCmdAudioVfs_Register();
+#endif
+	}
+#endif
 
 
 	
@@ -719,7 +935,9 @@ int main(void) {
 
 
 	DBG("[Main] Starting FreeRTOS scheduler...\n");
+	diag_putc('c');  /* about to start scheduler */
 	vTaskStartScheduler();
+	diag_putc('!');  /* should never reach here */
 
 	while (1)
 		;

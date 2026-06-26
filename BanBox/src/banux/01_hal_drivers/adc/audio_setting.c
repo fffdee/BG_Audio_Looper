@@ -3,7 +3,6 @@
 #include "audio_setting.h"
 #include "audio_adc.h"
 #include "debug.h"
-#include "sys_param.h"
 // dB表，索引0~31，单位dB，Mic为21.14~-18.29，LineIn为13.25~-16.3
 static const float mic_db_table[32] = {
     21.14, 19.76, 18.29, 17.04, 15.94, 14.67, 13.56, 12.12,
@@ -198,7 +197,7 @@ void AudioSetting_SetGuitar2VolumePercent(uint8_t percent) {
 }
 
 uint8_t AudioSetting_GetGuitar2VolumePercent(void) {
-
-
-    return (uint8_t) SYSPARAM_AUDIO()->guitar2_volume;
+    uint16_t leftVol = 0, rightVol = 0;
+    AudioADC_VolGet(ADC0_MODULE, &leftVol, &rightVol);
+    return (uint8_t)(((uint32_t)rightVol * 100) / VOL_MAX);
 }
