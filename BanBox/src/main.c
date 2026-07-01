@@ -295,7 +295,7 @@ void power_on()
 	GPIO_RegOneBitSet(GPIO_A_OE, HW_LED_GPIO_PIN);
 	GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
 
-	CtrlVarsInit();
+
 
 	/* SPI and Driver Framework already initialized in main() */
 	/* All hardware drivers (LCD, Flash, etc.) auto-initialized by framework */
