@@ -15,8 +15,8 @@
 /* Version: increment on each release (format V<major>.<minor>.<patch>) */
 #define BOOTLOADER_VERSION_MAJOR   0
 #define BOOTLOADER_VERSION_MINOR   2
-#define BOOTLOADER_VERSION_PATCH   0
-#define BOOTLOADER_VERSION_STR     "V0.2.0"
+#define BOOTLOADER_VERSION_PATCH   1
+#define BOOTLOADER_VERSION_STR     "V0.2.1"
 
 #include <stdlib.h>
 #include <stdbool.h>

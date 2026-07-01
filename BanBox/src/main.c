@@ -15,8 +15,8 @@
 /* Version: increment on each release (format V<major>.<minor>.<patch>) */
 #define APP_VERSION_MAJOR   0
 #define APP_VERSION_MINOR   2
-#define APP_VERSION_PATCH   0
-#define APP_VERSION_STR     "V0.2.0"
+#define APP_VERSION_PATCH   1
+#define APP_VERSION_STR     "V0.2.1"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -781,7 +781,8 @@ int main(void) {
 	Clock_USBClkDivSet(4);
 	Clock_USBClkSelect(APLL_CLK_MODE);
 
-	Remap_InitTcm(0, 12);
+	Remap_DisableTcm();
+	Remap_InitTcm(0x40000, TCM_SIZE);
 	/* SpiFlashInit moved AFTER spi_init() — SPIM_Init can reset the XIP flash config */
 	DMA_ChannelAllocTableSet(DmaChannelMap);
 #endif
