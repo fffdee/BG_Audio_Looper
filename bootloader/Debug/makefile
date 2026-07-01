@@ -1,9 +1,9 @@
 ################################################################################
-# 自动生成的文件。不要编辑！
+# Automatically-generated file. Do not edit!
 ################################################################################
 
 ifndef ANDESIGHT_ROOT
-ANDESIGHT_ROOT=/cygdrive/D/app/Andestech/AndeSight300RDS
+ANDESIGHT_ROOT=/cygdrive/C/Andestech/AndeSight300RDS
 endif
 
 ifndef CROSS_COMPILE
@@ -36,21 +36,10 @@ RM := rm -rf
 -include src/banux/03_driver_framework/core/subdir.mk
 -include src/banux/03_driver_framework/drivers/subdir.mk
 -include src/banux/04_shell_commands/subdir.mk
--include src/banux/05_component/bangtsynth/BG_Audio_Processor/subdir.mk
--include src/banux/05_component/bangtsynth/BG_Audio_Processor/effects/subdir.mk
--include src/banux/05_component/bangtsynth/BG_Envelope_Generator/subdir.mk
--include src/banux/05_component/bangtsynth/BG_HAL/subdir.mk
--include src/banux/05_component/bangtsynth/BG_Midi_Controller/subdir.mk
--include src/banux/05_component/bangtsynth/BG_Soundbank/subdir.mk
--include src/banux/05_component/bangtsynth/subdir.mk
--include src/banux/05_component/bangtsynth/drum_machine/subdir.mk
--include src/banux/05_component/bangtsynth/soundbank_data/subdir.mk
 -include src/banux/06_app/audio/subdir.mk
 -include src/banux/06_app/audio/effect_parameter/subdir.mk
 -include src/banux/06_app/audio/music_parameter/subdir.mk
 -include src/subdir.mk
--include src/drivers/bluetooth/src/subdir.mk
--include src/drivers/usb/src/subdir.mk
 -include startup/subdir.mk
 -include objects.mk
 
@@ -92,51 +81,51 @@ SIZE_OUTPUTS += \
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size \
 
 
-# 所有目标
+# All Target
 all: bootloader.adx secondary-outputs
 
-# 工具调用
+# Tool invocations
 bootloader.adx: $(OBJS) $(USER_OBJS)
-	@echo '正在构建目标： $@'
-	@echo '正在调用： Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "bootloader.adx" $(OBJS) $(USER_OBJS) $(LIBS)
-	@echo '已结束构建目标： $@'
+	@echo 'Building target: $@'
+	@echo 'Invoking: Andes C Linker'
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanBox/src/banux/02_device_drivers/bluetooth" -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "bootloader.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
 	@echo ' '
 
 $(foreach subdir,$(SUBDIRS),$(wildcard $(subdir)/*.gcda) $(wildcard $(subdir)/*.gcno)): bootloader.adx $(OBJS) $(USER_OBJS)
 ../gmon.sum ../gmon.out: bootloader.adx $(OBJS) $(USER_OBJS)
 
 $(SECONDARY_OUTPUT_PATH)/symbol.txt: $(LINKER_OUTPUTS)
-	@echo '正在调用： NM (symbol listing)'
+	@echo 'Invoking: NM (symbol listing)'
 	$(CROSS_COMPILE)nm -n -l -C "bootloader.adx" > $(SECONDARY_OUTPUT_PATH)/symbol.txt
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/readelf.txt: $(LINKER_OUTPUTS)
-	@echo '正在调用： Readelf (ELF info listing)'
+	@echo 'Invoking: Readelf (ELF info listing)'
 	$(CROSS_COMPILE)readelf -a "bootloader.adx" > $(SECONDARY_OUTPUT_PATH)/readelf.txt
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/objdump.txt: $(LINKER_OUTPUTS)
-	@echo '正在调用： Objdump (disassembly)'
+	@echo 'Invoking: Objdump (disassembly)'
 	$(CROSS_COMPILE)objdump -x -d -C "bootloader.adx" > $(SECONDARY_OUTPUT_PATH)/objdump.txt
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin: $(LINKER_OUTPUTS)
-	@echo '正在调用： Objcopy (object content copy)'
+	@echo 'Invoking: Objcopy (object content copy)'
 	$(CROSS_COMPILE)objcopy -S -O binary "bootloader.adx" $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size: $(LINKER_OUTPUTS)
-	@echo '正在调用： Size (section size listing)'
+	@echo 'Invoking: Size (section size listing)'
 	$(CROSS_COMPILE)size  "bootloader.adx" | tee $(SECONDARY_OUTPUT_PATH)/.PHONY.size
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
-# 其他目标
+# Other Targets
 clean:
 	-$(RM) $(OBJCOPY_OUTPUTS)$(OBJS)$(C_DEPS)$(GCOV_OUT)$(SYMBOL_OUTPUTS)$(OBJDUMP_OUTPUTS)$(READELF_OUTPUTS)$(GPROF_OUT)$(SIZE_OUTPUTS)$(EXECUTABLES)$(S_UPPER_DEPS) bootloader.adx
 	-@echo ' '

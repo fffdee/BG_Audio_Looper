@@ -1,4 +1,4 @@
-/**
+﻿/**
  *****************************************************************************
  * @file     otg_device_stor.h
  * @author   Owen
@@ -21,21 +21,7 @@ extern "C" {
 #include "type.h"
 
 void OTG_DeviceStorInit(void);
-<<<<<<< Updated upstream
 void OTG_DeviceStorProcess(void);
-=======
-<<<<<<< HEAD
-void OTG_DeviceStorProcess(void);
-=======
-<<<<<<< HEAD
-bool OTG_DeviceStorProcess(void);
-void OTG_DeviceStorSetLocalAccess(bool busy);
-bool OTG_DeviceStorIsLocalAccess(void);
-=======
-void OTG_DeviceStorProcess(void);
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 
 #ifdef  __cplusplus
 }

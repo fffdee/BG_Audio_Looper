@@ -1,5 +1,5 @@
 ################################################################################
-# 自动生成的文件。不要编辑！
+# Automatically-generated file. Do not edit!
 ################################################################################
 
 O_SRCS := 
@@ -37,20 +37,9 @@ src/banux/02_device_drivers/flash \
 src/banux/03_driver_framework/core \
 src/banux/03_driver_framework/drivers \
 src/banux/04_shell_commands \
-src/banux/05_component/bangtsynth/BG_Audio_Processor \
-src/banux/05_component/bangtsynth/BG_Audio_Processor/effects \
-src/banux/05_component/bangtsynth/BG_Envelope_Generator \
-src/banux/05_component/bangtsynth/BG_HAL \
-src/banux/05_component/bangtsynth/BG_Midi_Controller \
-src/banux/05_component/bangtsynth/BG_Soundbank \
-src/banux/05_component/bangtsynth \
-src/banux/05_component/bangtsynth/drum_machine \
-src/banux/05_component/bangtsynth/soundbank_data \
 src/banux/06_app/audio \
 src/banux/06_app/audio/effect_parameter \
 src/banux/06_app/audio/music_parameter \
 src \
-src/drivers/bluetooth/src \
-src/drivers/usb/src \
 startup \
 

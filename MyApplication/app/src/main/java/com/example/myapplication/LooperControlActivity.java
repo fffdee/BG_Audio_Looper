@@ -266,17 +266,11 @@ public class LooperControlActivity extends BaseActivity {
     private Switch swMetroDuringRec;
     private Switch swCountdownBeforeRec;
     private Switch swCountdownSilent;
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
 
     // 侧边栏：录制模式
     private Switch swRecordingMode;
     private TextView tvRecordingModeHint;
     private boolean syncingDrawerUi = false;
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 
     // 侧边栏：Looper 设置
     private Switch swSeg1FollowSeg0;
@@ -1195,19 +1189,6 @@ public class LooperControlActivity extends BaseActivity {
 
         if (current == SegState.INACTIVE) {
             // INACTIVE → 根据节拍器模式决定是否先倒计时再录制
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-            // 单录制限制：同一时刻只允许一段处于 RECORDING 状态
-            for (int j = 0; j < SEG_COUNT; j++) {
-                if (j != idx && segStates[j] == SegState.RECORDING) {
-                    Toast.makeText(this,
-                            "段 " + (j + 1) + " 正在录制，请先停止后再开始新录制",
-                            Toast.LENGTH_SHORT).show();
-<<<<<<< Updated upstream
-=======
-=======
             if (recordingMode == 0) {
                 // Solo 模式：同一时刻只允许一段处于 RECORDING 状态
                 boolean hasRecording = false;
@@ -1226,8 +1207,6 @@ public class LooperControlActivity extends BaseActivity {
                                 "LOOP " + (idx + 1) + " 已加入录制队列，等待当前录制结束",
                                 Toast.LENGTH_SHORT).show();
                     }
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
                     return;
                 }
             }
@@ -2173,20 +2152,9 @@ public class LooperControlActivity extends BaseActivity {
                                 segTrimStartPage[i] = 0;
                                 segTrimEndPage[i] = 0;
 
-<<<<<<< HEAD
-                                // 刷新UI
                                 refreshSegUI(i);
                                 refreshSegCfgHint(i);
                             }
-                            // 无论当前状态，始终清除音频轨卡片（防止残留）
-<<<<<<< Updated upstream
-=======
-=======
-                                refreshSegUI(i);
-                                refreshSegCfgHint(i);
-                            }
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
                             removeAudioTrackCard(i);
                         }
 
@@ -2607,25 +2575,13 @@ public class LooperControlActivity extends BaseActivity {
             cancelCountdown(i);
             stopStorageUpdateForRecording(i);
             if (segStates[i] == SegState.PLAYING || segStates[i] == SegState.RECORDING) {
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
                 // 断连：停止但保留段数据，等重连后同步恢复
-                segStates[i]        = SegState.STOPPED;
-                segPlayStartTime[i] = 0;
-            }
-<<<<<<< Updated upstream
-=======
-=======
                 segStates[i]        = SegState.STOPPED;
                 segPlayStartTime[i] = 0;
             }
             if (segStates[i] == SegState.QUEUED) {
                 segStates[i] = SegState.INACTIVE;
             }
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
             segInCountdown[i] = false;
             segInSyncWait[i]  = false;
             refreshSegUI(i);
@@ -2882,30 +2838,12 @@ public class LooperControlActivity extends BaseActivity {
             }
             if (newState != SegState.INACTIVE && lenPages > 0) {
                 segStates[i] = newState;
-<<<<<<< Updated upstream
-                // 若本地时长未知，从 pages 估算
-=======
-<<<<<<< HEAD
-                // 若本地时长未知，从 pages 估算
-=======
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
                 if (segLoopDurationMs[i] <= 0) {
                     segLoopDurationMs[i] = pagesToMs(lenPages, i);
                 }
                 upsertAudioTrackCard(i);
             } else {
-<<<<<<< Updated upstream
-                // MCU 报告段已清除
-                if (segStates[i] != SegState.INACTIVE) {
-=======
-<<<<<<< HEAD
-                // MCU 报告段已清除
-                if (segStates[i] != SegState.INACTIVE) {
-=======
                 if (segStates[i] != SegState.INACTIVE && segStates[i] != SegState.QUEUED) {
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
                     segStates[i]        = SegState.INACTIVE;
                     segLoopDurationMs[i] = 0;
                     removeAudioTrackCard(i);
@@ -3119,15 +3057,7 @@ public class LooperControlActivity extends BaseActivity {
                     long b2 = Long.parseLong(hex.substring(base + 4, base + 6), 16);
                     long b3 = Long.parseLong(hex.substring(base + 6, base + 8), 16);
                     long lenBytes = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
-<<<<<<< Updated upstream
-                    if (lenBytes > 0 && segStates[i] == SegState.INACTIVE) {
-=======
-<<<<<<< HEAD
-                    if (lenBytes > 0 && segStates[i] == SegState.INACTIVE) {
-=======
                     if (lenBytes > 0 && (segStates[i] == SegState.INACTIVE || segStates[i] == SegState.QUEUED)) {
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
                         segStates[i] = SegState.STOPPED;
                         // 估算循环时长（48000 Hz，单声道 2B/sample，立体声 4B/sample）
                         long bytesPerSec = (segRecSource[i] != REC_SRC_ALL_MIX) ? 96000L : 192000L;

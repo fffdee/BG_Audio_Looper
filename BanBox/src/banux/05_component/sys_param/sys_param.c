@@ -396,10 +396,6 @@ SysParam_Status_t SysParam_ApplyToAudio(void) {
                   g_sys_param.system.lp_timeout_min);
     }
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
     /* Apply USB output volume (device->PC) */
     {
         extern void BG_AudioIO_SetUsbOutVolume(uint8_t vol, uint8_t mute);
@@ -407,8 +403,6 @@ SysParam_Status_t SysParam_ApplyToAudio(void) {
                                    g_sys_param.volume.usb_out_mute);
     }
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     return SYSPARAM_OK;
 }
 

@@ -1,13 +1,18 @@
 /**
  ******************************************************************************
  * @file    power_on_music.h
- * @brief   开机音乐播放模块（基于 const WAV 数组，复用 RemindSound 解码器）
+ * @brief   开机音乐播放模块（直接 PCM 播放，无需解码器）
  *
  * 使用方式:
- *   1. 将 WAV 文件用 host_tool/mp3_to_c_array.py 转换为 C 数组
- *   2. 替换 g_power_on_wav.c 中的数组数据
+ *   1. 将 WAV 文件用 wav2array 工具转换为 raw PCM int16_t C 数组
+ *   2. 放入 power_on.h（const int16_t power_on[]）
  *   3. 开机时自动调用 PowerOnMusic_Play() 播放
  *   4. Shell 命令行可用 `pwr_music -p` 手动测试
+ *
+ * 数据参数 (由 power_on.h 注释标定):
+ *   - Sample Rate: 44100 Hz
+ *   - Bit Depth:   16-bit
+ *   - Channels:    2 (stereo, L/R 交错)
  ******************************************************************************
  */
 

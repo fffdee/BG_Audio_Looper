@@ -1,5 +1,5 @@
 ################################################################################
-# ×Ô¶¯Éú³ÉµÄÎÄ¼ş¡£²»Òª±à¼­£¡
+# è‡ªåŠ¨ç”Ÿæˆçš„æ–‡ä»¶ã€‚ä¸è¦ç¼–è¾‘ï¼
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
@@ -13,6 +13,8 @@ C_SRCS += \
 ../src/banux/04_shell_commands/shell_cmd_lp.c \
 ../src/banux/04_shell_commands/shell_cmd_param.c \
 ../src/banux/04_shell_commands/shell_cmd_psram.c \
+../src/banux/04_shell_commands/shell_cmd_soundbank.c \
+../src/banux/04_shell_commands/shell_cmd_speedtest.c \
 ../src/banux/04_shell_commands/shell_cmd_sysmon.c \
 ../src/banux/04_shell_commands/shell_cmd_ui.c \
 ../src/banux/04_shell_commands/shell_fs.c \
@@ -29,6 +31,8 @@ OBJS += \
 ./src/banux/04_shell_commands/shell_cmd_lp.o \
 ./src/banux/04_shell_commands/shell_cmd_param.o \
 ./src/banux/04_shell_commands/shell_cmd_psram.o \
+./src/banux/04_shell_commands/shell_cmd_soundbank.o \
+./src/banux/04_shell_commands/shell_cmd_speedtest.o \
 ./src/banux/04_shell_commands/shell_cmd_sysmon.o \
 ./src/banux/04_shell_commands/shell_cmd_ui.o \
 ./src/banux/04_shell_commands/shell_fs.o \
@@ -45,6 +49,8 @@ C_DEPS += \
 ./src/banux/04_shell_commands/shell_cmd_lp.d \
 ./src/banux/04_shell_commands/shell_cmd_param.d \
 ./src/banux/04_shell_commands/shell_cmd_psram.d \
+./src/banux/04_shell_commands/shell_cmd_soundbank.d \
+./src/banux/04_shell_commands/shell_cmd_speedtest.d \
 ./src/banux/04_shell_commands/shell_cmd_sysmon.d \
 ./src/banux/04_shell_commands/shell_cmd_ui.d \
 ./src/banux/04_shell_commands/shell_fs.d \
@@ -54,10 +60,10 @@ C_DEPS += \
 
 # Each subdirectory must supply rules for building sources it contributes
 src/banux/04_shell_commands/%.o: ../src/banux/04_shell_commands/%.c
-	@echo 'ÕıÔÚ¹¹½¨ÎÄ¼ş£º $<'
-	@echo 'ÕıÔÚµ÷ÓÃ£º Andes C Compiler'
+	@echo 'æ­£åœ¨æ„å»ºæ–‡ä»¶ï¼š $<'
+	@echo 'æ­£åœ¨è°ƒç”¨ï¼š Andes C Compiler'
 	$(CROSS_COMPILE)gcc -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/inc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver/inc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio/inc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/inc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/device" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/01_hal_drivers" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/01_hal_drivers/adc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/01_hal_drivers/gpio" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/01_hal_drivers/spi" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/flash" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/lcd" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/power_mgr" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/03_driver_framework/core" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/03_driver_framework" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/04_shell_commands" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/06_app/audio" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/06_app/audio/effect_parameter" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/06_app/audio/music_parameter" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/05_component/sys_param" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/06_app/BG_AudioIO_Manager" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/03_driver_framework/drivers" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/01_vfs" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/bluetooth" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/bluetooth/inc" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/remind_sound" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/01_hal_drivers/sdio" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/03_driver_framework/event" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/sdcard" -I"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/05_component/fat32" -Og -mcmodel=medium -g3 -Wall -mcpu=d1088-spu -c -fmessage-length=0 -ldsp -mext-dsp -fsingle-precision-constant -ffunction-sections -fdata-sections -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d) $(@:%.o=%.o)" -o "$@" "$<"
-	@echo 'ÒÑ½áÊø¹¹½¨£º $<'
+	@echo 'å·²ç»“æŸæ„å»ºï¼š $<'
 	@echo ' '
 
 

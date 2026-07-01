@@ -15,7 +15,6 @@
 #include "fat32.h"
 #include "fat32_nand.h"
 #include "flash_devices.h"
-#include "err_handle.h"
 #include <string.h>
 #include <stdio.h>
 

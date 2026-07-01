@@ -60,7 +60,7 @@ void ExceptionCommHandler(unsigned stack, unsigned exception_num)
 	unsigned int *pstack;
 
 	  pstack = (unsigned int *)stack;
-	  DBG("Error exception happened\r
+	  DBG("Error exception happened\r\n");
 
 	  mask_itype = __nds32__mfsr(NDS32_SR_ITYPE);
 	  mask_ipc = __nds32__mfsr(NDS32_SR_IPC);

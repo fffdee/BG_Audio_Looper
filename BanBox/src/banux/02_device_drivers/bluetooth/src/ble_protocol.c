@@ -1,29 +1,9 @@
 #include "ble_protocol.h"
 #include "shell_io_ble.h"
-<<<<<<< Updated upstream
-#include "sys_param.h"
-#include "effect_graph.h"
-=======
-<<<<<<< HEAD
-#include "sys_param.h"
-#include "effect_graph.h"
-=======
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 #include "debug.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
-<<<<<<< Updated upstream
-#include "battery_drv.h"    /* battery_get_soc() for on-connect battery report */
-#include "audio_looper.h"   /* loop_get_segment_state/loop_get_segment_length_pages for reconnect sync */
-=======
-<<<<<<< HEAD
-#include "battery_drv.h"    /* battery_get_soc() for on-connect battery report */
-#include "audio_looper.h"   /* loop_get_segment_state/loop_get_segment_length_pages for reconnect sync */
-=======
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 #include <string.h>
 
 #ifndef pdMS_TO_TICKS
@@ -43,10 +23,6 @@ static uint32_t g_sync_pending_tick = 0;
 static volatile uint32_t g_sync_complete_tick = 0;
 #define BLE_PROTO_ACK_DRAIN_COOLDOWN_MS 300
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
 /* 同步提供者回调：由 05_component/ble_app 层注册，
  * 负责读取应用层参数并调用 BleProto_SendSyncFrame 发送。
  * 02 层不直接依赖 05 层头文件，通过回调解耦。 */
@@ -61,8 +37,6 @@ static BleProto_ShellPendingHandler_t g_shell_pending_handler = NULL;
  * 替代 extern 声明 BLE_SendInit，避免02→04跨层依赖 */
 static BleProto_SendInitHandler_t g_send_init_handler = NULL;
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 static TaskHandle_t g_sync_task_handle = NULL;
 
 /* 前向声明：在 BleProto_Process() 中使用 */
@@ -377,22 +351,9 @@ void BleProto_Init(void)
     if (s_frame_mutex == NULL) {
         s_frame_mutex = xSemaphoreCreateMutex();
     }
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-    /* 同步初始化 BLE Send mutex（定义在 shell_io_ble.c) */
-    {
-        extern void BLE_SendInit(void);
-        BLE_SendInit();
-<<<<<<< Updated upstream
-=======
-=======
     /* 同步初始化 BLE Send mutex（通过回调，避免02→04跨层依赖） */
     if (g_send_init_handler != NULL) {
         g_send_init_handler();
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     }
 }
 
@@ -442,19 +403,9 @@ void BleProto_Process(void)
      * 同步期间收到的 BLE 命令被缓冲但未处理（避免 Shell_WriteRaw 与同步帧
      * 并发调用 BLE_Send 导致 BLE 栈崩溃）。需等待冷却期结束后安全处理。*/
     if (!g_syncing && g_sync_complete_tick == 0) {
-<<<<<<< Updated upstream
-        extern void ShellIO_BLE_ProcessPending(void);
-        ShellIO_BLE_ProcessPending();
-=======
-<<<<<<< HEAD
-        extern void ShellIO_BLE_ProcessPending(void);
-        ShellIO_BLE_ProcessPending();
-=======
         if (g_shell_pending_handler != NULL) {
             g_shell_pending_handler();
         }
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     }
 
 check_sync:
@@ -504,12 +455,6 @@ void BleProto_RequestSync(void)
     DBG("[BLE_PROTO] Sync requested, will start in %dms\n", BLE_PROTO_SYNC_DELAY_MS);
 }
 
-<<<<<<< Updated upstream
-static void send_param_noack(uint8_t cmd, const uint8_t *payload, uint8_t len)
-=======
-<<<<<<< HEAD
-static void send_param_noack(uint8_t cmd, const uint8_t *payload, uint8_t len)
-=======
 /**
  * @brief 同步帧发送（公共 API，供 05_component/ble_app 层调用）
  * @param cmd     命令字节
@@ -518,8 +463,6 @@ static void send_param_noack(uint8_t cmd, const uint8_t *payload, uint8_t len)
  * @note 包含重试机制和帧间隔控制，仅在同步任务中调用。
  */
 void BleProto_SendSyncFrame(uint8_t cmd, const uint8_t *payload, uint8_t len)
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 {
     /* 静态帧缓冲：负载最大只有 200 字节，当前层尢4块 buf 共耗 > 600字节导致栈溢出。
      * send_param_noack 仅在 BleProto_StartSync (单一子任务) 中调用，用 static 安全 */
@@ -560,12 +503,6 @@ void BleProto_SendSyncFrame(uint8_t cmd, const uint8_t *payload, uint8_t len)
 /* 独立任务：执行全量参数同步，结束后自我删除，不阻塞主循环 */
 static void ble_sync_task_fn(void *params)
 {
-<<<<<<< Updated upstream
-    BleProto_StartSync();
-=======
-<<<<<<< HEAD
-    BleProto_StartSync();
-=======
     g_syncing = true;
     DBG("[BLE_PROTO] Sync task started\n");
 
@@ -579,180 +516,13 @@ static void ble_sync_task_fn(void *params)
     g_sync_complete_tick = xTaskGetTickCount();
     DBG("[BLE_PROTO] Sync task completed\n");
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     /* 先把全局句柄清掉，再 vTaskDelete，避免主循环在任务删除期间访问已失效句柄 */
     g_sync_task_handle = NULL;
     vTaskDelete(NULL);
     /* 不会执行到这里 */
 }
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-void BleProto_StartSync(void)
-{
-    SysParam_t *sp = SysParam_Get();
-    /* 静态中间缓冲区：避免在栈上分配 200 字节导致栈溢出。
-     * BleProto_StartSync 只在永不并发的单次子任务中调用， static 安全 */
-    static uint8_t buf[BLE_PROTO_MAX_PAYLOAD];
 
-    g_syncing = true;
-    DBG("[BLE_PROTO] Starting full parameter sync (fire-and-forget)...\n");
-
-    {
-        uint8_t sync_start[1] = { 6 };
-        send_param_noack(BLE_CMD_SYNC_START, sync_start, 1);
-    }
-
-    {
-        buf[0] = sp->volume.mic1_volume;
-        buf[1] = sp->volume.mic2_volume;
-        buf[2] = sp->volume.guitar1_volume;
-        buf[3] = sp->volume.guitar2_volume;
-        buf[4] = sp->volume.output_volume;
-        send_param_noack(BLE_CMD_VOLUME, buf, 5);
-    }
-
-    {
-        EffectNode_t *node = EffectGraph_FindNodeById(10);
-        if (node != NULL && node->type == EFFECT_NODE_TYPE_EFFECT_DRC) {
-            buf[0] = (uint8_t)(node->params.drc.threshold & 0xFF);
-            buf[1] = (uint8_t)((node->params.drc.threshold >> 8) & 0xFF);
-            buf[2] = node->params.drc.ratio;
-            buf[3] = node->params.drc.attack;
-            buf[4] = node->params.drc.release;
-            send_param_noack(BLE_CMD_DRC, buf, 5);
-        }
-    }
-
-    {
-        EffectNode_t *node = EffectGraph_FindNodeById(12);
-        if (node != NULL && node->type == EFFECT_NODE_TYPE_EFFECT_REVERB) {
-            buf[0] = node->params.reverb.room_size;
-            buf[1] = node->params.reverb.damping;
-            buf[2] = node->params.reverb.wet_dry;
-            send_param_noack(BLE_CMD_REVERB, buf, 3);
-        }
-    }
-
-    {
-        EffectNode_t *node = EffectGraph_FindNodeById(5);
-        if (node != NULL && node->type == EFFECT_NODE_TYPE_EFFECT_EQ) {
-            int band_count = node->params.eq.band_count;
-            int i;
-            buf[0] = (uint8_t)band_count;
-            buf[1] = (uint8_t)(node->params.eq.pregain & 0xFF);
-            buf[2] = (uint8_t)((node->params.eq.pregain >> 8) & 0xFF);
-            for (i = 0; i < band_count && i < 10; i++) {
-                int base = 3 + i * 10;
-                buf[base + 0] = (uint8_t)(node->params.eq.band_gains[i] & 0xFF);
-                buf[base + 1] = 0;
-                buf[base + 2] = (uint8_t)(node->params.eq.band_f0[i] & 0xFF);
-                buf[base + 3] = (uint8_t)((node->params.eq.band_f0[i] >> 8) & 0xFF);
-                buf[base + 4] = (uint8_t)((node->params.eq.band_f0[i] >> 16) & 0xFF);
-                buf[base + 5] = (uint8_t)((node->params.eq.band_f0[i] >> 24) & 0xFF);
-                buf[base + 6] = (uint8_t)(node->params.eq.band_Q[i] & 0xFF);
-                buf[base + 7] = (uint8_t)((node->params.eq.band_Q[i] >> 8) & 0xFF);
-                buf[base + 8] = node->params.eq.band_types[i];
-                buf[base + 9] = node->params.eq.band_enables[i];
-            }
-            send_param_noack(BLE_CMD_EQ, buf, 3 + band_count * 10);
-        }
-    }
-
-    {
-        buf[0] = sp->looper.tempo;
-        buf[1] = sp->looper.time_signature;
-        buf[2] = sp->looper.click_volume;
-        buf[3] = sp->looper.overdub_mode;
-        buf[4] = sp->looper.quantize;
-        send_param_noack(BLE_CMD_METRONOME, buf, 5);
-    }
-
-    {
-        buf[0] = sp->looper.loop_count;
-        buf[1] = sp->looper.overdub_mode;
-        buf[2] = sp->looper.quantize;
-        buf[3] = sp->looper.click_volume;
-        buf[4] = sp->looper.tempo;
-        buf[5] = sp->looper.time_signature;
-        buf[6] = (uint8_t)(sp->looper.fade_time & 0xFF);
-        buf[7] = (uint8_t)((sp->looper.fade_time >> 8) & 0xFF);
-        buf[8] = sp->looper.segment_rec_source[0];
-        buf[9] = sp->looper.segment_rec_source[1];
-        buf[10] = sp->looper.segment_rec_source[2];
-        buf[11] = sp->looper.segment_rec_source[3];
-        buf[12] = sp->looper.export_mono_mix;                               /* 声道平衡 */
-        buf[13] = (uint8_t)(sp->looper.export_gain_pct & 0xFF);            /* 导出增益 lo */
-        buf[14] = (uint8_t)((sp->looper.export_gain_pct >> 8) & 0xFF);     /* 导出增益 hi */
-        send_param_noack(BLE_CMD_LOOPER, buf, 15);
-    }
-
-    /* 同步各段运行时状态：断连重连后 App 需要知道哪些段有内容（STOPPED）
-     * payload: [s0_state, s1_state, s2_state, s3_state,
-     *           s0_len_lo, s0_len_hi, s1_len_lo, s1_len_hi,
-     *           s2_len_lo, s2_len_hi, s3_len_lo, s3_len_hi]   共12字节 */
-    {
-        uint8_t i;
-        for (i = 0; i < MAX_SEGMENTS; i++) {
-            buf[i] = (uint8_t)loop_get_segment_state(i);
-        }
-        for (i = 0; i < MAX_SEGMENTS; i++) {
-            uint32_t len_pages = loop_get_segment_length_pages(i);
-            /* 截断至 uint16_t：最大 65535 页 ≈ 16MB，足够表示实际录音长度 */
-            uint16_t len16 = (len_pages > 0xFFFF) ? 0xFFFF : (uint16_t)len_pages;
-            buf[MAX_SEGMENTS + i * 2]     = (uint8_t)(len16 & 0xFF);
-            buf[MAX_SEGMENTS + i * 2 + 1] = (uint8_t)((len16 >> 8) & 0xFF);
-        }
-        send_param_noack(BLE_CMD_LOOPER_SEG_STATE, buf, MAX_SEGMENTS + MAX_SEGMENTS * 2);
-    }
-
-    {
-        send_param_noack(BLE_CMD_SYNC_END, NULL, 0);
-    }
-
-    /* Send current battery level immediately after sync so App shows
-     * correct SOC as soon as the toolbar connection indicator turns green. */
-    {
-        uint8_t bat_pl[2];
-        bat_pl[0] = BLE_SYSTEM_SUB_BATTERY;
-        bat_pl[1] = battery_get_soc();
-        send_param_noack(BLE_CMD_SYSTEM, bat_pl, 2);
-    }
-
-    /* Send current auto-LP enabled state so App can sync the toggle. */
-    {
-        extern uint8_t LowPower_GetEnabled(void);
-        extern uint8_t LowPower_GetTimeoutMin(void);
-        uint8_t lp_pl[2];
-        lp_pl[0] = BLE_SYSTEM_SUB_LP_STATE;
-        lp_pl[1] = LowPower_GetEnabled();
-        send_param_noack(BLE_CMD_SYSTEM, lp_pl, 2);
-        /* Send idle timeout */
-        lp_pl[0] = BLE_SYSTEM_SUB_LP_TIMEOUT;
-        lp_pl[1] = LowPower_GetTimeoutMin();
-        send_param_noack(BLE_CMD_SYSTEM, lp_pl, 2);
-    }
-
-    /* Send product ID so App can identify the device and load correct feature set. */
-    {
-        uint8_t pid_pl[3];
-        pid_pl[0] = BLE_SYSTEM_SUB_PRODUCT_ID;
-        pid_pl[1] = (uint8_t)(BG_PRODUCT_ID_BANBOX & 0xFF);
-        pid_pl[2] = (uint8_t)((BG_PRODUCT_ID_BANBOX >> 8) & 0xFF);
-        send_param_noack(BLE_CMD_SYSTEM, pid_pl, 3);
-    }
-
-    g_syncing = false;
-    g_sync_complete_tick = xTaskGetTickCount();
-    DBG("[BLE_PROTO] Full parameter sync completed\n");
-
-    vTaskDelay(pdMS_TO_TICKS(100));
-<<<<<<< Updated upstream
-=======
-=======
 /**
  * @brief 注册同步提供者回调（由 05_component/ble_app 层调用）
  * @param provider  同步提供者函数指针，在同步任务中调用
@@ -773,8 +543,6 @@ void BleProto_RegisterSendInitHandler(BleProto_SendInitHandler_t handler)
 {
     g_send_init_handler = handler;
     DBG("[BLE_PROTO] Send init handler registered\n");
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 }
 
 void BleProto_OnFrameReceived(const uint8_t *data, uint16_t len)

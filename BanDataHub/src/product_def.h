@@ -153,13 +153,15 @@ extern "C" {
 #elif defined(BANBOX_II)
 #define BANGTSYNTH_EN           0   /* 暂未移植到新板 */
 #elif defined(BANDATAHUB)
-#define BANGTSYNTH_EN           0   /* BanDataHub不需要MIDI合成器 */
+#define BANGTSYNTH_EN           1   /* BanDataHub: SD卡+PSRAM方案启用合成器 */
 #else
 //#define BANGTSYNTH_EN           0
 #endif
 
-/* 高级合成器功能 (依赖 NAND + PSRAM) */
-#if HW_DRV_FLASH_NAND_EN && HW_DRV_PSRAM_EN
+/* 高级合成器功能 (SD卡 + PSRAM 直读方案, 无需NAND) */
+#if defined(BANDATAHUB) && HW_DRV_SDCARD_EN && HW_DRV_PSRAM_EN
+#define SYNTH_SD_NAND_PSRAM_EN  1   /* BanDataHub: SD卡直读 + PSRAM缓存 */
+#elif HW_DRV_FLASH_NAND_EN && HW_DRV_PSRAM_EN
 #define SYNTH_SD_NAND_PSRAM_EN  0   /* 待启用：需 NAND + PSRAM */
 #else
 #define SYNTH_SD_NAND_PSRAM_EN  0   /* 父级硬件未满足 */
@@ -214,19 +216,7 @@ extern "C" {
 #endif
 
 /* FAT32 命令 (依赖 FAT32 功能) */
-<<<<<<< Updated upstream
 #if FAT32_EN && !defined(BANDATAHUB)
-=======
-<<<<<<< HEAD
-#if FAT32_EN && !defined(BANDATAHUB)
-=======
-<<<<<<< HEAD
-#if FAT32_EN
-=======
-#if FAT32_EN && !defined(BANDATAHUB)
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 #define HW_CMD_FAT_EN           1
 #else
 #define HW_CMD_FAT_EN           0

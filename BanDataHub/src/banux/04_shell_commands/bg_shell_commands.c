@@ -50,6 +50,16 @@
 #include "shell_cmd_psram.h"
 #endif
 
+#if HW_DRV_PSRAM_EN || HW_DRV_SDCARD_EN
+/* PSRAM & SD卡 读写速度测试命令 */
+#include "shell_cmd_speedtest.h"
+#endif
+
+#if BANGTSYNTH_EN
+/* 音源管理命令 */
+#include "shell_cmd_soundbank.h"
+#endif
+
 /*============================================================================
  * Common save function for modules
  *===========================================================================*/
@@ -1756,14 +1766,6 @@ static const ShellOpt_t flash_opts[] = {
 DEFINE_MODULE(flash, "Flash storage management", MOD_CAT_HARDWARE, flash_opts);
 
 /*============================================================================
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
  * sd module - SD Card block-level read/write test
  *===========================================================================*/
 
@@ -2167,13 +2169,6 @@ static const ShellOpt_t sd_opts[] = {
 DEFINE_MODULE(sd, "SD Card block R/W test", MOD_CAT_HARDWARE, sd_opts);
 
 /*============================================================================
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
  * Module registration
  *===========================================================================*/
 
@@ -2952,18 +2947,7 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(led);
     REGISTER_MODULE(dbg);
     REGISTER_MODULE(flash);
-<<<<<<< Updated upstream
     REGISTER_MODULE(sd);
-=======
-<<<<<<< HEAD
-    REGISTER_MODULE(sd);
-=======
-<<<<<<< HEAD
-=======
-    REGISTER_MODULE(sd);
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     REGISTER_MODULE(battery);
     REGISTER_MODULE(bt);
     REGISTER_MODULE(ble);
@@ -3009,6 +2993,18 @@ void Shell_RegisterAllModules(void)
     ShellCmdPsram_Register();
 #endif
 
+#if HW_DRV_PSRAM_EN || HW_DRV_SDCARD_EN
+    /* PSRAM & SD卡 读写速度测试命令 */
+    extern int ShellCmdSpeedTest_Register(void);
+    ShellCmdSpeedTest_Register();
+#endif
+
+#if BANGTSYNTH_EN
+    /* 音源管理命令 (合成器) */
+    extern int ShellCmdSoundbank_Register(void);
+    ShellCmdSoundbank_Register();
+#endif
+
     /* 低功耗控制命令 */
     {
         extern void ShellCmdLp_Register(void);
@@ -3022,23 +3018,6 @@ void Shell_RegisterAllModules(void)
         ShellCmdHwtest_Register();
     }
 #endif
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-    /* 录制命令 */
-#if FAT32_EN
-    {
-        extern void ShellCmdRec_Register(void);
-        ShellCmdRec_Register();
-    }
-#endif
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 }
 
 /*============================================================================
@@ -3108,118 +3087,3 @@ void ShellCmdRemind_Register(void)
 {
     REGISTER_MODULE(remind);
 }
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-/*============================================================================
- * rec module - Audio recorder control
- *===========================================================================*/
-#if FAT32_EN
-#include "bg_recorder.h"
-
-static int rec_start(int argc, char *argv[])
-{
-    RecMode_t mode = REC_MODE_SINGLE_CH;
-    int ret;
-
-    if (argc >= 1) {
-        if (strcmp(argv[0], "dual") == 0 || strcmp(argv[0], "d") == 0) {
-            mode = REC_MODE_DUAL_CH;
-        } else if (strcmp(argv[0], "single") == 0 || strcmp(argv[0], "s") == 0) {
-            mode = REC_MODE_SINGLE_CH;
-        }
-    }
-
-    ret = BG_Rec_Start(mode);
-    if (ret != 0) {
-        Shell_Printf("Start failed: %d\r\n", ret);
-        return -1;
-    }
-    Shell_Printf("Recording started (%s)\r\n",
-                 mode == REC_MODE_DUAL_CH ? "DUAL: MIC+LINE" : "SINGLE: LINE L+R");
-    return 0;
-}
-
-static int rec_stop(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    if (!BG_Rec_IsRecording()) {
-        Shell_Print("Not recording\r\n");
-        return -1;
-    }
-    BG_Rec_Stop();
-    {
-        const RecInfo_t *ri = BG_Rec_GetInfo();
-        uint32_t sec = ri->total_samples / REC_SAMPLE_RATE;
-        Shell_Printf("Stopped: %s + %s, %lu samples (%lu sec)\r\n",
-                     ri->filename_raw, ri->filename_tgt,
-                     (unsigned long)ri->total_samples,
-                     (unsigned long)sec);
-    }
-    return 0;
-}
-
-static int rec_status(int argc, char *argv[])
-{
-    const RecInfo_t *ri = BG_Rec_GetInfo();
-    (void)argc; (void)argv;
-
-    Shell_Printf("State: %s\r\n",
-                 ri->state == REC_STATE_IDLE ? "IDLE" :
-                 ri->state == REC_STATE_RECORDING ? "RECORDING" :
-                 ri->state == REC_STATE_STOPPING ? "STOPPING" : "ERROR");
-    Shell_Printf("Mode:  %s\r\n",
-                 ri->mode == REC_MODE_DUAL_CH ? "DUAL (MIC+LINE)" : "SINGLE (LINE L+R)");
-    Shell_Printf("RAW:   %s\r\n", ri->filename_raw);
-    Shell_Printf("TGT:   %s\r\n", ri->filename_tgt);
-    Shell_Printf("Index: %lu\r\n", (unsigned long)ri->file_index);
-    if (ri->state == REC_STATE_RECORDING) {
-        uint32_t sec = ri->total_samples / REC_SAMPLE_RATE;
-        Shell_Printf("Time:  %02lu:%02lu\r\n",
-                     (unsigned long)(sec / 60), (unsigned long)(sec % 60));
-    }
-    Shell_Printf("SD:    %s\r\n", ri->sd_ready ? "OK" : "NOT READY");
-    Shell_Printf("Errors: %lu\r\n", (unsigned long)ri->write_errors);
-    return 0;
-}
-
-static int rec_init(int argc, char *argv[])
-{
-    BG_ERR ret;
-    (void)argc; (void)argv;
-
-    /* Force re-init FAT32 */
-    FAT32_DeInit();
-    ret = FAT32_Init();
-    if (ret != 0) {
-        Shell_Printf("FAT32 init failed: %d\r\n", ret);
-        BG_Rec_SetSDReady(false);
-        return -1;
-    }
-    BG_Rec_SetSDReady(true);
-    Shell_Print("SD card mounted OK\r\n");
-    return 0;
-}
-
-static const ShellOpt_t rec_opts[] = {
-    OPT("s", "start", "[single|dual]", "Start recording", rec_start),
-    OPT("x", "stop",  NULL,            "Stop recording",  rec_stop),
-    OPT("i", "info",  NULL,            "Show recorder status", rec_status),
-    OPT("f", "init",  NULL,            "Force init SD/FAT32", rec_init),
-    OPT_END()
-};
-
-DEFINE_MODULE(rec, "Audio recorder", MOD_CAT_HARDWARE, rec_opts);
-
-void ShellCmdRec_Register(void)
-{
-    REGISTER_MODULE(rec);
-}
-#endif /* FAT32_EN */
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes

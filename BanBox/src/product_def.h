@@ -115,6 +115,10 @@ extern "C" {
 #define BG_EVENT_EN             0   /* 事件发布-订阅系统 (话题订阅) */
 #define EFFECT_GRAPHICS_EN      1   /* 音效处理图 */
 
+/* 开机音乐 (power_on.h PCM 数组 ~705KB + WAV ~109KB)
+ * 占用 Flash 空间极大，默认关闭以适配 2MB Flash */
+#define POWER_ON_MUSIC_EN       0   /* 开机音乐播放模块 */
+
 /* Looper 存储类型选择
  * 0 = 自动（根据 HW_PSRAM0_EN / HW_NAND0_EN 检测，推荐）
  * 1 = 强制 PSRAM (ESP-PSRAM64H，支持叠录)
@@ -130,21 +134,7 @@ extern "C" {
 #define USB_EN                  0
 #endif
 
-/* MIDI 合成器功能 (依赖 NOR Flash) */
-#ifdef BANBOX_1_0
-#define BANGTSYNTH_EN           0   /* 暂时禁用：节省 ~885 KB Flash */
-#elif defined(BANBOX_II)
-#define BANGTSYNTH_EN           0   /* 暂未移植到新板 */
-#else
-//#define BANGTSYNTH_EN           0
-#endif
-
-/* 高级合成器功能 (依赖 NAND + PSRAM) */
-#if HW_DRV_FLASH_NAND_EN && HW_DRV_PSRAM_EN
-#define SYNTH_SD_NAND_PSRAM_EN  0   /* 待启用：需 NAND + PSRAM */
-#else
-#define SYNTH_SD_NAND_PSRAM_EN  0   /* 父级硬件未满足 */
-#endif
+/* MIDI 合成器已移除 — 节省 ~885 KB Flash */
 
 /* FAT32 文件系统 (依赖 NAND 或 SD Card) */
 #if HW_DRV_FLASH_NAND_EN || HW_DRV_SDCARD_EN

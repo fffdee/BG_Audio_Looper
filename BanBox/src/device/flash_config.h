@@ -1,8 +1,8 @@
 #ifndef __FLASH_CONFIG_H__
 #define __FLASH_CONFIG_H__
 
-/* APP firmware starts at 0x040000 (after 256KB bootloader) */
-#define	CODE_ADDR				0x040000
+/* APP firmware starts at 0x000000 (no bootloader mode) */
+#define	CODE_ADDR				0x000000
 #define CONST_DATA_ADDR    		0x198000
 
 #ifdef CFG_CHIP_BP1048P4

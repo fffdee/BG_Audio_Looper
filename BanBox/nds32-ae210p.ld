@@ -2,6 +2,8 @@
 ENTRY(_start)
 SECTIONS
 {
+	/* APP linked at PART_A_BASE (0x040000) — bootloader jumps here.
+	 * For Partition B, hardware remap maps 0x040000->0x240000 transparently. */
 	PROVIDE (__executable_start = 0x040000);
 	NDS_SAG_LMA_EILM = 0x040000 ;
 	EILM_BEGIN = NDS_SAG_LMA_EILM;

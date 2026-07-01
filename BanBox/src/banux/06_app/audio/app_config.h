@@ -18,7 +18,7 @@
 // 是否使用Bootloader启动
 // 1: APP由Bootloader跳转启动，跳过Chip_Init等bootloader已完成的初始化
 // 0: APP独立运行（直接从0x0启动），需要完整初始化
-#define HAS_BOOTLOADER				1
+#define HAS_BOOTLOADER				0
 
 typedef uint16_t (*AudioCoreDataGetFunc)(void* Buf, uint16_t Samples);
 typedef uint16_t (*AudioCoreDataLenGetFunc)(void);

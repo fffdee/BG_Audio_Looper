@@ -121,10 +121,6 @@ public class BanBoxSettingsActivity extends BaseActivity {
         // 设置ViewPager适配器
         setupFunctionViewPager();
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
         // ========== 设备功能列表显示 ==========
         TextView tvFeatureList = findViewById(R.id.tv_feature_list);
         if (tvFeatureList != null && bluetoothHelper != null) {
@@ -147,8 +143,6 @@ public class BanBoxSettingsActivity extends BaseActivity {
             });
         }
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
         // ========== 初始化侧边栏相关控件 ==========
         initSideDrawer();
 
@@ -257,10 +251,6 @@ public class BanBoxSettingsActivity extends BaseActivity {
         }
     }
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
     /** 将功能名称（英文）转换为中文显示 */
     private String featName(String feat) {
         if (feat == null) return "";
@@ -282,8 +272,6 @@ public class BanBoxSettingsActivity extends BaseActivity {
         }
     }
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     /**
      * 初始化侧边栏控件和交互逻辑
      */

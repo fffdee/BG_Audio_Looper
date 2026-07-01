@@ -1,4 +1,10 @@
-/* Auto-generated — DO NOT EDIT */
+/* Legacy placeholder —  real data now in power_on.h (raw PCM int16_t).
+ * PowerOnMusic_Play() plays power_on[] directly via DAC, bypassing the audio decoder.
+ * Guarded by POWER_ON_MUSIC_EN to save ~109KB Flash when disabled. */
+#include "product_def.h"
+
+#if POWER_ON_MUSIC_EN
+
 #include "g_power_on_wav.h"
 
 const uint32_t g_power_on_wav_size = 17684;
@@ -1111,3 +1117,5 @@ const uint8_t g_power_on_wav[] = {
     0xB1, 0xFE, 0xF1, 0xFE, 0x2B, 0xFF, 0x5F, 0xFF, 0x8C, 0xFF, 0xB2, 0xFF, 0xD1, 0xFF, 0xE9, 0xFF,
     0xF9, 0xFF, 0x00, 0x00,
 };
+
+#endif /* POWER_ON_MUSIC_EN */

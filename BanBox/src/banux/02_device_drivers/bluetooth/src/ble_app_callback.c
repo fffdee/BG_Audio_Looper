@@ -44,31 +44,9 @@ void BLEStackCallBackFunc(uint8_t event)
 			BleConnectFlag = 0;
 			BG_EVT_PUB(EVT_BLE_DISCONNECTED);
 			/* 清除同步任务状态，防止重连后弹窗永不消失 */
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
 			{
 				extern void BleProto_OnDisconnected(void);
 				BleProto_OnDisconnected();
-			}
-			/* 蓝牙断开时仅停止正在播放或录制的段（不动 INACTIVE/STOPPED 段，不清数据） */
-			{
-				uint8_t i;
-				for (i = 0; i < MAX_SEGMENTS; i++) {
-					SegmentState_t segState = loop_get_segment_state(i);
-					if (segState == SEGMENT_PLAYING || segState == SEGMENT_RECORDING) {
-						loop_set_segment_stopped(i);
-					}
-				}
-
-				metronome_disable();
-				BT_DBG("[BLE] Disconnect: looper+metronome stopped\n");
-=======
-			{
-				extern void BleProto_OnDisconnected(void);
-				BleProto_OnDisconnected();
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
 			}
 			/* Looper/节拍器停止逻辑已移至 05_component/ble_app/ble_app_sync.c，
 			 * 通过 BG_EVT_SUB(EVT_BLE_DISCONNECTED) 订阅自动触发，

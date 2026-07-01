@@ -22,6 +22,8 @@
 #include <stdbool.h>
 
 /* BG_ERR 错误码定义（原 err_handle.h 属于 bangtsynth，已移除，此处内联） */
+#ifndef BG_ERR_DEFINED
+#define BG_ERR_DEFINED
 typedef enum {
     SUCCESS = 0,
     ENABLE_INVALID_INPUT,
@@ -29,6 +31,7 @@ typedef enum {
     ENABLE_NOT_FOUND,
     ENABLE_IO_ERROR,
 } BG_ERR;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

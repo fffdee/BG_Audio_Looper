@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file hal_sdio.h
  * @brief HAL层SDIO接口抽象
  * @note 封装SDK的SDIO和SD卡驱动接口
@@ -52,29 +52,6 @@ typedef enum {
     HAL_SD_ERR_PARAM = -6,
 } HAL_SD_Error_t;
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-#define HAL_SD_LOCK_WAIT_FOREVER  0xFFFFFFFFu
-
-/**
- * @brief Lock shared SDIO/SDCard access.
- * @param timeout_ms timeout in milliseconds, or HAL_SD_LOCK_WAIT_FOREVER
- * @return true if access is granted
- */
-bool HAL_SD_Lock(uint32_t timeout_ms);
-
-/**
- * @brief Unlock shared SDIO/SDCard access.
- */
-void HAL_SD_Unlock(void);
-
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 /**
  * @brief 初始化SDIO端口
  * @param port SDIO端口选择

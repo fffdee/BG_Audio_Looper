@@ -97,11 +97,6 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>startup</name>
-			<type>2</type>
-			<locationURI>copy_PARENT/startup</locationURI>
-		</link>
-		<link>
 			<name>driver/driver_api</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>

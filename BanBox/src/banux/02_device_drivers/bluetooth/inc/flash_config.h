@@ -3,7 +3,7 @@
 
 //���ڶ���Flash ����ʹ�����(v0.4)
 //Ĭ��flashΪ2M Byte�������С�б仯ע������߽�
-#define	CODE_ADDR				0x040000
+#define	CODE_ADDR				0x000000
 #define CONST_DATA_ADDR    		0x130000	//��������ʱcode�߽�
 #define AUDIO_EFFECT_ADDR  		0x1C8000	//����ʵ��������(��ʱδ��)
 #define FLASHFS_ADDR			0x1D0000	//����ʵ��������(��ʱδ��)

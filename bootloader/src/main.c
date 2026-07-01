@@ -12,6 +12,12 @@
  **************************************************************************************
  */
 
+/* Version: increment on each release (format V<major>.<minor>.<patch>) */
+#define BOOTLOADER_VERSION_MAJOR   0
+#define BOOTLOADER_VERSION_MINOR   2
+#define BOOTLOADER_VERSION_PATCH   0
+#define BOOTLOADER_VERSION_STR     "V0.2.0"
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <nds32_intrinsic.h>
@@ -296,6 +302,7 @@ int main(void) {
 
 	DBG("****************************************************************\n");
 	DBG("                          BG_CARD SDK                           \n");
+	DBG("                          Bootloader " BOOTLOADER_VERSION_STR "                    \n");
 	DBG("****************************************************************\n");
 
 	/* Check partition flags; jump to application if not in upgrade mode.

@@ -1,5 +1,5 @@
 ################################################################################
-# 自动生成的文件。不要编辑！
+# 鑷姩鐢熸垚鐨勬枃浠躲�備笉瑕佺紪杈戯紒
 ################################################################################
 
 O_SRCS := 
@@ -46,6 +46,7 @@ src/banux/03_driver_framework/drivers \
 src/banux/03_driver_framework \
 src/banux/03_driver_framework/event \
 src/banux/04_shell_commands \
+src/banux/05_component/bangtsynth \
 src/banux/05_component/fat32 \
 src/banux/05_component/sys_param \
 src/banux/06_app/BG_AudioIO_Manager \

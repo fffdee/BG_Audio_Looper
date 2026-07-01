@@ -43,13 +43,7 @@ public class BleProtocol {
     public static final byte SYSTEM_SUB_LP_STATE   = 0x03;
     public static final byte SYSTEM_SUB_LP_TIMEOUT = 0x04;
     public static final byte SYSTEM_SUB_PRODUCT_ID = 0x05;
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
     public static final byte SYSTEM_SUB_FEATURE_LIST = 0x06;  /* MCU → App: 产品功能列表 (payload[1..N]: JSON 字符串) */
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 
     /* Product IDs (match MCU BG_PRODUCT_ID_xxx) */
     public static final int PRODUCT_ID_BANBOX = 0x0001;

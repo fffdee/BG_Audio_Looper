@@ -3418,13 +3418,7 @@ void Shell_RegisterAllModules(void)
 
     ShellCmd_Param_Init();       /* param 鍛戒护 */
 
-    ShellCmd_BattCalib_Init();   /* batt calib 鍛戒护 */
-
-    /* Soundbank management command (BANGTSYNTH_EN) */
-    ShellCmdSoundbank_Register();
-
-    /* 鼓机命令 (BANGTSYNTH_EN) */
-    extern int ShellCmdDrum_Register(void);
+    ShellCmd_BattCalib_Init();   /* batt calib 命令 */
 
     /* 提示音测试命令 */
     extern void ShellCmdRemind_Register(void);
@@ -3433,8 +3427,6 @@ void Shell_RegisterAllModules(void)
     extern void ShellCmdPowerOnMusic_Register(void);
 
     ShellCmdMetronome_Register();
-
-    ShellCmdDrum_Register();
 
     ShellCmdRemind_Register();   /* remind 提示音测试命令 */
 
@@ -3470,18 +3462,12 @@ void Shell_RegisterAllModules(void)
         extern void ShellCmdLp_Register(void);
         ShellCmdLp_Register();
     }
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
 
     /* 固件升级命令 (USB CDC) */
     {
         extern void ShellCmdUpg_Register(void);
         ShellCmdUpg_Register();
     }
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 }
 
 /*============================================================================

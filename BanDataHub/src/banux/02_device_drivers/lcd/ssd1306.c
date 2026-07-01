@@ -1,20 +1,4 @@
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-/**
- * @file ssd1306.c
- * @brief SSD1306 OLED driver using hardware I2C peripheral.
- *
- * Replaced GPIO bit-bang I2C with SDK hardware I2C API for reliable
- * communication. Uses I2C_PORT_A30_A31 (SCL=A31, SDA=A30).
- */
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
-#include "ssd1306.h"
+﻿#include "ssd1306.h"
 
 #if HW_DRV_SSD1306_EN
 
@@ -22,25 +6,6 @@
 #include "gpio.h"
 #include "delay.h"
 #include "debug.h"
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-#include "i2c.h"
-#include "i2c_interface.h"
-
-static SSD1306_t g_ssd1306;
-
-/* SSD1306 I2C slave address (7-bit) */
-#define SSD1306_I2C_ADDR    (HW_SSD1306_I2C_ADDR)
-
-/* Control byte: 0x00 = command, 0x40 = data */
-#define SSD1306_CMD_CTRL    0x00
-#define SSD1306_DATA_CTRL   0x40
-=======
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 
 static SSD1306_t g_ssd1306;
 
@@ -49,13 +14,6 @@ static SSD1306_t g_ssd1306;
 #define SDA_HIGH()  GPIO_RegOneBitSet(GPIO_A_OUT, (1 << HW_SSD1306_SDA_PIN))
 #define SDA_LOW()   GPIO_RegOneBitClear(GPIO_A_OUT, (1 << HW_SSD1306_SDA_PIN))
 #define SDA_READ()  ((GPIO_RegOneBitGet(GPIO_A_IN, (1 << HW_SSD1306_SDA_PIN))) ? 1 : 0)
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 
 static const uint8_t font_6x8[][6] = {
     {0x00,0x00,0x00,0x00,0x00,0x00},
@@ -154,59 +112,6 @@ static const uint8_t font_6x8[][6] = {
     {0x08,0x08,0x2A,0x1C,0x08,0x00},
 };
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-/* ========== Hardware I2C helpers ========== */
-
-/**
- * Send a single command byte to SSD1306 via hardware I2C.
- * Format: [START] [ADDR+W] [0x00] [cmd] [STOP]
- */
-static void SSD1306_WriteCommand(uint8_t cmd)
-{
-    uint8_t buf[2];
-    buf[0] = SSD1306_CMD_CTRL;  /* control byte: command */
-    buf[1] = cmd;
-    I2C_MasterSendBuffer(SSD1306_I2C_ADDR, buf, 2, 100);
-}
-
-/**
- * Send a buffer of data bytes to SSD1306 via hardware I2C.
- * Format: [START] [ADDR+W] [0x40] [data...] [STOP]
- */
-static void SSD1306_WriteDataBuf(const uint8_t *data, uint16_t len)
-{
-    /*
-     * I2C_MasterSendBuffer sends: [START] [ADDR+W] [data[0]] [data[1]] ... [STOP]
-     * We need: [START] [ADDR+W] [0x40] [data[0]] [data[1]] ... [STOP]
-     * So we prepend the control byte to the data.
-     */
-    uint8_t buf[SSD1306_WIDTH + 1];  /* 1 control byte + 128 data bytes max */
-    buf[0] = SSD1306_DATA_CTRL;      /* control byte: data */
-    if (len > SSD1306_WIDTH) len = SSD1306_WIDTH;
-    memcpy(&buf[1], data, len);
-    I2C_MasterSendBuffer(SSD1306_I2C_ADDR, buf, len + 1, 1000);
-}
-
-/* ========== Public API ========== */
-
-void SSD1306_Init(void)
-{
-    /* Enable internal pull-ups on I2C pins */
-    GPIO_RegOneBitSet(GPIO_A_PU, (1 << HW_SSD1306_SCL_PIN));
-    GPIO_RegOneBitClear(GPIO_A_PD, (1 << HW_SSD1306_SCL_PIN));
-    GPIO_RegOneBitSet(GPIO_A_PU, (1 << HW_SSD1306_SDA_PIN));
-    GPIO_RegOneBitClear(GPIO_A_PD, (1 << HW_SSD1306_SDA_PIN));
-
-    /* Initialize hardware I2C: clk_div=0x28 (~375KHz), port=A30/A31, own_addr=0 */
-    I2C_Init(0x28, I2C_PORT_A30_A31, 0x00);
-
-=======
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 static void I2C_Delay(void)
 {
     volatile uint32_t i;
@@ -300,13 +205,6 @@ static void I2C_GPIO_Init(void)
 void SSD1306_Init(void)
 {
     I2C_GPIO_Init();
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     DelayMs(100);
 
     SSD1306_WriteCommand(0xAE);
@@ -337,19 +235,7 @@ void SSD1306_Init(void)
 
     memset(g_ssd1306.buffer, 0, sizeof(g_ssd1306.buffer));
     g_ssd1306.initialized = 1;
-<<<<<<< Updated upstream
     DBG("SSD1306 initialized OK\n");
-=======
-<<<<<<< HEAD
-    DBG("SSD1306 initialized OK\n");
-=======
-<<<<<<< HEAD
-    DBG("SSD1306 initialized OK (HW I2C)\n");
-=======
-    DBG("SSD1306 initialized OK\n");
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 }
 
 void SSD1306_DeInit(void)
@@ -373,16 +259,6 @@ void SSD1306_Update(void)
         SSD1306_WriteCommand(0x00);
         SSD1306_WriteCommand(0x10);
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-        /* Send 128 bytes of page data in one I2C transaction */
-        SSD1306_WriteDataBuf(&g_ssd1306.buffer[i * SSD1306_WIDTH], SSD1306_WIDTH);
-=======
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
         I2C_Start();
         I2C_SendByte(HW_SSD1306_I2C_ADDR << 1);
         I2C_WaitAck();
@@ -397,13 +273,6 @@ void SSD1306_Update(void)
             }
         }
         I2C_Stop();
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 69f72477ab92a7ac337c78cbc6167910bcd3c4ac
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     }
 }
 

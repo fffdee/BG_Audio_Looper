@@ -12,6 +12,12 @@
  **************************************************************************************
  */
 
+/* Version: increment on each release (format V<major>.<minor>.<patch>) */
+#define APP_VERSION_MAJOR   0
+#define APP_VERSION_MINOR   2
+#define APP_VERSION_PATCH   0
+#define APP_VERSION_STR     "V0.2.0"
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <nds32_intrinsic.h>
@@ -101,10 +107,6 @@ extern uint8_t BleConnectFlag;
 /* 系统状态管理（空闲/正常/数据传输） */
 #include "sys_state.h"
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
 /* Boot partition detection and confirmation */
 #include "dual_partition.h"
 
@@ -112,21 +114,8 @@ extern uint8_t BleConnectFlag;
 #include "app_upgrade.h"
 #include "cdc_upgrade.h"
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 /* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
 #include "remind_sound.h"
-
-/* BanGTsynth MIDI 合成器模块 */
-#if BANGTSYNTH_EN
-#include "bangtsynth_node.h"
-#include "bg_storage.h"
-#include "soundbank_manager.h"
-#include "bg_osal.h"              /* bg_tick_increment() */
-#if SYNTH_SD_NAND_PSRAM_EN
-#include "synth_sdnandpsram.h"    /* SYNTH_LoadTick() */
-#endif
-#endif
 
 //#define UI_EN
 
@@ -181,11 +170,6 @@ void Timer2Interrupt(void) {
 
 	/* Increment BLE tick counter for sync command timing */
 	ble_tick_counter++;
-
-#if BANGTSYNTH_EN
-	/* 驱动合成器 HAL 毫秒计数器（独立于 FreeRTOS 调度器） */
-	bg_tick_increment();
-#endif
 
 	if(count_flag){
 		power_count++;
@@ -341,34 +325,6 @@ void power_on()
 	}
 
 
-#if BANGTSYNTH_EN
-	DBG("[Task] Running synthesizer startup sequence...\n");
-	SYNTH_StartupSequence();
-	/*=====================================================
-	 * BanGTsynth MIDI 合成器初始化
-	 * 初始化 MIDI 控制器、音频处理流水线
-	 * 必须在 Audio_Init 之后调用 (Effect Graph 已创建)
-	 *====================================================*/
-	DBG("[Task] Initializing BanGTsynth...\n");
-	{
-		extern int osPortRemainMem(void);
-		DBG("[Task] Heap before BanGTsynth: %d bytes\n", osPortRemainMem());
-	}
-
-	if (BanGTsynth_Node_Init() == 0) {
-		DBG("[Task] BanGTsynth initialized OK\n");
-		/* 设置内嵌 SF2 存储驱动并加载默认音源 */
-		BG_Storage.SetDriver(&bg_storage_driver_embedded);
-		if (soundbank_manager.Init(0) == SUCCESS) {
-			DBG("[Task] Embedded SF2 soundbank loaded OK\n");
-
-		} else {
-			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
-		}
-	} else {
-		DBG("[Task] BanGTsynth init FAILED\n");
-	}
-#endif
 	BG_AudioManager.Audio_Init(44100);
 
 #if FAT32_EN
@@ -396,21 +352,6 @@ void power_on()
 #endif
 
 	/*=====================================================
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-	 * BLE data command dispatcher
-	 * Route incoming BLE data frames to the correct handler
-	 *====================================================*/
-	{
-		extern void BleProto_Init(void);
-		BleProto_Init();
-		extern void BleProto_RegisterDataHandler(BleProto_DataHandler_t handler);
-		BleProto_RegisterDataHandler(ble_data_cmd_dispatch);
-		DBG("[Task] BLE data handler registered\n");
-<<<<<<< Updated upstream
-=======
 =======
 	 * BLE application layer — sync provider + data handler
 	 * 注册 05_component/ble_app 层的同步提供者和数据命令处理器，
@@ -424,26 +365,18 @@ void power_on()
 		extern void BleProto_Init(void);
 		BleProto_Init();
 		DBG("[Task] BLE app layer initialized (sync + data handler)\n");
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 	}
 
 	/*=====================================================
 	 * Battery calibration — load saved curve from flash
 	 *====================================================*/
 	BattCalib_Init();
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
 	/* Register LowPower_FeedActivity callback for battery calibration (02→06 decoupling) */
 	{
 		extern void BattCalib_RegisterFeedActivity(void (*feed_fn)(uint8_t));
 		extern void LowPower_FeedActivity(uint8_t mask);
 		BattCalib_RegisterFeedActivity(LowPower_FeedActivity);
 	}
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 	DBG("[Task] Battery calibration initialized\n");
 
 	/*=====================================================
@@ -554,10 +487,6 @@ void pwr_butoon_handler()
 uint8_t time_count = 0;
 /* hardware_check() 被 50ms 定时调用，600次 = 30秒 */
 static uint16_t battery_report_count = 0;
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
 
 /* LED 指示灯状态 */
 static uint16_t led_blink_count = 0;   /* 闪烁计数器 */
@@ -614,8 +543,6 @@ static void led_update(void)
 	}
 }
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 void hardware_check()
 {
 
@@ -647,15 +574,9 @@ void hardware_check()
 
 	/* 系统状态机更新（检测空闲/传输状态，BLE 上报到 App） */
 	SysState_Update();
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
 
 	/* LED 指示灯状态更新 */
 	led_update();
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 }
 
 void MainTask() {
@@ -723,11 +644,6 @@ void MainTask() {
 		}
 
 		BG_AudioManager.Audio_Loop();
-
-#if BANGTSYNTH_EN && SYNTH_SD_NAND_PSRAM_EN
-		/* 驱动 Program Change 预热状态机（每主循环一步，无阻塞） */
-		SYNTH_LoadTick();
-#endif
 
 		/* Update UI System (handles button input, menu, status bar) */
 		if(UI_flag == 1){
@@ -866,7 +782,7 @@ int main(void) {
 	Clock_USBClkSelect(APLL_CLK_MODE);
 
 	Remap_InitTcm(0, 12);
-	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
+	/* SpiFlashInit moved AFTER spi_init() — SPIM_Init can reset the XIP flash config */
 	DMA_ChannelAllocTableSet(DmaChannelMap);
 #endif
 
@@ -891,6 +807,7 @@ int main(void) {
 
 	DBG("****************************************************************\n");
 	DBG("                          BG_CARD SDK                           \n");
+	DBG("                          APP " APP_VERSION_STR "                           \n");
 	DBG("****************************************************************\n");
 
 	prvInitialiseHeap();
@@ -902,10 +819,30 @@ int main(void) {
 	diag_putc('9');  /* SarADC done */
 	xQueue = xQueueCreate(4, sizeof(uint32_t));
 
-	/* Initialize SPI hardware BEFORE driver framework (drivers need it) */
+	/* Initialize SPI hardware BEFORE driver framework (drivers need it).
+	 *
+	 * IMPORTANT: In the bootloader path, spi_init() → SPIM_Init() reconfigures
+	 * the shared SPI controller and BREAKS XIP Flash access.  The following
+	 * SpiFlashInit() call is meant to restore XIP, but SpiFlashInit() itself
+	 * runs from XIP Flash — so the CPU faults before it can restore anything.
+	 *
+	 * In the bootloader path the SPI controller was already configured by
+	 * SpiFlashInit() at line 737 above; spi_init() is NOT needed here.
+	 * Drivers (flash_driver.c etc.) call SPIM_DMA_* directly and work
+	 * correctly with the XIP configuration.
+	 *
+	 * In the non-bootloader path, SpiFlashInit() runs FIRST, then spi_init()
+	 * is called to additionally configure the SPI master for peripherals
+	 * (LCD, external NOR/NAND, etc.).  This ordering is safe because
+	 * SpiFlashInit() runs while XIP is still valid (from the SDK startup). */
+#if !HAS_BOOTLOADER
 	DBG("[Main] Initializing SPI hardware...\n");
+	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
 	spi_init();
 	diag_putc('a');  /* spi_init done */
+#else
+	diag_putc('a');  /* skipped spi_init in bootloader path (XIP already configured) */
+#endif
 
 	/* Initialize Driver Framework BEFORE RTOS */
 	DBG("[Main] Initializing Driver Framework (before RTOS)...\n");

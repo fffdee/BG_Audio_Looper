@@ -67,15 +67,7 @@ static uint16_t adc_to_mv(uint16_t adc_val)
 }
 
 /**
-<<<<<<< Updated upstream
- * @brief Battery API: get remaining battery SOC percentage (integer only)
-=======
-<<<<<<< HEAD
- * @brief Battery API: get remaining battery SOC percentage (integer only)
-=======
  * @brief Battery API: get remaining battery SOC percentage (linear interpolation)
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
  * @return Battery SOC percentage (0~100)
  *
  * Uses a voltage-SOC lookup table with linear interpolation between points
@@ -90,10 +82,6 @@ uint8_t battery_get_soc(void)
 {
     uint16_t adc_val = battery_adc_read();
     uint16_t mv;
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
     uint8_t i;
     
     /* Voltage-SOC lookup table (descending voltage, ascending SOC) */
@@ -105,31 +93,10 @@ uint8_t battery_get_soc(void)
     };
     #define TABLE_SIZE (sizeof(v_table) / sizeof(v_table[0]))
     
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
     if (adc_val == 0u) {
         return 50u; /* ADC fault: return mid-value */
     }
     mv = adc_to_mv(adc_val);
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-    if (mv >= 4200u)      return 100u;
-    else if (mv >= 4100u) return 90u;
-    else if (mv >= 4000u) return 80u;
-    else if (mv >= 3900u) return 70u;
-    else if (mv >= 3800u) return 60u;
-    else if (mv >= 3750u) return 50u;
-    else if (mv >= 3700u) return 40u;
-    else if (mv >= 3650u) return 30u;
-    else if (mv >= 3600u) return 20u;
-    else if (mv >= 3400u) return 10u;
-    else if (mv >= 3000u) return 5u;
-    else                  return 0u;
-<<<<<<< Updated upstream
-=======
-=======
     
     /* Above max: full */
     if (mv >= v_table[0]) return soc_table[0];
@@ -148,8 +115,6 @@ uint8_t battery_get_soc(void)
         }
     }
     return 0u;
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 }
 
 /**

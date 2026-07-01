@@ -97,6 +97,11 @@ extern uint8_t BleConnectFlag;
 #include "sys_state.h"
 #include "remind_sound.h"
 
+#if BANGTSYNTH_EN
+#include "bangtsynth_node.h"
+#include "bg_storage.h"
+#endif
+
 
 
 extern void SysTickInit(void);
@@ -266,8 +271,6 @@ void power_on()
 	}
 
 #if BANGTSYNTH_EN
-	DBG("[Task] Running synthesizer startup sequence...\n");
-	SYNTH_StartupSequence();
 	DBG("[Task] Initializing BanGTsynth...\n");
 	{
 		extern int osPortRemainMem(void);
@@ -275,22 +278,43 @@ void power_on()
 	}
 	if (BanGTsynth_Node_Init() == 0) {
 		DBG("[Task] BanGTsynth initialized OK\n");
-		BG_Storage.SetDriver(&bg_storage_driver_embedded);
-		if (soundbank_manager.Init(0) == SUCCESS) {
-			DBG("[Task] Embedded SF2 soundbank loaded OK\n");
-		} else {
-			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
-		}
 	} else {
 		DBG("[Task] BanGTsynth init FAILED\n");
 	}
 #endif
 
-	/* 初始化 Flash 设备（含 SD 卡），必须在 RTOS 调度器启动后调用，
-	   因为 SD 卡初始化内部使用 vTaskDelay() */
+	/* 初始化 Flash 设备（含 PSRAM + SD 卡），必须在 RTOS 调度器启动后调用
+	   且必须在 BanGTsynth 存储初始化之前 (PSRAM设备需要就绪) */
 	DBG("[Task] Initializing Flash devices (PSRAM, SD card)...\n");
 	BG_FlashMgr.Init();
 	DBG("[Task] Flash devices initialized\n");
+
+#if BANGTSYNTH_EN
+#if SYNTH_SD_NAND_PSRAM_EN
+	/* SD+PSRAM 方案: SYNTH_StartupSequence 内部处理所有存储初始化
+	 * 注意: 必须在 BG_FlashMgr.Init() 之后, PSRAM设备已就绪 */
+	DBG("[Task] Starting SYNTH startup sequence...\n");
+	if (SYNTH_StartupSequence()) {
+		DBG("[Task] SD+PSRAM soundbank loaded OK\n");
+	} else {
+		DBG("[Task] SD+PSRAM init FAILED, trying embedded fallback\n");
+		BG_Storage.SetDriver(&bg_storage_driver_embedded);
+		if (soundbank_manager.Init(0) == SUCCESS) {
+			DBG("[Task] Embedded SF2 soundbank loaded OK (fallback)\n");
+		} else {
+			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
+		}
+	}
+#else
+	/* 传统方案: 内嵌音源 */
+	BG_Storage.SetDriver(&bg_storage_driver_embedded);
+	if (soundbank_manager.Init(0) == SUCCESS) {
+		DBG("[Task] Embedded SF2 soundbank loaded OK\n");
+	} else {
+		DBG("[Task] Embedded SF2 soundbank load FAILED\n");
+	}
+#endif
+#endif
 
 	BG_AudioManager.Audio_Init(44100);
 

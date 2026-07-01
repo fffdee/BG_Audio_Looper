@@ -410,21 +410,6 @@ void BG_audio_Init(uint16_t SampleRate)
 	InitADC0LineIn(SampleRate);
 	InitADC1Mic(SampleRate);
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-	/* 开机 VCOM/PGA 稳定等待：ADC 模拟前端（VCOM 参考电压、PGA 建立）
-	 * 需要约 200~500ms 才能稳定，期间 ADC 输出包含 DC 偏移 + HPF 瞬态失真。
-	 * 先静音，等 300ms 后再解除，消除开机时几秒钟的失真现象。 */
-	AudioADC_SoftMute(ADC0_MODULE, TRUE, TRUE);
-	AudioADC_SoftMute(ADC1_MODULE, TRUE, TRUE);
-	vTaskDelay((300 + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS);
-	AudioADC_SoftMute(ADC0_MODULE, FALSE, FALSE);
-	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
-<<<<<<< Updated upstream
-=======
-=======
 	/* 开机消噪：DAC先静音，防止DAC启动时的pop噪声输出到扬声器
 	 * 同时ADC也静音，等VCOM/PGA稳定后再一起解除 */
 	AudioDAC_VolSet(DAC0, 0, 0);  /* DAC0 左右声道静音 */
@@ -439,8 +424,6 @@ void BG_audio_Init(uint16_t SampleRate)
 	AudioADC_SoftMute(ADC0_MODULE, FALSE, FALSE);
 	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
 	/* DAC音量将在Audio_loop()的SetVolume()中恢复，无需手动解除 */
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
 
 	/* 开机提示音：InitDAC/ADC 完成后此处堆约 77KB，足够分配 19KB 解码器缓冲
 	 * InitAudioEffects 之后堆仅剩 ~11KB（不够），故必须在此处播放

@@ -125,12 +125,6 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
                         node_config->type = EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY;
                         node_config->name = "looper_play";
                         break;
-#if BANGTSYNTH_EN
-                    case SOURCE_TYPE_SYNTH:
-                        node_config->type = EFFECT_NODE_TYPE_SOURCE_SYNTH;
-                        node_config->name = "synth_in";
-                        break;
-#endif
                     default:
                         node_config->type = EFFECT_NODE_TYPE_SOURCE_ADC0;
                         node_config->name = "source";

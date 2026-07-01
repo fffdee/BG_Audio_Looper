@@ -67,10 +67,6 @@
                 android:orientation="vertical"
                 android:padding="@dimen/toolbar_padding">
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
                 <!-- 设备功能信息卡片 -->
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -101,8 +97,6 @@
                         android:lineSpacingExtra="4dp" />
                 </RelativeLayout>
 
->>>>>>> 691fcd2 (refactor(ble): 解耦跨层依赖并重构BLE同步回调)
->>>>>>> Stashed changes
                 <!-- 功能卡片容器 -->
                 <RelativeLayout
                     android:layout_width="match_parent"

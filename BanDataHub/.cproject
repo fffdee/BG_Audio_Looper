@@ -86,6 +86,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_HAL}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_Midi_Controller}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_Soundbank}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/01_hal}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/BanDataHub/src/banux/05_component/bangtsynth/drum_machine}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/soundbank_data}&quot;"/>

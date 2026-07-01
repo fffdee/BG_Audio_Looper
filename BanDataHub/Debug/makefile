@@ -1,9 +1,9 @@
 ################################################################################
-# 自动生成的文件。不要编辑！
+# Automatically-generated file. Do not edit!
 ################################################################################
 
 ifndef ANDESIGHT_ROOT
-ANDESIGHT_ROOT=/cygdrive/D/app/Andestech/AndeSight300RDS
+ANDESIGHT_ROOT=/cygdrive/C/Andestech/AndeSight300RDS
 endif
 
 ifndef CROSS_COMPILE
@@ -45,6 +45,32 @@ RM := rm -rf
 -include src/banux/03_driver_framework/subdir.mk
 -include src/banux/03_driver_framework/event/subdir.mk
 -include src/banux/04_shell_commands/subdir.mk
+-include src/banux/05_component/bangtsynth/01_hal/subdir.mk
+-include src/banux/05_component/bangtsynth/01_hal/port/bandatahub/subdir.mk
+-include src/banux/05_component/bangtsynth/01_hal/port/bp10/subdir.mk
+-include src/banux/05_component/bangtsynth/01_hal/port/embedded/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/envelope/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/fat32/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/midi/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/nand_store/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/psram_buffer/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/sampler/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/soundbank/subdir.mk
+-include src/banux/05_component/bangtsynth/02_core/synth_integration/subdir.mk
+-include src/banux/05_component/bangtsynth/03_app/drum_machine/subdir.mk
+-include src/banux/05_component/bangtsynth/03_app/synth_node/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Audio_Processor/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Audio_Processor/effects/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Envelope_Generator/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_HAL/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Midi_Controller/subdir.mk
+-include src/banux/05_component/bangtsynth/BG_Soundbank/subdir.mk
+-include src/banux/05_component/bangtsynth/subdir.mk
+-include src/banux/05_component/bangtsynth/data/drum_data/subdir.mk
+-include src/banux/05_component/bangtsynth/data/soundbank_data/subdir.mk
+-include src/banux/05_component/bangtsynth/drum_machine/subdir.mk
+-include src/banux/05_component/bangtsynth/durm_data/subdir.mk
+-include src/banux/05_component/bangtsynth/soundbank_data/subdir.mk
 -include src/banux/05_component/fat32/subdir.mk
 -include src/banux/05_component/sys_param/subdir.mk
 -include src/banux/06_app/BG_AudioIO_Manager/subdir.mk
@@ -95,51 +121,51 @@ SIZE_OUTPUTS += \
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size \
 
 
-# 所有目标
+# All Target
 all: BanDataHub.adx secondary-outputs
 
-# 工具调用
+# Tool invocations
 BanDataHub.adx: $(OBJS) $(USER_OBJS)
-	@echo '正在构建目标： $@'
-	@echo '正在调用： Andes C Linker'
-	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -L"/cygdrive/E/BanGO_prj/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/bluetooth" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BanDataHub.adx" $(OBJS) $(USER_OBJS) $(LIBS)
-	@echo '已结束构建目标： $@'
+	@echo 'Building target: $@'
+	@echo 'Invoking: Andes C Linker'
+	$(CROSS_COMPILE)gcc -Og -nostartfiles -static -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver" -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/audio" -L"/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/bluetooth" -mcmodel=medium -ldsp -mext-dsp -T"../nds32-ae210p.ld" -Wl,--gc-sections -mvh -o "BanDataHub.adx" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
 	@echo ' '
 
 $(foreach subdir,$(SUBDIRS),$(wildcard $(subdir)/*.gcda) $(wildcard $(subdir)/*.gcno)): BanDataHub.adx $(OBJS) $(USER_OBJS)
 ../gmon.sum ../gmon.out: BanDataHub.adx $(OBJS) $(USER_OBJS)
 
 $(SECONDARY_OUTPUT_PATH)/symbol.txt: $(LINKER_OUTPUTS)
-	@echo '正在调用： NM (symbol listing)'
+	@echo 'Invoking: NM (symbol listing)'
 	$(CROSS_COMPILE)nm -n -l -C "BanDataHub.adx" > $(SECONDARY_OUTPUT_PATH)/symbol.txt
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/readelf.txt: $(LINKER_OUTPUTS)
-	@echo '正在调用： Readelf (ELF info listing)'
+	@echo 'Invoking: Readelf (ELF info listing)'
 	$(CROSS_COMPILE)readelf -a "BanDataHub.adx" > $(SECONDARY_OUTPUT_PATH)/readelf.txt
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/objdump.txt: $(LINKER_OUTPUTS)
-	@echo '正在调用： Objdump (disassembly)'
+	@echo 'Invoking: Objdump (disassembly)'
 	$(CROSS_COMPILE)objdump -x -d -C "BanDataHub.adx" > $(SECONDARY_OUTPUT_PATH)/objdump.txt
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin: $(LINKER_OUTPUTS)
-	@echo '正在调用： Objcopy (object content copy)'
+	@echo 'Invoking: Objcopy (object content copy)'
 	$(CROSS_COMPILE)objcopy -S -O binary "BanDataHub.adx" $(SECONDARY_OUTPUT_PATH)/$(BUILD_ARTIFACT_FILE_BASE_NAME).bin
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
 $(SECONDARY_OUTPUT_PATH)/.PHONY.size: $(LINKER_OUTPUTS)
-	@echo '正在调用： Size (section size listing)'
+	@echo 'Invoking: Size (section size listing)'
 	$(CROSS_COMPILE)size  "BanDataHub.adx" | tee $(SECONDARY_OUTPUT_PATH)/.PHONY.size
-	@echo '已结束构建： $@'
+	@echo 'Finished building: $@'
 	@echo ' '
 
-# 其他目标
+# Other Targets
 clean:
 	-$(RM) $(OBJCOPY_OUTPUTS)$(OBJS)$(C_DEPS)$(GCOV_OUT)$(SYMBOL_OUTPUTS)$(OBJDUMP_OUTPUTS)$(READELF_OUTPUTS)$(GPROF_OUT)$(SIZE_OUTPUTS)$(EXECUTABLES)$(S_UPPER_DEPS) BanDataHub.adx
 	-@echo ' '
