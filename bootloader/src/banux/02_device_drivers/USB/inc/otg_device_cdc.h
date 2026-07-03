@@ -193,6 +193,12 @@ bool OTG_DeviceCDC_FlushRxBuffer(void);
  */
 bool OTG_DeviceCDC_FlushTxBuffer(void);
 
+/**
+ * @brief  CDC periodic task — must be called in main loop
+ *         Drives RX/TX ring-buffers and endpoint state machine
+ */
+void OTG_DeviceCDC_Task(void);
+
 
 #ifdef  __cplusplus
 }

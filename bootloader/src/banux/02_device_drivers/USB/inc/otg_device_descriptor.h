@@ -540,8 +540,9 @@ const uint8_t *ConfigDescriptorTab[13] =
 	ConfigDescriptor_Tab(HID),               // 7
 	ConfigDescriptor_Tab(AUDIO_MIC_PHONE),   // 8
 	ConfigDescriptor_Tab(AUDIO_CDC),         // 9
-	ConfigDescriptor_Tab(CDC_ONLY),          // 10 (MIC_CDC鏈畾涔夛紝鏆傜敤CDC_ONLY)
-	ConfigDescriptor_Tab(AUDIO_MIC_CDC),     // 11 鈫�姝ｇ‘浣嶇疆锛�	ConfigDescriptor_Tab(CDC_ONLY)           // 12
+	ConfigDescriptor_Tab(CDC_ONLY),          // 10 (MIC_CDC未定义，暂用CDC_ONLY)
+	ConfigDescriptor_Tab(AUDIO_MIC_CDC),     // 11
+	ConfigDescriptor_Tab(CDC_ONLY),          // 12
 };
 
 const uint8_t *InterFaceNumTab[13] =
@@ -556,7 +557,8 @@ const uint8_t *InterFaceNumTab[13] =
 	InterFaceNum_Tab(HID),               // 7
 	InterFaceNum_Tab(AUDIO_MIC_PHONE),   // 8
 	InterFaceNum_Tab(AUDIO_CDC),         // 9
-	InterFaceNum_Tab(CDC_ONLY),          // 10 (MIC_CDC鏈畾涔夛紝鏆傜敤CDC_ONLY)
-	InterFaceNum_Tab(AUDIO_MIC_CDC),     // 11 鈫�姝ｇ‘浣嶇疆锛�	InterFaceNum_Tab(CDC_ONLY)           // 12
+	InterFaceNum_Tab(CDC_ONLY),          // 10 (MIC_CDC未定义，暂用CDC_ONLY)
+	InterFaceNum_Tab(AUDIO_MIC_CDC),     // 11
+	InterFaceNum_Tab(CDC_ONLY),          // 12
 };
 

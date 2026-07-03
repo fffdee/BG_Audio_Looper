@@ -40,11 +40,12 @@
 #include <string.h>
 #include <stdio.h>
 
-/* USB CDC only — no audio, no BLE */
+/* USB CDC + Audio (copied from BanBox) */
 #include "otg_device_hcd.h"
 #include "otg_device_standard_request.h"
 #include "otg_device_cdc.h"
 #include "otg_detect.h"
+#include "usb_audio_api.h"
 
 #include "upgrade.h"
 
@@ -98,15 +99,15 @@ static uint8_t DmaChannelMap[29] = {
  * ────────────────────────────────────────────────────────────────────────── */
 static void UpgradeTask(void)
 {
-	/* CDC_ONLY: single CDC serial interface, no audio endpoints */
-	OTG_DeviceModeSel(CDC_ONLY, 0x8888, 0x1722);
-	OTG_DeviceInit();
-	NVIC_EnableIRQ(Usb_IRQn);
-	NVIC_SetPriority(Usb_IRQn, 0);
+	/* AUDIO_MIC_CDC: 与 BanBox 工程一致的 CDC+声卡复合设备模式
+	 * UsbDeviceEnable() 内部调用 OTG_DeviceInit() + NVIC_EnableIRQ(Usb_IRQn) */
+	OTG_DeviceModeSel(AUDIO_MIC_CDC, 0x1234, 0x1234);
+	UsbDevicePlayInit();
+	UsbDeviceEnable();
 
 	Upgrade_Init();
 
-	DBG("[BOOT] USB CDC upgrade ready (VID=0x%04X PID=0x%04X)\n", 0x8888, 0x1722);
+	DBG("[BOOT] USB CDC+Audio upgrade ready (VID=0x%04X PID=0x%04X)\n", 0x1234, 0x1234);
 
 	while (1) {
 		/* Service USB enumeration and control requests */
@@ -171,6 +172,7 @@ int main(void) {
 	prvInitialiseHeap();
 	NVIC_EnableIRQ(SWI_IRQn);
 
+	
 	xTaskCreate((TaskFunction_t)UpgradeTask, "UpgTask", 2048, NULL, 1, NULL);
 
 	DBG("[Main] Starting FreeRTOS scheduler...\n");

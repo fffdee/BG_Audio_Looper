@@ -69,10 +69,12 @@ extern "C"{
 #define MIC_READER			5
 #define AUDIO_MIC_READER	6
 #define HID					7
-#define AUDIO_MIC_PHONE		8#define AUDIO_CDC			9   // 新增：音频+CDC串口
+#define AUDIO_MIC_PHONE		8
+#define AUDIO_CDC			9   // 新增：音频+CDC串口
 #define MIC_CDC				10  // 新增：麦克风+CDC串口
 #define AUDIO_MIC_CDC		11  // 新增：音频+麦克风+CDC串口
-#define CDC_ONLY			12  // 新增：仅CDC串口#define USBPID(x)			(USB_PID_BASE + x)
+#define CDC_ONLY			12  // 新增：仅CDC串口
+#define USBPID(x)			(USB_PID_BASE + x)
 
 //�������ߵ���
 #define HID_DATA_FUN_EN	1

@@ -257,11 +257,17 @@ void __cpu_init()
 	__nds32__mtsr(0x1<<14, NDS32_SR_IVB);
 #endif
 # else
-	/* set IVIC, vector size: 4 bytes, base: 0x0
-	 * If we use v3/v3m toolchain and want to use
-	 * assembly version please don't use USE_C_EXT
-	 * in CFLAGS */
-	__nds32__mtsr(0x0000, NDS32_SR_IVB);
+	/* set IVIC, vector size: 4 bytes
+	 * Base = __executable_start (from linker script).
+	 * APP linked at 0x040000 → IVB=0x40000 so interrupts
+	 * use the APP's vector table, not the bootloader's.
+	 * With IVB=0 the first interrupt after vTaskStartScheduler()
+	 * enters the bootloader's vector table and crashes.
+	 * Matches BT_Audio_APP's FLASH_BOOT_EN approach. */
+	{
+		extern char __executable_start;
+		__nds32__mtsr((uint32_t)&__executable_start & 0xFFFF0000UL, NDS32_SR_IVB);
+	}
 # endif
 #endif
 	/* Set PSW INTL to 0 */

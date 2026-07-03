@@ -20,6 +20,13 @@
 // 0: APP独立运行（直接从0x0启动），需要完整初始化
 #define HAS_BOOTLOADER				0
 
+//******************************************************************************
+//                         开机提示音配置
+//******************************************************************************
+// 1: 开机时播放提示音（RemindSound "on" + 自定义开机音乐）
+// 0: 关闭开机提示音
+#define ENABLE_POWER_ON_SOUND		0
+
 typedef uint16_t (*AudioCoreDataGetFunc)(void* Buf, uint16_t Samples);
 typedef uint16_t (*AudioCoreDataLenGetFunc)(void);
 typedef uint16_t (*AudioCoreDataSetFunc)(void* Buf, uint16_t Samples);

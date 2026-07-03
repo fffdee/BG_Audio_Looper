@@ -17,8 +17,9 @@
 #include "otg_device_hcd.h"
 #include "otg_device_standard_request.h"
 #include "otg_device_descriptor.h"
+#include "otg_device_audio.h"
 #include "otg_device_cdc.h"
-/* Audio mode disabled — bootloader is CDC-only */
+#define CFG_APP_USB_AUDIO_MODE_EN
 
 #ifdef CFG_APP_CONFIG
 #include "app_config.h"
@@ -60,10 +61,8 @@ const char *gDeviceString_Manu ="BanGO";		//max length: 32bytes
 const char *gDeviceString_SerialNumber ="20250405";//max length: 32bytes
 uint8_t *gDeviceString_Index;
 
-#ifdef CFG_APP_USB_AUDIO_MODE_EN
 extern UsbAudio UsbAudioSpeaker;
 extern UsbAudio UsbAudioMic;
-#endif
 
 void OTG_DeviceModeSel(uint8_t Mode,uint16_t UsbVid,uint16_t UsbPid)
 {
@@ -209,9 +208,7 @@ void OTG_DeviceGetDescriptor(void)
 	OTG_DeviceControlSend((uint8_t*)UsbSendPtr, Len,3);
 }
 
-#ifdef CFG_APP_USB_AUDIO_MODE_EN
 void OTG_DeviceAudioInit();
-#endif
 //extern uint32_t SpeakerRun;
 void OTG_DeviceStandardRequest()
 {

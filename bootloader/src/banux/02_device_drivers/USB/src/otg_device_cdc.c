@@ -334,8 +334,8 @@ bool OTG_DeviceCDC_FlushTx(void)
     UsbCDC.TxBusy = 1;
     
     // Send data through USB endpoint (使用Bulk IN端点)
-  //  DBG("CDC: Sending %u bytes via Bulk IN\n", len);
-    OTG_DeviceBulkSend(DEVICE_CDC_DATA_IN_EP, tmpBuf, len, 100);
+    // 超时1000ms: 给主机充足时间读取数据，避免因主机轮询延迟而丢包
+    OTG_DeviceBulkSend(DEVICE_CDC_DATA_IN_EP, tmpBuf, len, 1000);
     
     // 发送完成后清除busy标志（同步模式）
     UsbCDC.TxBusy = 0;

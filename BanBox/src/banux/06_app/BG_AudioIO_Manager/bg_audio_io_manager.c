@@ -22,6 +22,7 @@
 #include "type.h"
 #include "remind_sound.h"
 #include "power_on_music.h"
+#include "app_config.h"		/* ENABLE_POWER_ON_SOUND */
 #include "audio_effect.h"
 #include "ctrlvars.h"
 #include "otg_device_hcd.h"
@@ -428,11 +429,13 @@ void BG_audio_Init(uint16_t SampleRate)
 	/* 开机提示音：InitDAC/ADC 完成后此处堆约 77KB，足够分配 19KB 解码器缓冲
 	 * InitAudioEffects 之后堆仅剩 ~11KB（不够），故必须在此处播放
 	 * FIFO 等待已有超时保护（remind_sound.c），DAC DMA 未就绪时安全跳过 */
-	//RemindSound_PlayByName("on");
+#if ENABLE_POWER_ON_SOUND
+	RemindSound_PlayByName("on");
 
-	/* 开机音乐：播放用户自定义 WAV/MP3（默认注释，取消注释即可启用）
+	/* 开机音乐：播放用户自定义 WAV/MP3
 	 * 需要先替换 06_app/power_on_music/g_power_on_wav.c 中的音乐数据 */
-	//PowerOnMusic_Play();
+	PowerOnMusic_Play();
+#endif
 
 	InitAudioEffects(SampleRate);
 	InitControlGPIO();
