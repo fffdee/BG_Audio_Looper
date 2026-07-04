@@ -147,15 +147,18 @@ class Bootloader:
     封装全部 bootloader 操作。
     progress_cb: 可选回调 progress_cb(sent, total) 用于汇报进度。
     log_cb:      可选回调 log_cb(msg: str) 用于输出日志。
+    info_cb:     可选回调 info_cb(info: dict) 用于汇报设备信息。
     """
 
     def __init__(self, comm: BLComm,
                  progress_cb: Optional[Callable[[int, int], None]] = None,
-                 log_cb:      Optional[Callable[[str], None]] = None):
+                 log_cb:      Optional[Callable[[str], None]] = None,
+                 info_cb:     Optional[Callable[[dict], None]] = None):
         self._comm       = comm
         self._seq        = 0
         self._progress   = progress_cb or (lambda s, t: None)
         self._log        = log_cb       or print
+        self._info       = info_cb      or (lambda i: None)
 
     def _next_seq(self) -> int:
         s = self._seq
@@ -301,6 +304,8 @@ class Bootloader:
             f"备份分区={backup_lbl}({backup_size//1024} KB)  "
             f"启动失败次数={info['boot_fail_cnt']}"
         )
+        # 通过回调把 info 字典传给 UI 层（用于更新设备信息卡）
+        self._info(info)
         return info
 
     def set_partition(self, part: int):

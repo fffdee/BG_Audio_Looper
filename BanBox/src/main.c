@@ -295,7 +295,10 @@ void power_on()
 	GPIO_RegOneBitSet(GPIO_A_OE, HW_LED_GPIO_PIN);
 	GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
 
-
+	/* 初始化音频控制变量默认值（效果器参数、增益等）
+	 * 必须在 SysParam_Init() 和 Audio_Init() 之前调用，
+	 * 否则 gCtrlVars 全零导致所有效果器参数异常 → 无声 */
+	CtrlVarsInit();
 
 	/* SPI and Driver Framework already initialized in main() */
 	/* All hardware drivers (LCD, Flash, etc.) auto-initialized by framework */

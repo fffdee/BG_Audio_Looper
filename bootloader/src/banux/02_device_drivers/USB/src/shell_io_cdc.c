@@ -4,7 +4,7 @@
  * @author   BG Card Team
  * @version  V1.0.0
  * @date     16-December-2025
- * @brief    Shell CDC IO适配器实现
+ * @brief    Shell CDC IO适配器实现 (Bootloader版 — 无Shell框架依赖)
  *****************************************************************************
  */
 

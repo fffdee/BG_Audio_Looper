@@ -266,15 +266,21 @@ public class BluetoothHelper {
                     protoWriteBusy = false;
                     protoWriteQueue.clear();
                     cachedAb01Char = null;  // 等 onServicesDiscovered 后重新缓存
-                    boolean mtuReq = gatt.requestMtu(250);
-                    Log.d("BLE", "requestMtu(250) called, result=" + mtuReq);
+                    // 连接后延迟 500ms 再 discoverServices，给设备 BT 栈稳定时间。
+                    // 设备刚启动时 BT 栈处理 ATT MTU exchange 极慢（实测 15 秒），
+                    // 立即 requestMtu 会导致 supervision timeout 断连。
+                    // 改为先 discoverServices（默认 23 字节 MTU 足够），
+                    // 服务发现完成后再 requestMtu。
+                    handler.postDelayed(() -> {
+                        Log.d("BLE", "discoverServices() after 500ms stabilization delay");
+                        gatt.discoverServices();
+                    }, 500);
                     // 连接建立后立即显示同步弹窗，设置超时安全阀
                     syncingLiveData.postValue(true);
                     postSyncTimeout();
                     connectionStateLiveData.postValue(
                             BleConnectionState.connected(connectedDevice, gatt));
                     handler.post(() -> notifyConnected(connectedDevice, gatt));
-                    gatt.discoverServices();
                 } else if (newState == android.bluetooth.BluetoothProfile.STATE_DISCONNECTED) {
                     isConnected = false;
                     isCccdEnabled = false;
@@ -298,6 +304,14 @@ public class BluetoothHelper {
             public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
                 super.onMtuChanged(gatt, mtu, status);
                 Log.d("BLE", "onMtuChanged: mtu=" + mtu + ", status=" + status);
+                // MTU 协商完成后启用通知（服务发现已在之前完成）
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    Log.d("BLE", "MTU negotiated, enabling notifications...");
+                    handler.postDelayed(() -> enableNotify(gatt), 100);
+                } else {
+                    Log.e("BLE", "MTU negotiation failed, enabling notifications with default MTU...");
+                    handler.postDelayed(() -> enableNotify(gatt), 100);
+                }
             }
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
@@ -328,15 +342,11 @@ public class BluetoothHelper {
                 } else {
                     Log.e("BLE", "[Discovery] AB01 write characteristic NOT found in service list!");
                 }
-                // 服务就绪后，立即尝试发送队列中挂起的帧
-                handler.post(() -> {
-                    serviceNotReadyRetries = 0;
-                    if (!protoWriteQueue.isEmpty() && !protoWriteBusy) {
-                        Log.d("BLE", "[Discovery] Flushing " + protoWriteQueue.size() + " pending proto writes");
-                        drainProtoWriteQueue();
-                    }
-                });
-                handler.postDelayed(() -> enableNotify(gatt), 100);
+                // 服务发现完成后请求 MTU（onMtuChanged 中再 enableNotify）
+                handler.postDelayed(() -> {
+                    boolean mtuReq = gatt.requestMtu(250);
+                    Log.d("BLE", "requestMtu(250) called after service discovery, result=" + mtuReq);
+                }, 200);
             }
 
             @Override
@@ -502,7 +512,11 @@ public class BluetoothHelper {
                 }
             }
         };
-        bluetoothGatt = device.connectGatt(context, false, gattCallback);
+        bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+        Log.d("BLE", "connectGatt called with TRANSPORT_LE for device: " + device.getAddress());
+        // 设备 BT 栈处理 ATT 极慢（实测 15 秒），请求更长监督超时（CONNECTION_PRIORITY_LOW_POWER 通常给 ~6s）
+        boolean prio = bluetoothGatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_LOW_POWER);
+        Log.d("BLE", "requestConnectionPriority(LOW_POWER) result=" + prio);
     }
 
     public void writeCharacteristic(String handleOrUuid, byte[] data, java.util.function.Consumer<Boolean> callback) {

@@ -55,6 +55,89 @@ static uint32_t crc32_calc(const uint8_t *buf, uint32_t len)
 }
 
 /* =========================================================================
+ * Dynamic flash layout
+ *
+ * Flash capacity may be smaller than the default layout assumes (8 MB).
+ * If so, addresses like PART_FLAG_ADDR (0x440000) and PART_B_BASE (0x240000)
+ * may wrap around, causing PartFlag writes to overwrite firmware data.
+ * We detect the actual flash size at runtime and adjust accordingly.
+ * ========================================================================= */
+static uint32_t g_part_flag_addr;     /* actual address of partition flags  */
+static uint32_t g_flash_capacity;     /* flash size in bytes               */
+static uint32_t g_part_a_usable;      /* usable A partition size (bytes)   */
+static uint32_t g_part_b_usable;      /* usable B partition size (bytes)   */
+
+void PartFlag_Init(void)
+{
+    SPI_FLASH_INFO *fi = SpiFlashInfoGet();
+    g_flash_capacity = fi->Capacity;
+
+    DBG("[BOOT] Flash: MID=0x%02X DID=0x%04X Capacity=%u bytes (%u KB)\n",
+        (unsigned)fi->Mid, (unsigned)fi->Did,
+        (unsigned)g_flash_capacity, (unsigned)(g_flash_capacity / 1024));
+
+    /* Compute safe PartFlag address: use last 4KB sector of flash.
+     * This guarantees it won't wrap regardless of flash size. */
+    if (g_flash_capacity >= PART_FLAG_ADDR + FLASH_SECTOR_SZ) {
+        /* Flash large enough — use default address */
+        g_part_flag_addr = PART_FLAG_ADDR;
+    } else {
+        /* Flash too small — place PartFlag at last sector */
+        g_part_flag_addr = (g_flash_capacity - FLASH_SECTOR_SZ)
+                           & ~(FLASH_SECTOR_SZ - 1u);
+        DBG("[BOOT] WARNING: Flash too small for default layout!\n");
+        DBG("[BOOT] PartFlag moved: 0x%08X -> 0x%08X\n",
+            (unsigned)PART_FLAG_ADDR, (unsigned)g_part_flag_addr);
+    }
+
+    /* Compute usable Partition B size (clamped to actual flash boundary) */
+    if (g_flash_capacity >= PART_B_BASE + PART_B_SIZE) {
+        g_part_b_usable = PART_B_SIZE;
+    } else if (g_flash_capacity > PART_B_BASE) {
+        g_part_b_usable = g_flash_capacity - PART_B_BASE;
+        /* Shrink further if PartFlag is inside Partition B */
+        if (g_part_flag_addr >= PART_B_BASE &&
+            g_part_flag_addr < PART_B_BASE + g_part_b_usable) {
+            g_part_b_usable = g_part_flag_addr - PART_B_BASE;
+        }
+        DBG("[BOOT] Partition B usable: %u KB (of %u KB)\n",
+            (unsigned)(g_part_b_usable / 1024),
+            (unsigned)(PART_B_SIZE / 1024));
+    } else {
+        g_part_b_usable = 0;
+        DBG("[BOOT] WARNING: Flash too small for Partition B "
+            "(need >= %u KB, have %u KB)\n",
+            (unsigned)((PART_B_BASE + PART_B_SIZE) / 1024),
+            (unsigned)(g_flash_capacity / 1024));
+    }
+
+    /* Compute usable Partition A size */
+    if (g_flash_capacity >= PART_A_BASE + PART_A_SIZE) {
+        g_part_a_usable = PART_A_SIZE;
+    } else if (g_flash_capacity > PART_A_BASE) {
+        g_part_a_usable = g_flash_capacity - PART_A_BASE;
+        DBG("[BOOT] Partition A usable: %u KB (of %u KB)\n",
+            (unsigned)(g_part_a_usable / 1024),
+            (unsigned)(PART_A_SIZE / 1024));
+    } else {
+        g_part_a_usable = 0;
+        DBG("[BOOT] FATAL: Flash too small for Partition A!\n");
+    }
+
+    /* Validate layout */
+    if (g_part_flag_addr >= PART_A_BASE &&
+        g_part_flag_addr < PART_A_BASE + PART_A_SIZE) {
+        DBG("[BOOT] FATAL: PartFlag@0x%08X overlaps Partition A!\n",
+            (unsigned)g_part_flag_addr);
+    }
+    if (g_part_flag_addr >= PART_B_BASE &&
+        g_part_flag_addr < PART_B_BASE + PART_B_SIZE) {
+        DBG("[BOOT] PartFlag@0x%08X is inside Partition B region, "
+            "B usable size reduced\n", (unsigned)g_part_flag_addr);
+    }
+}
+
+/* =========================================================================
  * Partition flag helpers
  * ========================================================================= */
 static void part_flag_seal(PartFlag_t *f)
@@ -74,7 +157,14 @@ static int part_flag_valid(const PartFlag_t *f)
 
 int PartFlag_Read(PartFlag_t *flag)
 {
-    memcpy(flag, (const void *)PART_FLAG_ADDR, sizeof(PartFlag_t));
+    if (g_part_flag_addr == 0u) {
+        /* PartFlag_Init not yet called — use default address as fallback */
+        memcpy(flag, (const void *)PART_FLAG_ADDR, sizeof(PartFlag_t));
+    } else {
+        DataCacheInvalidAll();
+        __nds32__dsb();
+        memcpy(flag, (const void *)g_part_flag_addr, sizeof(PartFlag_t));
+    }
     return part_flag_valid(flag) ? 1 : 0;
 }
 
@@ -88,12 +178,25 @@ void PartFlag_Default(PartFlag_t *flag)
 int PartFlag_Write(const PartFlag_t *flag)
 {
     PartFlag_t tmp;
+    uint32_t addr = (g_part_flag_addr != 0u) ? g_part_flag_addr : PART_FLAG_ADDR;
     memcpy(&tmp, flag, sizeof(PartFlag_t));
     part_flag_seal(&tmp);          /* always re-seal before writing */
 
-    if (FlashErase(PART_FLAG_ADDR, FLASH_SECTOR_SZ) != FLASH_NONE_ERR)
-        return 0;
-    return (SpiFlashWrite(PART_FLAG_ADDR, (uint8_t *)&tmp,
+    /* 直接调用 SpiFlashErase 避免 FlashErase 容量检查陷阱
+     *
+     * IsSuspend=0（阻塞模式）！原因：
+     *   SpiFlashErase/SpiFlashWrite 在 IsSuspend=1 时会进入
+     *   suspend/resume 循环，resume 连续失败 5 次后调用
+     *   vTaskDelay(1) 让出 CPU。但此函数会在
+     *   Boot_CheckAndJumpIfNeeded() 中被调用——此时 FreeRTOS
+     *   尚未启动，vTaskDelay 访问未初始化的调度器数据结构，
+     *   导致堆链表损坏，最终在 uxListRemove 触发 Bus Error
+     *   (R0=0x4 损坏指针)。IsSuspend=0 时函数仅阻塞轮询
+     *   等待完成，不调用 vTaskDelay，在 FreeRTOS 启动前后均安全。
+     *   分区标志仅 4KB 单扇区擦除 + 20 字节写入，阻塞时间
+     *   约 100~400ms，可接受。 */
+    SpiFlashErase(SECTOR_ERASE, addr / FLASH_SECTOR_SZ, 0);
+    return (SpiFlashWrite(addr, (uint8_t *)&tmp,
                          sizeof(PartFlag_t), 0) == FLASH_NONE_ERR) ? 1 : 0;
 }
 
@@ -160,7 +263,12 @@ void Boot_JumpTo(uint32_t addr)
         }
         else
         {
-            diag_putc('?');  /* BootInfo magic mismatch! */
+            /* BootInfo magic 不匹配 — APP 固件未嵌入 BootInfo 结构。
+             * APP 的 C runtime 启动代码（_start/__c_init）会自行处理
+             * .data 拷贝和 .bss 清零，此处直接跳转即可。 */
+            diag_putc('?');
+            DBG("[BOOT] No BootInfo at 0x%08X, APP will self-init .data/.bss\n",
+                (unsigned)(addr + BOOT_INFO_OFFSET));
         }
     }
 
@@ -210,29 +318,77 @@ void Boot_CheckAndJumpIfNeeded(void)
         (void)backup_addr;
     }
 
-    /* Firmware validity check */
+    /* Firmware validity check
+     *
+     * CRITICAL: Invalidate D-cache before reading flash to ensure we get
+     * fresh data, not stale cache lines from a previous boot/JUMP.
+     *
+     * 检查策略（宽松但安全）：
+     *   1. 优先：FW_VALID_MAGIC ("BGPF") at offset 0xA4 → 最可靠
+     *   2. 回退：首字为有效 NDS32 指令（非 0xFFFFFFFF 且非 PART_FLAG_MAGIC）
+     *   3. 拒绝：首字为 PART_FLAG_MAGIC ("BGPW") → 说明该区域被分区标志污染
+     */
+    DataCacheInvalidAll();
+    __nds32__dsb();
+
+    /* Diagnostic: dump first word at key addresses */
     {
-        volatile const uint32_t *magic_ptr =
+        volatile const uint32_t *pa = (volatile const uint32_t *)PART_A_BASE;
+        volatile const uint32_t *pb = (volatile const uint32_t *)PART_B_BASE;
+        volatile const uint32_t *pf = (volatile const uint32_t *)g_part_flag_addr;
+        DBG("[BOOT] Flash dump: A@0x%08X=0x%08X  B@0x%08X=0x%08X  "
+            "Flag@0x%08X=0x%08X\n",
+            (unsigned)PART_A_BASE, (unsigned)*pa,
+            (unsigned)PART_B_BASE, (unsigned)*pb,
+            (unsigned)g_part_flag_addr, (unsigned)*pf);
+    }
+
+    {
+        volatile const uint32_t *first_word =
+            (volatile const uint32_t *)jump_addr;
+        volatile const uint32_t *fw_magic =
             (volatile const uint32_t *)(jump_addr + FW_VALID_MAGIC_OFFSET);
 
-        DBG("[BOOT] Checking magic @ 0x%08X = 0x%08X (expect 0x%08X)\n",
-            (unsigned)(jump_addr + FW_VALID_MAGIC_OFFSET),
-            (unsigned)*magic_ptr, (unsigned)FW_VALID_MAGIC);
+        DBG("[BOOT] Checking firmware @ 0x%08X = 0x%08X (magic@0xA4=0x%08X)\n",
+            (unsigned)jump_addr, (unsigned)*first_word,
+            (unsigned)*fw_magic);
 
-        if (*magic_ptr != FW_VALID_MAGIC) {
+        /* Accept firmware if BGPF magic present at offset 0xA4 */
+        int valid = (*fw_magic == FW_VALID_MAGIC);
+
+        /* Fallback: accept if first word looks like a valid instruction
+         * (non-empty AND not partition flag magic) */
+        if (!valid && *first_word != 0xFFFFFFFFu &&
+            *first_word != PART_FLAG_MAGIC) {
+            valid = 1;
+            DBG("[BOOT] No BGPF magic, but first word looks valid → accept\n");
+        }
+
+        if (!valid) {
+            /* Try the other partition */
             if (jump_addr != PART_A_BASE) {
-                DBG("[BOOT] B partition has no firmware magic – "
-                    "resetting flags to A\n");
+                DBG("[BOOT] B not valid – trying A\n");
                 flag.active_part     = 0;
                 flag.boot_fail_cnt   = 0;
                 PartFlag_Write(&flag);
                 jump_addr = PART_A_BASE;
-                magic_ptr = (volatile const uint32_t *)
-                            (PART_A_BASE + FW_VALID_MAGIC_OFFSET);
+                first_word = (volatile const uint32_t *)PART_A_BASE;
+                fw_magic = (volatile const uint32_t *)
+                           (PART_A_BASE + FW_VALID_MAGIC_OFFSET);
+                DBG("[BOOT] Checking A @ 0x%08X = 0x%08X (magic@0xA4=0x%08X)\n",
+                    (unsigned)jump_addr, (unsigned)*first_word,
+                    (unsigned)*fw_magic);
+
+                valid = (*fw_magic == FW_VALID_MAGIC);
+                if (!valid && *first_word != 0xFFFFFFFFu &&
+                    *first_word != PART_FLAG_MAGIC) {
+                    valid = 1;
+                    DBG("[BOOT] A: no BGPF magic, but first word valid → accept\n");
+                }
             }
-            if (*magic_ptr != FW_VALID_MAGIC) {
-                DBG("[BOOT] No valid firmware found (magic=0x%08X) – "
-                    "staying in bootloader\n", (unsigned)*magic_ptr);
+            if (!valid) {
+                DBG("[BOOT] No valid firmware in either partition – "
+                    "staying in bootloader\n");
                 return;
             }
         }
@@ -400,20 +556,45 @@ static int parse_poll(void)
 
 /* =========================================================================
  * Flash helpers
+ *
+ * NOTE: 直接使用 SpiFlashErase/SpiFlashWrite 而不是 FlashErase 封装。
+ *       FlashErase 内部会读取全局 flash 容量做边界检查，在 bootloader
+ *       场景下该全局变量可能未被正确填充导致返回 ERASE_FLASH_ERR
+ *       (参考 BT_Audio_APP/bt_obex_upgrade.c 的实现)。
+ *
+ *       IsSuspend=1：擦写过程可被 USB 中断暂停，避免 CDC host 超时断开。
  * ========================================================================= */
+#define FLASH_BLOCK_SZ   0x10000UL   /* 64 KB block erase unit */
+
+static void flash_service_usb(void)
+{
+    /* Service USB so CDC host doesn't disconnect mid-erase/write */
+    OTG_DeviceRequestProcess();
+    OTG_DeviceCDC_Task();
+}
+
 static int flash_erase(uint32_t offset, uint32_t size)
 {
-    uint32_t aligned = (size + FLASH_SECTOR_SZ - 1u) & ~(FLASH_SECTOR_SZ - 1u);
     uint32_t cur = offset;
-    uint32_t end = offset + aligned;
+    uint32_t end = offset + size;
     volatile uint32_t d;
 
+    /* 4KB 对齐起点与终点 */
+    cur &= ~(FLASH_SECTOR_SZ - 1u);
+    end = (end + FLASH_SECTOR_SZ - 1u) & ~(FLASH_SECTOR_SZ - 1u);
+
     while (cur < end) {
-        if (FlashErase(cur, FLASH_SECTOR_SZ) != FLASH_NONE_ERR) return 0;
-        cur += FLASH_SECTOR_SZ;
-        /* Service USB so CDC host doesn't disconnect mid-erase */
-        OTG_DeviceRequestProcess();
-        OTG_DeviceCDC_Task();
+        /* 优先 64KB block erase（要求 64KB 对齐且剩余 >= 64KB） */
+        if (((cur & (FLASH_BLOCK_SZ - 1u)) == 0u) &&
+            ((end - cur) >= FLASH_BLOCK_SZ)) {
+            SpiFlashErase(BLOCK_ERASE, cur / FLASH_BLOCK_SZ, 1);
+            cur += FLASH_BLOCK_SZ;
+        } else {
+            SpiFlashErase(SECTOR_ERASE, cur / FLASH_SECTOR_SZ, 1);
+            cur += FLASH_SECTOR_SZ;
+        }
+        flash_service_usb();
+        /* 短延时让 USB 状态机跑完 */
         d = 10000UL; while (d--);
     }
     return 1;
@@ -421,7 +602,7 @@ static int flash_erase(uint32_t offset, uint32_t size)
 
 static int flash_write(uint32_t addr, const uint8_t *data, uint16_t len)
 {
-    return (SpiFlashWrite(addr, (uint8_t *)data, len, 0) == FLASH_NONE_ERR) ? 1 : 0;
+    return (SpiFlashWrite(addr, (uint8_t *)data, len, 1) == FLASH_NONE_ERR) ? 1 : 0;
 }
 
 /* =========================================================================
@@ -433,26 +614,57 @@ static struct {
     UpgState_t state;
     uint32_t   total_size;
     uint32_t   written;
+    uint32_t   fw_base;     /* write target base address */
+    uint32_t   fw_max;      /* write target max size */
+    uint8_t    target_part; /* 0=A, 1=B */
 } g_session;
 
 /* =========================================================================
  * Core upgrade state machine
  * ========================================================================= */
+/* Helper: compute write target (backup partition) from current active partition.
+ * In dual-partition mode, we always write to the partition that is NOT active.
+ * If the backup partition is unavailable (e.g. B on a small flash),
+ * fall back to writing to A (overwrite current firmware). */
+static void upgrade_compute_target(void)
+{
+#if (BOOT_CURRENT_MODE == BOOT_MODE_DUAL_AB)
+    PartFlag_t flag;
+    if (PartFlag_Read(&flag) && flag.active_part == 1u) {
+        /* Active = B → write to A (backup) */
+        g_session.target_part = 0;
+        g_session.fw_base     = PART_A_BASE;
+        g_session.fw_max      = g_part_a_usable;
+    } else {
+        /* Active = A (or no valid flag) → write to B (backup) */
+        g_session.target_part = 1;
+        g_session.fw_base     = PART_B_BASE;
+        g_session.fw_max      = g_part_b_usable;
+        /* If B is unavailable (flash too small), fall back to A */
+        if (g_part_b_usable == 0) {
+            DBG("[UPG] WARNING: Part B unavailable, falling back to A\n");
+            g_session.target_part = 0;
+            g_session.fw_base     = PART_A_BASE;
+            g_session.fw_max      = g_part_a_usable;
+        }
+    }
+#else
+    g_session.target_part = 0;
+    g_session.fw_base     = PART_A_BASE;
+    g_session.fw_max      = PART_A_SIZE;
+#endif
+    DBG("[UPG] Target: Part %c @ 0x%08X max=%u KB\n",
+        g_session.target_part ? 'B' : 'A',
+        (unsigned)g_session.fw_base,
+        (unsigned)(g_session.fw_max / 1024));
+}
+
 static void upgrade_run(void)
 {
     UpgPkt_t *pkt = &g_parser.pkt;
     uint32_t  offset;
     uint16_t  dlen;
     int       rc;
-
-    /* Determine write-target base for this mode */
-#if (BOOT_CURRENT_MODE == BOOT_MODE_DUAL_AB)
-    const uint32_t fw_base = PART_B_BASE;
-    const uint32_t fw_max  = PART_B_SIZE;
-#else
-    const uint32_t fw_base = PART_A_BASE;
-    const uint32_t fw_max  = PART_A_SIZE;
-#endif
 
     rc = parse_poll();
     if (rc == 0) return;  /* no complete packet yet */
@@ -471,6 +683,7 @@ static void upgrade_run(void)
         g_session.state      = UPG_IDLE;
         g_session.written    = 0;
         g_session.total_size = 0;
+        upgrade_compute_target();  /* recompute backup partition */
         parser_reset();
         SEND_ACKD(pkt->seq, &ver, 1);
         break;
@@ -484,16 +697,33 @@ static void upgrade_run(void)
         info.protocol_ver = UPG_VERSION;
         info.boot_mode    = BOOT_CURRENT_MODE;
         info.part_a_base  = PART_A_BASE;
-        info.part_a_size  = PART_A_SIZE;
+        info.part_a_size  = g_part_a_usable;
         info.part_b_base  = PART_B_BASE;
-        info.part_b_size  = PART_B_SIZE;
+        info.part_b_size  = g_part_b_usable;
         if (PartFlag_Read(&flag)) {
             info.active_part    = flag.active_part;
             info.boot_fail_cnt  = flag.boot_fail_cnt;
         } else {
             info.active_part = 0;
         }
-        DBG("[UPG] QUERY_INFO\n");
+        /* When the physical backup partition is unavailable (e.g. B on a
+         * 2 MB flash), we report the EFFECTIVE backup partition info so
+         * the host can proceed with the download.  The bootloader's
+         * upgrade_compute_target() will redirect writes to the fallback. */
+        if (info.active_part == 0 && g_part_b_usable == 0) {
+            /* Active=A, B unavailable → effective backup is A */
+            info.part_b_base = PART_A_BASE;
+            info.part_b_size = g_part_a_usable;
+            DBG("[UPG] QUERY_INFO: B unavailable, reporting A as backup\n");
+        } else if (info.active_part == 1 && g_part_a_usable == 0) {
+            /* Active=B, A unavailable → effective backup is B (unlikely) */
+            info.part_a_base = PART_B_BASE;
+            info.part_a_size = g_part_b_usable;
+        }
+        DBG("[UPG] QUERY_INFO: active=%d A=%uKB B=%uKB\n",
+            (int)info.active_part,
+            (unsigned)(info.part_a_size / 1024),
+            (unsigned)(info.part_b_size / 1024));
         SEND_ACKD(pkt->seq, (uint8_t *)&info, (uint16_t)sizeof(info));
         break;
     }
@@ -509,6 +739,7 @@ static void upgrade_run(void)
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
         DBG("[UPG] SET_PART -> %d\n", (int)flag.active_part);
+        upgrade_compute_target();  /* recompute after partition change */
         SEND_ACK(pkt->seq);
         break;
     }
@@ -523,8 +754,8 @@ static void upgrade_run(void)
     /* ── ERASE ────────────────────────────────────────── */
     case CMD_ERASE:
         DBG("[UPG] ERASE base=0x%08X sz=0x%X\n",
-            (unsigned)fw_base, (unsigned)fw_max);
-        if (!flash_erase(fw_base, fw_max)) {
+            (unsigned)g_session.fw_base, (unsigned)g_session.fw_max);
+        if (!flash_erase(g_session.fw_base, g_session.fw_max)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
         g_session.state = UPG_IDLE;
@@ -538,12 +769,14 @@ static void upgrade_run(void)
                       | ((uint32_t)pkt->data[1] << 16)
                       | ((uint32_t)pkt->data[2] <<  8)
                       |  (uint32_t)pkt->data[3];
-        DBG("[UPG] START total=%u to 0x%08X\n",
-            (unsigned)g_session.total_size, (unsigned)fw_base);
-        if (g_session.total_size == 0 || g_session.total_size > fw_max) {
+        DBG("[UPG] START total=%u to 0x%08X (part %c, max=%u KB)\n",
+            (unsigned)g_session.total_size, (unsigned)g_session.fw_base,
+            g_session.target_part ? 'B' : 'A',
+            (unsigned)(g_session.fw_max / 1024));
+        if (g_session.total_size == 0 || g_session.total_size > g_session.fw_max) {
             SEND_NACK(pkt->seq, UPG_ERR_SIZE); break;
         }
-        if (!flash_erase(fw_base, g_session.total_size)) {
+        if (!flash_erase(g_session.fw_base, g_session.total_size)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
         g_session.written = 0;
@@ -565,7 +798,7 @@ static void upgrade_run(void)
         if ((offset + dlen) > g_session.total_size) {
             SEND_NACK(pkt->seq, UPG_ERR_SIZE); break;
         }
-        if (!flash_write(fw_base + offset, pkt->data + 4, dlen)) {
+        if (!flash_write(g_session.fw_base + offset, pkt->data + 4, dlen)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
         g_session.written += dlen;
@@ -582,12 +815,51 @@ static void upgrade_run(void)
         if (g_session.state != UPG_WRITING) {
             SEND_NACK(pkt->seq, UPG_ERR_STATE); break;
         }
-        DBG("[UPG] FINISH: updating partition flags\n");
+        DBG("[UPG] FINISH: verifying firmware write to Part %c @ 0x%08X\n",
+            g_session.target_part ? 'B' : 'A', (unsigned)g_session.fw_base);
+
+        /* Verify firmware was written correctly.
+         * Lenient check: accept BGPF magic OR valid first word. */
+        DataCacheInvalidAll();
+        __nds32__dsb();
+        {
+            volatile const uint32_t *fw_magic_check =
+                (volatile const uint32_t *)(g_session.fw_base + FW_VALID_MAGIC_OFFSET);
+            volatile const uint32_t *fw_first =
+                (volatile const uint32_t *)g_session.fw_base;
+            int fw_ok = (*fw_magic_check == FW_VALID_MAGIC) ||
+                        (*fw_first != 0xFFFFFFFFu &&
+                         *fw_first != PART_FLAG_MAGIC);
+            DBG("[UPG] Verify: @0x%08X=0x%08X magic@0xA4=0x%08X → %s\n",
+                (unsigned)g_session.fw_base, (unsigned)*fw_first,
+                (unsigned)*fw_magic_check, fw_ok ? "OK" : "FAIL");
+            if (!fw_ok) {
+                DBG("[UPG] FATAL: firmware write verification FAILED!\n");
+                SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
+            }
+        }
+
+        DBG("[UPG] FINISH: updating partition flags → active=%d\n",
+            (int)g_session.target_part);
         if (!PartFlag_Read(&flag)) PartFlag_Default(&flag);
-        flag.active_part     = 1u;   /* USB CDC always writes to B; boot B */
+        flag.active_part     = g_session.target_part;  /* boot from written partition */
         flag.boot_fail_cnt   = 0u;
         if (!PartFlag_Write(&flag)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
+        }
+        /* Verify partition flag did NOT corrupt firmware area */
+        DataCacheInvalidAll();
+        __nds32__dsb();
+        {
+            volatile const uint32_t *fw_first_after =
+                (volatile const uint32_t *)g_session.fw_base;
+            if (*fw_first_after == PART_FLAG_MAGIC ||
+                *fw_first_after == 0xFFFFFFFFu) {
+                DBG("[UPG] FATAL: PartFlag write corrupted firmware!\n");
+                DBG("[UPG] Flag@0x%08X overwrote FW@0x%08X\n",
+                    (unsigned)g_part_flag_addr, (unsigned)g_session.fw_base);
+                SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
+            }
         }
 #else
         if (g_session.state != UPG_WRITING) {
@@ -613,6 +885,14 @@ static void upgrade_run(void)
             else
                 jump_addr = PART_A_BASE;
         }
+        /* Partition B 需要设置硬件 Remap：
+         * APP 固件链接在 0x040000 运行，Remap 将 0x040000 映射到 0x240000 */
+        if (jump_addr == PART_B_BASE) {
+            Remap_AddrRemapSet(ADDR_REMAP0, PART_A_BASE, PART_B_BASE,
+                               (uint32_t)(PART_A_SIZE / 1024UL));
+            jump_addr = PART_A_BASE;
+            DBG("[UPG] Remap 0x040000->0x240000, jumping to 0x040000\n");
+        }
 #else
         jump_addr = PART_A_BASE;
 #endif
@@ -635,6 +915,7 @@ void Upgrade_Init(void)
     memset(&g_session, 0, sizeof(g_session));
     memset(&g_parser, 0, sizeof(g_parser));
     g_session.state = UPG_IDLE;
+    upgrade_compute_target();  /* set initial write target */
     DBG("[UPG] Init OK (mode=%d, CDC only)\n", BOOT_CURRENT_MODE);
 }
 

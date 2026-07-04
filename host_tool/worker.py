@@ -1,7 +1,7 @@
 """
 worker.py — 后台线程
 1. AutoScanWorker  — 启动时自动扫描所有串口，发送握手探测
-2. UpgradeWorker   — 耗时操作（握手、擦除、写 Flash、跳转）
+2. UpgradeWorker   — 耗时操作（握手、擦除、写 Flash、跳转、查询、设置分区、重启）
 """
 
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -63,18 +63,24 @@ class UpgradeWorker(QThread):
     信号:
         log(str)              — 一行日志文本
         progress(int, int)    — (已完成字节, 总字节)
+        info(dict)            — 设备信息 (query_info 返回的字典)
         finished(bool, str)   — (成功?, 结果消息)
     """
 
     log      = pyqtSignal(str)
     progress = pyqtSignal(int, int)
+    info     = pyqtSignal(dict)
     finished = pyqtSignal(bool, str)
 
     # 操作类型常量
-    OP_PING    = "ping"
-    OP_ERASE   = "erase"
-    OP_UPGRADE = "upgrade"
-    OP_JUMP    = "jump"
+    OP_PING       = "ping"
+    OP_QUERY      = "query"
+    OP_ERASE      = "erase"
+    OP_UPGRADE    = "upgrade"
+    OP_JUMP       = "jump"
+    OP_REBOOT     = "reboot"
+    OP_SET_PART_A = "set_part_a"
+    OP_SET_PART_B = "set_part_b"
 
     def __init__(self, port: str, baud: int, operation: str,
                  firmware: bytes = b"", auto_jump: bool = False,
@@ -99,6 +105,9 @@ class UpgradeWorker(QThread):
     def _emit_progress(self, sent: int, total: int):
         self.progress.emit(sent, total)
 
+    def _emit_info(self, info: dict):
+        self.info.emit(info)
+
     # ─── 线程入口 ─────────────────────────────────────────────────────────────
 
     def run(self):
@@ -106,12 +115,20 @@ class UpgradeWorker(QThread):
         try:
             self._emit_log(f"正在连接 {self._port} @ {self._baud} bps …")
             comm = BLComm(self._port, self._baud)
-            bl   = Bootloader(comm,
-                               progress_cb=self._emit_progress,
-                               log_cb=self._emit_log)
+            # 让 Bootloader 把 info 字典通过信号回传 UI
+            bl = Bootloader(
+                comm,
+                progress_cb=self._emit_progress,
+                log_cb=self._emit_log,
+                info_cb=self._emit_info,
+            )
 
             if self._operation == self.OP_PING:
                 bl.ping()
+
+            elif self._operation == self.OP_QUERY:
+                bl.ping()
+                bl.query_info()
 
             elif self._operation == self.OP_ERASE:
                 bl.ping()
@@ -128,13 +145,25 @@ class UpgradeWorker(QThread):
             elif self._operation == self.OP_JUMP:
                 bl.jump()
 
+            elif self._operation == self.OP_REBOOT:
+                bl.ping()
+                bl.reboot()
+
+            elif self._operation == self.OP_SET_PART_A:
+                bl.ping()
+                bl.set_partition(0)
+
+            elif self._operation == self.OP_SET_PART_B:
+                bl.ping()
+                bl.set_partition(1)
+
             else:
                 raise RuntimeError(f"未知操作: {self._operation}")
 
-            self.finished.emit(True, "操作成功完成")
+            self.finished.emit(True, "操作成功完成 ✓")
 
         except Exception as exc:
-            self.finished.emit(False, str(exc))
+            self.finished.emit(False, f"操作失败: {exc}")
         finally:
             if comm:
                 comm.close()

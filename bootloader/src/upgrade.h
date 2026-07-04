@@ -115,6 +115,7 @@ typedef struct {
 } DevInfo_t;
 
 /* ── Public partition API ── */
+void PartFlag_Init(void);      /* Must be called after SpiFlashInit, before Boot_CheckAndJumpIfNeeded */
 int  PartFlag_Read(PartFlag_t *flag);
 int  PartFlag_Write(const PartFlag_t *flag);
 void PartFlag_Default(PartFlag_t *flag);

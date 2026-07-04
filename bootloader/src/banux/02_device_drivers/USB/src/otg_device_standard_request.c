@@ -56,7 +56,7 @@ uint8_t Request[256];
 
 uint8_t *ConfigDescriptor;
 uint8_t *InterfaceNum;
-const char *gDeviceProductString ="BG Card audio";		//max length: 32bytes
+const char *gDeviceProductString ="BG boot audio";		//max length: 32bytes
 const char *gDeviceString_Manu ="BanGO";		//max length: 32bytes
 const char *gDeviceString_SerialNumber ="20250405";//max length: 32bytes
 uint8_t *gDeviceString_Index;
@@ -74,7 +74,7 @@ void OTG_DeviceModeSel(uint8_t Mode,uint16_t UsbVid,uint16_t UsbPid)
 	ConfigDescriptor = (uint8_t *)ConfigDescriptorTab[Mode];
 	InterfaceNum = (uint8_t *)InterFaceNumTab[Mode];
 
- 	gDeviceProductString		    = "BG Card audio"; 	//max length: 32bytesv bkd add
+ 	gDeviceProductString		    = "BG boot audio"; 	//max length: 32bytesv bkd add
  	gDeviceString_Manu 		        = "BanGO";			    	//max length: 32bytes
 	gDeviceString_SerialNumber      = "20250405";						//max length: 32bytes
 }

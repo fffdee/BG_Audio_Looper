@@ -46,21 +46,29 @@
 #include "otg_device_cdc.h"
 #include "otg_detect.h"
 #include "usb_audio_api.h"
+#include "audio_api.h"
 
 #include "upgrade.h"
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Timer2 ISR (1 ms tick)
- * Only services USB port-link detection. No audio processing.
+ * Services USB port-link detection and USB audio state machine.
+ * UsbAudioTimer1msProcess() handles speaker/mic enable-disable logic
+ * based on USB streaming activity (AltSet/FramCount).
  * ────────────────────────────────────────────────────────────────────────── */
 void Timer2Interrupt(void) {
 	Timer_InterruptFlagClear(TIMER2, UPDATE_INTERRUPT_SRC);
 	OTG_PortLinkCheck();
+	UsbAudioTimer1msProcess();
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
  * DMA channel allocation table
- * Only UART1 RX/TX channels are assigned; audio DMA channels unused.
+ * UART1 RX/TX and audio ADC/DAC channels are assigned.
+ * NOTE: audio_init() in audio_api.c will overwrite this table with its own
+ *       DmaChannelMap that allocates channels 0-3 for ADC0/1 + DAC0/1.
+ *       The assignments here are for the bootloader phase before audio_init()
+ *       is called, so UART1 debug output works during early boot.
  * ────────────────────────────────────────────────────────────────────────── */
 static uint8_t DmaChannelMap[29] = {
 		255, //PERIPHERAL_ID_SPIS_RX = 0,
@@ -81,10 +89,10 @@ static uint8_t DmaChannelMap[29] = {
 		255, //PERIPHERAL_ID_TIMER4,
 		255, //PERIPHERAL_ID_TIMER5,
 		255, //PERIPHERAL_ID_TIMER6,
-		255, //PERIPHERAL_ID_AUDIO_ADC0_RX,  -- unused in bootloader
-		255, //PERIPHERAL_ID_AUDIO_ADC1_RX,  -- unused in bootloader
-		255, //PERIPHERAL_ID_AUDIO_DAC0_TX,  -- unused in bootloader
-		255, //PERIPHERAL_ID_AUDIO_DAC1_TX,  -- unused in bootloader
+		0,   //PERIPHERAL_ID_AUDIO_ADC0_RX,  -- audio_init() reuses
+		1,   //PERIPHERAL_ID_AUDIO_ADC1_RX,  -- audio_init() reuses
+		2,   //PERIPHERAL_ID_AUDIO_DAC0_TX,  -- audio_init() reuses
+		3,   //PERIPHERAL_ID_AUDIO_DAC1_TX,  -- audio_init() reuses
 		255, //PERIPHERAL_ID_I2S0_RX,
 		255, //PERIPHERAL_ID_I2S0_TX,
 		255, //PERIPHERAL_ID_I2S1_RX,
@@ -101,13 +109,15 @@ static void UpgradeTask(void)
 {
 	/* AUDIO_MIC_CDC: 与 BanBox 工程一致的 CDC+声卡复合设备模式
 	 * UsbDeviceEnable() 内部调用 OTG_DeviceInit() + NVIC_EnableIRQ(Usb_IRQn) */
-	OTG_DeviceModeSel(AUDIO_MIC_CDC, 0x1234, 0x1234);
+	OTG_DeviceModeSel(AUDIO_MIC_CDC, 0x8888,0x1722);
 	UsbDevicePlayInit();
 	UsbDeviceEnable();
-
+	/* audio_init() 复用 USB 输入流（speaker 播放）和麦克风输入流（mic capture）
+	 * 内部会重新分配 DMA 通道表，初始化 ADC1/DAC0/DAC1 + FIFO */
+	audio_init(44100);
 	Upgrade_Init();
 
-	DBG("[BOOT] USB CDC+Audio upgrade ready (VID=0x%04X PID=0x%04X)\n", 0x1234, 0x1234);
+	DBG("[BOOT] USB CDC+Audio upgrade ready (VID=0x%04X PID=0x%04X)\n", 0x8888, 0x1722);
 
 	while (1) {
 		/* Service USB enumeration and control requests */
@@ -115,6 +125,10 @@ static void UpgradeTask(void)
 
 		/* Drive CDC RX/TX ring-buffers */
 		OTG_DeviceCDC_Task();
+
+		/* Drive USB audio speaker/mic data flow (1ms tick from Timer2 ISR
+		 * updates usb_speaker_enable / usb_mic_enable flags) */
+		audio_process();
 
 		/* Firmware upgrade state machine */
 		Upgrade_Process();
@@ -149,9 +163,23 @@ int main(void) {
 	GPIO_PortAModeSet(GPIOA10, 3);   /* UART1 TX  */
 	DbgUartInit(1, 115200, 8, 0, 1);
 
+	/* CRITICAL: Disable any stale partition-B remap from a previous boot.
+	 * If the remap persists across reset (e.g. watchdog reset after APP
+	 * crash), CPU reads/writes to 0x040000 would be redirected to 0x240000
+	 * (or vice-versa), corrupting the firmware check and partition flag
+	 * operations. This must happen BEFORE Boot_CheckAndJumpIfNeeded(). */
+	Remap_AddrRemapDisable(ADDR_REMAP0);
+	Remap_AddrRemapDisable(ADDR_REMAP1);
+	Remap_AddrRemapDisable(ADDR_REMAP2);
+
 	Remap_InitTcm(0, 12);
 	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
 	DMA_ChannelAllocTableSet(DmaChannelMap);
+
+	/* Detect flash capacity and compute safe partition flag address.
+	 * This must be called BEFORE Boot_CheckAndJumpIfNeeded() and
+	 * BEFORE any PartFlag_Read/Write calls. */
+	PartFlag_Init();
 
 	GIE_ENABLE();
 

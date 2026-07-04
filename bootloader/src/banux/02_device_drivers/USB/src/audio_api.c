@@ -56,6 +56,7 @@ uint32_t MICFIFO[MIC_FIFO_LEN/4];
 uint32_t dac_play_buf[ONE_MS_SAMPLE];
 uint32_t adc_play_buf[ONE_MS_SAMPLE];
 uint32_t mix_play_buf[ONE_MS_SAMPLE];
+uint32_t mic_play_buf[ONE_MS_SAMPLE];
 uint16_t i;
 extern uint32_t  usb_speaker_enable;
 extern uint32_t  usb_mic_enable;
@@ -83,9 +84,9 @@ void audio_init(uint32_t SampleRate)
 
 
 	AudioDAC_DoutModeSet(AUDIO_DAC0, MODE0, WIDTH_24_BIT_1);
-//	AudioDAC_DoutModeSet(AUDIO_DAC1, MODE0, WIDTH_24_BIT_1);
+	AudioDAC_DoutModeSet(AUDIO_DAC1, MODE0, WIDTH_24_BIT_1);
 	AudioDAC_Init(DAC0, SampleRate, (void*)DAC0FIFO, DAC0_FIFO_LEN, NULL, 0);
-//	AudioDAC_Init(DAC1, SampleRate, (void*)DAC1FIFO, DAC1_FIFO_LEN, NULL, 0);
+	AudioDAC_Init(DAC1, SampleRate, (void*)DAC1FIFO, DAC1_FIFO_LEN, NULL, 0);
 }
 
 
@@ -99,10 +100,10 @@ void audio_process(void)
 		{
 			AudioDAC_DataSet(DAC0,dac_play_buf,ONE_MS_SAMPLE);
 
-//			for(i=0;i<ONE_MS_SAMPLE;i++)
-//				mix_play_buf[i] = dac_play_buf[i]/2+adc_play_buf[1]/2;
-//			//AudioDAC0DataSet(dac_play_buf, ONE_MS_SAMPLE);
-//			AudioDAC0DataSet(mix_play_buf, ONE_MS_SAMPLE);
+			for(i=0;i<ONE_MS_SAMPLE;i++)
+				mix_play_buf[i] = dac_play_buf[i]/2+adc_play_buf[1]/2;
+			//AudioDAC0DataSet(dac_play_buf, ONE_MS_SAMPLE);
+			AudioDAC0DataSet(mix_play_buf, ONE_MS_SAMPLE);
 		}
 
 	}
@@ -117,14 +118,14 @@ void audio_process(void)
 	}
 
 
-//
-//		if(AudioADC_DataLenGet(ADC1_MODULE) >= ONE_MS_SAMPLE)
-//				{
-//
-//					AudioADC_DataGet(ADC1_MODULE,mic_play_buf,ONE_MS_SAMPLE);
-//
-//					AudioDAC_DataSet(DAC1, mic_play_buf,ONE_MS_SAMPLE);
-//				}
+
+		if(AudioADC_DataLenGet(ADC1_MODULE) >= ONE_MS_SAMPLE)
+				{
+
+					AudioADC_DataGet(ADC1_MODULE,mic_play_buf,ONE_MS_SAMPLE);
+
+					AudioDAC_DataSet(DAC1, mic_play_buf,ONE_MS_SAMPLE);
+				}
 
 
 }
