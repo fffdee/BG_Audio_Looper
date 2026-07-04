@@ -133,3 +133,40 @@ BG_EVT_SUB(EVT_AUDIO_HP_OUT,       on_audio_detect);
 /* USB 事件订阅已移除：USB 直接初始化，不依赖事件系统 */
 /* BG_EVT_SUB(EVT_SYS_USB_CONNECT,    on_usb_event); */
 /* BG_EVT_SUB(EVT_SYS_USB_DISCONNECT, on_usb_event); */
+
+/* ============================================
+ * 5. 系统状态事件回调 (运行态 / 子系统状态)
+ * ============================================ */
+
+#include "sys_state.h"
+
+static void on_sys_run_state(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    const BG_EventSysRunState_t *evt = (const BG_EventSysRunState_t *)data;
+    (void)topic; (void)size;
+
+    static const char *state_names[] = {
+        "OFF", "BOOT", "RUNNING", "IDLE", "SHUTDOWN"
+    };
+    DBG("[Evt] RunState: %s -> %s\n",
+        state_names[evt->old_state], state_names[evt->new_state]);
+}
+
+static void on_sys_sub_state(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    const BG_EventSysSubState_t *evt = (const BG_EventSysSubState_t *)data;
+    (void)topic; (void)size;
+
+    DBG("[Evt] SubState diff=0x%04X new=0x%04X\n",
+        evt->changed_bits, evt->new_state);
+
+    if (evt->changed_bits & SYS_SUB_BT_CONNECTED)
+        DBG("[Evt]   BT %s\n", (evt->new_state & SYS_SUB_BT_CONNECTED) ? "connected" : "disconnected");
+    if (evt->changed_bits & SYS_SUB_BLE_CONNECTED)
+        DBG("[Evt]   BLE %s\n", (evt->new_state & SYS_SUB_BLE_CONNECTED) ? "connected" : "disconnected");
+    if (evt->changed_bits & SYS_SUB_USB_CONNECTED)
+        DBG("[Evt]   USB %s\n", (evt->new_state & SYS_SUB_USB_CONNECTED) ? "connected" : "disconnected");
+}
+
+BG_EVT_SUB(EVT_SYS_RUN_STATE, on_sys_run_state);
+BG_EVT_SUB(EVT_SYS_SUB_STATE, on_sys_sub_state);

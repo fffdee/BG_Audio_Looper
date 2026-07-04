@@ -57,6 +57,12 @@ typedef enum {
     EVT_SYS_BT_SUSPENDED    = 0x0067,   /* 蓝牙 A2DP 暂停推流 */
     EVT_SYS_POWER_ON        = 0x0068,   /* 开机 */
     EVT_SYS_POWER_OFF       = 0x0069,   /* 关机 */
+    EVT_SYS_RUN_STATE       = 0x006A,   /* 运行态变化 (OFF/BOOT/RUNNING/IDLE/SHUTDOWN) */
+    EVT_SYS_SUB_STATE       = 0x006B,   /* 子系统状态变化 (位掩码) */
+    EVT_SYS_IDLE_ENTER      = 0x006C,   /* 进入空闲态 (低功耗) */
+    EVT_SYS_IDLE_EXIT       = 0x006D,   /* 退出空闲态 */
+    EVT_SYS_TRANSFER_ENTER  = 0x006E,   /* 进入传输态 (WAV/OTA) */
+    EVT_SYS_TRANSFER_EXIT   = 0x006F,   /* 退出传输态 */
 
     /* ---- MIDI 事件 (0x0080 ~ 0x009F) ---- */
     EVT_MIDI_NOTE_ON        = 0x0080,   /* MIDI Note On */
@@ -155,6 +161,22 @@ typedef struct {
 typedef struct {
     uint8_t  addr[6];       /* 远端蓝牙地址 */
 } BG_EventBtData_t;
+
+/**
+ * @brief 系统运行态变化事件 (伴随 EVT_SYS_RUN_STATE 发布)
+ */
+typedef struct {
+    uint8_t old_state;      /* 旧运行态 (SysRunState_t) */
+    uint8_t new_state;      /* 新运行态 (SysRunState_t) */
+} BG_EventSysRunState_t;
+
+/**
+ * @brief 系统子系统状态变化事件 (伴随 EVT_SYS_SUB_STATE 发布)
+ */
+typedef struct {
+    uint16_t changed_bits;  /* 变化的位掩码 */
+    uint16_t new_state;     /* 变化后的子系统状态 */
+} BG_EventSysSubState_t;
 
 /**
  * @brief MIDI 事件数据 (伴随 EVT_MIDI_xxx 发布)

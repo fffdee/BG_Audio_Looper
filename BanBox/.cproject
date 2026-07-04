@@ -95,6 +95,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_hal_drivers/sdio}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/06_app/power_on_music}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/startup}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/06_app}&quot;"/>
 								</option>
 								<option id="nds.c.compiler.option.optimization.lto.934303171" name="Link Time Optimization (-flto)" superClass="nds.c.compiler.option.optimization.lto" value="false" valueType="boolean"/>
 								<option id="nds.c.compiler.option.optimization.removesections.function.489783750" name="Remove unused function sections (-ffunction-sections)" superClass="nds.c.compiler.option.optimization.removesections.function" value="true" valueType="boolean"/>

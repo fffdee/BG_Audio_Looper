@@ -145,6 +145,15 @@ uint16_t OTG_DeviceCDC_Send(uint8_t *buf, uint16_t len);
 uint16_t OTG_DeviceCDC_Receive(uint8_t *buf, uint16_t len);
 
 /**
+ * @brief  Peek at the next byte in CDC RX buffer without consuming it.
+ *         Used by SOF dispatchers to check protocol start byte before
+ *         committing to consume the data.
+ * @param  byte: pointer to receive the peeked byte
+ * @return 1 if a byte was peeked, 0 if buffer empty
+ */
+uint16_t OTG_DeviceCDC_PeekByte(uint8_t *byte);
+
+/**
  * @brief  Get available bytes in CDC RX buffer
  * @return number of available bytes
  */

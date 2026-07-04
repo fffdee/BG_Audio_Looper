@@ -31,6 +31,7 @@ class Cmd:
     QUERY_INFO  = 0x07   # v2: 查询设备分区信息
     SET_PART    = 0x08   # v2: 设置活跃分区
     REBOOT      = 0x09   # v2: 请求设备重启
+    ENTER_BOOT  = 0x0B   # APP → bootloader: reboot & stay in BL
 
 
 class Rsp:
@@ -205,6 +206,31 @@ class Bootloader:
         self._log(f"设备在线，协议版本 v{version}")
         return version
 
+    def enter_boot_from_app(self) -> bool:
+        """让 APP 模式的设备跳回 Bootloader。
+
+        流程:
+          1. 直接发送 CMD_ENTER_BOOT 协议包（0xAA SOF + 0x0B CMD）
+          2. APP 的 CDC_Upgrade_CheckEnter() 自动嗅探 0xAA 进入升级模式
+          3. App_Upgrade 引擎处理 CMD_ENTER_BOOT，写 FORCE_BOOT_MAGIC 后复位
+          4. 等待设备重新枚举为 Bootloader
+
+        返回 True 如果 CMD_ENTER_BOOT 收到 ACK（设备即将复位）。
+        """
+        self._log("发送 CMD_ENTER_BOOT 协议包 …")
+        try:
+            resp = self._transact(Cmd.ENTER_BOOT, timeout=2.0,
+                                  label="ENTER_BOOT")
+            if resp:
+                self._log("APP 已确认，正在重启到 Bootloader …")
+                return True
+        except Exception as e:
+            # APP 复位会导致串口断开，这是正常的
+            self._log(f"APP 已重启（串口断开属正常）: {e}")
+            return True
+
+        return False
+
     def erase(self):
         """擦除整个应用 Flash 区域（最长 30 s）。"""
         self._log("正在擦除应用区 Flash …")
@@ -212,31 +238,43 @@ class Bootloader:
         self._log("擦除完成 ✓")
 
     def upgrade(self, firmware: bytes):
-        """完整升级流程：QUERY_INFO → START → DATA chunks → FINISH。"""
+        """完整升级流程：QUERY_INFO → START → DATA chunks → FINISH。
+
+        单分区模式 (boot_mode == 0): 直接写入 Part A（覆盖当前固件）。
+        双分区模式 (boot_mode == 1): 写入非活跃分区（备份分区）。
+        """
         total = len(firmware)
         self._log(f"固件大小: {total} 字节  ({total / 1024:.1f} KB)")
 
         # ── 先查询分区信息，校验大小并显示目标分区 ──────────────────────────
-        info        = self.query_info()
-        active_part = info["active_part"]
-        if active_part == 0:
-            backup_base = info["part_b_base"]
-            backup_size = info["part_b_size"]
-            backup_lbl  = "B"
+        info = self.query_info()
+
+        if info["boot_mode"] == 0:
+            # 单分区：直接写 Part A
+            target_base = info["part_a_base"]
+            target_size = info["part_a_size"]
+            target_lbl  = "A (单分区)"
         else:
-            backup_base = info["part_a_base"]
-            backup_size = info["part_a_size"]
-            backup_lbl  = "A"
+            # 双分区：写非活跃分区
+            active_part = info["active_part"]
+            if active_part == 0:
+                target_base = info["part_b_base"]
+                target_size = info["part_b_size"]
+                target_lbl  = "B"
+            else:
+                target_base = info["part_a_base"]
+                target_size = info["part_a_size"]
+                target_lbl  = "A"
 
         self._log(
-            f"将写入备份分区 {backup_lbl}  地址=0x{backup_base:06X}  "
-            f"容量={backup_size // 1024} KB"
+            f"将写入分区 {target_lbl}  地址=0x{target_base:06X}  "
+            f"容量={target_size // 1024} KB"
         )
-        if total > backup_size:
+        if total > target_size:
             raise RuntimeError(
                 f"固件大小 {total:,} 字节 ({total/1024:.1f} KB) "
-                f"超出分区 {backup_lbl} 容量 {backup_size:,} 字节 "
-                f"({backup_size//1024} KB)"
+                f"超出分区 {target_lbl} 容量 {target_size:,} 字节 "
+                f"({target_size//1024} KB)"
             )
 
         self._transact(Cmd.START, struct.pack(">I", total),
@@ -295,15 +333,25 @@ class Bootloader:
              info["part_b_base"],
              info["part_b_size"]) = struct.unpack("<IIII", resp[4:20])
         active_lbl  = 'B' if info['active_part'] else 'A'
-        backup_lbl  = 'A' if info['active_part'] else 'B'
-        backup_size = info['part_a_size'] if info['active_part'] else info['part_b_size']
-        self._log(
-            f"设备信息: 协议v{info['protocol_ver']}  "
-            f"模式={'双分区A/B' if info['boot_mode'] else '单分区'}  "
-            f"当前运行分区={active_lbl}  "
-            f"备份分区={backup_lbl}({backup_size//1024} KB)  "
-            f"启动失败次数={info['boot_fail_cnt']}"
-        )
+        is_single   = info['boot_mode'] == 0
+
+        if is_single:
+            self._log(
+                f"设备信息: 协议v{info['protocol_ver']}  "
+                f"模式=单分区  "
+                f"容量={info['part_a_size']//1024} KB  "
+                f"启动失败次数={info['boot_fail_cnt']}"
+            )
+        else:
+            backup_lbl  = 'A' if info['active_part'] else 'B'
+            backup_size = info['part_a_size'] if info['active_part'] else info['part_b_size']
+            self._log(
+                f"设备信息: 协议v{info['protocol_ver']}  "
+                f"模式=双分区A/B  "
+                f"当前运行分区={active_lbl}  "
+                f"备份分区={backup_lbl}({backup_size//1024} KB)  "
+                f"启动失败次数={info['boot_fail_cnt']}"
+            )
         # 通过回调把 info 字典传给 UI 层（用于更新设备信息卡）
         self._info(info)
         return info

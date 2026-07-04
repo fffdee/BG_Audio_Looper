@@ -5,11 +5,11 @@
  * With a separate bootloader, the bootloader has already decided which
  * partition to run and performed the address remap before jumping here.
  * This module provides:
- *   1. Boot_CheckAndJump() — currently a no-op (bootloader handles this),
- *      but kept for API compatibility.
- *   2. Boot_ConfirmSuccess() — resets boot_fail_cnt after successful startup.
- *   3. Boot_IsRunningPart2() — detects if running from Partition B via remap.
- *   4. Partition flag read/write helpers.
+ *   1. DualPart_Init() — detect flash capacity and compute layout.
+ *   2. Boot_CheckAndJump() — detect which partition we're running on.
+ *   3. Boot_ConfirmSuccess() — resets boot_fail_cnt after successful startup.
+ *   4. Boot_IsRunningPart2() — detects if running from Partition B via remap.
+ *   5. Partition flag read/write helpers (use dynamic address).
  */
 
 #include <string.h>
@@ -19,6 +19,75 @@
 #include "watchdog.h"
 #include "remap.h"
 #include "debug.h"
+
+/* =========================================================================
+ * Runtime flash layout (detected by DualPart_Init)
+ * ========================================================================= */
+static DualPart_Layout_t g_layout;
+
+const DualPart_Layout_t *DualPart_GetLayout(void)
+{
+    return &g_layout;
+}
+
+void DualPart_Init(void)
+{
+    /* Use internal ROM capacity (no external NOR Flash detection) */
+    g_layout.flash_capacity = INTERNAL_ROM_CAPACITY;
+
+    DBG("[BOOT] Internal ROM: Capacity=%u bytes (%u KB)\n",
+        (unsigned)g_layout.flash_capacity,
+        (unsigned)(g_layout.flash_capacity / 1024));
+
+    /* Compute PartFlag address: use last 4KB sector of flash */
+    if (g_layout.flash_capacity >= PART_FLAG_ADDR_DEFAULT + FLASH_SECTOR_SZ) {
+        g_layout.part_flag_addr = PART_FLAG_ADDR_DEFAULT;
+    } else {
+        g_layout.part_flag_addr = (g_layout.flash_capacity - FLASH_SECTOR_SZ)
+                                  & ~(FLASH_SECTOR_SZ - 1u);
+        DBG("[BOOT] PartFlag moved: 0x%08X -> 0x%08X\n",
+            (unsigned)PART_FLAG_ADDR_DEFAULT,
+            (unsigned)g_layout.part_flag_addr);
+    }
+
+    /* Compute usable Partition A size (clamped to actual flash boundary,
+     * minus PartFlag sector if it falls inside A) */
+    if (g_layout.flash_capacity >= PART_A_BASE + PART_A_SIZE &&
+        g_layout.part_flag_addr >= PART_A_BASE + PART_A_SIZE) {
+        g_layout.part_a_usable = PART_A_SIZE;
+    } else {
+        uint32_t a_end = g_layout.flash_capacity;
+        if (g_layout.part_flag_addr >= PART_A_BASE &&
+            g_layout.part_flag_addr < a_end) {
+            a_end = g_layout.part_flag_addr;
+        }
+        g_layout.part_a_usable = (a_end > PART_A_BASE) ? a_end - PART_A_BASE : 0;
+    }
+
+    /* Compute usable Partition B size */
+    if (g_layout.flash_capacity >= PART_B_BASE + PART_B_SIZE &&
+        g_layout.part_flag_addr >= PART_B_BASE + PART_B_SIZE) {
+        g_layout.part_b_usable = PART_B_SIZE;
+    } else if (g_layout.flash_capacity > PART_B_BASE) {
+        uint32_t b_end = g_layout.flash_capacity;
+        if (g_layout.part_flag_addr >= PART_B_BASE &&
+            g_layout.part_flag_addr < b_end) {
+            b_end = g_layout.part_flag_addr;
+        }
+        g_layout.part_b_usable = b_end - PART_B_BASE;
+    } else {
+        g_layout.part_b_usable = 0;
+    }
+
+    /* Determine dual-partition availability */
+    g_layout.is_dual = (g_layout.part_a_usable > 0 && g_layout.part_b_usable > 0) ? 1 : 0;
+
+    DBG("[BOOT] Layout: %s A=%uKB B=%uKB flags@0x%08X\n",
+        g_layout.is_dual ? "DUAL" : "SINGLE",
+        (unsigned)(g_layout.part_a_usable / 1024),
+        (unsigned)(g_layout.part_b_usable / 1024),
+        (unsigned)g_layout.part_flag_addr);
+}
 
 /* =========================================================================
  * CRC32 (IEEE 802.3, poly = 0xEDB88320) — for partition flags
@@ -55,7 +124,7 @@ static int part_flag_valid(const PartFlag_t *f)
 
 int PartFlag_Read(PartFlag_t *flag)
 {
-    memcpy(flag, (const void *)PART_FLAG_ADDR, sizeof(PartFlag_t));
+    memcpy(flag, (const void *)g_layout.part_flag_addr, sizeof(PartFlag_t));
     return part_flag_valid(flag) ? 1 : 0;
 }
 
@@ -75,9 +144,9 @@ int PartFlag_Write(const PartFlag_t *flag)
     memcpy(&tmp, flag, sizeof(PartFlag_t));
     part_flag_seal(&tmp);
 
-    if (FlashErase(PART_FLAG_ADDR, FLASH_SECTOR_SZ) != FLASH_NONE_ERR)
+    if (FlashErase(g_layout.part_flag_addr, FLASH_SECTOR_SZ) != FLASH_NONE_ERR)
         return 0;
-    return (SpiFlashWrite(PART_FLAG_ADDR, (uint8_t *)&tmp,
+    return (SpiFlashWrite(g_layout.part_flag_addr, (uint8_t *)&tmp,
                          sizeof(PartFlag_t), 0) == FLASH_NONE_ERR) ? 1 : 0;
 }
 

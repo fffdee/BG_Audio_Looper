@@ -10,12 +10,18 @@
  * When Partition B is active, hardware address remap maps
  * [0x040000, 0x240000) → [0x240000, 0x440000) transparently.
  *
- * Flash layout (chip = 8 MB / 0x800000):
+ * Flash layout (8 MB / 0x800000) — dual-partition:
  *   0x000000 - 0x03FFFF  Bootloader             256 KB
  *   0x040000 - 0x23FFFF  Partition A            2 MB  — equal live partition
  *   0x240000 - 0x43FFFF  Partition B            2 MB  — equal live partition
  *   0x440000 - 0x440FFF  Partition flags         4 KB
  *   0x441000 - 0x7FFFFF  System data / BT config ~3.75 MB
+ *
+ * Flash layout (2 MB / 0x200000) — single-partition:
+ *   0x000000 - 0x03FFFF  Bootloader             256 KB
+ *   0x040000 - 0x1FEFFF  Partition A            ~1.75 MB (only partition)
+ *   0x1FF000 - 0x1FFFFF  Partition flags         4 KB (last sector)
+ *   (Partition B not available — upgrade overwrites Partition A)
  */
 #ifndef __DUAL_PARTITION_H__
 #define __DUAL_PARTITION_H__
@@ -25,15 +31,34 @@
 /* ── Flash partition layout (aligned with bootloader upgrade.h) ───────────── */
 #define BOOTLOADER_SIZE     0x00040000UL  /* 256 KB                         */
 
+/* Internal ROM capacity (no external NOR Flash) */
+#define INTERNAL_ROM_CAPACITY 0x00200000UL /* 2 MB internal flash            */
+
 #define PART_A_BASE         0x00040000UL  /* Partition A base               */
-#define PART_A_SIZE         0x00200000UL  /* Partition A: 2 MB              */
+#define PART_A_SIZE         0x00200000UL  /* Partition A: 2 MB (max)        */
 #define PART_B_BASE         0x00240000UL  /* Partition B base               */
 #define PART_B_SIZE         0x00200000UL  /* Partition B: 2 MB              */
 
-#define PART_FLAG_ADDR      0x00440000UL  /* Partition flags sector (4 KB)  */
+/* Default PartFlag address for 8 MB flash; 2 MB flash uses last sector */
+#define PART_FLAG_ADDR_DEFAULT  0x00440000UL
 #define PART_FLAG_MAGIC     0x42475057UL  /* "BGPW"                         */
 
 #define FLASH_SECTOR_SZ     0x1000UL      /* 4 KB erase unit                 */
+
+/* ── Runtime flash layout (detected by DualPart_Init) ───────────────────── */
+typedef struct {
+    uint32_t flash_capacity;   /* Total flash size in bytes                */
+    uint32_t part_a_usable;    /* Usable A partition size                  */
+    uint32_t part_b_usable;    /* Usable B partition size (0 = N/A)        */
+    uint32_t part_flag_addr;   /* Actual partition flags address           */
+    uint8_t  is_dual;          /* 1 = true dual A/B, 0 = single partition */
+} DualPart_Layout_t;
+
+/* Get runtime layout (call DualPart_Init first) */
+const DualPart_Layout_t *DualPart_GetLayout(void);
+
+/* Initialize runtime layout from actual flash capacity */
+void DualPart_Init(void);
 
 /* ── Firmware validity signature ─────────────────────────────────────────── */
 /* Vector table = (9 exception + 32 HW) × 4B = 0xA4 bytes.
@@ -58,7 +83,7 @@ typedef struct {
 
 /* ── Protocol constants (shared by USB CDC and BLE OTA engines) ──────────── */
 #define UPG_SOF             0xAAU
-#define UPG_VERSION         0x03U   /* v3: aligned with bootloader dual-partition */
+#define UPG_VERSION         0x04U   /* v4: runtime partition capability query */
 #define UPG_MAX_CHUNK       256U
 
 /* Commands: Host → Device */
@@ -71,6 +96,7 @@ typedef struct {
 #define CMD_QUERY_INFO      0x07U
 #define CMD_SET_PART        0x08U
 #define CMD_REBOOT          0x09U
+#define CMD_ENTER_BOOT      0x0BU  /* APP → bootloader: reboot & stay in BL */
 
 /* Responses */
 #define RSP_ACK             0xA1U
@@ -89,7 +115,7 @@ typedef struct {
     uint8_t  boot_mode;       /* BOOT_MODE_DUAL_AB = 1                      */
     uint8_t  active_part;     /* 0 = A active, 1 = B active                 */
     uint8_t  boot_fail_cnt;
-    uint8_t  protocol_ver;    /* UPG_VERSION (0x03)                         */
+    uint8_t  protocol_ver;    /* UPG_VERSION (0x04)                         */
     uint32_t part_a_base;
     uint32_t part_a_size;
     uint32_t part_b_base;
@@ -97,6 +123,16 @@ typedef struct {
 } DevInfo_t;
 
 #define BOOT_MODE_DUAL_AB  1   /* A/B dual-partition with bootloader       */
+#define BOOT_MODE_SINGLE   0   /* Single partition (no dual A/B)           */
+
+/* ── Force-bootloader flag (SRAM, survives soft reset) ──
+ * APP writes this before rebooting to request bootloader stay.
+ * Bootloader checks at start of Boot_CheckAndJumpIfNeeded(). */
+#define FORCE_BOOT_ADDR     0x20000004UL
+#define FORCE_BOOT_MAGIC    0xCAFEBABEUL
+
+/* Backward-compatible macro: use runtime layout instead when possible */
+#define PART_FLAG_ADDR  (DualPart_GetLayout()->part_flag_addr)
 
 /* ── Partition flag helpers (implemented in boot_decision.c) ─────────────── */
 int  PartFlag_Read(PartFlag_t *flag);

@@ -4,8 +4,9 @@ worker.py — 后台线程
 2. UpgradeWorker   — 耗时操作（握手、擦除、写 Flash、跳转、查询、设置分区、重启）
 """
 
+import time
 from PyQt5.QtCore import QThread, pyqtSignal
-from bl_core import BLComm, Bootloader, list_ports, probe_port
+from bl_core import BLComm, Bootloader, list_ports, probe_port, Cmd, build_packet
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -54,8 +55,74 @@ class AutoScanWorker(QThread):
 
         if found_any:
             self.scan_finished.emit(True, "已找到设备")
+            return
+
+        # ── 未找到 Bootloader，尝试让 APP 跳回 Bootloader ──
+        self.log.emit("未发现 Bootloader，尝试检测 APP 模式设备 …")
+        for device, desc in ports:
+            if self._abort:
+                break
+            if self._try_enter_bootloader(device, desc):
+                found_any = True
+                break
+
+        if found_any:
+            self.scan_finished.emit(True, "已找到设备")
         else:
             self.scan_finished.emit(False, "未发现 Bootloader 设备")
+
+    def _try_enter_bootloader(self, device: str, desc: str) -> bool:
+        """尝试让 APP 模式的设备跳回 Bootloader，然后重新握手。
+
+        流程：直接发 CMD_ENTER_BOOT 协议包（0xAA SOF + 0x0B CMD）。
+        APP 的 CDC_Upgrade_CheckEnter() 会自动嗅探 0xAA 并进入升级模式，
+        然后 App_Upgrade 引擎处理 CMD_ENTER_BOOT，写 FORCE_BOOT_MAGIC 后复位。
+        不需要 shell 命令 "upg"。
+        """
+        import serial as pyserial
+
+        self.log.emit(f"  尝试 APP→Bootloader: {device} …")
+        try:
+            ser = pyserial.Serial(device, baudrate=self._baud, timeout=0.1)
+        except (pyserial.SerialException, OSError):
+            self.log.emit(f"  ✗ {device} 无法打开")
+            return False
+
+        try:
+            # 直接发 CMD_ENTER_BOOT 协议包
+            # APP 的 CDC_Upgrade_CheckEnter() 会嗅探 0xAA SOF
+            self.log.emit("  发送 CMD_ENTER_BOOT 协议包 …")
+            pkt = build_packet(Cmd.ENTER_BOOT, 0)
+            ser.reset_input_buffer()
+            ser.write(pkt)
+            ser.flush()
+
+            # APP 收到后会 ACK 然后复位，串口可能断开
+            time.sleep(0.5)
+            try:
+                resp = ser.read(256)
+                if resp:
+                    self.log.emit(f"  收到响应: {resp.hex()}")
+            except Exception:
+                pass
+
+        finally:
+            ser.close()
+
+        # 等待设备重新枚举为 Bootloader
+        self.log.emit("  等待设备重新枚举 (2s) …")
+        time.sleep(2.0)
+
+        # 重新握手
+        self.log.emit(f"  重新探测 {device} …")
+        ver = probe_port(device, self._baud, timeout=1.0)
+        if ver is not None:
+            self.log.emit(f"  ✓ {device} — Bootloader v{ver} (从 APP 跳回)")
+            self.found.emit(device, desc, ver)
+            return True
+        else:
+            self.log.emit(f"  ✗ {device} 仍无应答")
+            return False
 
 
 class UpgradeWorker(QThread):
@@ -81,9 +148,10 @@ class UpgradeWorker(QThread):
     OP_REBOOT     = "reboot"
     OP_SET_PART_A = "set_part_a"
     OP_SET_PART_B = "set_part_b"
+    OP_ENTER_BOOT = "enter_boot"
 
     def __init__(self, port: str, baud: int, operation: str,
-                 firmware: bytes = b"", auto_jump: bool = False,
+                 firmware: bytes = b"", auto_jump: bool = True,
                  parent=None):
         super().__init__(parent)
         self._port      = port
@@ -156,6 +224,9 @@ class UpgradeWorker(QThread):
             elif self._operation == self.OP_SET_PART_B:
                 bl.ping()
                 bl.set_partition(1)
+
+            elif self._operation == self.OP_ENTER_BOOT:
+                bl.enter_boot_from_app()
 
             else:
                 raise RuntimeError(f"未知操作: {self._operation}")

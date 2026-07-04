@@ -692,9 +692,14 @@ int CDC_FileManager_CheckEnter(void)
         return 0;
     }
 
-    /* 读取一个字节检查是否是 SOF */
-    if (OTG_DeviceCDC_Receive(&data, 1) == 1) {
+    /* Peek at first byte WITHOUT consuming it.
+     * This allows other CDC dispatchers (e.g. CDC_Upgrade_CheckEnter for
+     * 0xAA SOF) to see the byte if it doesn't match our SOF (0xAB). */
+    if (OTG_DeviceCDC_PeekByte(&data) == 1) {
         if (data == CDC_FM_SOF) {
+            /* SOF matched — now consume the byte */
+            OTG_DeviceCDC_Receive(&data, 1);
+
             /* 检测到 SOF，开始帧解析 */
             reset_frame_context();
             s_frame_ctx.state = FRAME_STATE_CMD; /* SOF 已收到，等待 CMD */
@@ -710,6 +715,7 @@ int CDC_FileManager_CheckEnter(void)
                 return 0;
             }
         }
+        /* 不是 SOF (0xAB)，不消费字节，留给 Shell 或其他模块处理 */
     }
 
     return 0;

@@ -42,6 +42,15 @@ void CDC_Upgrade_EnterMode(void);
 int CDC_Upgrade_InMode(void);
 
 /**
+ * @brief  Auto-detect upgrade protocol SOF (0xAA) on CDC.
+ *         Call from main loop before normal Audio/Shell processing.
+ *         If SOF detected, enters upgrade mode automatically and injects
+ *         the SOF byte into the upgrade engine.
+ *         @return 1 if upgrade mode entered, 0 otherwise.
+ */
+int CDC_Upgrade_CheckEnter(void);
+
+/**
  * @brief  Drive CDC upgrade state machine. Call from main loop ONLY when
  *         CDC_Upgrade_InMode() == 1.
  *         Reads all pending CDC data and feeds it to the App_Upgrade engine.

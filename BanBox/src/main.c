@@ -106,6 +106,7 @@ extern uint8_t BleConnectFlag;
 
 /* 系统状态管理（空闲/正常/数据传输） */
 #include "sys_state.h"
+#include "app_sys_handler.h"
 
 /* Boot partition detection and confirmation */
 #include "dual_partition.h"
@@ -286,9 +287,10 @@ static void ble_data_cmd_dispatch(const BleProtoFrame_t *frame)
 
 void power_on()
 {
-
-	// GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX20);
-	// GPIO_RegOneBitSet(GPIO_A_OUT, GPIO_INDEX24);
+	/* SysState: 推进运行态 OFF → BOOT → RUNNING
+	 * 注意: SysState_PowerOn() 内部会执行已注册的 PowerOn 回调和 IO 初始化，
+	 * 以下代码是 legacy 直接初始化，逐步迁移到回调注册模式 */
+	SysState_PowerOn();
 
 	/* LED 指示灯初始化: GPIO_A16 输出，默认常亮 */
 	GPIO_RegOneBitClear(GPIO_A_IE, HW_LED_GPIO_PIN);
@@ -383,10 +385,8 @@ void power_on()
 	DBG("[Task] Battery calibration initialized\n");
 
 	/*=====================================================
-	 * System state machine (IDLE / NORMAL / TRANSFER)
+	 * System state machine — already initialized in main()
 	 *====================================================*/
-	SysState_Init();
-	DBG("[Task] SysState initialized\n");
 
 #ifdef UI_EN
 
@@ -421,6 +421,11 @@ void power_on()
 
 void power_off()
 {
+	/* SysState: 推进运行态 RUNNING/IDLE → SHUTDOWN → OFF
+	 * 注意: SysState_PowerOff() 内部会执行已注册的 PowerOff 回调，
+	 * 以下代码是 legacy 直接清理，逐步迁移到回调注册模式 */
+	SysState_PowerOff();
+
 	/* 释放混响内存，为关机提示音腾出 ~57KB 堆空间 */
 	BG_AudioIO_PrepareForShutdown();
 	/* 关机前保存已修改的参数到 Flash，避免用户设置丢失 */
@@ -488,68 +493,9 @@ void pwr_butoon_handler()
 
 
 uint8_t time_count = 0;
-/* hardware_check() 被 50ms 定时调用，600次 = 30秒 */
-static uint16_t battery_report_count = 0;
-
-/* LED 指示灯状态 */
-static uint16_t led_blink_count = 0;   /* 闪烁计数器 */
-static uint8_t  led_last_state = 0;    /* 上次LED状态，用于变化检测 */
-
-/**
- * @brief LED 指示灯更新（在 hardware_check 中每 50ms 调用）
- *
- * 逻辑：
- *   - 充电完成（USB连接 + SOC>=100%）→ 熄灭
- *   - 电量 < 15% 且未充电 → 闪烁（500ms亮 / 500ms灭）
- *   - 其他（正常状态）→ 常亮
- */
-static void led_update(void)
-{
-	uint8_t soc = BattCalib_GetSOC();
-	bool usb_connected = OTG_PortDeviceIsLink();
-	uint8_t desired;  /* 0=灭, 1=亮, 2=闪烁 */
-
-	/* 充电完成：USB连接且电量满 → 熄灭 */
-	if (usb_connected && soc >= 100) {
-		desired = 0;
-	}
-	/* 低电量闪烁（仅未充电时，充电中低电量也闪烁提醒） */
-	else if (soc < 15) {
-		desired = 2;
-	}
-	/* 正常状态：常亮 */
-	else {
-		desired = 1;
-	}
-
-	/* 执行LED控制 */
-	if (desired == 2) {
-		/* 闪烁模式：500ms亮 / 500ms灭 = 10次50ms */
-		led_blink_count++;
-		if (led_blink_count >= 10) {
-			led_blink_count = 0;
-			led_last_state = !led_last_state;
-		}
-		if (led_last_state) {
-			GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
-		} else {
-			GPIO_RegOneBitClear(GPIO_A_OUT, HW_LED_GPIO_PIN);
-		}
-	} else {
-		led_blink_count = 0;
-		led_last_state = desired;
-		if (desired) {
-			GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
-		} else {
-			GPIO_RegOneBitClear(GPIO_A_OUT, HW_LED_GPIO_PIN);
-		}
-	}
-}
 
 void hardware_check()
 {
-
-	UI_StatusBar_SetBTStatus(GetA2dpState());
 	time_count++;
 	if(time_count>=100){
 		if(ADC_SingleModeDataGet(ADC_CHANNEL_POWERKEY)>4000){
@@ -560,31 +506,32 @@ void hardware_check()
 		time_count = 0;
 	}
 
-	/* 每 30 秒通过 BLE 上报一次电量（仅在已连接时发送）*/
-	battery_report_count++;
-	if (battery_report_count >= 600) {
-		battery_report_count = 0;
-		if (BleConnectFlag) {
-			uint8_t payload[2];
-			payload[0] = BLE_SYSTEM_SUB_BATTERY;
-			payload[1] = BattCalib_GetSOC();  /* 使用矫正曲线 SOC（无矫正则回退到电压法） */
-			BleProto_SendOnce(BLE_CMD_SYSTEM, payload, 2);
-		}
-	}
-
 	/* Battery calibration voltage tick (每次 hardware_check 调用约 50ms) */
 	BattCalib_Tick();
 
-	/* 系统状态机更新（检测空闲/传输状态，BLE 上报到 App） */
+	/* 系统状态机更新（检测空闲/传输状态，发布事件到订阅者） */
 	SysState_Update();
 
-	/* LED 指示灯状态更新 */
-	led_update();
+	/* 应用层 50ms tick (LED 闪烁时序, BLE 电量上报) */
+	AppSys_LedTick();
+	AppSys_BatteryTick();
 }
 
 void MainTask() {
 
-
+	/* Configure power-on IO levels (applied by SysState_PowerOn) */
+	{
+		static const SysIoConfig_t io_cfg = {
+			.port_out_set   = HW_LED_GPIO_PIN,       /* LED 常亮 */
+			.port_out_clear = 0,
+			.port_oe_set    = HW_LED_GPIO_PIN,       /* LED 输出 */
+			.port_oe_clear  = 0,
+			.port_ie_clear  = HW_LED_GPIO_PIN,       /* LED 禁用输入 */
+			.port_pu_set    = 0,
+			.port_pd_set    = 0,
+		};
+		SysState_SetIoConfig(&io_cfg);
+	}
 
 
 #if BUTTON_POWER_ENABLE
@@ -640,7 +587,10 @@ void MainTask() {
 		}
 #endif /* CDC_FILE_MANAGER_EN */
 
-		/* CDC firmware upgrade mode — process upgrade packets */
+		/* CDC firmware upgrade mode — auto-detect SOF or process packets */
+		if (!CDC_Upgrade_InMode()) {
+			CDC_Upgrade_CheckEnter();  /* 嗅探 0xAA SOF，自动进入升级模式 */
+		}
 		if (CDC_Upgrade_InMode()) {
 			CDC_Upgrade_Process();
 			continue;  /* Skip Audio/Shell during upgrade */
@@ -793,7 +743,8 @@ int main(void) {
 	/* Boot partition detection — detect which partition we're running on.
 	 * With bootloader, the jump decision is already made by bootloader.
 	 * This just sets the internal tracking flag. */
-	diag_putc('4');  /* before Boot_CheckAndJump */
+	diag_putc('4');  /* before DualPart_Init + Boot_CheckAndJump */
+	DualPart_Init();  /* detect flash capacity & compute layout (must precede Boot_CheckAndJump) */
 	Boot_CheckAndJump();
 	diag_putc('5');  /* Boot_CheckAndJump done */
 
@@ -871,6 +822,11 @@ int main(void) {
 	//xTaskCreate( (TaskFunction_t)FlashNewDriverTask, "FlashNewDriverTask", 1024, NULL, 1, NULL );
 	// xTaskCreate( (TaskFunction_t)InternalFlashTestTask, "InternalFlashTest", 1024, NULL, 1, NULL );
 
+	/* Initialize system state module (must be before MainTask / PowerOn) */
+	SysState_Init();
+
+	/* Initialize event publish-subscribe system (auto-registers all BG_EVT_SUB) */
+	BG_Event_Init();
 
 	xTaskCreate((TaskFunction_t )MainTask, "MainTask", 4096, NULL, 1, NULL);
 

@@ -69,11 +69,10 @@ static uint32_t g_part_b_usable;      /* usable B partition size (bytes)   */
 
 void PartFlag_Init(void)
 {
-    SPI_FLASH_INFO *fi = SpiFlashInfoGet();
-    g_flash_capacity = fi->Capacity;
+    /* Use internal ROM capacity (no external NOR Flash detection) */
+    g_flash_capacity = INTERNAL_ROM_CAPACITY;
 
-    DBG("[BOOT] Flash: MID=0x%02X DID=0x%04X Capacity=%u bytes (%u KB)\n",
-        (unsigned)fi->Mid, (unsigned)fi->Did,
+    DBG("[BOOT] Internal ROM: Capacity=%u bytes (%u KB)\n",
         (unsigned)g_flash_capacity, (unsigned)(g_flash_capacity / 1024));
 
     /* Compute safe PartFlag address: use last 4KB sector of flash.
@@ -134,6 +133,14 @@ void PartFlag_Init(void)
         g_part_flag_addr < PART_B_BASE + PART_B_SIZE) {
         DBG("[BOOT] PartFlag@0x%08X is inside Partition B region, "
             "B usable size reduced\n", (unsigned)g_part_flag_addr);
+    }
+
+    /* Summary */
+    {
+        uint8_t caps = PartFlag_GetCaps();
+        DBG("[BOOT] Capability: %s mode (caps=0x%02X)\n",
+            (caps & CAPS_DUAL_PART) ? "DUAL-PARTITION" : "SINGLE-PARTITION",
+            (unsigned)caps);
     }
 }
 
@@ -198,6 +205,20 @@ int PartFlag_Write(const PartFlag_t *flag)
     SpiFlashErase(SECTOR_ERASE, addr / FLASH_SECTOR_SZ, 0);
     return (SpiFlashWrite(addr, (uint8_t *)&tmp,
                          sizeof(PartFlag_t), 0) == FLASH_NONE_ERR) ? 1 : 0;
+}
+
+uint8_t PartFlag_GetCaps(void)
+{
+    uint8_t caps = 0;
+    if (g_part_a_usable > 0 && g_part_b_usable > 0) {
+        /* Both partitions available — true dual-partition */
+        caps |= CAPS_DUAL_PART | CAPS_SAFE_UPDATE;
+    } else if (g_part_a_usable > 0 || g_part_b_usable > 0) {
+        /* Only one partition — single-partition mode, no safe update */
+        /* (caps remains 0 for single-partition) */
+    }
+    caps |= CAPS_CRC_VERIFY;  /* We always verify firmware integrity */
+    return caps;
 }
 
 /* =========================================================================
@@ -286,6 +307,15 @@ void Boot_JumpTo(uint32_t addr)
 
 void Boot_CheckAndJumpIfNeeded(void)
 {
+    /* ── Force-bootloader check ──
+     * APP writes FORCE_BOOT_MAGIC to SRAM before rebooting to request
+     * bootloader stay.  Must check and clear BEFORE any other boot logic. */
+    if (*(volatile uint32_t *)FORCE_BOOT_ADDR == FORCE_BOOT_MAGIC) {
+        *(volatile uint32_t *)FORCE_BOOT_ADDR = 0;
+        DBG("[BOOT] Force-bootloader flag detected — staying in upgrade mode\n");
+        return;  /* Skip APP jump, fall through to USB CDC upgrade task */
+    }
+
 #if (BOOT_CURRENT_MODE == BOOT_MODE_DUAL_AB)
     PartFlag_t flag;
     uint32_t   jump_addr;
@@ -299,13 +329,36 @@ void Boot_CheckAndJumpIfNeeded(void)
         jump_addr =
             (flag.active_part == 1) ? PART_B_BASE : PART_A_BASE;
 
-        if (flag.boot_fail_cnt >= BOOT_FAIL_MAX) {
-            DBG("[BOOT] Active part %d failed %d times, switching to %d\n",
-                (int)flag.active_part, (int)flag.boot_fail_cnt,
-                (int)(1 - flag.active_part));
-            flag.active_part    = (flag.active_part == 0) ? 1u : 0u;
-            flag.boot_fail_cnt  = 1;
+        /* Safety: if active part is B but B is unavailable, force to A */
+        if (flag.active_part == 1 && g_part_b_usable == 0) {
+            DBG("[BOOT] WARNING: Active=B but B unavailable, forcing A\n");
+            flag.active_part   = 0;
+            flag.boot_fail_cnt = 0;
             PartFlag_Write(&flag);
+            jump_addr    = PART_A_BASE;
+            backup_addr  = PART_B_BASE;
+        }
+
+        if (flag.boot_fail_cnt >= BOOT_FAIL_MAX) {
+            /* Safety: only switch to other partition if it's available */
+            uint8_t other_part = (flag.active_part == 0) ? 1u : 0u;
+            uint32_t other_usable = (other_part == 0)
+                                    ? g_part_a_usable : g_part_b_usable;
+            if (other_usable > 0) {
+                DBG("[BOOT] Active part %d failed %d times, switching to %d\n",
+                    (int)flag.active_part, (int)flag.boot_fail_cnt,
+                    (int)other_part);
+                flag.active_part    = other_part;
+                flag.boot_fail_cnt  = 1;
+                PartFlag_Write(&flag);
+            } else {
+                DBG("[BOOT] Active part %d failed, but other partition "
+                    "unavailable — staying\n", (int)flag.active_part);
+                /* Don't switch, but don't keep incrementing either */
+                flag.boot_fail_cnt = BOOT_FAIL_MAX;
+                PartFlag_Write(&flag);
+                return;  /* Stay in bootloader for safety */
+            }
             jump_addr   = (flag.active_part == 1) ? PART_B_BASE : PART_A_BASE;
             backup_addr = (flag.active_part == 0) ? PART_B_BASE : PART_A_BASE;
         } else {
@@ -365,8 +418,8 @@ void Boot_CheckAndJumpIfNeeded(void)
         }
 
         if (!valid) {
-            /* Try the other partition */
-            if (jump_addr != PART_A_BASE) {
+            /* Try the other partition (only if it exists) */
+            if (jump_addr == PART_B_BASE && g_part_a_usable > 0) {
                 DBG("[BOOT] B not valid – trying A\n");
                 flag.active_part     = 0;
                 flag.boot_fail_cnt   = 0;
@@ -385,9 +438,28 @@ void Boot_CheckAndJumpIfNeeded(void)
                     valid = 1;
                     DBG("[BOOT] A: no BGPF magic, but first word valid → accept\n");
                 }
+            } else if (jump_addr == PART_A_BASE && g_part_b_usable > 0) {
+                DBG("[BOOT] A not valid – trying B\n");
+                flag.active_part     = 1;
+                flag.boot_fail_cnt   = 0;
+                PartFlag_Write(&flag);
+                jump_addr = PART_B_BASE;
+                first_word = (volatile const uint32_t *)PART_B_BASE;
+                fw_magic = (volatile const uint32_t *)
+                           (PART_B_BASE + FW_VALID_MAGIC_OFFSET);
+                DBG("[BOOT] Checking B @ 0x%08X = 0x%08X (magic@0xA4=0x%08X)\n",
+                    (unsigned)jump_addr, (unsigned)*first_word,
+                    (unsigned)*fw_magic);
+
+                valid = (*fw_magic == FW_VALID_MAGIC);
+                if (!valid && *first_word != 0xFFFFFFFFu &&
+                    *first_word != PART_FLAG_MAGIC) {
+                    valid = 1;
+                    DBG("[BOOT] B: no BGPF magic, but first word valid → accept\n");
+                }
             }
             if (!valid) {
-                DBG("[BOOT] No valid firmware in either partition – "
+                DBG("[BOOT] No valid firmware in any partition – "
                     "staying in bootloader\n");
                 return;
             }
@@ -405,8 +477,42 @@ void Boot_CheckAndJumpIfNeeded(void)
     DBG("[BOOT] Jumping to 0x%08X ...\n", (unsigned)jump_addr);
     Boot_JumpTo(jump_addr);   /* never returns when jumping */
 #else
-    /* Single-partition legacy mode: just jump to A */
-    Boot_JumpTo(PART_A_BASE);
+    /* Single-partition mode: check firmware validity, then jump to A.
+     * If no valid firmware found, stay in bootloader for USB CDC upgrade. */
+    {
+        volatile const uint32_t *first_word =
+            (volatile const uint32_t *)PART_A_BASE;
+        volatile const uint32_t *fw_magic =
+            (volatile const uint32_t *)(PART_A_BASE + FW_VALID_MAGIC_OFFSET);
+
+        DataCacheInvalidAll();
+        __nds32__dsb();
+
+        DBG("[BOOT] Single-partition: checking firmware @ 0x%08X = 0x%08X "
+            "(magic@0xA4=0x%08X)\n",
+            (unsigned)PART_A_BASE, (unsigned)*first_word,
+            (unsigned)*fw_magic);
+
+        /* Accept firmware if BGPF magic present at offset 0xA4 */
+        int valid = (*fw_magic == FW_VALID_MAGIC);
+
+        /* Fallback: accept if first word looks like a valid instruction
+         * (non-empty AND not partition flag magic) */
+        if (!valid && *first_word != 0xFFFFFFFFu &&
+            *first_word != PART_FLAG_MAGIC) {
+            valid = 1;
+            DBG("[BOOT] No BGPF magic, but first word looks valid → accept\n");
+        }
+
+        if (!valid) {
+            DBG("[BOOT] No valid firmware at Part A — "
+                "staying in bootloader for upgrade\n");
+            return;  /* Fall through to USB CDC upgrade task */
+        }
+
+        DBG("[BOOT] Jumping to 0x%08X ...\n", (unsigned)PART_A_BASE);
+        Boot_JumpTo(PART_A_BASE);
+    }
 #endif
 }
 
@@ -695,7 +801,8 @@ static void upgrade_run(void)
         DevInfo_t  info;
         memset(&info, 0, sizeof(info));
         info.protocol_ver = UPG_VERSION;
-        info.boot_mode    = BOOT_CURRENT_MODE;
+        info.boot_mode    = (PartFlag_GetCaps() & CAPS_DUAL_PART)
+                            ? BOOT_MODE_DUAL_AB : BOOT_MODE_SINGLE;
         info.part_a_base  = PART_A_BASE;
         info.part_a_size  = g_part_a_usable;
         info.part_b_base  = PART_B_BASE;
@@ -732,6 +839,11 @@ static void upgrade_run(void)
     case CMD_SET_PART: {
         PartFlag_t flag;
         if (pkt->len < 1) { SEND_NACK(pkt->seq, UPG_ERR_PARAM); break; }
+        /* Safety: reject partition switch if dual-partition not available */
+        if (!(PartFlag_GetCaps() & CAPS_DUAL_PART)) {
+            DBG("[UPG] SET_PART rejected: dual-partition not available\n");
+            SEND_NACK(pkt->seq, UPG_ERR_CAPS); break;
+        }
         if (!PartFlag_Read(&flag)) PartFlag_Default(&flag);
         flag.active_part    = pkt->data[0] ? 1u : 0u;
         flag.boot_fail_cnt  = 0;
@@ -741,6 +853,27 @@ static void upgrade_run(void)
         DBG("[UPG] SET_PART -> %d\n", (int)flag.active_part);
         upgrade_compute_target();  /* recompute after partition change */
         SEND_ACK(pkt->seq);
+        break;
+    }
+
+    /* ── GET_CAPS ─────────────────────────────────────────────── */
+    case CMD_GET_CAPS: {
+        CapInfo_t caps;
+        memset(&caps, 0, sizeof(caps));
+        caps.protocol_ver   = UPG_VERSION;
+        caps.caps_flags     = PartFlag_GetCaps();
+        caps.effective_mode = (caps.caps_flags & CAPS_DUAL_PART)
+                              ? BOOT_MODE_DUAL_AB : BOOT_MODE_SINGLE;
+        caps.reserved       = 0;
+        caps.flash_capacity = g_flash_capacity;
+        caps.part_a_usable  = g_part_a_usable;
+        caps.part_b_usable  = g_part_b_usable;
+        DBG("[UPG] GET_CAPS: flags=0x%02X mode=%d flash=%uKB A=%uKB B=%uKB\n",
+            (unsigned)caps.caps_flags, (int)caps.effective_mode,
+            (unsigned)(caps.flash_capacity / 1024),
+            (unsigned)(caps.part_a_usable / 1024),
+            (unsigned)(caps.part_b_usable / 1024));
+        SEND_ACKD(pkt->seq, (uint8_t *)&caps, (uint16_t)sizeof(caps));
         break;
     }
 
@@ -864,6 +997,28 @@ static void upgrade_run(void)
 #else
         if (g_session.state != UPG_WRITING) {
             SEND_NACK(pkt->seq, UPG_ERR_STATE); break;
+        }
+        DBG("[UPG] FINISH: verifying firmware write to Part A @ 0x%08X\n",
+            (unsigned)g_session.fw_base);
+
+        /* Verify firmware was written correctly */
+        DataCacheInvalidAll();
+        __nds32__dsb();
+        {
+            volatile const uint32_t *fw_magic_check =
+                (volatile const uint32_t *)(g_session.fw_base + FW_VALID_MAGIC_OFFSET);
+            volatile const uint32_t *fw_first =
+                (volatile const uint32_t *)g_session.fw_base;
+            int fw_ok = (*fw_magic_check == FW_VALID_MAGIC) ||
+                        (*fw_first != 0xFFFFFFFFu &&
+                         *fw_first != PART_FLAG_MAGIC);
+            DBG("[UPG] Verify: @0x%08X=0x%08X magic@0xA4=0x%08X → %s\n",
+                (unsigned)g_session.fw_base, (unsigned)*fw_first,
+                (unsigned)*fw_magic_check, fw_ok ? "OK" : "FAIL");
+            if (!fw_ok) {
+                DBG("[UPG] FATAL: firmware write verification FAILED!\n");
+                SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
+            }
         }
         DBG("[UPG] FINISH written=%u\n", (unsigned)g_session.written);
 #endif

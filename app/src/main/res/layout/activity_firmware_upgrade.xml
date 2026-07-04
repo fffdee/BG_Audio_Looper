@@ -22,16 +22,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-            <!-- 设备信息卡片 -->
+            <!-- 设备信息卡片（双分区模式显示） -->
             <LinearLayout
+                android:id="@+id/card_device_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@color/bg_card"
                 android:padding="16dp"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="12dp"
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -112,7 +115,40 @@
                     android:textColor="@color/text_accent" />
             </LinearLayout>
 
-            <!-- 固件来源 -->
+            <!-- 单分区：精简连接状态 -->
+            <LinearLayout
+                android:id="@+id/card_simple_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_card"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="设备"
+                        android:textColor="@color/label_secondary"
+                        android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/tv_ble_status_simple"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="未连接"
+                        android:textColor="@color/text_error"
+                        android:textSize="13sp"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 固件选择 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -122,19 +158,23 @@
                 android:layout_marginBottom="12dp">
 
                 <TextView
+                    android:id="@+id/tv_fw_source_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="固件来源"
+                    android:text="固件"
                     android:textColor="@color/text_accent"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="10dp" />
 
+                <!-- 双分区模式：云端+本地 -->
                 <LinearLayout
+                    android:id="@+id/row_fw_source_dual"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="10dp">
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone">
 
                     <Button
                         android:id="@+id/btn_check_update"
@@ -158,6 +198,17 @@
                         android:textColor="@color/text_accent" />
                 </LinearLayout>
 
+                <!-- 单分区模式：仅选择文件 -->
+                <Button
+                    android:id="@+id/btn_select_file_simple"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="选择固件文件"
+                    android:textSize="14sp"
+                    android:backgroundTint="@color/bg_card_light"
+                    android:textColor="@color/text_accent"
+                    android:visibility="visible" />
+
                 <TextView
                     android:id="@+id/tv_file_name"
                     android:layout_width="match_parent"
@@ -167,6 +218,7 @@
                     android:textSize="13sp"
                     android:singleLine="true"
                     android:ellipsize="middle"
+                    android:layout_marginTop="8dp"
                     android:layout_marginBottom="4dp" />
 
                 <TextView
@@ -195,15 +247,6 @@
                 android:background="@color/bg_card"
                 android:padding="16dp"
                 android:layout_marginBottom="12dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="升级进度"
-                    android:textColor="@color/text_accent"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="10dp" />
 
                 <ProgressBar
                     android:id="@+id/progress_bar"
@@ -237,14 +280,16 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- 日志输出 -->
+            <!-- 日志输出（双分区模式显示） -->
             <LinearLayout
+                android:id="@+id/card_log"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@color/bg_card"
                 android:padding="16dp"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="12dp"
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -277,19 +322,21 @@
 
     <!-- 底部操作栏 -->
     <LinearLayout
+        android:id="@+id/bottom_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@color/bg_card"
         android:padding="12dp"
-        android:elevation="8dp">
+        android:elevation="8dp"
+        android:gravity="bottom">
 
+        <!-- 单分区模式：仅升级按钮 -->
         <Button
             android:id="@+id/btn_start_upgrade"
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
             android:text="开始升级"
             android:textSize="15sp"
             android:textStyle="bold"
@@ -297,18 +344,20 @@
             android:textColor="@color/on_surface_color"
             android:enabled="false" />
 
+        <!-- 双分区模式额外按钮 -->
         <Button
             android:id="@+id/btn_reboot"
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
+            android:layout_marginStart="8dp"
             android:text="重启设备"
             android:textSize="13sp"
             android:backgroundTint="@color/rollback_btn_bg"
             android:textColor="@color/rollback_btn_text"
-            android:enabled="false" />
+            android:enabled="false"
+            android:visibility="gone" />
 
-        <!-- 设置按钮 -->
         <ImageButton
             android:id="@+id/btn_ota_settings"
             android:layout_width="48dp"
@@ -317,12 +366,13 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_settings"
             android:tint="@color/text_accent"
-            android:contentDescription="OTA 设置" />
+            android:contentDescription="OTA 设置"
+            android:visibility="gone" />
     </LinearLayout>
 
     </LinearLayout><!-- 主内容区结束 -->
 
-    <!-- OTA 设置侧边栏（覆盖层，滑入自右侧） -->
+    <!-- OTA 设置侧边栏（双分区模式，覆盖层） -->
     <include layout="@layout/drawer_ota_settings" />
 
 </FrameLayout>

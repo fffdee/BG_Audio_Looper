@@ -26,17 +26,28 @@
 /* ── Boot mode ── */
 #define BOOT_MODE_SINGLE   0   /* Legacy single-partition                    */
 #define BOOT_MODE_DUAL_AB  1   /* A/B dual-partition (equal peers)          */
-#define BOOT_CURRENT_MODE  BOOT_MODE_DUAL_AB
 
 /* ── Flash partition layout ── */
 #define BOOTLOADER_SIZE      0x00040000UL  /* 256 KB                         */
 
-#define PART_A_BASE          0x00040000UL  /* Partition A base               */
-#define PART_A_SIZE          0x00200000UL  /* Partition A: 2 MB              */
-#define PART_B_BASE          0x00240000UL  /* Partition B base               */
-#define PART_B_SIZE          0x00200000UL  /* Partition B: 2 MB              */
+/* Internal ROM capacity (no external NOR Flash) — MUST be defined before
+ * the BOOT_CURRENT_MODE #if below so the preprocessor sees the real value. */
+#define INTERNAL_ROM_CAPACITY 0x00200000UL /* 2 MB internal flash            */
 
-#define PART_FLAG_ADDR       0x00440000UL  /* Partition flag sector (4 KB)   */
+/* Auto-detect mode from internal ROM capacity:
+ * 2 MB → single partition (no room for A+B), 8 MB → dual A/B */
+#if (INTERNAL_ROM_CAPACITY >= 0x00480000UL)
+#define BOOT_CURRENT_MODE  BOOT_MODE_DUAL_AB
+#else
+#define BOOT_CURRENT_MODE  BOOT_MODE_SINGLE
+#endif
+
+#define PART_A_BASE          0x00040000UL  /* Partition A base               */
+#define PART_A_SIZE          0x00200000UL  /* Partition A: 2 MB (nominal)    */
+#define PART_B_BASE          0x00240000UL  /* Partition B base (may be invalid) */
+#define PART_B_SIZE          0x00200000UL  /* Partition B: 2 MB (nominal)    */
+
+#define PART_FLAG_ADDR       0x00440000UL  /* Partition flag sector (4 KB) — default for 8 MB */
 #define PART_FLAG_MAGIC      0x42475057UL  /* "BGPW"                         */
 
 #define FLASH_SECTOR_SZ      0x1000UL      /* 4 KB erase unit                */
@@ -65,6 +76,13 @@ typedef struct {
 #define BOOT_HANDOFF_ADDR     0x20000000UL
 #define BOOT_HANDOFF_MAGIC    0xDEADBEEFUL
 
+/* ── Force-bootloader flag (SRAM, survives soft reset) ──
+ * APP writes this magic before rebooting to request bootloader stay.
+ * Bootloader checks this at the very start of Boot_CheckAndJumpIfNeeded()
+ * — if set, clears it and stays in upgrade mode (skips APP jump). */
+#define FORCE_BOOT_ADDR       0x20000004UL
+#define FORCE_BOOT_MAGIC      0xCAFEBABEUL
+
 /* ── Partition flag structure ── */
 typedef struct {
     uint32_t magic;           /* Must equal PART_FLAG_MAGIC                  */
@@ -77,7 +95,7 @@ typedef struct {
 
 /* ── Protocol framing (USB CDC) ── */
 #define UPG_SOF          0xAAU
-#define UPG_VERSION      0x03U  /* v3: dual-partition equal peers, CDC only  */
+#define UPG_VERSION      0x04U  /* v4: runtime partition capability query    */
 #define UPG_MAX_CHUNK    256U
 
 /* Commands: Host -> Bootloader (USB CDC) */
@@ -90,6 +108,8 @@ typedef struct {
 #define CMD_QUERY_INFO   0x07U
 #define CMD_SET_PART     0x08U
 #define CMD_REBOOT       0x09U
+#define CMD_GET_CAPS     0x0AU  /* Query runtime partition capabilities */
+#define CMD_ENTER_BOOT   0x0BU  /* APP → bootloader: reboot & stay in BL */
 
 /* Responses */
 #define RSP_ACK          0xA1U
@@ -101,6 +121,12 @@ typedef struct {
 #define UPG_ERR_SIZE     0x03U
 #define UPG_ERR_STATE    0x04U
 #define UPG_ERR_PARAM    0x05U
+#define UPG_ERR_CAPS     0x06U  /* Operation not supported by current hardware */
+
+/* ── Capability flags (CMD_GET_CAPS response) ── */
+#define CAPS_DUAL_PART   0x01U  /* True dual-partition (both A and B exist)   */
+#define CAPS_SAFE_UPDATE 0x02U  /* Safe update: backup partition exists       */
+#define CAPS_CRC_VERIFY  0x04U  /* Firmware CRC verification supported        */
 
 /* ── Device info (CMD_QUERY_INFO ACK payload) ── */
 typedef struct {
@@ -114,11 +140,23 @@ typedef struct {
     uint32_t part_b_size;
 } DevInfo_t;
 
+/* ── Capability info (CMD_GET_CAPS ACK payload) ── */
+typedef struct {
+    uint8_t  protocol_ver;    /* UPG_VERSION                                 */
+    uint8_t  caps_flags;      /* CAPS_DUAL_PART | CAPS_SAFE_UPDATE | ...     */
+    uint8_t  effective_mode;  /* BOOT_MODE_SINGLE or BOOT_MODE_DUAL_AB       */
+    uint8_t  reserved;
+    uint32_t flash_capacity;  /* Total flash size in bytes                   */
+    uint32_t part_a_usable;   /* Usable A partition size                     */
+    uint32_t part_b_usable;   /* Usable B partition size (0 = not available) */
+} CapInfo_t;
+
 /* ── Public partition API ── */
 void PartFlag_Init(void);      /* Must be called after SpiFlashInit, before Boot_CheckAndJumpIfNeeded */
 int  PartFlag_Read(PartFlag_t *flag);
 int  PartFlag_Write(const PartFlag_t *flag);
 void PartFlag_Default(PartFlag_t *flag);
+uint8_t PartFlag_GetCaps(void); /* Returns CAPS_DUAL_PART | CAPS_SAFE_UPDATE etc. */
 
 /* ── Boot decision ── */
 void Boot_CheckAndJumpIfNeeded(void);

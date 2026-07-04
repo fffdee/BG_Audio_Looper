@@ -50,6 +50,10 @@ public class FirmwareUpgradeActivity extends Activity {
     private static final long DATA_DELAY_MS = 10;
     private static final int BLE_MTU = 200;
 
+    /* boot_mode values (must match dual_partition.h) */
+    private static final int BOOT_MODE_SINGLE  = 0;
+    private static final int BOOT_MODE_DUAL_AB = 1;
+
     private static final String BEMFA_API =
         "https://apis.bemfa.com/vb/api/v1/firmwareVersion";
     private static final String BEMFA_OPENID = "4d9ec352e0376f2110a0c601a2857225";
@@ -57,16 +61,27 @@ public class FirmwareUpgradeActivity extends Activity {
     private static final int    BEMFA_DEVTYPE = 3;
 
     private TextView tvBleStatus, tvProtocolVer, tvAppSize;
-    private Button btnQueryInfo, btnCheckUpdate, btnSelectFile;
+    private TextView tvBleStatusSimple;
+    private Button btnQueryInfo, btnCheckUpdate, btnSelectFile, btnSelectFileSimple;
     private Button btnStartUpgrade, btnReboot;
+    private ImageButton btnOtaSettings;
     private TextView tvFileName, tvFileSize, tvCloudInfo;
     private ProgressBar progressBar;
     private TextView tvProgressText, tvProgressPct;
     private TextView tvLog;
     private ScrollView scrollLog;
 
+    // Cards / sections for mode switching
+    private View cardDeviceInfo;
+    private View cardSimpleStatus;
+    private View cardLog;
+    private View rowFwSourceDual;
+
     // OTA 设置侧边栏
     private View drawerOtaSettings;
+
+    // Current device mode (default: single-partition for simplicity)
+    private int currentBootMode = BOOT_MODE_SINGLE;
 
     private BluetoothHelper bleHelper;
     private Handler uiHandler = new Handler(Looper.getMainLooper());
@@ -87,11 +102,13 @@ public class FirmwareUpgradeActivity extends Activity {
         setContentView(R.layout.activity_firmware_upgrade);
 
         tvBleStatus    = findViewById(R.id.tv_ble_status);
+        tvBleStatusSimple = findViewById(R.id.tv_ble_status_simple);
         tvProtocolVer  = findViewById(R.id.tv_protocol_ver);
         tvAppSize      = findViewById(R.id.tv_app_size);
         btnQueryInfo   = findViewById(R.id.btn_query_info);
         btnCheckUpdate = findViewById(R.id.btn_check_update);
         btnSelectFile  = findViewById(R.id.btn_select_file);
+        btnSelectFileSimple = findViewById(R.id.btn_select_file_simple);
         tvFileName     = findViewById(R.id.tv_file_name);
         tvFileSize     = findViewById(R.id.tv_file_size);
         tvCloudInfo    = findViewById(R.id.tv_cloud_info);
@@ -102,6 +119,13 @@ public class FirmwareUpgradeActivity extends Activity {
         scrollLog      = findViewById(R.id.scroll_log);
         btnStartUpgrade = findViewById(R.id.btn_start_upgrade);
         btnReboot      = findViewById(R.id.btn_reboot);
+        btnOtaSettings = findViewById(R.id.btn_ota_settings);
+
+        // Section cards
+        cardDeviceInfo   = findViewById(R.id.card_device_info);
+        cardSimpleStatus = findViewById(R.id.card_simple_status);
+        cardLog          = findViewById(R.id.card_log);
+        rowFwSourceDual  = findViewById(R.id.row_fw_source_dual);
 
         bleHelper = BluetoothManager.getInstance().getBluetoothHelper();
 
@@ -110,6 +134,7 @@ public class FirmwareUpgradeActivity extends Activity {
         btnQueryInfo.setOnClickListener(v -> executor.execute(this::doQueryInfo));
         btnCheckUpdate.setOnClickListener(v -> executor.execute(this::doCheckUpdate));
         btnSelectFile.setOnClickListener(v -> openFilePicker());
+        btnSelectFileSimple.setOnClickListener(v -> openFilePicker());
         btnStartUpgrade.setOnClickListener(v -> {
             if (!upgrading) executor.execute(this::doUpgrade);
         });
@@ -117,7 +142,6 @@ public class FirmwareUpgradeActivity extends Activity {
 
         // OTA 设置侧边栏
         drawerOtaSettings = findViewById(R.id.drawer_ota_settings);
-        ImageButton btnOtaSettings = findViewById(R.id.btn_ota_settings);
         ImageButton btnCloseOtaDrawer = findViewById(R.id.btn_close_ota_drawer);
         btnOtaSettings.setOnClickListener(v -> openOtaDrawer());
         btnCloseOtaDrawer.setOnClickListener(v -> closeOtaDrawer());
@@ -129,6 +153,11 @@ public class FirmwareUpgradeActivity extends Activity {
                 ackLock.notifyAll();
             }
         });
+
+        /* Auto-query device info on entry to detect partition mode */
+        if (bleHelper.isConnected()) {
+            executor.execute(this::doQueryInfo);
+        }
     }
 
     @Override
@@ -148,12 +177,46 @@ public class FirmwareUpgradeActivity extends Activity {
 
     private void updateBleStatus() {
         boolean connected = bleHelper.isConnected();
-        tvBleStatus.setText(connected ? "已连接" : "未连接");
-        tvBleStatus.setTextColor(getColor(connected ?
-            R.color.primary_accent : R.color.text_error));
+        String statusText = connected ? "已连接" : "未连接";
+        int statusColor = getColor(connected ? R.color.primary_accent : R.color.text_error);
+
+        tvBleStatus.setText(statusText);
+        tvBleStatus.setTextColor(statusColor);
+        tvBleStatusSimple.setText(statusText);
+        tvBleStatusSimple.setTextColor(statusColor);
+
         btnStartUpgrade.setEnabled(connected && firmware != null);
-        btnReboot.setEnabled(connected);
+        if (currentBootMode == BOOT_MODE_DUAL_AB) {
+            btnReboot.setEnabled(connected);
+        }
         btnQueryInfo.setEnabled(connected);
+    }
+
+    /**
+     * Apply UI mode based on boot_mode reported by the device.
+     * Single-partition (2 MB): minimal UI — select file + upgrade only.
+     * Dual-partition (8 MB): full UI with device info, cloud update, log, reboot.
+     */
+    private void applyUIMode(int bootMode) {
+        currentBootMode = bootMode;
+        boolean isDual = (bootMode == BOOT_MODE_DUAL_AB);
+
+        uiHandler.post(() -> {
+            // Device info card
+            cardDeviceInfo.setVisibility(isDual ? View.VISIBLE : View.GONE);
+            // Simple status bar (single-partition)
+            cardSimpleStatus.setVisibility(isDual ? View.GONE : View.VISIBLE);
+            // Cloud + local file row (dual)
+            rowFwSourceDual.setVisibility(isDual ? View.VISIBLE : View.GONE);
+            // Simple select file button (single)
+            btnSelectFileSimple.setVisibility(isDual ? View.GONE : View.VISIBLE);
+            // Log card
+            cardLog.setVisibility(isDual ? View.VISIBLE : View.GONE);
+            // Reboot button
+            btnReboot.setVisibility(isDual ? View.VISIBLE : View.GONE);
+            // Settings button
+            btnOtaSettings.setVisibility(isDual ? View.VISIBLE : View.GONE);
+        });
     }
 
     private void log(String msg) {
@@ -288,23 +351,43 @@ public class FirmwareUpgradeActivity extends Activity {
         try {
             log("正在查询设备信息...");
             byte[] resp = transact(CMD_QUERY_INFO, null, 5000);
-            if (resp.length >= 12) {
-                int ver = resp[0] & 0xFF;
-                long appBase = ((long)(resp[4] & 0xFF) << 24)
-                             | ((long)(resp[5] & 0xFF) << 16)
-                             | ((long)(resp[6] & 0xFF) << 8)
-                             |  (resp[7] & 0xFF);
-                long appSize = ((long)(resp[8] & 0xFF) << 24)
-                             | ((long)(resp[9] & 0xFF) << 16)
-                             | ((long)(resp[10] & 0xFF) << 8)
-                             |  (resp[11] & 0xFF);
+            if (resp.length >= 4) {
+                int bootMode   = resp[0] & 0xFF;
+                int activePart = resp[1] & 0xFF;
+                int failCnt    = resp[2] & 0xFF;
+                int ver        = resp[3] & 0xFF;
+
+                long partASize = 0, partBSize = 0;
+                if (resp.length >= 20) {
+                    long partABase = ((long)(resp[4] & 0xFF) << 24)
+                                   | ((long)(resp[5] & 0xFF) << 16)
+                                   | ((long)(resp[6] & 0xFF) << 8)
+                                   |  (resp[7] & 0xFF);
+                    partASize = ((long)(resp[8] & 0xFF) << 24)
+                              | ((long)(resp[9] & 0xFF) << 16)
+                              | ((long)(resp[10] & 0xFF) << 8)
+                              |  (resp[11] & 0xFF);
+                    long partBBase = ((long)(resp[12] & 0xFF) << 24)
+                                   | ((long)(resp[13] & 0xFF) << 16)
+                                   | ((long)(resp[14] & 0xFF) << 8)
+                                   |  (resp[15] & 0xFF);
+                    partBSize = ((long)(resp[16] & 0xFF) << 24)
+                              | ((long)(resp[17] & 0xFF) << 16)
+                              | ((long)(resp[18] & 0xFF) << 8)
+                              |  (resp[19] & 0xFF);
+                }
+
+                /* Apply UI mode based on boot_mode from device */
+                applyUIMode(bootMode);
+
+                String modeStr = (bootMode == BOOT_MODE_DUAL_AB) ? "双分区A/B" : "单分区";
                 uiHandler.post(() -> {
                     tvProtocolVer.setText("v" + ver);
-                    tvAppSize.setText((appSize / 1024) + " KB");
+                    tvAppSize.setText((partASize / 1024) + " KB");
                 });
-                log("协议版本: v" + ver + "  APP: 0x" +
-                    Long.toHexString(appBase) + "  容量: " +
-                    (appSize / 1024) + " KB");
+                log("模式: " + modeStr + "  协议: v" + ver
+                    + "  A容量: " + (partASize / 1024) + " KB"
+                    + (bootMode == BOOT_MODE_DUAL_AB ? "  B容量: " + (partBSize / 1024) + " KB" : ""));
             }
         } catch (Exception e) {
             log("查询失败: " + e.getMessage());
@@ -499,6 +582,7 @@ public class FirmwareUpgradeActivity extends Activity {
             tvFileName.setText(fwFile.getName());
             tvFileSize.setText(String.format("%.1f KB", firmware.length / 1024.0));
             btnStartUpgrade.setEnabled(bleHelper.isConnected());
+            btnSelectFileSimple.setText(fwFile.getName());
         });
         setProgress(0, "下载完成，等待升级");
     }
@@ -535,6 +619,7 @@ public class FirmwareUpgradeActivity extends Activity {
                     tvFileSize.setText(String.format("%.1f KB",
                         firmware.length / 1024.0));
                     btnStartUpgrade.setEnabled(bleHelper.isConnected());
+                    btnSelectFileSimple.setText(name);
                 });
                 log("已加载固件: " + name + " (" + firmware.length + " 字节)");
             } catch (Exception e) {
