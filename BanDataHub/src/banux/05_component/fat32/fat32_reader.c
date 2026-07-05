@@ -1,4 +1,4 @@
-﻿﻿﻿/**
+﻿﻿﻿﻿﻿/**
  * @file fat32_reader.c
  * @brief BanDataHub FAT16/FAT32 file operations.
  */

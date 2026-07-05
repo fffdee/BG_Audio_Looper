@@ -125,11 +125,14 @@ typedef struct {
 #define BOOT_MODE_DUAL_AB  1   /* A/B dual-partition with bootloader       */
 #define BOOT_MODE_SINGLE   0   /* Single partition (no dual A/B)           */
 
-/* ── Force-bootloader flag (SRAM, survives soft reset) ──
- * APP writes this before rebooting to request bootloader stay.
- * Bootloader checks at start of Boot_CheckAndJumpIfNeeded(). */
-#define FORCE_BOOT_ADDR     0x20000004UL
-#define FORCE_BOOT_MAGIC    0xCAFEBABEUL
+/* ── Burn flag (Flash, one-time bootloader stay request) ──
+ * APP writes BURN_FLAG_MAGIC to BURN_FLAG_ADDR in Flash before rebooting
+ * to request bootloader stay.  Bootloader checks at startup, erases it,
+ * and stays in upgrade mode.  One-time: if user just reboots without
+ * upgrading, the flag is already cleared and bootloader jumps to APP. */
+#define BURN_FLAG_ADDR      0x0003F000UL  /* Last sector of bootloader area */
+#define BURN_FLAG_MAGIC     0x4F4F5442UL  /* "BOOT" in little-endian       */
+#define BURN_FLAG_SECTOR    (BURN_FLAG_ADDR / 4096U)
 
 /* Backward-compatible macro: use runtime layout instead when possible */
 #define PART_FLAG_ADDR  (DualPart_GetLayout()->part_flag_addr)

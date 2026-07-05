@@ -8,9 +8,10 @@ MP3/WAV/SBC → C Array Converter
 import sys
 import os
 import wave
-import audioop
 import io
 import lameenc
+import struct
+import numpy as np
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -79,7 +80,7 @@ class ConvertWorker(QThread):
     # ------------------------------------------------------------------
     def _apply_wav_volume(self, data: bytes, vol_pct: int) -> bytes:
         """步骤3: 对 WAV 文件的 PCM 采样值按 vol_pct/100 缩放，返回新的 WAV bytes。
-        使用内置 wave + audioop，无需外部依赖。
+        使用 numpy 替代已移除的 audioop（Python 3.13+）。
         """
         buf_in = io.BytesIO(data)
         try:
@@ -96,8 +97,28 @@ class ConvertWorker(QThread):
         if sampwidth not in (1, 2, 4):
             raise ValueError(f"不支持的 WAV 位宽: {sampwidth * 8} bit")
 
-        # audioop.mul 会自动处理整数溢出截断（防止破音）
-        scaled = audioop.mul(pcm, sampwidth, factor)
+        # 用 numpy 缩放 PCM（替代已移除的 audioop.mul）
+        if sampwidth == 1:
+            # 8-bit unsigned (0-255)
+            arr = np.frombuffer(pcm, dtype=np.uint8)
+            # 转为有符号中心化 (-128 ~ 127)
+            arr = arr.astype(np.float64) - 128.0
+            arr = arr * factor
+            # 截断并转回 unsigned
+            arr = np.clip(arr, -128, 127) + 128.0
+            scaled = arr.astype(np.uint8).tobytes()
+        elif sampwidth == 2:
+            # 16-bit signed
+            arr = np.frombuffer(pcm, dtype=np.int16)
+            arr = arr.astype(np.float64) * factor
+            arr = np.clip(arr, -32768, 32767)
+            scaled = arr.astype(np.int16).tobytes()
+        elif sampwidth == 4:
+            # 32-bit signed
+            arr = np.frombuffer(pcm, dtype=np.int32)
+            arr = arr.astype(np.float64) * factor
+            arr = np.clip(arr, -2147483648, 2147483647)
+            scaled = arr.astype(np.int32).tobytes()
 
         buf_out = io.BytesIO()
         with wave.open(buf_out, 'wb') as wf:
@@ -159,8 +180,8 @@ class ConvertWorker(QThread):
 
         # ------------------------------------------------------------------
         # 检测文件类型并执行音量调整
-        # WAV:  wave + audioop 直接 PCM 缩放
-        # MP3:  QAudioDecoder 解码 → audioop 缩放 → 输出 WAV（固件 RIFF 自动检测）
+        # WAV:  wave + numpy 直接 PCM 缩放
+        # MP3:  QAudioDecoder 解码 → numpy 缩放 → 输出 WAV（固件 RIFF 自动检测）
         # 其他: 跳过音量调整，按原始数据嵌入
         # ------------------------------------------------------------------
         vol        = self.volume_pct
@@ -610,7 +631,11 @@ class MainWindow(QMainWindow):
             end_byte   = max(start_byte, min(end_byte, len(pcm)))
             pcm = pcm[start_byte:end_byte]
 
-        scaled = audioop.mul(pcm, 2, vol_pct / 100.0)
+        # 用 numpy 缩放 PCM（替代已移除的 audioop.mul）
+        arr = np.frombuffer(pcm, dtype=np.int16)
+        arr = arr.astype(np.float64) * (vol_pct / 100.0)
+        arr = np.clip(arr, -32768, 32767)
+        scaled = arr.astype(np.int16).tobytes()
 
         enc = lameenc.Encoder()
         enc.set_bit_rate(128)

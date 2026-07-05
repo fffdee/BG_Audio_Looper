@@ -39,6 +39,7 @@
 #define __BG_EVENT_H__
 
 #include <stdint.h>
+#include "product_def.h"      /* BG_EVENT_EN */
 #include "bg_event_topics.h"
 
 #ifdef __cplusplus

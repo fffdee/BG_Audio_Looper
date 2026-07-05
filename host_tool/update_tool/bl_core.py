@@ -212,7 +212,7 @@ class Bootloader:
         流程:
           1. 直接发送 CMD_ENTER_BOOT 协议包（0xAA SOF + 0x0B CMD）
           2. APP 的 CDC_Upgrade_CheckEnter() 自动嗅探 0xAA 进入升级模式
-          3. App_Upgrade 引擎处理 CMD_ENTER_BOOT，写 FORCE_BOOT_MAGIC 后复位
+          3. App_Upgrade 引擎处理 CMD_ENTER_BOOT，写 BURN_FLAG_MAGIC 到 Flash 后复位
           4. 等待设备重新枚举为 Bootloader
 
         返回 True 如果 CMD_ENTER_BOOT 收到 ACK（设备即将复位）。
@@ -378,10 +378,27 @@ class Bootloader:
 
 
 # ─── 工具函数 ─────────────────────────────────────────────────────────────────
+
+# Bootloader USB VID/PID (用于识别设备是否处于升级模式)
+BL_VID = 0x8888
+BL_PID = 0x1722
+
+
 def list_ports():
     """返回 [(device, description), ...] 列表。"""
     return [(p.device, p.description or p.device)
             for p in sorted(serial.tools.list_ports.comports())]
+
+
+def list_bootloader_ports():
+    """返回 VID/PID 匹配 Bootloader 的串口 [(device, description), ...]。
+    Bootloader VID=0x8888 PID=0x1722, APP VID=0x1234 PID=0x1234。"""
+    result = []
+    for p in serial.tools.list_ports.comports():
+        if hasattr(p, 'vid') and p.vid == BL_VID and \
+           hasattr(p, 'pid') and p.pid == BL_PID:
+            result.append((p.device, p.description or p.device))
+    return sorted(result)
 
 
 def probe_port(port: str, baudrate: int = 115200,

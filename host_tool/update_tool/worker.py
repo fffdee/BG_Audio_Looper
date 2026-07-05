@@ -6,7 +6,7 @@ worker.py — 后台线程
 
 import time
 from PyQt5.QtCore import QThread, pyqtSignal
-from bl_core import BLComm, Bootloader, list_ports, probe_port, Cmd, build_packet
+from bl_core import BLComm, Bootloader, list_ports, list_bootloader_ports, probe_port, Cmd, build_packet
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -32,6 +32,22 @@ class AutoScanWorker(QThread):
         self._abort = True
 
     def run(self):
+        # ── Step 1: 先通过 VID/PID 快速查找 Bootloader ──
+        bl_ports = list_bootloader_ports()
+        if bl_ports:
+            self.log.emit(f"发现 Bootloader 设备 (VID=0x8888 PID=0x1722) …")
+            for device, desc in bl_ports:
+                if self._abort:
+                    break
+                self.log.emit(f"  探测 {device} ({desc}) …")
+                ver = probe_port(device, self._baud, timeout=0.5)
+                if ver is not None:
+                    self.log.emit(f"  ✓ {device} — Bootloader v{ver}")
+                    self.found.emit(device, desc, ver)
+                    self.scan_finished.emit(True, "已找到设备")
+                    return
+
+        # ── Step 2: 全量扫描（VID/PID 不可用时回退） ──
         ports = list_ports()
         if not ports:
             self.log.emit("未发现任何串口")
@@ -39,45 +55,43 @@ class AutoScanWorker(QThread):
             return
 
         self.log.emit(f"正在扫描 {len(ports)} 个串口 …")
-        found_any = False
         for device, desc in ports:
             if self._abort:
                 break
+            # 跳过已尝试的 bootloader 端口
+            if any(d == device for d, _ in bl_ports):
+                continue
             self.log.emit(f"  探测 {device} ({desc}) …")
             ver = probe_port(device, self._baud, timeout=0.5)
             if ver is not None:
                 self.log.emit(f"  ✓ {device} — Bootloader v{ver}")
                 self.found.emit(device, desc, ver)
-                found_any = True
-                break                     # 找到第一个即停止
+                self.scan_finished.emit(True, "已找到设备")
+                return
             else:
                 self.log.emit(f"  ✗ {device} 无应答")
 
-        if found_any:
-            self.scan_finished.emit(True, "已找到设备")
-            return
-
-        # ── 未找到 Bootloader，尝试让 APP 跳回 Bootloader ──
+        # ── Step 3: 未找到 Bootloader，尝试让 APP 跳回 Bootloader ──
         self.log.emit("未发现 Bootloader，尝试检测 APP 模式设备 …")
         for device, desc in ports:
             if self._abort:
                 break
             if self._try_enter_bootloader(device, desc):
-                found_any = True
-                break
+                self.scan_finished.emit(True, "已找到设备")
+                return
 
-        if found_any:
-            self.scan_finished.emit(True, "已找到设备")
-        else:
-            self.scan_finished.emit(False, "未发现 Bootloader 设备")
+        self.scan_finished.emit(False, "未发现 Bootloader 设备")
 
     def _try_enter_bootloader(self, device: str, desc: str) -> bool:
-        """尝试让 APP 模式的设备跳回 Bootloader，然后重新握手。
+        """尝试让 APP 模式的设备跳回 Bootloader，然后全量重新扫描。
 
         流程：直接发 CMD_ENTER_BOOT 协议包（0xAA SOF + 0x0B CMD）。
-        APP 的 CDC_Upgrade_CheckEnter() 会自动嗅探 0xAA 并进入升级模式，
-        然后 App_Upgrade 引擎处理 CMD_ENTER_BOOT，写 FORCE_BOOT_MAGIC 后复位。
-        不需要 shell 命令 "upg"。
+        APP 的 CDC_Upgrade_CheckEnter() 自动嗅探 0xAA 进入升级模式，
+        然后 App_Upgrade 引擎处理 CMD_ENTER_BOOT：
+          1. 写 BURN_FLAG_MAGIC 到 Flash (0x3F000)
+          2. 复位芯片
+          3. Bootloader 检测到 BURN_FLAG，擦除并停留在升级模式
+          4. 设备以 VID=0x8888/PID=0x1722 重新枚举（COM 端口号可能变化！）
         """
         import serial as pyserial
 
@@ -90,14 +104,13 @@ class AutoScanWorker(QThread):
 
         try:
             # 直接发 CMD_ENTER_BOOT 协议包
-            # APP 的 CDC_Upgrade_CheckEnter() 会嗅探 0xAA SOF
             self.log.emit("  发送 CMD_ENTER_BOOT 协议包 …")
             pkt = build_packet(Cmd.ENTER_BOOT, 0)
             ser.reset_input_buffer()
             ser.write(pkt)
             ser.flush()
 
-            # APP 收到后会 ACK 然后复位，串口可能断开
+            # APP 收到后会 ACK 然后写 Flash 标志 + 复位
             time.sleep(0.5)
             try:
                 resp = ser.read(256)
@@ -109,20 +122,35 @@ class AutoScanWorker(QThread):
         finally:
             ser.close()
 
-        # 等待设备重新枚举为 Bootloader
-        self.log.emit("  等待设备重新枚举 (2s) …")
-        time.sleep(2.0)
+        # 等待设备重新枚举（APP→复位→Bootloader，VID/PID 变化）
+        # Windows 需要时间重新枚举 USB 设备
+        self.log.emit("  等待设备重新枚举 (3s) …")
+        time.sleep(3.0)
 
-        # 重新握手
-        self.log.emit(f"  重新探测 {device} …")
-        ver = probe_port(device, self._baud, timeout=1.0)
-        if ver is not None:
-            self.log.emit(f"  ✓ {device} — Bootloader v{ver} (从 APP 跳回)")
-            self.found.emit(device, desc, ver)
-            return True
-        else:
-            self.log.emit(f"  ✗ {device} 仍无应答")
-            return False
+        # 全量重新扫描（COM 端口号可能变化！）
+        # 优先通过 VID/PID 查找 Bootloader
+        self.log.emit("  重新扫描所有串口 …")
+        bl_ports = list_bootloader_ports()
+        if bl_ports:
+            for bdev, bdesc in bl_ports:
+                self.log.emit(f"  发现 Bootloader 设备: {bdev} ({bdesc})")
+                ver = probe_port(bdev, self._baud, timeout=1.0)
+                if ver is not None:
+                    self.log.emit(f"  ✓ {bdev} — Bootloader v{ver} (从 APP 跳回)")
+                    self.found.emit(bdev, bdesc, ver)
+                    return True
+
+        # 回退：全量扫描
+        all_ports = list_ports()
+        for pdev, pdesc in all_ports:
+            ver = probe_port(pdev, self._baud, timeout=1.0)
+            if ver is not None:
+                self.log.emit(f"  ✓ {pdev} — Bootloader v{ver} (从 APP 跳回)")
+                self.found.emit(pdev, pdesc, ver)
+                return True
+
+        self.log.emit(f"  ✗ 未发现 Bootloader 设备")
+        return False
 
 
 class UpgradeWorker(QThread):

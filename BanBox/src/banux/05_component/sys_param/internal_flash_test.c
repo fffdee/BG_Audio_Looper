@@ -12,7 +12,7 @@
 #include "debug.h"
 #include "gpio.h"
 #include "string.h"
-#include "bg_lcd.h"
+#include <stdbool.h>
 
 /* 测试配置 */
 #define TEST_SECTOR_NUM     250             /* 使用第250扇区做测试 (避免破坏代码区) */
@@ -294,10 +294,6 @@ void InternalFlash_Test(void)
  */
 void InternalFlashTestTask(void)
 {
-    /* 初始化LCD */
-    BG_lcd.Init();
-    BG_lcd.Clear(0x001F);  /* 蓝色背景 */
-    
     DBG("\n");
     DBG("**************************************************\n");
     DBG("*     Internal Flash Test Task Started          *\n");

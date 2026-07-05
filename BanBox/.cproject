@@ -38,15 +38,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_hal_drivers/gpio}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_hal_drivers/spi}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/flash}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/lcd}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/power_mgr}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/03_driver_framework/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/03_driver_framework}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/04_shell_commands}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/base_func}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/BG_List}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/menu_slider}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/page}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/06_app/audio}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/06_app/audio/effect_parameter}&quot;"/>
@@ -56,18 +51,12 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/06_app/BG_AudioIO_Manager}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/USB/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/06_app/bluetooth/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui_system}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/audio_spectrum}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/03_driver_framework/drivers}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_vfs}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/effect_graph}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/bluetooth}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/02_device_drivers/bluetooth/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/components}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/resources}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/BanGUI/ui/views}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/driver/driver_api/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/middleware/audio/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/middleware/rtos/freertos/inc}&quot;"/>

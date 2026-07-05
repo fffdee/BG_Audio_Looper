@@ -23,7 +23,7 @@ extern "C" {
 
 #ifdef BANBOX_1_0
 /* BANBOX_1_0 硬件资源: 2×W25Qxx NOR Flash, LCD, Battery, USB, BT */
-#define HW_DRV_LCD_EN           1   /* ST7735 LCD 驱动 */
+#define HW_DRV_LCD_EN           0   /* ST7735 LCD 驱动 - 已移除 */
 #define HW_DRV_FLASH_NOR_EN     1   /* W25Qxx NOR Flash 驱动 (2片) */
 #define HW_DRV_FLASH_NAND_EN    0   /* 无 NAND Flash */
 #define HW_DRV_PSRAM_EN         0   /* 无 PSRAM */
@@ -47,7 +47,7 @@ extern "C" {
 
 #ifdef BANBOX_1_1
 /* BANBOX_1_1 硬件资源 (待完善) */
-#define HW_DRV_LCD_EN           1
+#define HW_DRV_LCD_EN           0   /* LCD 驱动 - 已移除 */
 #define HW_DRV_FLASH_NOR_EN     1
 #define HW_DRV_FLASH_NAND_EN    0
 #define HW_DRV_PSRAM_EN         0
@@ -59,7 +59,7 @@ extern "C" {
 
 #ifdef BANBOX_II
 /* BANBOX_II 硬件资源: NOR + NAND + PSRAM + SD Card (新引脚布局) */
-#define HW_DRV_LCD_EN           1   /* ST7735 LCD 驱动 */
+#define HW_DRV_LCD_EN           0   /* ST7735 LCD 驱动 - 已移除 */
 #define HW_DRV_FLASH_NOR_EN     1   /* W25Qxx NOR Flash 驱动 (1片) */
 #define HW_DRV_FLASH_NAND_EN    1   /* W25N02 NAND Flash 驱动 */
 #define HW_DRV_PSRAM_EN         1   /* ESP-PSRAM64H PSRAM 驱动 */
@@ -112,12 +112,12 @@ extern "C" {
 
 /* 核心功能 */
 #define VFS_EN                  0   /* 虚拟文件系统 */
-#define BG_EVENT_EN             0   /* 事件发布-订阅系统 (话题订阅) */
+#define BG_EVENT_EN             1   /* 事件发布-订阅系统 (话题订阅) */
 #define EFFECT_GRAPHICS_EN      1   /* 音效处理图 */
 
-/* 开机音乐 (power_on.h PCM 数组 ~705KB + WAV ~109KB)
- * 占用 Flash 空间极大，默认关闭以适配 2MB Flash */
-#define POWER_ON_MUSIC_EN       0   /* 开机音乐播放模块 */
+/* 开机音乐 (POWER_ON_MUSIC_EN=0: 关闭，使用 RemindSound MP3 提示音)
+ * POWER_ON_MUSIC_EN=1: 正弦波实时合成 C 和弦 (零 Flash 占用) */
+#define POWER_ON_MUSIC_EN       0  /* 开机音乐播放模块 */
 
 /* Looper 存储类型选择
  * 0 = 自动（根据 HW_PSRAM0_EN / HW_NAND0_EN 检测，推荐）

@@ -43,45 +43,6 @@ static char     g_SavedInput[SHELL_CMD_MAX_LEN]; /* 浏览历史时暂存当前�
 /* ESC序列状态机: 0=正常, 1=收到ESC, 2=收到ESC[ */
 static uint8_t  g_EscState = 0;
 
-// LCD console related
-static const ShellLCD_t    *g_LCD = NULL;
-static bool                 g_ConsoleEnabled = FALSE;
-static bool                 g_DbgToLcdEnabled = FALSE;  /* DBG output to LCD */
-static char                 g_ConsoleLines[SHELL_CONSOLE_MAX_LINES][SHELL_CONSOLE_LINE_WIDTH + 1];
-static uint16_t             g_ConsoleLineColors[SHELL_CONSOLE_MAX_LINES];  /* RGB565 color per line */
-static uint8_t              g_ConsoleLineCount = 0;
-static uint8_t              g_ConsoleDirty = 0;
-static uint16_t             g_ConsoleBlinkTimer = 0;
-static uint8_t              g_ConsoleCursorBlink = 0;
-static char                 g_ConsoleInputLine[SHELL_CONSOLE_LINE_WIDTH + 1];  /* Current input line */
-static uint8_t              g_ConsoleInputLen = 0;
-static uint8_t              g_ConsoleInputDirty = 0;
-
-// Console color definitions
-#define CONSOLE_BG_COLOR     0x0000  /* Black background */
-#define CONSOLE_TEXT_COLOR   0x07E0  /* Green text - for output */
-#define CONSOLE_CMD_COLOR    0x07FF  /* Cyan - for commands */
-#define CONSOLE_INPUT_COLOR  0xFFFF  /* White - for current input */
-#define CONSOLE_TITLE_COLOR  0xFFFF  /* White title */
-#define CONSOLE_CURSOR_COLOR 0xFFE0  /* Yellow cursor */
-#define CONSOLE_HEADER_COLOR 0x001F  /* Blue header bar */
-#define CONSOLE_START_Y      10      /* Text start Y coordinate (after title) */
-#define CONSOLE_LINE_HEIGHT  9       /* Line height for 6x8 font */
-
-/* ANSI color to RGB565 mapping */
-#define ANSI_COLOR_BLACK     0x0000
-#define ANSI_COLOR_RED       0xF800
-#define ANSI_COLOR_GREEN     0x07E0
-#define ANSI_COLOR_YELLOW    0xFFE0
-#define ANSI_COLOR_BLUE      0x001F
-#define ANSI_COLOR_MAGENTA   0xF81F
-#define ANSI_COLOR_CYAN      0x07FF
-#define ANSI_COLOR_WHITE     0xFFFF
-
-/* Line color types */
-#define LINE_COLOR_OUTPUT    0       /* Output - green */
-#define LINE_COLOR_COMMAND   1       /* Command - cyan */
-
 static const char *g_CatNames[MOD_CAT_MAX] = {
     "System", "Hardware", "Parameter", "Debug"
 };
@@ -98,10 +59,7 @@ static void Shell_ShowModuleHelp(const ShellModule_t *mod);
 static void Shell_HistoryAdd(const char *cmd);
 static void Shell_HistoryRecall(int8_t direction);  /* +1=older, -1=newer */
 
-static void Console_AddLine(const char* str);
-static void Console_AddLineWithColor(const char* str, uint16_t colorValue);
-static void Console_UpdateInputLine(const char* input, uint8_t len);
-static void Shell_SendRaw(const char *str);  /* Send to CDC only, no LCD */
+static void Shell_SendRaw(const char *str);
 
 /**
  * @brief  Send raw binary data
@@ -295,161 +253,10 @@ static void Shell_SendRaw(const char *str)
     }
 }
 
-/* Helper function: Parse ANSI color codes and extract RGB565 color */
-static uint16_t Parse_ANSI_Color(const char **p)
-{
-    const char *s = *p;
-    int codes[10] = {0};  /* Store multiple codes */
-    int code_count = 0;
-    int current_code = 0;
-    uint16_t color = CONSOLE_TEXT_COLOR;  /* Default color */
-    int i;
-    
-    /* Skip ESC[ */
-    s += 2;
-    
-    /* Parse all codes separated by ';' */
-    while (*s && *s != 'm') {
-        if (*s >= '0' && *s <= '9') {
-            current_code = current_code * 10 + (*s - '0');
-        } else if (*s == ';') {
-            if (code_count < 10) {
-                codes[code_count++] = current_code;
-            }
-            current_code = 0;
-        }
-        s++;
-    }
-    
-    /* Store last code */
-    if (code_count < 10) {
-        codes[code_count++] = current_code;
-    }
-    
-    /* Process codes - look for color codes (30-37 for foreground) */
-    for (i = 0; i < code_count; i++) {
-        if (codes[i] == 0) color = CONSOLE_TEXT_COLOR;      /* Reset */
-        else if (codes[i] == 30) color = ANSI_COLOR_BLACK;
-        else if (codes[i] == 31) color = ANSI_COLOR_RED;
-        else if (codes[i] == 32) color = ANSI_COLOR_GREEN;
-        else if (codes[i] == 33) color = ANSI_COLOR_YELLOW;
-        else if (codes[i] == 34) color = ANSI_COLOR_BLUE;
-        else if (codes[i] == 35) color = ANSI_COLOR_MAGENTA;
-        else if (codes[i] == 36) color = ANSI_COLOR_CYAN;
-        else if (codes[i] == 37) color = ANSI_COLOR_WHITE;
-        /* Ignore attribute codes like 1 (bold), 4 (underline), etc. */
-    }
-    
-    if (*s == 'm') s++;
-    *p = s;
-    return color;
-}
-
-/* Helper function: Strip ANSI codes and extract color segments */
-static void Strip_ANSI_With_Color(const char *src, char *dst, uint16_t maxLen, uint16_t *color)
-{
-    uint16_t i = 0;
-    const char *p = src;
-    *color = CONSOLE_TEXT_COLOR;  /* Default color */
-    
-    while (*p && i < maxLen - 1) {
-        if (*p == '\033' && *(p + 1) == '[') {
-            /* Parse color and skip escape sequence */
-            *color = Parse_ANSI_Color(&p);
-        } else {
-            /* Normal character, copy it */
-            dst[i++] = *p++;
-        }
-    }
-    dst[i] = '\0';
-}
-
-/* Print to CDC and LCD console (for command output) */
+/* Print to CDC (for command output) */
 void Shell_Print(const char *str)
 {
     Shell_SendRaw(str);
-    /* Also output to LCD console (with ANSI codes parsed for color) */
-    if (g_ConsoleEnabled && str) {
-        char cleanBuf[256];
-        uint16_t color;
-        Strip_ANSI_With_Color(str, cleanBuf, sizeof(cleanBuf), &color);
-        Console_AddLineWithColor(cleanBuf, color);
-    }
-}
-
-/* Internal function: Add a line to LCD console buffer with color */
-static void Console_AddLineWithColor(const char* str, uint16_t colorValue)
-{
-    uint8_t i;
-    const char* p;
-    char* dst;
-    uint16_t len;
-    uint16_t remaining;
-    
-    if (!g_ConsoleEnabled || !g_LCD || !str) return;
-    
-    /* Skip empty strings or strings with only whitespace/newlines */
-    p = str;
-    while (*p == ' ' || *p == '\r' || *p == '\n' || *p == '\t') p++;
-    if (*p == '\0') return;  /* Skip empty lines */
-    
-    /* Calculate string length (until newline or null) */
-    len = 0;
-    while (p[len] && p[len] != '\n' && p[len] != '\r') {
-        len++;
-    }
-    
-    /* Handle long strings by splitting into multiple lines */
-    remaining = len;
-    while (remaining > 0) {
-        /* If lines are full, scroll all lines up */
-        if (g_ConsoleLineCount >= SHELL_CONSOLE_MAX_LINES) {
-            for (i = 0; i < SHELL_CONSOLE_MAX_LINES - 1; i++) {
-                memcpy(g_ConsoleLines[i], g_ConsoleLines[i + 1], SHELL_CONSOLE_LINE_WIDTH + 1);
-                g_ConsoleLineColors[i] = g_ConsoleLineColors[i + 1];
-            }
-            /* Clear the last line before reusing */
-            memset(g_ConsoleLines[SHELL_CONSOLE_MAX_LINES - 1], 0, SHELL_CONSOLE_LINE_WIDTH + 1);
-            g_ConsoleLineCount = SHELL_CONSOLE_MAX_LINES - 1;
-        }
-        
-        /* Copy up to SHELL_CONSOLE_LINE_WIDTH characters */
-        dst = g_ConsoleLines[g_ConsoleLineCount];
-        i = 0;
-        while (*p && i < SHELL_CONSOLE_LINE_WIDTH && *p != '\n' && *p != '\r') {
-            dst[i++] = *p++;
-            remaining--;
-        }
-        dst[i] = '\0';
-        
-        /* Add this line if it has content */
-        if (i > 0) {
-            g_ConsoleLineColors[g_ConsoleLineCount] = colorValue;
-            g_ConsoleLineCount++;
-            g_ConsoleDirty = 1;
-        }
-    }
-}
-
-/* Internal function: Add a line to LCD console buffer (default output color) */
-static void Console_AddLine(const char* str)
-{
-    Console_AddLineWithColor(str, CONSOLE_TEXT_COLOR);
-}
-
-/* Internal function: Update the input line display on LCD (no newline) */
-static void Console_UpdateInputLine(const char* input, uint8_t len)
-{
-    if (!g_ConsoleEnabled || !g_LCD) return;
-    
-    /* Copy input to buffer */
-    if (len > SHELL_CONSOLE_LINE_WIDTH - 2) {  /* Reserve space for "$ " */
-        len = SHELL_CONSOLE_LINE_WIDTH - 2;
-    }
-    memcpy(g_ConsoleInputLine, input, len);
-    g_ConsoleInputLine[len] = '\0';
-    g_ConsoleInputLen = len;
-    g_ConsoleInputDirty = 1;
 }
 
 void Shell_Printf(const char *fmt, ...)
@@ -505,10 +312,6 @@ static void Shell_ProcessChar(char c)
                 /* 保存到历史记录 */
                 Shell_HistoryAdd(g_CmdLine);
                 g_HistoryNav = -1;  /* 重置浏览位置 */
-                /* Add command to LCD console with command color before executing */
-                Console_AddLineWithColor(g_CmdLine, CONSOLE_CMD_COLOR);
-                /* Clear input line */
-                Console_UpdateInputLine("", 0);
                 Shell_Execute();
             }
             Shell_Prompt();
@@ -521,8 +324,6 @@ static void Shell_ProcessChar(char c)
                 g_CmdLen--;
                 g_CmdLine[g_CmdLen] = '\0';
                 Shell_SendRaw("\b \b");
-                /* Update LCD input line */
-                Console_UpdateInputLine(g_CmdLine, g_CmdLen);
             }
             break;
             
@@ -531,8 +332,6 @@ static void Shell_ProcessChar(char c)
             g_CmdLen = 0;
             g_CmdLine[0] = '\0';
             g_HistoryNav = -1;
-            /* Clear LCD input line */
-            Console_UpdateInputLine("", 0);
             Shell_Prompt();
             break;
             
@@ -544,8 +343,6 @@ static void Shell_ProcessChar(char c)
                 // Echo to CDC only
                 char echo[2] = {c, '\0'};
                 Shell_SendRaw(echo);
-                /* Update LCD input line */
-                Console_UpdateInputLine(g_CmdLine, g_CmdLen);
             }
             break;
     }
@@ -910,210 +707,6 @@ static void Shell_HistoryRecall(int8_t direction)
     g_CmdLine[SHELL_CMD_MAX_LEN - 1] = '\0';
     g_CmdLen = (uint16_t)strlen(g_CmdLine);
 
-    /* 回显并更新 LCD */
+    /* 回显 */
     Shell_SendRaw(g_CmdLine);
-    Console_UpdateInputLine(g_CmdLine, g_CmdLen);
 }
-
-/*******************************************************************************
- * LCD Console Implementation
- ******************************************************************************/
-
-bool Shell_SetLCD(const ShellLCD_t *lcd)
-{
-    if (!lcd || !lcd->clear || !lcd->fillRect || !lcd->drawString || !lcd->getSize) {
-        return FALSE;
-    }
-    g_LCD = lcd;
-    return TRUE;
-}
-
-void Shell_ConsoleEnable(bool enable)
-{
-    if (enable && !g_LCD) {
-        return;  /* LCD interface not set, cannot enable */
-    }
-    
-    if (enable && !g_ConsoleEnabled) {
-        /* First enable, initialize console */
-        uint8_t i;
-        for (i = 0; i < SHELL_CONSOLE_MAX_LINES; i++) {
-            memset(g_ConsoleLines[i], 0, SHELL_CONSOLE_LINE_WIDTH + 1);
-            g_ConsoleLineColors[i] = LINE_COLOR_OUTPUT;
-        }
-        g_ConsoleLineCount = 0;
-        g_ConsoleDirty = 1;
-        g_ConsoleBlinkTimer = 0;
-        g_ConsoleCursorBlink = 0;
-        /* Initialize input line */
-        memset(g_ConsoleInputLine, 0, SHELL_CONSOLE_LINE_WIDTH + 1);
-        g_ConsoleInputLen = 0;
-        g_ConsoleInputDirty = 1;
-        
-        /* Set enabled flag BEFORE drawing so Console_AddLine works */
-        g_ConsoleEnabled = TRUE;
-        
-        /* Clear screen and draw title bar */
-        if (g_LCD) {
-            uint16_t w, h;
-            g_LCD->getSize(&w, &h);
-            g_LCD->clear(CONSOLE_BG_COLOR);
-            g_LCD->fillRect(0, 0, w, 12, CONSOLE_HEADER_COLOR);
-            g_LCD->drawString(2, 2, "SHELL CONSOLE", CONSOLE_TITLE_COLOR);
-        }
-        
-        /* Show welcome message */
-        Console_AddLine("Shell Console Ready");
-        Console_AddLine("Enter:Menu Exit:Clear");
-    } else {
-        g_ConsoleEnabled = enable;
-    }
-}
-
-bool Shell_ConsoleIsEnabled(void)
-{
-    return g_ConsoleEnabled;
-}
-
-void Shell_ConsoleUpdate(void)
-{
-    uint8_t i;
-    uint16_t y;
-    uint16_t w, h;
-    uint16_t max_lines;
-    uint16_t input_y;
-    uint16_t text_color;
-    
-    if (!g_ConsoleEnabled || !g_LCD) return;
-    
-    g_LCD->getSize(&w, &h);
-    /* Reserve last line for input */
-    max_lines = (h - CONSOLE_START_Y) / CONSOLE_LINE_HEIGHT - 1;
-    if (max_lines > SHELL_CONSOLE_MAX_LINES) {
-        max_lines = SHELL_CONSOLE_MAX_LINES;
-    }
-    
-    /* Calculate input line Y position (bottom of screen) */
-    input_y = h - CONSOLE_LINE_HEIGHT - 2;
-    
-    /* If content updated, redraw */
-    if (g_ConsoleDirty) {
-        /* Clear text area (not input line) */
-        g_LCD->fillRect(0, CONSOLE_START_Y, w, input_y - CONSOLE_START_Y, CONSOLE_BG_COLOR);
-        
-        /* Display console content with colors */
-        y = CONSOLE_START_Y;
-        for (i = 0; i < g_ConsoleLineCount && i < max_lines; i++) {
-            if (g_ConsoleLines[i][0] != '\0') {
-                /* Use stored RGB565 color value */
-                text_color = g_ConsoleLineColors[i];
-                g_LCD->drawString(0, y, g_ConsoleLines[i], text_color);
-            }
-            y += CONSOLE_LINE_HEIGHT;
-        }
-        
-        g_ConsoleDirty = 0;
-    }
-    
-    /* If input line updated, redraw input area */
-    if (g_ConsoleInputDirty) {
-        /* Clear input line area */
-        g_LCD->fillRect(0, input_y, w, CONSOLE_LINE_HEIGHT + 2, CONSOLE_BG_COLOR);
-        
-        /* Draw input prompt and content */
-        g_LCD->drawString(0, input_y, "$", CONSOLE_CURSOR_COLOR);
-        if (g_ConsoleInputLen > 0) {
-            g_LCD->drawString(6, input_y, g_ConsoleInputLine, CONSOLE_INPUT_COLOR);
-        }
-        g_ConsoleInputDirty = 0;
-        g_ConsoleBlinkTimer = 0;  /* Reset blink timer on input change */
-        g_ConsoleCursorBlink = 1; /* Show cursor immediately */
-    }
-    
-    /* Cursor blink effect at end of input line */
-    g_ConsoleBlinkTimer++;
-    if (g_ConsoleBlinkTimer >= 25) {  /* About 500ms blink interval */
-        g_ConsoleBlinkTimer = 0;
-        g_ConsoleCursorBlink = !g_ConsoleCursorBlink;
-        
-        /* Draw blinking cursor after input text */
-        uint16_t cursor_x = 6 + g_ConsoleInputLen * 6;  /* 6 pixels per char */
-        if (cursor_x + 6 <= w) {
-            if (g_ConsoleCursorBlink) {
-                g_LCD->drawString(cursor_x, input_y, "_", CONSOLE_CURSOR_COLOR);
-            } else {
-                g_LCD->fillRect(cursor_x, input_y, 6, 8, CONSOLE_BG_COLOR);
-            }
-        }
-    }
-}
-
-void Shell_ConsoleClear(void)
-{
-    uint8_t i;
-    uint16_t w, h;
-    
-    if (!g_ConsoleEnabled || !g_LCD) return;
-    
-    /* Clear all line buffers */
-    for (i = 0; i < SHELL_CONSOLE_MAX_LINES; i++) {
-        memset(g_ConsoleLines[i], 0, SHELL_CONSOLE_LINE_WIDTH + 1);
-    }
-    g_ConsoleLineCount = 0;
-
-    /* Immediately clear the screen area */
-    g_LCD->getSize(&w, &h);
-    g_LCD->fillRect(0, CONSOLE_START_Y, w, h - CONSOLE_START_Y, CONSOLE_BG_COLOR);
-
-    /* Add cleared message and mark dirty for next update */
-    g_ConsoleDirty = 1;
-    Console_AddLine("Cleared");
-}
-
-void Shell_ConsolePrint(const char* str)
-{
-    if (g_ConsoleEnabled) {
-        Console_AddLine(str);
-    }
-}
-
-void Shell_ConsolePrintf(const char* fmt, ...)
-{
-    if (!g_ConsoleEnabled) return;
-    
-    char buf[SHELL_CONSOLE_LINE_WIDTH + 1];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(buf, SHELL_CONSOLE_LINE_WIDTH + 1, fmt, args);
-    va_end(args);
-    Console_AddLine(buf);
-}
-
-void Shell_DbgToLcdEnable(bool enable)
-{
-    g_DbgToLcdEnabled = enable;
-}
-
-bool Shell_DbgToLcdIsEnabled(void)
-{
-    return g_DbgToLcdEnabled;
-}
-
-void Shell_DbgToLcd(const char* str)
-{
-    if (g_ConsoleEnabled && g_DbgToLcdEnabled && str) {
-        Console_AddLine(str);
-    }
-}
-
-/*
-
-#define DBG_LCD(format, ...) do { \
-    printf(format, ##__VA_ARGS__); \
-    if (Shell_DbgToLcdIsEnabled()) { \
-        char buf[128]; \
-        snprintf(buf, sizeof(buf), format, ##__VA_ARGS__); \
-        Shell_DbgToLcd(buf); \
-    } \
-} while(0)
-*/

@@ -1,12 +1,19 @@
 /**
  ******************************************************************************
  * @file    remind_sound.h
- * @brief   开机/事件提示音播放模块（基于 const 数组的 MP3 解码输出）
+ * @brief   提示音播放模块（非阻塞，通过 Effect Graph 音频系统输出）
  *
- * 使用方式:
- *   1. 用 host_tool/mp3_to_c_array.py 将 MP3 文件转换为 C 数组
- *   2. 在 remind_sound.c 的 s_remind_table[] 中注册条目
- *   3. 调用 RemindSound_PlayByIndex(id) 或 RemindSound_PlayByName(name)
+ * 架构说明:
+ *   - 提示音数据（WAV/MP3 const 数组）注册在 s_remind_table[] 中
+ *   - RemindSound_Start() 设置播放状态，立即返回（非阻塞）
+ *   - RemindSound_GenerateAudio() 由 Effect Graph 的 REMIND 源节点调用，
+ *     每次解码一小帧 PCM 数据，混入音频流输出到 DAC
+ *   - 播放完成后自动停止，也可以手动 RemindSound_Stop()
+ *
+ * 新增提示音步骤：
+ *   1. 用 mp3_to_c_array.py 生成 .h / .c
+ *   2. 在 remind_sound.c 的 #include 区域引入新 .h
+ *   3. 在 s_remind_table[] 末尾追加一条 { id, "name", data, size }
  ******************************************************************************
  */
 
@@ -14,6 +21,7 @@
 #define __REMIND_SOUND_H__
 
 #include "typedefine.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,31 +31,49 @@ extern "C" {
 typedef struct {
     uint8_t         id;         /* 唯一索引 (从 0 开始) */
     const char     *name;       /* 名称字符串，用于按名播放 */
-    const uint8_t  *data;       /* MP3 数据指针 */
-    uint32_t        size;       /* MP3 数据字节数 */
-    uint8_t         vol_pct;    /* 播放音量百分比 (0-100)，相对于电位器当前音量 */
-                                /* 100 = 跟随电位器; 50 = 电位器音量的一半 */
+    const uint8_t  *data;       /* 音频数据指针 (WAV/MP3) */
+    uint32_t        size;       /* 音频数据字节数 */
+    uint8_t         vol_pct;    /* 播放音量百分比 (0-100) */
 } RemindSoundItem_t;
 
 /**
- * @brief  按索引播放提示音（阻塞，直到播完）
- * @param  id  s_remind_table 中的 id 字段
- * @return 0=成功, -1=索引越界/参数无效
- */
-int RemindSound_PlayByIndex(uint8_t id);
-
-/**
- * @brief  按名称播放提示音（阻塞，直到播完）
+ * @brief  按名称启动提示音播放（非阻塞）
  * @param  name  对应 RemindSoundItem_t.name 字符串
- * @return 0=成功, -1=未找到
+ * @return 0=成功启动, -1=未找到/正在播放/参数无效
  */
-int RemindSound_PlayByName(const char *name);
+int RemindSound_Start(const char *name);
 
 /**
- * @brief  直接播放原始 MP3 数据（底层接口）
- * @param  vol_pct  音量百分比 (0-100)，相对于电位器当前反馈音量
+ * @brief  按索引启动提示音播放（非阻塞）
+ * @param  id  s_remind_table 中的 id 字段
+ * @return 0=成功启动, -1=索引越界/正在播放
  */
-void RemindSound_Play(const uint8_t *mp3_data, uint32_t mp3_size, uint8_t vol_pct);
+int RemindSound_StartById(uint8_t id);
+
+/**
+ * @brief  停止当前提示音播放
+ */
+void RemindSound_Stop(void);
+
+/**
+ * @brief  查询是否正在播放提示音
+ * @return 1=正在播放, 0=未播放
+ */
+int RemindSound_IsPlaying(void);
+
+/**
+ * @brief  生成提示音音频数据（由 Effect Graph REMIND 源节点调用）
+ * @param  out_buf   输出缓冲区，uint32_t 格式 [L|R] packed
+ * @param  max_len   最大样本数（每个样本为一个 uint32_t 立体声帧）
+ * @return 实际生成的样本数
+ */
+uint16_t RemindSound_GenerateAudio(uint32_t *out_buf, uint16_t max_len);
+
+/**
+ * @brief  查询可用数据量（Effect Graph REMIND 源节点可用数据回调）
+ * @return 可用样本数，0=无数据/未播放
+ */
+uint16_t RemindSound_GetAvailableData(void);
 
 /**
  * @brief  向串口打印当前提示音表
@@ -60,15 +86,12 @@ void RemindSound_ListAll(void);
 int RemindSound_GetCount(void);
 
 /**
- * @brief  提示音播放中标志（非零 = 正在播放）
- * @note   Effect Graph 的 DAC 输出节点检查此标志，
- *         播放期间停止向 DAC FIFO 写数据，避免冲突。
+ * @brief  初始化提示音模块（必须在 Effect Graph 初始化之前调用）
  */
-extern volatile uint8_t g_remind_sound_active;
+void RemindSound_Init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __REMIND_SOUND_H__ */
-

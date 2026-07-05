@@ -38,53 +38,6 @@ extern "C" {
 #define SHELL_MODULE_MAX        40     // Max module count (increased for remind + future modules)
 #define SHELL_OUT_BUF_SIZE      256     // Output buffer size
 
-/* LCD Console Configuration - 6x8 font: 160/6=26 chars, (128-10)/9=13 lines */
-#define SHELL_CONSOLE_MAX_LINES    13   // Console max lines (6x8 font)
-#define SHELL_CONSOLE_LINE_WIDTH   26   // Max chars per line (160/6)
-
-/*******************************************************************************
- * LCD Display Abstract Interface (for console display, decoupled from LCD)
- ******************************************************************************/
-
-/**
- * @brief  Clear screen function type
- * @param  color: Background color (RGB565)
- */
-typedef void (*ShellLCD_Clear_t)(uint16_t color);
-
-/**
- * @brief  Draw filled rectangle function type
- * @param  x, y: Start coordinates
- * @param  w, h: Width and height
- * @param  color: Fill color
- */
-typedef void (*ShellLCD_FillRect_t)(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
-
-/**
- * @brief  Draw string function type
- * @param  x, y: Start coordinates
- * @param  str: String
- * @param  color: Text color
- */
-typedef void (*ShellLCD_DrawString_t)(uint16_t x, uint16_t y, const char* str, uint16_t color);
-
-/**
- * @brief  Get screen size function type
- * @param  width: Width output
- * @param  height: Height output
- */
-typedef void (*ShellLCD_GetSize_t)(uint16_t* width, uint16_t* height);
-
-/**
- * @brief  Shell LCD display interface structure (abstract layer)
- */
-typedef struct {
-    ShellLCD_Clear_t      clear;        // Clear screen
-    ShellLCD_FillRect_t   fillRect;     // Fill rectangle
-    ShellLCD_DrawString_t drawString;   // Draw string
-    ShellLCD_GetSize_t    getSize;      // Get screen size
-} ShellLCD_t;
-
 /*******************************************************************************
  * IO Interface Definitions (transport layer abstraction)
  ******************************************************************************/
@@ -250,72 +203,6 @@ void Shell_RegisterAllModules(void);
  * @brief  Register system commands (sys, info, etc)
  */
 void SysCmd_Register(void);
-
-/*******************************************************************************
- * LCD Console API
- ******************************************************************************/
-
-/**
- * @brief  Set LCD display interface
- * @param  lcd: LCD interface pointer
- * @return TRUE on success
- * @note   After setting, LCD console can be enabled
- */
-bool Shell_SetLCD(const ShellLCD_t *lcd);
-
-/**
- * @brief  Enable/disable LCD console display
- * @param  enable: TRUE to enable, FALSE to disable
- * @note   When enabled, Shell output also displays on LCD
- */
-void Shell_ConsoleEnable(bool enable);
-
-/**
- * @brief  Check if LCD console is enabled
- * @return TRUE if enabled
- */
-bool Shell_ConsoleIsEnabled(void);
-
-/**
- * @brief  LCD console update (needs periodic call)
- * @note   Used to refresh LCD display, e.g. cursor blink
- */
-void Shell_ConsoleUpdate(void);
-
-/**
- * @brief  Clear LCD console
- */
-void Shell_ConsoleClear(void);
-
-/**
- * @brief  Print directly to LCD console (not via serial)
- * @param  str: String
- */
-void Shell_ConsolePrint(const char* str);
-
-/**
- * @brief  Formatted print to LCD console
- * @param  fmt: Format string
- */
-void Shell_ConsolePrintf(const char* fmt, ...);
-
-/**
- * @brief  Enable/disable DBG output to LCD console
- * @param  enable: TRUE to enable, FALSE to disable
- */
-void Shell_DbgToLcdEnable(bool enable);
-
-/**
- * @brief  Check if DBG to LCD is enabled
- * @return TRUE if enabled
- */
-bool Shell_DbgToLcdIsEnabled(void);
-
-/**
- * @brief  Output DBG message to LCD (call from DBG macro hook)
- * @param  str: Debug string
- */
-void Shell_DbgToLcd(const char* str);
 
 /*******************************************************************************
  * Convenience Macros

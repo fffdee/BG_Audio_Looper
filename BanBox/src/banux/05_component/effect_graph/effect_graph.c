@@ -42,7 +42,7 @@ static GraphError_t TopologicalSort(void);
  * 内部辅助函数实现
  ******************************************************************************/
 
-/* 判断是否为源节点 (包括 ADC0, ADC1, USB_IN, BT_IN, METRONOME, LOOPER_PLAY) */
+/* 判断是否为源节点 (包括 ADC0, ADC1, USB_IN, BT_IN, METRONOME, REMIND, LOOPER_PLAY) */
 static bool IsSourceNode(EffectNodeType_t type)
 {
     return (type >= EFFECT_NODE_TYPE_SOURCE_ADC0 && type <= EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY);

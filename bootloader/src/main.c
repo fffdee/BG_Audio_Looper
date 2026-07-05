@@ -107,11 +107,11 @@ static uint8_t DmaChannelMap[29] = {
  * ────────────────────────────────────────────────────────────────────────── */
 static void UpgradeTask(void)
 {
-	/* AUDIO_MIC_CDC: 与 BanBox APP 工程一致的 CDC+声卡复合设备模式
-	 * 使用相同的 VID/PID，确保 APP↔Bootloader 切换时 Windows 分配相同的
-	 * COM 端口号，上位机无需重新查找端口。
+	/* AUDIO_MIC_CDC: CDC+声卡复合设备模式
+	 * Bootloader 使用专用 VID=0x8888/PID=0x1722，上位机通过此标识
+	 * 识别设备处于可升级状态。APP 使用不同的 VID/PID (0x1234/0x1234)。
 	 * UsbDeviceEnable() 内部调用 OTG_DeviceInit() + NVIC_EnableIRQ(Usb_IRQn) */
-	OTG_DeviceModeSel(AUDIO_MIC_CDC, 0x1234, 0x1234);
+	OTG_DeviceModeSel(AUDIO_MIC_CDC, 0x8888, 0x1722);
 	UsbDevicePlayInit();
 	UsbDeviceEnable();
 	/* audio_init() 复用 USB 输入流（speaker 播放）和麦克风输入流（mic capture）
@@ -119,7 +119,7 @@ static void UpgradeTask(void)
 	audio_init(44100);
 	Upgrade_Init();
 
-	DBG("[BOOT] USB CDC+Audio upgrade ready (VID=0x%04X PID=0x%04X)\n", 0x1234, 0x1234);
+	DBG("[BOOT] USB CDC+Audio upgrade ready (VID=0x%04X PID=0x%04X)\n", 0x8888, 0x1722);
 
 	while (1) {
 		/* Service USB enumeration and control requests */

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 蓝牙状态小圆点 drawable -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="@color/status_disconnected" />
-    <size android:width="8dp" android:height="8dp" />
-</shape>

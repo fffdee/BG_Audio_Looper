@@ -15,6 +15,7 @@ USB CDC 固件升级 & 跳转上位机
 
 import sys
 import os
+import time
 from pathlib import Path
 
 from PyQt5.QtCore import Qt, QTimer, QSize
@@ -27,7 +28,7 @@ from PyQt5.QtWidgets import (
     QFrame, QSizePolicy, QGroupBox,
 )
 
-from bl_core import list_ports
+from bl_core import list_ports, list_bootloader_ports, BL_VID, BL_PID
 from worker import AutoScanWorker, UpgradeWorker
 
 
@@ -163,6 +164,21 @@ QPushButton#Success {
 QPushButton#Success:hover {
     background-color: #ecfdf5;
     border-color: #10b981;
+}
+
+/* ── Boot 模式按钮（醒目橙色） ── */
+QPushButton#BootMode {
+    background-color: #fff7ed;
+    border: 1px solid #fdba74;
+    color: #c2410c;
+    font-weight: 600;
+}
+QPushButton#BootMode:hover {
+    background-color: #ffedd5;
+    border-color: #f97316;
+}
+QPushButton#BootMode:pressed {
+    background-color: #fed7aa;
 }
 
 /* ── 输入控件 ── */
@@ -346,6 +362,13 @@ class MainWindow(QMainWindow):
         self.btn_scan.setFixedWidth(88)
         ctrl_row.addWidget(self.btn_scan)
 
+        self.btn_enter_boot = QPushButton("进入 Boot 模式")
+        self.btn_enter_boot.setObjectName("BootMode")
+        self.btn_enter_boot.setFixedWidth(120)
+        self.btn_enter_boot.setVisible(False)  # 默认隐藏，非 Bootloader 设备才显示
+        self.btn_enter_boot.setToolTip("发送 'boot' 命令让 APP 重启到 Bootloader 升级模式")
+        ctrl_row.addWidget(self.btn_enter_boot)
+
         card_conn_layout.addLayout(ctrl_row)
         root.addWidget(card_conn)
 
@@ -519,6 +542,8 @@ class MainWindow(QMainWindow):
         self.btn_refresh.clicked.connect(self._refresh_ports)
         self.btn_scan.clicked.connect(self._on_auto_scan)
         self.btn_browse.clicked.connect(self._browse_firmware)
+        self.btn_enter_boot.clicked.connect(self._on_enter_boot)
+        self.combo_port.currentIndexChanged.connect(self._on_port_changed)
 
         self.btn_ping.clicked.connect(lambda: self._start_op(UpgradeWorker.OP_PING))
         self.btn_query.clicked.connect(lambda: self._start_op(UpgradeWorker.OP_QUERY))
@@ -546,6 +571,93 @@ class MainWindow(QMainWindow):
                 if self.combo_port.itemData(i) == current:
                     self.combo_port.setCurrentIndex(i)
                     break
+        self._on_port_changed()
+
+    def _on_port_changed(self):
+        """端口选择变化时，根据 VID/PID 决定是否显示'进入 Boot 模式'按钮。"""
+        import serial.tools.list_ports as sp
+        port_data = self.combo_port.currentData()
+        if not port_data:
+            self.btn_enter_boot.setVisible(False)
+            return
+
+        # 查找该端口的 VID/PID
+        is_bootloader = False
+        for p in sp.comports():
+            if p.device == port_data:
+                vid = getattr(p, 'vid', None) or 0
+                pid = getattr(p, 'pid', None) or 0
+                is_bootloader = (vid == BL_VID and pid == BL_PID)
+                break
+
+        # 非 Bootloader 设备 → 显示"进入 Boot 模式"按钮
+        self.btn_enter_boot.setVisible(not is_bootloader)
+
+    def _on_enter_boot(self):
+        """发送 'boot' shell 命令让 APP 进入 Bootloader 烧录模式。"""
+        import serial as pyserial
+        port_data = self.combo_port.currentData()
+        if not port_data:
+            QMessageBox.warning(self, "未选择串口", "请先选择串口")
+            return
+
+        baud = int(self.combo_baud.currentText())
+        self._append_log(f"发送 'boot' 命令到 {port_data} …")
+        self._set_busy(True)
+        self._set_status("● 正在进入 Boot 模式 …", "StatusBusy")
+
+        try:
+            ser = pyserial.Serial(port_data, baudrate=baud, timeout=0.5)
+        except (pyserial.SerialException, OSError) as e:
+            self._append_log(f"✗ 无法打开 {port_data}: {e}")
+            self._set_busy(False)
+            self._set_status("● 连接失败", "StatusError")
+            return
+
+        try:
+            # 发送 shell 命令让 APP 写 burn flag 并复位
+            ser.write(b"boot\r\n")
+            ser.flush()
+            time.sleep(0.3)
+            # 读取可能的响应
+            try:
+                resp = ser.read(256)
+                if resp:
+                    text = resp.decode('utf-8', errors='replace').strip()
+                    if text:
+                        self._append_log(f"  响应: {text}")
+            except Exception:
+                pass
+        finally:
+            ser.close()
+
+        # 等待设备重新枚举（APP→复位→Bootloader，VID/PID 变化）
+        self._append_log("  等待设备重新枚举 (3s) …")
+        QTimer.singleShot(3000, self._after_enter_boot)
+
+    def _after_enter_boot(self):
+        """进入 Boot 模式后重新扫描设备。"""
+        self._refresh_ports()
+
+        # 通过 VID/PID 查找 Bootloader
+        bl_ports = list_bootloader_ports()
+        if bl_ports:
+            for bdev, bdesc in bl_ports:
+                self._append_log(f"  发现 Bootloader: {bdev} ({bdesc})")
+                # 选中该端口
+                for i in range(self.combo_port.count()):
+                    if self.combo_port.itemData(i) == bdev:
+                        self.combo_port.setCurrentIndex(i)
+                        break
+                break
+            # 自动查询信息
+            QTimer.singleShot(300, lambda: self._start_op(UpgradeWorker.OP_QUERY))
+            self._set_status("● 已连接 (Bootloader)", "StatusConnected")
+        else:
+            self._append_log("  ✗ 未发现 Bootloader 设备，请确认设备已重启")
+            self._set_status("● 未连接", "StatusDisconnected")
+
+        self._set_busy(False)
 
     # ────────────────────────────────────────────────────────────────────────
     #  自动扫描
@@ -743,6 +855,7 @@ class MainWindow(QMainWindow):
         self.btn_browse.setEnabled(enabled)
         self.btn_scan.setEnabled(enabled)
         self.btn_refresh.setEnabled(enabled)
+        self.btn_enter_boot.setEnabled(enabled)
 
     def closeEvent(self, event):
         # 确保后台线程退出

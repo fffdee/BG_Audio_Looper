@@ -73,6 +73,7 @@ typedef enum {
     
     /* 新增节点 ID: 18-20 */
     NODE_ID_METRONOME,       /* 节拍器源节点 */
+    NODE_ID_REMIND,          /* 提示音源节点 */
     NODE_ID_LOOPER_PLAY,     /* Looper播放源节点 */
     NODE_ID_LOOPER_RECORD,   /* Looper录制输出节点 */
     
@@ -123,8 +124,9 @@ typedef enum {
     { NODE_ID_DAC0_OUT,    EFFECT_NODE_TYPE_SINK_DAC0,      "dac_out",   true,  {{0}} }, \
     { NODE_ID_USB_OUT,     EFFECT_NODE_TYPE_SINK_USB_OUT,   "usb_out",   true,  {{0}} }, \
     \
-    /* ===== 节拍器和Looper节点 ===== */ \
+    /* ===== 节拍器、提示音和Looper节点 ===== */ \
     { NODE_ID_METRONOME,     EFFECT_NODE_TYPE_SOURCE_METRONOME,    "metronome",     true,  {{0}} }, \
+    { NODE_ID_REMIND,        EFFECT_NODE_TYPE_SOURCE_REMIND,       "remind",        true,  {{0}} }, \
     { NODE_ID_LOOPER_PLAY,   EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY,  "looper_play",   true,  {{0}} }, \
     { NODE_ID_LOOPER_RECORD, EFFECT_NODE_TYPE_SINK_LOOPER_RECORD,  "looper_record", true,  {{0}} }, \
 }
@@ -181,10 +183,11 @@ typedef enum {
     \
     /* Pre_Reverb_Mixer → Reverb */ \
     { NODE_ID_PRE_REVERB_MIXER, NODE_ID_REVERB, 0, 0 }, \
-    /* USB/BT + 节拍器 输入到 USB_BT 混音器 */ \
+    /* USB/BT + 节拍器 + 提示音 输入到 USB_BT 混音器 */ \
     { NODE_ID_USB_IN,    NODE_ID_USB_BT_MIXER, 0, 0 }, \
     { NODE_ID_BT_IN,     NODE_ID_USB_BT_MIXER, 0, 1 }, \
     { NODE_ID_METRONOME, NODE_ID_USB_BT_MIXER, 0, 2 }, \
+    { NODE_ID_REMIND,    NODE_ID_USB_BT_MIXER, 0, 3 }, \
     \
     /* USB/BT 混音器 → EQ处理 */ \
     { NODE_ID_USB_BT_MIXER, NODE_ID_USB_BT_EQ, 0, 0 }, \
@@ -206,7 +209,7 @@ typedef enum {
     { NODE_ID_EXPANDER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
 }
 
-#define DEFAULT_EDGE_COUNT  22
+#define DEFAULT_EDGE_COUNT  23
 
 /*******************************************************************************
  * 效果器默认参数配置

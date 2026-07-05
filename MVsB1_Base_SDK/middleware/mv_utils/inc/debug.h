@@ -63,11 +63,6 @@ uint8_t DBG_Global(char * str,char **fmt, ...);
 //#define	DBG(format, ...)		printf(format, ##__VA_ARGS__)
 #define DBG(format, ...)  do { \
     printf(format, ##__VA_ARGS__); \
-    if (Shell_DbgToLcdIsEnabled()) { \
-        char buf[128]; \
-        snprintf(buf, sizeof(buf), format, ##__VA_ARGS__); \
-        Shell_DbgToLcd(buf); \
-    } \
 } while(0)
 #define	OTG_DBG(format, ...)		//printf(format, ##__VA_ARGS__)
 #define	BT_DBG(format, ...)			printf(format, ##__VA_ARGS__)//do{printf("[BT] "); printf(format, ##__VA_ARGS__);}while(0)

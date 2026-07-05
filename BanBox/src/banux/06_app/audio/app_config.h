@@ -23,9 +23,9 @@
 //******************************************************************************
 //                         开机提示音配置
 //******************************************************************************
-// 1: 开机时播放提示音（RemindSound "on" + 自定义开机音乐）
+// 1: 开机时播放提示音（通过 Effect Graph REMIND 源节点混音输出，非阻塞）
 // 0: 关闭开机提示音
-#define ENABLE_POWER_ON_SOUND		0
+#define ENABLE_POWER_ON_SOUND		1
 
 typedef uint16_t (*AudioCoreDataGetFunc)(void* Buf, uint16_t Samples);
 typedef uint16_t (*AudioCoreDataLenGetFunc)(void);

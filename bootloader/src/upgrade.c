@@ -307,13 +307,25 @@ void Boot_JumpTo(uint32_t addr)
 
 void Boot_CheckAndJumpIfNeeded(void)
 {
-    /* ── Force-bootloader check ──
-     * APP writes FORCE_BOOT_MAGIC to SRAM before rebooting to request
-     * bootloader stay.  Must check and clear BEFORE any other boot logic. */
-    if (*(volatile uint32_t *)FORCE_BOOT_ADDR == FORCE_BOOT_MAGIC) {
-        *(volatile uint32_t *)FORCE_BOOT_ADDR = 0;
-        DBG("[BOOT] Force-bootloader flag detected — staying in upgrade mode\n");
-        return;  /* Skip APP jump, fall through to USB CDC upgrade task */
+    /* ── Burn flag check (Flash, one-time) ──
+     * APP writes BURN_FLAG_MAGIC to Flash before rebooting to request
+     * bootloader stay.  Must check and clear BEFORE any other boot logic.
+     * This is a one-time flag: after reading, erase it so next reboot
+     * jumps to APP normally. */
+    {
+        uint32_t flag_val = *(volatile const uint32_t *)BURN_FLAG_ADDR;
+        if (flag_val == BURN_FLAG_MAGIC) {
+            DBG("[BOOT] Burn flag detected @0x%08X — staying in upgrade mode\n",
+                (unsigned)BURN_FLAG_ADDR);
+            /* Erase the flag (one-time)
+             * IsSuspend=0 (blocking): Boot_CheckAndJumpIfNeeded() is called
+             * BEFORE FreeRTOS scheduler starts.  IsSuspend=1 would invoke
+             * vTaskDelay() on an uninitialized scheduler → Bus Error crash.
+             * Same fix as PartFlag_Write() above. */
+            SpiFlashErase(SECTOR_ERASE, BURN_FLAG_SECTOR, 0);
+            DBG("[BOOT] Burn flag cleared\n");
+            return;  /* Skip APP jump, fall through to USB CDC upgrade task */
+        }
     }
 
 #if (BOOT_CURRENT_MODE == BOOT_MODE_DUAL_AB)

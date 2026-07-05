@@ -21,7 +21,6 @@
 #include "debug.h"
 #include "type.h"
 #include "remind_sound.h"
-#include "power_on_music.h"
 #include "app_config.h"		/* ENABLE_POWER_ON_SOUND */
 #include "audio_effect.h"
 #include "ctrlvars.h"
@@ -151,9 +150,11 @@ static uint16_t ADC1_ReadMicData(EffectNode_t *node, uint32_t *out_buf, uint16_t
 static uint16_t USB_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
 static uint16_t BT_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
 
-// Metronome 和 Looper 源节点回调
+// Metronome、Remind 和 Looper 源节点回调
 static uint16_t Metronome_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
 static uint16_t Metronome_GetAvailCallback(EffectNode_t *node);
+static uint16_t Remind_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
+static uint16_t Remind_GetAvailCallback(EffectNode_t *node);
 static uint16_t LooperPlay_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len);
 static uint16_t LooperPlay_GetAvailCallback(EffectNode_t *node);
 
@@ -426,20 +427,17 @@ void BG_audio_Init(uint16_t SampleRate)
 	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
 	/* DAC音量将在Audio_loop()的SetVolume()中恢复，无需手动解除 */
 
-	/* 开机提示音：InitDAC/ADC 完成后此处堆约 77KB，足够分配 19KB 解码器缓冲
-	 * InitAudioEffects 之后堆仅剩 ~11KB（不够），故必须在此处播放
-	 * FIFO 等待已有超时保护（remind_sound.c），DAC DMA 未就绪时安全跳过 */
-#if ENABLE_POWER_ON_SOUND
-	RemindSound_PlayByName("on");
-
-	/* 开机音乐：播放用户自定义 WAV/MP3
-	 * 需要先替换 06_app/power_on_music/g_power_on_wav.c 中的音乐数据 */
-	PowerOnMusic_Play();
-#endif
-
 	InitAudioEffects(SampleRate);
 	InitControlGPIO();
 	InitDetectionGPIO();
+
+	/* 开机提示音：非阻塞模式，通过 Effect Graph REMIND 源节点混音输出
+	 * 解码器缓冲区为静态分配（19KB BSS），不与效果器争夺堆内存，
+	 * 因此可在 InitAudioEffects 之后启动 */
+#if ENABLE_POWER_ON_SOUND
+	RemindSound_Init();
+	RemindSound_Start("on");
+#endif
 	A2dp_DecoderInit();
 	BtStackServiceStart();
 	
@@ -1440,15 +1438,15 @@ static uint16_t BT_GetAvailableData(EffectNode_t *node)
 static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
 {
 	uint16_t samples_to_read;
-	
+
 	(void)node;
-	
+
 	/* 限制最大长度 */
 	samples_to_read = max_len;
 	if (samples_to_read > 640) {
 		samples_to_read = 640;
 	}
-	
+
 	/* 读取ADC数据（32位=L/R两个16位声道打包） */
 	if (samples_to_read > 0) {
 		AudioADC_DataGet(ADC0_MODULE, out_buf, samples_to_read);
@@ -1456,6 +1454,10 @@ static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint1
 		memcpy(BG_AudioManager.Audio_data.guitar_buf_in, out_buf, samples_to_read * sizeof(uint32_t));
 		/* 低功耗：检测吉他输入信号是否超过门限 */
 		LowPower_CheckADCSignal(out_buf, samples_to_read);
+		/* 提示音播放期间，ADC数据不输出给DAC（仍读取以消耗FIFO） */
+		if (RemindSound_IsPlaying()) {
+			memset(out_buf, 0, samples_to_read * sizeof(uint32_t));
+		}
 	}
 	return samples_to_read;
 }
@@ -1470,15 +1472,15 @@ static uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint1
 static uint16_t ADC1_ReadMicData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
 {
 	uint16_t samples_to_read;
-	
+
 	(void)node;
-	
+
 	/* 限制最大长度 */
 	samples_to_read = max_len;
 	if (samples_to_read > 640) {
 		samples_to_read = 640;
 	}
-	
+
 	/* 读取ADC数据（32位=L/R两个16位声道打包） */
 	if (samples_to_read > 0) {
 		AudioADC_DataGet(ADC1_MODULE, out_buf, samples_to_read);
@@ -1486,6 +1488,10 @@ static uint16_t ADC1_ReadMicData(EffectNode_t *node, uint32_t *out_buf, uint16_t
 		memcpy(BG_AudioManager.Audio_data.mic_buf_in, out_buf, samples_to_read * sizeof(uint32_t));
 		/* 低功耗：检测麦克风输入信号是否超过门限 */
 		LowPower_CheckADCSignal(out_buf, samples_to_read);
+		/* 提示音播放期间，ADC数据不输出给DAC（仍读取以消耗FIFO） */
+		if (RemindSound_IsPlaying()) {
+			memset(out_buf, 0, samples_to_read * sizeof(uint32_t));
+		}
 	}
 	return samples_to_read;
 }
@@ -1497,12 +1503,8 @@ static void DAC0_WriteSpeakerData(EffectNode_t *node, uint32_t *in_buf, uint16_t
 {
 	uint16_t free_space;
 	uint16_t samples_to_write;
-	
-	(void)node;
 
-	/* 播放提示音期间，放弃 DAC 写入，避免与 RemindSound_Play 的直接写入冲突 */
-	if (g_remind_sound_active)
-		return;
+	(void)node;
 
 	// 获取 DAC FIFO 可用空间
 	free_space = AudioDAC_DataSpaceLenGet(DAC0);
@@ -1881,6 +1883,25 @@ static uint16_t Metronome_GetAvailCallback(EffectNode_t *node)
 }
 
 /**
+ * 提示音源节点回调 - 解码提示音 PCM 数据
+ * 非阻塞：每次调用解码一小帧，混入 USB_BT_MIXER
+ */
+static uint16_t Remind_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
+{
+	(void)node;
+	return RemindSound_GenerateAudio(out_buf, max_len);
+}
+
+/**
+ * 提示音可用数据量查询回调
+ */
+static uint16_t Remind_GetAvailCallback(EffectNode_t *node)
+{
+	(void)node;
+	return RemindSound_GetAvailableData();
+}
+
+/**
  * Looper播放源节点回调 - 从Flash读取录制的音频
  * 支持任意长度请求，通过循环读取多页来填充
  */
@@ -2248,9 +2269,9 @@ void BG_AudioIO_SetUsbOutVolume(uint8_t vol, uint8_t mute)
 }
 
 /**
- * @brief 关机前释放大内存效果器（混响），为口令提示音 pvPortMalloc 计划出堆空间
- * @note  必须在 RemindSound_PlayByName("off") 之前调用。
- *        覚夹 ct 指针清零并关闭 enable， ISR 中的 ReverbApply 会安全跳过。
+ * @brief 关机前释放大内存效果器（混响），为提示音 pvPortMalloc 腾出堆空间
+ * @note  必须在 RemindSound_Start("off") 之前调用。
+ *        指针清零并关闭 enable，ISR 中的 ReverbApply 会安全跳过。
  */
 void BG_AudioIO_PrepareForShutdown(void)
 {
@@ -2310,6 +2331,12 @@ void BG_AudioIO_SetupEffectGraphCallbacks(void)
 			node->func.source = Metronome_SourceCallback;
 			node->avail_func = Metronome_GetAvailCallback;
 			DBG("[Audio] [%d] %s -> Metronome\n", i, node->name);
+			break;
+			
+		case EFFECT_NODE_TYPE_SOURCE_REMIND:
+			node->func.source = Remind_SourceCallback;
+			node->avail_func = Remind_GetAvailCallback;
+			DBG("[Audio] [%d] %s -> Remind\n", i, node->name);
 			break;
 			
 		case EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY:

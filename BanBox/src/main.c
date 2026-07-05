@@ -16,7 +16,7 @@
 #define APP_VERSION_MAJOR   0
 #define APP_VERSION_MINOR   2
 #define APP_VERSION_PATCH   1
-#define APP_VERSION_STR     "V0.2.1"
+#define APP_VERSION_STR     "V0.2.15"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -50,7 +50,6 @@
 #include "BG_FlashMgr.h"
 #include "flash_test.h"
 #include "internal_flash_test.h"
-#include "bg_lcd.h"
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -59,7 +58,6 @@
 #include "otg_device_hcd.h"
 #include "otg_device_standard_request.h"
 #include "otg_device_stor.h"
-#include "gui_tool.h"
 #include "usb_audio_api.h"
 #include "otg_detect.h"
 #include "otg_device_audio.h"
@@ -73,8 +71,6 @@
 #include "fat32_nand.h"         /* NAND FAT32 file system */
 #include "looper_wav_export.h"  /* Audio Looper WAV export */
 #endif
-/* Page Manager - Now in BanGUI core (via bangui.h) */
-/* #include "page_manager.h" - Removed, use bangui.h */
 
 #include "bg_audio_io_manager.h"
 
@@ -84,18 +80,14 @@
 /* Physical BLE connection flag (defined in ble_app_callback.c) */
 extern uint8_t BleConnectFlag;
 
-#include "framebuffer.h"
 #include "audio_looper.h"
 
 /* System Parameter Storage */
 #include "sys_param.h"   
-#include "shell_lcd_adapter.h"  /* Shell LCD console adapter */
 #include "looper_wav_ble_export.h"  /* Audio Looper WAV BLE export */
 #include "ble_protocol.h"           /* BLE protocol types */
 #include "bg_shell.h"           /* Shell console API */
 #include "audio_setting.h"
-/* New UI Architecture - Single entry point */
-#include "bangui.h"             /* BanGUI unified UI system (includes page manager) */
 
 
 #include "drv_init.h"           /* Driver Framework Initialization */
@@ -118,8 +110,6 @@ extern uint8_t BleConnectFlag;
 /* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
 #include "remind_sound.h"
 
-//#define UI_EN
-
 extern void SysTickInit(void);
 extern void UsbAudioMicDacInit(void);
 extern void OTG_DeviceAudioInit();
@@ -132,15 +122,12 @@ uint8_t record_flag = 0;
 uint16_t read_write = 0;
 uint8_t play_flag = 0;
 uint16_t rec = 0, rea = 0, play = 0;
+uint8_t UI_flag = 0;
 uint16_t time = 0;
 uint16_t left_time = 0;
 uint16_t right_time = 0;
 uint8_t left_flag = false;
 uint8_t right_flag = false;
-
-/* BG_page 鐜板湪鍦�app_pages.c 涓畾涔夛紝閫氳繃 bangui.h 寮曞叆 */
-/* extern BG_Page BG_page; -- 鐢�app_pages.h 澹版槑 */
-uint8_t UI_count = 0, UI_flag = 0;
 
 /* BLE sync command timing */
 static uint32_t ble_tick_counter = 0;
@@ -303,12 +290,8 @@ void power_on()
 	CtrlVarsInit();
 
 	/* SPI and Driver Framework already initialized in main() */
-	/* All hardware drivers (LCD, Flash, etc.) auto-initialized by framework */
 	DBG("[Task] Hardware drivers already initialized in main()\n");
 
-#ifdef  UI_EN
-	BG_lcd.Init();
-#endif
 	/*=====================================================
 	 * System Parameter Initialization
 	 * 浠庡唴閮‵lash鍔犺浇淇濆瓨鐨勫弬鏁板埌鍏ㄥ眬鍙橀噺
@@ -388,31 +371,8 @@ void power_on()
 	 * System state machine — already initialized in main()
 	 *====================================================*/
 
-#ifdef UI_EN
-
-	BANGUI_QUICK_INIT();
-
-
-	/* 璁剧疆 Home 瑙嗗浘鍥炬爣鍥炶皟 */
-	View_Home_SetIconCallback(HOME_ICON_LOOPER, NULL);  /* TODO: 缁戝畾 Looper 瑙嗗浘 */
-
-	/*=====================================================
-	 * BOOT SPLASH SCREEN - 寮�満鐣岄潰
-	 * 鍚姩 UI 绯荤粺锛屼粠寮�満鐣岄潰寮�锛圠ogo + 杩涘害鏉★級
-	 * 鍔ㄧ敾鐢�view_boot.c 鐨勭姸鎬佹満椹卞姩锛屾棤纭欢杩�	 * 鍔ㄧ敾瀹屾垚鍚庤嚜鍔ㄥ垏鎹㈠埌 Home 妗岄潰
-	 *====================================================*/
-	BANGUI_START(UI_STATE_BOOT);
-
 
 	DBG("[Main] System initialized successfully\n");
-	DBG("[Main] Starting from Boot Screen...\n");
-
-	/* Initialize Shell LCD console adapter */
-
-	ShellLCD_Adapter_Init();
-#endif
-
-
 	DBG("[Main] Entering main loop...\n");
 
 	/* 开机提示音在 BG_audio_Init() 末尾（所有模块初始化完毕后）播放 */
@@ -433,8 +393,8 @@ void power_off()
 		DBG("[PowerOff] Saving modified parameters to flash...\n");
 		SysParam_Save();
 	}
-	/* 关机提示音 */
-	RemindSound_PlayByName("off");
+	/* 关机提示音（非阻塞，通过 Effect Graph 混音输出） */
+	RemindSound_Start("off");
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX20);
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX24);
 	/* 关机熄灭LED */
@@ -604,26 +564,6 @@ void MainTask() {
 
 			/* Update hardware status (Bluetooth, etc.) */
 			hardware_check();
-
-			/* Scan ADC/DAC insert detection pins and update statusbar data */
-			UI_StatusBar_ScanDetect();
-
-			/* If Shell console enabled, only update console display */
-#ifdef UI_EN
-			if (Shell_ConsoleIsEnabled()) {
-				Shell_ConsoleUpdate();
-			} else {
-				/* Update BanGUI system (handles views and input) */
-				BG_UI.Update(20);
-
-				/* Update statusbar (incremental update for changed items) */
-				UI_StatusBar_Update();
-
-			}
-#endif
-#ifdef USE_FRAME_BUFFER
-			BG_lcd.FlushFrameBuffer();
-#endif
 		}
 	}
 }
@@ -631,8 +571,6 @@ void MainTask() {
 void FlashNewDriverTask(void)
 {
 	spi_init();
-	BG_lcd.Init();
-	BG_lcd.Clear(BLUE);  // 钃濊壊琛ㄧず浣跨敤鏂伴┍鍔�
 	DBG("\n");
 	DBG("**************************************************\n");
 	DBG("*     New Flash Driver Architecture Test        *\n");

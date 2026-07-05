@@ -18,7 +18,6 @@
 #include "shell_io_manager.h"
 #include "remind_sound.h"
 
-#include "bg_lcd.h"
 #include "BG_FlashMgr.h"
 #include "flash_bus.h"
 
@@ -36,15 +35,11 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include "bangui.h"
 #include "audio_setting.h"
 
 /* 鏁堟灉鍣ㄥ懡浠ゆā鍧�*/
 #include "shell_cmd_effect.h"
 #include "shell_cmd_graph.h"
-
-/* UI鎺у埗鍛戒护妯″潡 */
-#include "shell_cmd_ui.h"
 
 /* 鍙傛暟淇濆瓨妯″潡 */
 #include "sys_param.h"
@@ -99,18 +94,6 @@ static int bt_save_param(int argc, char *argv[])
     Shell_Print("Saving bluetooth parameters to flash...\r\n");
     if (SysParam_SaveModule("bt") == SYSPARAM_OK) {
         Shell_Print("Bluetooth params saved\r\n");
-        return 0;
-    }
-    Shell_Print("Save failed!\r\n");
-    return -1;
-}
-
-static int lcd_save_param(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Print("Saving LCD parameters to flash...\r\n");
-    if (SysParam_SaveModule("lcd") == SYSPARAM_OK) {
-        Shell_Print("LCD params saved\r\n");
         return 0;
     }
     Shell_Print("Save failed!\r\n");
@@ -226,67 +209,6 @@ static int sys_factory_reset(int argc, char *argv[])
     return 0;
 }
 
-/* LCD control command */
-static int sys_console(int argc, char *argv[])
-{
-    if (argc < 1)
-    {
-        Shell_Printf("LCD Console: %s\r\n", Shell_ConsoleIsEnabled() ? "ON" : "OFF");
-        Shell_Print("Usage: sys -c <on|off|clear>\r\n");
-        return 0;
-    }
-    
-    if (strcmp(argv[0], "on") == 0 || strcmp(argv[0], "1") == 0)
-    {
-        Shell_ConsoleEnable(TRUE);
-        Shell_Print("LCD Console enabled\r\n");
-    }
-    else if (strcmp(argv[0], "off") == 0 || strcmp(argv[0], "0") == 0)
-    {
-        Shell_ConsoleEnable(FALSE);
-        Shell_Print("LCD Console disabled\r\n");
-    }
-    else if (strcmp(argv[0], "clear") == 0 || strcmp(argv[0], "clr") == 0)
-    {
-        Shell_ConsoleClear();
-        Shell_Print("Console cleared\r\n");
-    }
-    else
-    {
-        Shell_Printf("Unknown: %s\r\n", argv[0]);
-        return -1;
-    }
-    return 0;
-}
-
-/* DBG output to LCD console switch */
-static int sys_dbglcd(int argc, char *argv[])
-{
-    if (argc < 1)
-    {
-        Shell_Printf("DBG to LCD: %s\r\n", Shell_DbgToLcdIsEnabled() ? "ON" : "OFF");
-        Shell_Print("Usage: sys -d <on|off>\r\n");
-        return 0;
-    }
-    
-    if (strcmp(argv[0], "on") == 0 || strcmp(argv[0], "1") == 0)
-    {
-        Shell_DbgToLcdEnable(TRUE);
-        Shell_Print("DBG to LCD enabled\r\n");
-    }
-    else if (strcmp(argv[0], "off") == 0 || strcmp(argv[0], "0") == 0)
-    {
-        Shell_DbgToLcdEnable(FALSE);
-        Shell_Print("DBG to LCD disabled\r\n");
-    }
-    else
-    {
-        Shell_Printf("Unknown: %s\r\n", argv[0]);
-        return -1;
-    }
-    return 0;
-}
-
 static int sys_io(int argc, char *argv[])
 {
     ShellIOType_t active_io;
@@ -355,47 +277,6 @@ static int sys_io(int argc, char *argv[])
     return 0;
 }
 
-static int sys_rotate(int argc, char *argv[])
-{
-    static uint8_t current_rotation = 0;
-    
-    if (argc < 1)
-    {
-        /* Show current rotation angle */
-        Shell_Printf("Current rotation: %d掳 (", current_rotation * 90);
-        switch (current_rotation)
-        {
-            case 0: Shell_Print("Portrait)\r\n"); break;
-            case 1: Shell_Print("Landscape)\r\n"); break;
-            case 2: Shell_Print("Portrait Inverted)\r\n"); break;
-            case 3: Shell_Print("Landscape Inverted)\r\n"); break;
-        }
-        Shell_Print("\r\nUsage:\r\n");
-        Shell_Print("  sys -r 0    - 0掳 (Portrait)\r\n");
-        Shell_Print("  sys -r 1    - 90掳 (Landscape)\r\n");
-        Shell_Print("  sys -r 2    - 180掳 (Portrait Inverted)\r\n");
-        Shell_Print("  sys -r 3    - 270掳 (Landscape Inverted)\r\n");
-        return 0;
-    }
-    
-    /* Set rotation angle */
-    int rotation = atoi(argv[0]);
-    if (rotation < 0 || rotation > 3)
-    {
-        Shell_Print("Error: Rotation must be 0-3\r\n");
-        return -1;
-    }
-    
-    current_rotation = (uint8_t)rotation;
-    Lcd_SetRotation(current_rotation);
-    Shell_Printf("Screen rotated to %d掳\r\n", current_rotation * 90);
-    
-    /* Clear screen after rotation */
-    BG_lcd.Clear(BLACK);
-    
-    return 0;
-}
-
 static int sys_chipid(int argc, char *argv[])
 {
     uint64_t chip_id = 0;
@@ -422,9 +303,6 @@ static const ShellOpt_t sys_opts[] = {
     OPT("b", "reboot",  NULL,      "Reboot system",        sys_reboot),
     OPT("f", "factory", NULL,      "Factory reset (restore defaults)", sys_factory_reset),
     OPT("o", "io",      "[cmd]",   "IO control (cdc/ble/lock/unlock)", sys_io),
-    OPT("c", "console", "[cmd]",   "LCD console (on/off/clear)",       sys_console),
-    OPT("d", "dbglcd",  "[cmd]",   "DBG to LCD (on/off)",              sys_dbglcd),
-    OPT("r", "rotate_distr",  "[0-3]",   "Rotate screen (0/1/2/3 = 0掳/90掳/180掳/270掳)", sys_rotate),
     OPT("s", "chipid",  NULL,      "Show chip unique ID",  sys_chipid),
     OPT_END()
 };
@@ -1328,70 +1206,7 @@ static const ShellOpt_t gpio_opts[] = {
 
 DEFINE_MODULE(gpio, "GPIO control", MOD_CAT_HARDWARE, gpio_opts);
 
-/*============================================================================
- * lcd module - LCD control
- *===========================================================================*/
 
-static int lcd_on(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Print("LCD ON\r\n");
-    return 0;
-}
-
-static int lcd_off(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Print("LCD OFF\r\n");
-    return 0;
-}
-
-static int lcd_bl(int argc, char *argv[])
-{
-    if(argc < 1)
-    {
-        Shell_Printf("Contrast: %d%%\r\n", SYSPARAM_LCD()->contrast);
-        return 0;
-    }
-    int bl = atoi(argv[0]);
-    if(bl < 0) bl = 0;
-    if(bl > 100) bl = 100;
-    SYSPARAM_LCD()->contrast = (uint8_t)bl;
-    SysParam_MarkModified();
-    Shell_Printf("Contrast: %d%%\r\n", bl);
-    return 0;
-}
-
-/* 鑳屾櫙棰滆壊 */
-static int lcd_bgcolor(int argc, char *argv[])
-{
-    if(argc < 1)
-    {
-        Shell_Printf("BG Color: 0x%04X\r\n", SYSPARAM_LCD()->bg_color);
-        return 0;
-    }
-    
-    uint16_t color = (uint16_t)strtol(argv[0], NULL, 16);
-    SYSPARAM_LCD()->bg_color = color;
-    SysParam_MarkModified();
-    
-
-    BG_UI.SetBackgroundColor(color);
-    
-    Shell_Printf("BG Color: 0x%04X (Applied)\r\n", color);
-    return 0;
-}
-
-static const ShellOpt_t lcd_opts[] = {
-    OPT("o", "on",      NULL,       "Turn on LCD",       lcd_on),
-    OPT("f", "off",     NULL,       "Turn off LCD",      lcd_off),
-    OPT("b", "bl",      "<0-100>",  "Set contrast",      lcd_bl),
-    OPT("c", "color",   "<0xRRGG>", "Set BG color",      lcd_bgcolor),
-    OPT("S", "save",    NULL,       "Save LCD params",   lcd_save_param),
-    OPT_END()
-};
-
-DEFINE_MODULE(lcd, "LCD control", MOD_CAT_HARDWARE, lcd_opts);
 
 /*============================================================================
  * led module - LED control
@@ -3383,7 +3198,6 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(sys);
     REGISTER_MODULE(audio);
     REGISTER_MODULE(gpio);
-    REGISTER_MODULE(lcd);
     REGISTER_MODULE(led);
     REGISTER_MODULE(dbg);
     REGISTER_MODULE(looper);
@@ -3410,11 +3224,8 @@ void Shell_RegisterAllModules(void)
 #endif
     /* 鏁堟灉鍥惧拰鏁堟灉鍣ㄥ懡浠�*/
     ShellCmdEffect_Register();   /* effect 鍛戒护 */
-    ShellCmdGraph_Register();    /* graph 鍜�fx 鍛戒护 */
-    
-    /* UI鎺у埗鍛戒护 */
-    UICmd_Register();            /* ui 鍛戒护 */
-    
+    ShellCmdGraph_Register();    /* graph 鍜fx 鍛戒护 */
+
 
     ShellCmd_Param_Init();       /* param 鍛戒护 */
 
@@ -3423,14 +3234,9 @@ void Shell_RegisterAllModules(void)
     /* 提示音测试命令 */
     extern void ShellCmdRemind_Register(void);
 
-    /* 开机音乐测试命令 */
-    extern void ShellCmdPowerOnMusic_Register(void);
-
     ShellCmdMetronome_Register();
 
     ShellCmdRemind_Register();   /* remind 提示音测试命令 */
-
-    ShellCmdPowerOnMusic_Register();  /* pwr_music 开机音乐测试命令 */
 
     /* 硬件相关命令 - 根据板子硬件能力条件编译 */
 #if HW_CMD_FAT_EN
@@ -3495,31 +3301,29 @@ static int remind_play_by_index(int argc, char *argv[])
         return -1;
     }
     id = atoi(argv[0]);
-    Shell_Printf("Playing remind sound id=%d ...\r\n", id);
-    if (RemindSound_PlayByIndex((uint8_t)id) != 0) {
+    Shell_Printf("Starting remind sound id=%d ...\r\n", id);
+    if (RemindSound_StartById((uint8_t)id) != 0) {
         Shell_Printf("Error: id=%d not found (table has %d items)\r\n",
                      id, RemindSound_GetCount());
         return -1;
     }
-    Shell_Print("Done.\r\n");
+    Shell_Print("Playing (non-blocking).\r\n");
     return 0;
 }
 
 static int remind_play_on(int argc, char *argv[])
 {
     (void)argc; (void)argv;
-    Shell_Print("Playing power-on remind sound...\r\n");
-    RemindSound_PlayByName("on");
-    Shell_Print("Done.\r\n");
+    Shell_Print("Starting power-on remind sound...\r\n");
+    RemindSound_Start("on");
     return 0;
 }
 
 static int remind_play_off(int argc, char *argv[])
 {
     (void)argc; (void)argv;
-    Shell_Print("Playing power-off remind sound...\r\n");
-    RemindSound_PlayByName("off");
-    Shell_Print("Done.\r\n");
+    Shell_Print("Starting power-off remind sound...\r\n");
+    RemindSound_Start("off");
     return 0;
 }
 
@@ -3583,7 +3387,62 @@ static const ShellOpt_t upg_opts[] = {
 
 DEFINE_MODULE(upg, "Firmware upgrade (USB CDC)", MOD_CAT_SYSTEM, upg_opts);
 
+/*============================================================================
+ * boot 模块 - 重启到 Bootloader 烧录模式
+ *   boot         写烧录标志到 Flash，然后复位芯片进入 Bootloader
+ *   boot status  检查烧录标志是否已设置
+ *===========================================================================*/
+#include "spi_flash.h"
+#include "reset.h"
+
+static int boot_enter(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    uint32_t magic = BURN_FLAG_MAGIC;
+
+    Shell_Printf("[BOOT] Writing burn flag to Flash @0x%06X ...\r\n",
+                 (unsigned)BURN_FLAG_ADDR);
+
+    /* Unlock flash, erase sector, write magic */
+    SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
+    SpiFlashErase(SECTOR_ERASE, BURN_FLAG_SECTOR, 1);
+    SpiFlashWrite(BURN_FLAG_ADDR, (uint8_t *)&magic, sizeof(magic), 100);
+
+    Shell_Printf("[BOOT] Burn flag written. Rebooting to bootloader ...\r\n");
+
+    /* Delay to ensure message is sent */
+    {
+        volatile uint32_t delay;
+        for (delay = 0; delay < 200000; delay++) { ; }
+    }
+
+    Reset_McuSystem();
+    return 0;  /* Never reached */
+}
+
+static int boot_status(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    uint32_t val = *(volatile const uint32_t *)BURN_FLAG_ADDR;
+
+    Shell_Printf("Burn flag @0x%06X = 0x%08X\r\n",
+                 (unsigned)BURN_FLAG_ADDR, (unsigned)val);
+    Shell_Printf("Status: %s\r\n",
+                 (val == BURN_FLAG_MAGIC) ? "SET (will enter bootloader on next reboot)"
+                                          : "CLEARED (normal boot)");
+    return 0;
+}
+
+static const ShellOpt_t boot_opts[] = {
+    OPT("", "", NULL, "Reboot into bootloader for firmware upgrade", boot_enter),
+    OPT("s", "status", NULL, "Check burn flag status", boot_status),
+    OPT_END()
+};
+
+DEFINE_MODULE(boot, "Reboot to Bootloader", MOD_CAT_SYSTEM, boot_opts);
+
 void ShellCmdUpg_Register(void)
 {
     REGISTER_MODULE(upg);
+    REGISTER_MODULE(boot);
 }

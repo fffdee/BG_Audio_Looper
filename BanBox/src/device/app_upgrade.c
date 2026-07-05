@@ -346,16 +346,28 @@ static void handle_finish(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16
 /* ── Protocol: Handle CMD_ENTER_BOOT ─────────────────────────────────────── */
 static void handle_enter_boot(const UpgradeChannel_t *ch)
 {
-    DBG("[UPG] CMD_ENTER_BOOT: rebooting to bootloader\n");
+    uint32_t magic = BURN_FLAG_MAGIC;
+
+    DBG("[UPG] CMD_ENTER_BOOT: writing burn flag to Flash and rebooting\n");
     send_ack(ch, 0);
 
-    /* Write force-bootloader magic to SRAM (survives soft reset) */
-    *(volatile uint32_t *)FORCE_BOOT_ADDR = FORCE_BOOT_MAGIC;
-
-    /* Small delay to ensure ACK is sent before reset */
+    /* Small delay to ensure ACK is sent before Flash operation */
     {
         volatile uint32_t delay;
-        for (delay = 0; delay < 100000; delay++) { ; }
+        for (delay = 0; delay < 50000; delay++) { ; }
+    }
+
+    /* Write burn flag to Flash (one-time, bootloader will erase it) */
+    SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
+    SpiFlashErase(SECTOR_ERASE, BURN_FLAG_SECTOR, 1);
+    SpiFlashWrite(BURN_FLAG_ADDR, (uint8_t *)&magic, sizeof(magic), 100);
+    DBG("[UPG] Burn flag written @0x%08X = 0x%08X\n",
+        (unsigned)BURN_FLAG_ADDR, (unsigned)magic);
+
+    /* Small delay to ensure Flash write completes */
+    {
+        volatile uint32_t delay;
+        for (delay = 0; delay < 50000; delay++) { ; }
     }
 
     Reset_McuSystem();

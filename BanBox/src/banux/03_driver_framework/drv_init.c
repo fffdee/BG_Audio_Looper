@@ -12,7 +12,6 @@
 #include "vfs.h"
 #include "drv_fs.h"
 #include "drv_device.h"
-#include "drv_st7735.h"
 #include "drv_w25qxx.h"
 #include "drv_w25n02.h"
 #include "drv_psram.h"
@@ -84,23 +83,8 @@ int DrvFramework_RegisterAll(void)
     int failed = 0;
     
     DBG("[DrvInit] Starting driver registration...\n");
-    
+
     /* Flash 管理器已在 DrvFramework_FullInit() 中初始化，此处跳过 */
-    /* BG_flash_manager.Init() 和 BG_FlashMgr.Init() 已由调用方执行 */
-    
-    /* 注册ST7735 LCD驱动 */
-#if HW_DRV_LCD_EN
-    DBG("[DrvInit] Registering ST7735 LCD driver...\n");
-    ret = St7735_DrvRegister();
-    if (ret == 0) {
-        total++;
-        DBG("[DrvInit] ST7735 registered OK\n");
-    } else {
-        failed++;
-        DBG("[DrvInit] ST7735 registration FAILED\n");
-    }
-#endif /* HW_DRV_LCD_EN */
-    
 
     /* 注册NOR Flash驱动 (W25Qxx) */
 #if HW_DRV_FLASH_NOR_EN

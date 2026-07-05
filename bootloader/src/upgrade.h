@@ -76,12 +76,19 @@ typedef struct {
 #define BOOT_HANDOFF_ADDR     0x20000000UL
 #define BOOT_HANDOFF_MAGIC    0xDEADBEEFUL
 
-/* ── Force-bootloader flag (SRAM, survives soft reset) ──
- * APP writes this magic before rebooting to request bootloader stay.
- * Bootloader checks this at the very start of Boot_CheckAndJumpIfNeeded()
- * — if set, clears it and stays in upgrade mode (skips APP jump). */
-#define FORCE_BOOT_ADDR       0x20000004UL
-#define FORCE_BOOT_MAGIC      0xCAFEBABEUL
+/* ── Burn flag (Flash, one-time bootloader stay request) ──
+ * APP writes BURN_FLAG_MAGIC to BURN_FLAG_ADDR in Flash before rebooting
+ * to request bootloader stay.  Bootloader checks this at startup — if set,
+ * erases it and stays in upgrade mode (skips APP jump).
+ * This is a ONE-TIME flag: bootloader clears it after reading.
+ * If user doesn't want to upgrade, just reboot and bootloader will jump
+ * to APP normally (flag is already cleared).
+ *
+ * Location: last 4KB sector of bootloader area (0x3F000).
+ * Safe because firmware upgrade writes to 0x040000+, never touches this. */
+#define BURN_FLAG_ADDR        0x0003F000UL  /* Last sector of bootloader area */
+#define BURN_FLAG_MAGIC       0x4F4F5442UL  /* "BOOT" in little-endian       */
+#define BURN_FLAG_SECTOR      (BURN_FLAG_ADDR / 4096U)
 
 /* ── Partition flag structure ── */
 typedef struct {

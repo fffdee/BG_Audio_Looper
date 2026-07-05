@@ -1,13 +1,16 @@
 /**
  ******************************************************************************
  * @file    remind_sound.c
- * @brief   开机/事件提示音播放模块（基于 const 数组的 MP3 解码输出）
+ * @brief   提示音播放模块（非阻塞，通过 Effect Graph 音频系统输出）
  *
  * 架构说明：
- *   - s_remind_table[] 是集中注册表，每条目包含 id/name/data/size
- *   - RemindSound_PlayByIndex(id) / PlayByName(name) 通过表查找后调用底层
- *   - RemindSound_Play() 是底层实现，含完整 DBG 日志
- *   - g_remind_sound_active 标志让 Effect Graph 暂停 DAC 写入，避免冲突
+ *   - RemindSound_Start() 初始化解码器并设置播放状态，立即返回
+ *   - RemindSound_GenerateAudio() 由 Effect Graph 的 REMIND 源节点在
+ *     每个 Audio_loop() 周期调用，每次解码一小帧 PCM 数据
+ *   - 解码后的 PCM 经过 USB_BT_MIXER → USB_BT_EQ → FINAL_MIXER → DAC0
+ *     输出，与 USB/BT/节拍器音源混音，不再独占 DAC
+ *   - 播放完成后自动释放资源，无需手动清理
+ *   - 不再阻塞，不再需要 g_remind_sound_active 互斥标志
  *
  * 新增提示音步骤：
  *   1. 用 mp3_to_c_array.py 生成 .h / .c
@@ -21,97 +24,383 @@
 #include "typedefine.h"
 #include "audio_decoder_api.h"
 #include "mvstdio.h"
-#include "dac_interface.h"
 #include "debug.h"
 #include "remind_sound.h"
-#include "rtos_api.h"
-#include "adc.h"
-#include "dac.h"
-#include "gpio.h"
 #include "product_def.h"
 
 /* ---- 音频数据头文件（mp3_to_c_array.py 生成）---- */
-#include "g_remind_on.h"
-#include "g_remind_off.h"
+#include "g_remind_power_on.h"
 
 /* ---- 解码器缓冲区大小 ---- */
 #define REMIND_DECODER_BUF_SIZE  (19 * 1024)
 
-/* ---- 连续解码失败计数上限 ---- */
-#define REMIND_ERROR_MAX  3
+/* ---- 淡入参数 ---- */
+#define REMIND_FADE_IN_MS        50    /* 淡入时长 50ms，消除爆破音 */
+#define REMIND_FADE_IN_FRAMES    ((uint32_t)((uint64_t)REMIND_FADE_IN_MS * 44100 / 1000U))
+/* 44100Hz * 50ms ≈ 2205 帧 */
 
-/* ---- 解码器缓冲区（动态分配，仅在 Play 期间占用堆）---- */
-/* 必须在 Audio_Init 之前（堆满 74KB 时）调用，或释放较大效果器后调用 */
-static uint8_t *s_decoder_buf = NULL;
-
-/* ---- Effect Graph DAC 互斥标志 ---- */
-volatile uint8_t g_remind_sound_active = 0;
+/* ---- 解码重试参数 ---- */
+#define REMIND_DECODE_RETRIES    10    /* 单次 GenerateAudio 内最大解码重试次数 */
+#define REMIND_ERROR_MAX         30    /* 连续解码失败上限（跨多个 GenerateAudio 周期） */
 
 /* ============================================================
  * 提示音调用表 —— 在此处集中注册所有提示音
- * 新增提示音：追加一行 { id, "name", 数组名, 数组名_size }
+ * 新增提示音：追加一行 { id, "name", 数组名, 数组名_size, vol_pct }
  * ============================================================ */
-/* vol_pct: 0-100，播放时的音量相对于电位器满量程的百分比
- * 100 = 跟随电位器；50 = 电位器音量的一半（抵消录音电平偏高） */
 static const RemindSoundItem_t s_remind_table[] = {
-    { 0, "on",  g_remind_on,  (uint32_t)0, 50  /* on:  源文件电平偏高，衰减至50% */ },
-    { 1, "off", g_remind_off, (uint32_t)0, 100 /* off: 电平合适，满量程跟随电位器 */ },
+    { 0, "on",  g_remind_power_on, (uint32_t)0, 30  /* on:  vol_pct=30% */ },
 };
+
 /* size 字段在编译期常量不可用时通过 getter 取得，见下方 */
 static const uint32_t s_remind_sizes[] = {
-    /* 与 s_remind_table 顺序严格对应 */
-    0, /* [0] on  — 下方 init 时填入 g_remind_on_size  */
-    0, /* [1] off — 下方 init 时填入 g_remind_off_size */
+    0, /* [0] on — 下方 init 时填入 g_remind_power_on_size */
 };
 
 #define REMIND_TABLE_COUNT  ((int)(sizeof(s_remind_table) / sizeof(s_remind_table[0])))
 
-/* 运行期 size 缓存（因为 g_remind_on_size 是 extern const，链接后才有值）*/
+/* 运行期 size 缓存（因为 g_remind_power_on_size 是 extern const，链接后才有值）*/
 static uint32_t s_sizes_cache[REMIND_TABLE_COUNT];
 static uint8_t  s_table_inited = 0;
 
 static void remind_table_init(void)
 {
     if (s_table_inited) return;
-    s_sizes_cache[0] = g_remind_on_size;
-    s_sizes_cache[1] = g_remind_off_size;
+    s_sizes_cache[0] = g_remind_power_on_size;
     (void)s_remind_sizes; /* suppress unused warning */
     s_table_inited = 1;
 }
 
-/* ---- 当前播放的 const 数组指针及偏移 ---- */
-static const uint8_t *s_mp3_data;
-static uint32_t       s_mp3_size;
-static uint32_t       s_mp3_offset;
+/* ============================================================
+ * 播放状态机
+ * ============================================================ */
+typedef enum {
+    REMIND_STATE_IDLE = 0,      /* 空闲，未播放 */
+    REMIND_STATE_PLAYING,       /* 正在解码播放 */
+    REMIND_STATE_DONE           /* 播放结束，待清理 */
+} RemindState_t;
 
-/* ---- MemHandle（传给 audio_decoder_initialize 的 IO 句柄）---- */
+static RemindState_t s_state = REMIND_STATE_IDLE;
+
+/* 当前播放的数据源 */
+static const uint8_t *s_audio_data;
+static uint32_t       s_audio_size;
+static uint32_t       s_audio_offset;
+static uint8_t        s_vol_pct;
+
+/* 解码器缓冲区（静态分配，避免与 Effect Graph 争夺堆内存）
+ * InitAudioEffects 后堆仅剩 ~8KB，不够 19KB pvPortMalloc，
+ * 因此改为 BSS 静态分配。由于同一时间只播放一条提示音，不浪费内存。 */
+static uint8_t s_decoder_buf[REMIND_DECODER_BUF_SIZE];
+static uint8_t s_buf_in_use = 0;  /* 缓冲区是否被占用 */
+
+/* MemHandle（传给 audio_decoder_initialize 的 IO 句柄） */
 static MemHandle s_mem_handle;
 
+/* 解码后 PCM 缓冲区（用于 GenerateAudio 时暂存解码结果） */
+static int16_t  s_pcm_buf[640 * 2];  /* 640 帧 × 2 声道，约 2560 字节 */
+static uint16_t s_pcm_frames;        /* s_pcm_buf 中有效帧数 */
+static uint16_t s_pcm_read_pos;      /* 当前读到哪一帧 */
+static int32_t  s_decoder_type = MP3_DECODER;
+
+/* 连续解码失败计数 */
+static int s_error_cnt = 0;
+
+/* 淡入计数器：播放开始后从 0 递增，达到 REMIND_FADE_IN_FRAMES 后不再淡入 */
+static uint32_t s_fade_pos = 0;
 
 /* ------------------------------------------------------------
- * mv_mread 回调：从 const 数组读取 MP3 数据喂给解码器
+ * mv_mread 回调：从 const 数组读取音频数据喂给解码器
  * ------------------------------------------------------------ */
 static uint32_t RemindFillCallback(void *buffer, uint32_t length)
 {
-    uint32_t remain = s_mp3_size - s_mp3_offset;
+    uint32_t remain = s_audio_size - s_audio_offset;
     uint32_t read   = (length > remain) ? remain : length;
 
     if (read == 0)
         return 0;
 
-    memcpy(buffer, s_mp3_data + s_mp3_offset, read);
-    s_mp3_offset += read;
+    memcpy(buffer, s_audio_data + s_audio_offset, read);
+    s_audio_offset += read;
     return read;
 }
 
+/* ------------------------------------------------------------
+ * 内部：解码一帧 PCM 数据到 s_pcm_buf
+ * 返回：解码的帧数，0=结束/出错
+ * ------------------------------------------------------------ */
+static uint16_t decode_one_frame(void)
+{
+    if (audio_decoder_can_continue() != RT_YES) {
+        return 0;
+    }
+
+    if (audio_decoder_decode() != RT_SUCCESS) {
+        int32_t err = audio_decoder_get_error_code();
+        s_error_cnt++;
+        DBG("[Remind] decode error #%d, err=%ld\n", s_error_cnt, (long)err);
+        if (s_error_cnt >= REMIND_ERROR_MAX) {
+            DBG("[Remind] %d consecutive decode errors, stopping\n", REMIND_ERROR_MAX);
+            return 0;
+        }
+        return 0;  /* 返回 0 让调用方继续尝试 */
+    }
+
+    s_error_cnt = 0;
+    return (uint16_t)audio_decoder->song_info->pcm_data_length;
+}
+
+/* ------------------------------------------------------------
+ * 内部：清理播放资源
+ * ------------------------------------------------------------ */
+static void remind_cleanup(void)
+{
+    s_buf_in_use = 0;
+    s_state = REMIND_STATE_IDLE;
+    s_pcm_frames = 0;
+    s_pcm_read_pos = 0;
+    s_error_cnt = 0;
+    s_fade_pos = 0;
+    DBG("[Remind] Playback finished, resources released\n");
+}
 
 /* ============================================================
- * 公开 API：表查询
+ * 公开 API
  * ============================================================ */
 
-int RemindSound_GetCount(void)
+void RemindSound_Init(void)
 {
-    return REMIND_TABLE_COUNT;
+    remind_table_init();
+    s_state = REMIND_STATE_IDLE;
+    s_buf_in_use = 0;
+}
+
+int RemindSound_Start(const char *name)
+{
+    int i;
+    if (name == NULL) return -1;
+    remind_table_init();
+
+    /* 正在播放，不中断 */
+    if (s_state == REMIND_STATE_PLAYING) return -1;
+
+    for (i = 0; i < REMIND_TABLE_COUNT; i++) {
+        if (strcmp(s_remind_table[i].name, name) == 0) {
+            return RemindSound_StartById(s_remind_table[i].id);
+        }
+    }
+    DBG("[Remind] Start(\"%s\"): NOT FOUND\n", name);
+    return -1;
+}
+
+int RemindSound_StartById(uint8_t id)
+{
+    int i;
+    remind_table_init();
+
+    if (s_state == REMIND_STATE_PLAYING) return -1;
+
+    for (i = 0; i < REMIND_TABLE_COUNT; i++) {
+        if (s_remind_table[i].id == id) {
+            int32_t dec_type = MP3_DECODER;
+            const uint8_t *data = s_remind_table[i].data;
+            uint32_t size = s_sizes_cache[i];
+
+            if (data == NULL || size == 0) return -1;
+
+            DBG("[Remind] StartById(%d) -> \"%s\" (%lu bytes, vol=%d%%)\n",
+                id, s_remind_table[i].name, (unsigned long)size,
+                (int)s_remind_table[i].vol_pct);
+
+            /* 设置数据源 */
+            s_audio_data    = data;
+            s_audio_size    = size;
+            s_audio_offset  = 0;
+            s_vol_pct       = s_remind_table[i].vol_pct;
+            s_pcm_frames    = 0;
+            s_pcm_read_pos  = 0;
+            s_error_cnt     = 0;
+            s_fade_pos      = 0;
+
+            /* 检查解码器缓冲区是否被占用 */
+            if (s_buf_in_use) {
+                DBG("[Remind] decoder buffer busy\n");
+                return -1;
+            }
+            s_buf_in_use = 1;
+            memset(s_decoder_buf, 0, REMIND_DECODER_BUF_SIZE);
+
+            /* 初始化 MemHandle */
+            mv_mopen(&s_mem_handle, NULL, size, RemindFillCallback);
+
+            /* 检测格式 */
+            if (size >= 4 &&
+                data[0] == 'R' && data[1] == 'I' &&
+                data[2] == 'F' && data[3] == 'F') {
+                dec_type = WAV_DECODER;
+                DBG("[Remind] format=WAV\n");
+            } else {
+                DBG("[Remind] format=MP3\n");
+            }
+            s_decoder_type = dec_type;
+
+            /* 初始化解码器 */
+            if (audio_decoder_initialize(s_decoder_buf, &s_mem_handle,
+                                         IO_TYPE_MEMORY, dec_type) != RT_SUCCESS)
+            {
+                DBG("[Remind] audio_decoder_initialize FAILED\n");
+                s_buf_in_use = 0;
+                return -1;
+            }
+
+            DBG("[Remind] ch=%d, rate=%lu Hz, bitrate=%lu bps\n",
+                (int)audio_decoder->song_info->num_channels,
+                (unsigned long)audio_decoder->song_info->sampling_rate,
+                (unsigned long)audio_decoder->song_info->bitrate);
+
+            s_state = REMIND_STATE_PLAYING;
+            return 0;
+        }
+    }
+    DBG("[Remind] StartById(%d): NOT FOUND\n", id);
+    return -1;
+}
+
+void RemindSound_Stop(void)
+{
+    if (s_state != REMIND_STATE_IDLE) {
+        remind_cleanup();
+    }
+}
+
+int RemindSound_IsPlaying(void)
+{
+    return (s_state == REMIND_STATE_PLAYING) ? 1 : 0;
+}
+
+uint16_t RemindSound_GetAvailableData(void)
+{
+    if (s_state != REMIND_STATE_PLAYING) {
+        return 0;
+    }
+    /* 提示音始终可以提供数据（解码或返回静音） */
+    return 48;
+}
+
+uint16_t RemindSound_GenerateAudio(uint32_t *out_buf, uint16_t max_len)
+{
+    uint16_t i;
+    uint16_t generated = 0;
+    int retry;
+
+    if (max_len > 640) {
+        max_len = 640;
+    }
+
+    /* 空闲状态：输出静音 */
+    if (s_state != REMIND_STATE_PLAYING) {
+        for (i = 0; i < max_len; i++) {
+            out_buf[i] = 0;
+        }
+        return max_len;
+    }
+
+    /* 音量缩放因子（Q15 定点） */
+    int16_t vol_q15 = (int16_t)((uint32_t)s_vol_pct * 32767 / 100);
+
+    /* 逐样本填充输出缓冲区 */
+    generated = 0;
+    while (generated < max_len)
+    {
+        /* 如果 PCM 缓冲区已读完，解码下一帧 */
+        if (s_pcm_read_pos >= s_pcm_frames) {
+            uint16_t decoded_frames = 0;
+
+            /* 检查是否还有数据可解码 */
+            if (audio_decoder_can_continue() != RT_YES) {
+                /* 播放结束，剩余填静音 */
+                for (i = generated; i < max_len; i++) {
+                    out_buf[i] = 0;
+                }
+                remind_cleanup();
+                return max_len;
+            }
+
+            /* 带重试的解码：WAV 首帧可能返回 pcm_data_length=0，
+             * 需要再次调用 decode 才能拿到实际 PCM 数据 */
+            for (retry = 0; retry < REMIND_DECODE_RETRIES; retry++) {
+                decoded_frames = decode_one_frame();
+                if (decoded_frames > 0) {
+                    break;  /* 拿到数据，退出重试 */
+                }
+                if (s_error_cnt >= REMIND_ERROR_MAX) {
+                    /* 连续出错太多，停止 */
+                    for (i = generated; i < max_len; i++) {
+                        out_buf[i] = 0;
+                    }
+                    remind_cleanup();
+                    return max_len;
+                }
+                /* decoded_frames==0 但未超错误上限，继续重试 */
+            }
+
+            if (decoded_frames == 0) {
+                /* 重试耗尽仍无数据，输出静音帧让调用方下周期继续轮询 */
+                for (i = generated; i < max_len; i++) {
+                    out_buf[i] = 0;
+                }
+                return max_len;
+            }
+
+            /* 从解码器拷贝 PCM 到内部缓冲区 */
+            {
+                uint16_t ch = audio_decoder->song_info->num_channels;
+                int16_t *src = (int16_t *)audio_decoder->song_info->pcm_addr;
+
+                s_pcm_frames = decoded_frames;
+                s_pcm_read_pos = 0;
+
+                /* 将解码器输出转为立体声 int16 格式存入 s_pcm_buf
+                 * 格式: s_pcm_buf[2*n] = L, s_pcm_buf[2*n+1] = R */
+                if (ch == 1) {
+                    /* 单声道复制到双声道 */
+                    for (i = 0; i < decoded_frames && i < 640; i++) {
+                        int16_t sample = src[i];
+                        s_pcm_buf[i * 2]     = (int16_t)((int32_t)sample * vol_q15 >> 15);
+                        s_pcm_buf[i * 2 + 1] = s_pcm_buf[i * 2];
+                    }
+                } else {
+                    /* 立体声 */
+                    for (i = 0; i < decoded_frames && i < 640; i++) {
+                        int16_t l = src[i * 2];
+                        int16_t r = src[i * 2 + 1];
+                        s_pcm_buf[i * 2]     = (int16_t)((int32_t)l * vol_q15 >> 15);
+                        s_pcm_buf[i * 2 + 1] = (int16_t)((int32_t)r * vol_q15 >> 15);
+                    }
+                }
+            }
+        }
+
+        /* 从 PCM 缓冲区填充输出 */
+        if (s_pcm_read_pos < s_pcm_frames) {
+            int16_t l = s_pcm_buf[s_pcm_read_pos * 2];
+            int16_t r = s_pcm_buf[s_pcm_read_pos * 2 + 1];
+
+            /* 淡入处理：播放开始后前 REMIND_FADE_IN_FRAMES 帧渐增音量 */
+            if (s_fade_pos < REMIND_FADE_IN_FRAMES) {
+                int32_t fade_q15 = (int32_t)(s_fade_pos * 32767 / REMIND_FADE_IN_FRAMES);
+                l = (int16_t)((int32_t)l * fade_q15 >> 15);
+                r = (int16_t)((int32_t)r * fade_q15 >> 15);
+                s_fade_pos++;
+            }
+
+            /* Pack to uint32_t: [R:16 | L:16] — 与 Effect Graph 格式一致 */
+            out_buf[generated] = ((uint32_t)(uint16_t)r << 16) | ((uint16_t)l & 0xFFFF);
+            s_pcm_read_pos++;
+            generated++;
+        }
+    }
+
+    return generated;
 }
 
 void RemindSound_ListAll(void)
@@ -129,232 +418,7 @@ void RemindSound_ListAll(void)
     DBG("[Remind] -----------------------------------------\n");
 }
 
-int RemindSound_PlayByIndex(uint8_t id)
+int RemindSound_GetCount(void)
 {
-    int i;
-    remind_table_init();
-    for (i = 0; i < REMIND_TABLE_COUNT; i++) {
-        if (s_remind_table[i].id == id) {
-            DBG("[Remind] PlayByIndex(%d) -> \"%s\" (%lu bytes, vol=%d%%)\n",
-                id, s_remind_table[i].name, (unsigned long)s_sizes_cache[i],
-                (int)s_remind_table[i].vol_pct);
-            RemindSound_Play(s_remind_table[i].data, s_sizes_cache[i],
-                             s_remind_table[i].vol_pct);
-            return 0;
-        }
-    }
-    DBG("[Remind] PlayByIndex(%d): NOT FOUND (table has %d items)\n",
-        id, REMIND_TABLE_COUNT);
-    return -1;
-}
-
-int RemindSound_PlayByName(const char *name)
-{
-    int i;
-    if (name == NULL) return -1;
-    remind_table_init();
-    for (i = 0; i < REMIND_TABLE_COUNT; i++) {
-        if (strcmp(s_remind_table[i].name, name) == 0) {
-            DBG("[Remind] PlayByName(\"%s\") -> id=%d (%lu bytes, vol=%d%%)\n",
-                name, s_remind_table[i].id, (unsigned long)s_sizes_cache[i],
-                (int)s_remind_table[i].vol_pct);
-            RemindSound_Play(s_remind_table[i].data, s_sizes_cache[i],
-                             s_remind_table[i].vol_pct);
-            return 0;
-        }
-    }
-    DBG("[Remind] PlayByName(\"%s\"): NOT FOUND\n", name);
-    return -1;
-}
-
-
-/* ------------------------------------------------------------
- * 读取音量电位器原始值并换算为 DAC 音量寄存器值
- * ------------------------------------------------------------ */
-static uint16_t remind_read_pot_dac_vol(void)
-{
-#if HW_VOLUME_ADC_EN
-    uint16_t adc_val;
-    GPIO_RegOneBitClear(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
-    GPIO_RegOneBitSet(HW_VOLUME_ADC_GPIO_PORT, HW_VOLUME_ADC_GPIO_PIN);
-    adc_val = (uint16_t)ADC_SingleModeDataGet(HW_VOLUME_ADC_CHANNEL);
-    return (uint16_t)(adc_val * 4);
-#else
-    /* 无音量旋钮：返回最大音量 16383 */
-    return 16383;
-#endif
-}
-
-/* ============================================================
- * 底层播放函数（阻塞，直到播完）
- * vol_pct: 0~100，相对于当前电位器音量的百分比
- * ============================================================ */
-void RemindSound_Play(const uint8_t *mp3_data, uint32_t mp3_size, uint8_t vol_pct)
-{
-    int      error_cnt   = 0;
-    uint32_t sample_rate = 0;
-    uint16_t pot_vol     = 0;
-    uint16_t play_vol    = 0;
-    int32_t  decoder_type = MP3_DECODER;  /* 默认 MP3，后续根据 RIFF 头拦截修改 */
-
-    if (mp3_data == NULL || mp3_size == 0) {
-        DBG("[Remind] Play: invalid param (data=%p size=%lu)\n",
-            (void*)mp3_data, (unsigned long)mp3_size);
-        return;
-    }
-
-    /* 读取电位器当前音量，按 vol_pct 缩放后设置 DAC */
-    pot_vol  = remind_read_pot_dac_vol();
-    play_vol = (uint16_t)((uint32_t)pot_vol * vol_pct / 100);
-    if (play_vol == 0) play_vol = 1;   /* 至少输出极小音量，避免静音 */
-    AudioDAC_VolSet(DAC0, play_vol, play_vol);
-    DBG("[Remind] Play: pot_vol=%u, vol_pct=%d%%, play_vol=%u\n",
-        (unsigned)pot_vol, (int)vol_pct, (unsigned)play_vol);
-
-    /* 暂停 Effect Graph 的 DAC 写入，独占 DAC FIFO */
-    g_remind_sound_active = 1;
-
-    /* 动态分配解码器缓冲区（清零防止上次崩溃残留脏数据影响解码器）*/
-    s_decoder_buf = (uint8_t *)osPortMalloc(REMIND_DECODER_BUF_SIZE);
-    if (s_decoder_buf == NULL) {
-        DBG("[Remind] Play: osPortMalloc(%d) FAILED, heap too small\n",
-            REMIND_DECODER_BUF_SIZE);
-        g_remind_sound_active = 0;
-        return;
-    }
-    memset(s_decoder_buf, 0, REMIND_DECODER_BUF_SIZE);  /* 清零，防崩溃后残留脏状态干扰解码器 */
-
-    DBG("[Remind] Play: start, size=%lu, buf=%p\n",
-        (unsigned long)mp3_size, (void*)s_decoder_buf);
-
-    /* ---- 初始化播放状态 ---- */
-    s_mp3_data   = mp3_data;
-    s_mp3_size   = mp3_size;
-    s_mp3_offset = 0;
-
-    mv_mopen(&s_mem_handle, NULL, mp3_size, RemindFillCallback);
-
-    /* ---- 自动检测音频格式（RIFF 头 = WAV，否则按 MP3 处理）---- */
-    if (mp3_size >= 4 &&
-        mp3_data[0] == 'R' && mp3_data[1] == 'I' &&
-        mp3_data[2] == 'F' && mp3_data[3] == 'F') {
-        decoder_type = WAV_DECODER;
-        DBG("[Remind] Play: format=WAV\n");
-    } else {
-        DBG("[Remind] Play: format=MP3\n");
-    }
-
-    /* ---- 初始化解码器 ---- */
-    if (audio_decoder_initialize(s_decoder_buf, &s_mem_handle,
-                                 IO_TYPE_MEMORY, decoder_type) != RT_SUCCESS)
-    {
-        DBG("[Remind] Play: audio_decoder_initialize FAILED\n");
-        osPortFree(s_decoder_buf);
-        s_decoder_buf = NULL;
-        g_remind_sound_active = 0;
-        return;
-    }
-
-    /* 从 MP3 Header 读到的采样率，调整 DAC */
-    sample_rate = (uint32_t)audio_decoder->song_info->sampling_rate;
-    DBG("[Remind] Play: ch=%d, rate=%lu Hz, bitrate=%lu bps\n",
-        (int)audio_decoder->song_info->num_channels,
-        (unsigned long)sample_rate,
-        (unsigned long)audio_decoder->song_info->bitrate);
-    AudioDAC_SampleRateChange(ALL, sample_rate);
-
-    /* ---- 解码循环，直到数据耗尽或连续 3 次出错 ---- */
-    while (audio_decoder_can_continue() == RT_YES)
-    {
-        if (audio_decoder_decode() == RT_SUCCESS)
-        {
-            /* VBR：采样率可能逐帧变化 */
-            if (sample_rate != (uint32_t)audio_decoder->song_info->sampling_rate)
-            {
-                sample_rate = (uint32_t)audio_decoder->song_info->sampling_rate;
-                DBG("[Remind] Play: sample rate changed -> %lu Hz\n",
-                    (unsigned long)sample_rate);
-                AudioDAC_SampleRateChange(ALL, sample_rate);
-            }
-
-            error_cnt = 0;
-
-            /* 实时跟踪电位器音量：每解码一帧重新读 ADC 并按 vol_pct 缩放更新 DAC */
-            pot_vol  = remind_read_pot_dac_vol();
-            play_vol = (uint16_t)((uint32_t)pot_vol * vol_pct / 100);
-            if (play_vol == 0) play_vol = 1;
-            AudioDAC_VolSet(DAC0, play_vol, play_vol);
-
-            /* 等待 DAC FIFO 有足够空间（带超时，防 DMA 未就绪时 WDT 复位）
-             * pcm_data_length 可能大于 FIFO 总深度，循环分块等待写入 */
-            {
-                uint32_t remain = (uint32_t)audio_decoder->song_info->pcm_data_length;
-                uint32_t done   = 0;
-                uint32_t fifo_timeout;
-
-                if (audio_decoder->song_info->num_channels == 1)
-                {
-                    /* 单声道：逐样本写，每次等 1 个采样空间 */
-                    uint16_t  i;
-                    uint16_t *src = (uint16_t *)audio_decoder->song_info->pcm_addr;
-                    for (i = 0; i < (uint16_t)remain; i++)
-                    {
-                        uint16_t stereo[2];
-                        fifo_timeout = 2000000;
-                        while (AudioDAC0DataSpaceLenGet() < 1) {
-                            if (--fifo_timeout == 0) {
-                                DBG("[Remind] Play: DAC FIFO timeout, abort\n");
-                                error_cnt = REMIND_ERROR_MAX;
-                                goto remind_done;
-                            }
-                        }
-                        stereo[0] = *src;
-                        stereo[1] = *src;
-                        AudioDAC0DataSet(stereo, 1);
-                        src++;
-                    }
-                }
-                else
-                {
-                    /* 立体声：分块写，每块不超过当前可用空间 */
-                    uint16_t *src = (uint16_t *)audio_decoder->song_info->pcm_addr;
-                    while (done < remain)
-                    {
-                        uint32_t space;
-                        uint32_t chunk;
-                        fifo_timeout = 2000000;
-                        while ((space = (uint32_t)AudioDAC0DataSpaceLenGet()) == 0) {
-                            if (--fifo_timeout == 0) {
-                                DBG("[Remind] Play: DAC FIFO timeout, abort\n");
-                                error_cnt = REMIND_ERROR_MAX;
-                                goto remind_done;
-                            }
-                        }
-                        chunk = (space < (remain - done)) ? space : (remain - done);
-                        AudioDAC0DataSet(src + done * 2, chunk);
-                        done += chunk;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (++error_cnt >= REMIND_ERROR_MAX) {
-                DBG("[Remind] Play: %d consecutive decode errors, abort\n",
-                    REMIND_ERROR_MAX);
-                break;
-            }
-        }
-    }
-
-remind_done:
-    /* ---- 释放解码器缓冲区，恢复 Effect Graph DAC 写入权 ---- */
-    osPortFree(s_decoder_buf);
-    s_decoder_buf = NULL;
-    g_remind_sound_active = 0;
-    /* 恢复电位器音量（重新读取，避免旋钮在播放期间被调动）*/
-    pot_vol = remind_read_pot_dac_vol();
-    AudioDAC_VolSet(DAC0, pot_vol, pot_vol);
-    AudioDAC_SampleRateChange(ALL, 44100);
-    DBG("[Remind] Play: done, restored pot_vol=%u\n", (unsigned)pot_vol);
+    return REMIND_TABLE_COUNT;
 }

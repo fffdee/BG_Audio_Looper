@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<paths>
-    <cache-path name="export_cache" path="." />
-    <external-files-path name="export_files" path="Documents/ImageProjectExports" />
-    <external-files-path name="image_files" path="Pictures" />
-    <!-- 采样创作项目导出 ZIP -->
-    <external-path name="banbox_projects" path="Music/BanBox/Projects/" />
-</paths>
