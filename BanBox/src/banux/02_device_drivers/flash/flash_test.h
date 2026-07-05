@@ -10,11 +10,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "product_def.h"
 
 /*===========================================================================
  * NOR Flash 测试
  *===========================================================================*/
+#if FLASH_TEST_EN
 #define NOR_FLASH_TEST
+#endif
 
 #ifdef NOR_FLASH_TEST
 /**
@@ -52,7 +55,9 @@ void NorFlash_SpeedTest(uint32_t test_size_kb, NorTestResult_t *result);
 /*===========================================================================
  * NAND Flash 测试
  *===========================================================================*/
+#if FLASH_TEST_EN
 #define NAND_FLASH_TEST
+#endif
 
 #ifdef NAND_FLASH_TEST
 
@@ -107,7 +112,9 @@ void NandFlash_BBMTest(void);
 /*===========================================================================
  * PSRAM 测试
  *===========================================================================*/
+#if FLASH_TEST_EN
 #define PSRAM_TEST
+#endif
 
 #ifdef PSRAM_TEST
 
@@ -154,7 +161,9 @@ void PsramFlash_SpeedTest(uint32_t test_size_kb, PsramTestResult_t *result);
 /*===========================================================================
  * SD Card 测试
  *===========================================================================*/
+#if FLASH_TEST_EN
 #define SDCARD_TEST
+#endif
 
 #ifdef SDCARD_TEST
 

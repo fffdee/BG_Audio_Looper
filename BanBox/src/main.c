@@ -183,8 +183,7 @@ uint32_t record_time;
 
 uint8_t spimRate = SPIM_CLK_DIV_12M;
 uint8_t spimMode = 0;
-uint8_t SpimBuf_TX[MAX_BUF_LEN];
-uint8_t SpimBuf_RX[MAX_BUF_LEN];
+/* SpimBuf_TX/RX 已删除 (RAM优化: 释放8KB，未使用) */
 
 const char* spimIO[][4] = {
 //    cs      miso     clk      mosi
@@ -576,12 +575,14 @@ void FlashNewDriverTask(void)
 	DBG("*     New Flash Driver Architecture Test        *\n");
 	DBG("**************************************************\n");
 
-	// 杩愯瀹屾暣娴嬭瘯
+#if FLASH_TEST_EN
 	FlashNewDriver_Test();
-
-	// 娴嬭瘯瀹屾垚锛屾樉绀虹粨鏋滈鑹插凡鍦ㄦ祴璇曞嚱鏁颁腑璁剧疆
 	DBG("\nNew Flash Driver test completed.\n");
 	DBG("You can also run FlashNewDriver_QuickTest() for quick debug.\n");
+#else
+	DBG("FlashNewDriverTask: FLASH_TEST_EN=0, test disabled\n");
+#endif
+
 }
 
 /* BLE timing functions for sync command buffering */

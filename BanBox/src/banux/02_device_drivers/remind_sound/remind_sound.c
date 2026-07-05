@@ -27,6 +27,7 @@
 #include "debug.h"
 #include "remind_sound.h"
 #include "product_def.h"
+#include "rtos_api.h"  /* osPortMalloc / osPortFree */
 
 /* ---- 音频数据头文件（mp3_to_c_array.py 生成）---- */
 #include "g_remind_power_on.h"
@@ -87,10 +88,9 @@ static uint32_t       s_audio_size;
 static uint32_t       s_audio_offset;
 static uint8_t        s_vol_pct;
 
-/* 解码器缓冲区（静态分配，避免与 Effect Graph 争夺堆内存）
- * InitAudioEffects 后堆仅剩 ~8KB，不够 19KB pvPortMalloc，
- * 因此改为 BSS 静态分配。由于同一时间只播放一条提示音，不浪费内存。 */
-static uint8_t s_decoder_buf[REMIND_DECODER_BUF_SIZE];
+/* 解码器缓冲区（动态分配，播放时从堆分配，结束释放）
+ * RAM优化: 改为动态分配，空闲时释放19KB给EQ等效果器使用 */
+static uint8_t *s_decoder_buf = NULL;
 static uint8_t s_buf_in_use = 0;  /* 缓冲区是否被占用 */
 
 /* MemHandle（传给 audio_decoder_initialize 的 IO 句柄） */
@@ -154,6 +154,10 @@ static uint16_t decode_one_frame(void)
  * ------------------------------------------------------------ */
 static void remind_cleanup(void)
 {
+    if (s_decoder_buf != NULL) {
+        osPortFree(s_decoder_buf);
+        s_decoder_buf = NULL;
+    }
     s_buf_in_use = 0;
     s_state = REMIND_STATE_IDLE;
     s_pcm_frames = 0;
@@ -221,9 +225,14 @@ int RemindSound_StartById(uint8_t id)
             s_error_cnt     = 0;
             s_fade_pos      = 0;
 
-            /* 检查解码器缓冲区是否被占用 */
-            if (s_buf_in_use) {
+            /* 动态分配解码器缓冲区 */
+            if (s_buf_in_use || s_decoder_buf != NULL) {
                 DBG("[Remind] decoder buffer busy\n");
+                return -1;
+            }
+            s_decoder_buf = (uint8_t *)osPortMalloc(REMIND_DECODER_BUF_SIZE);
+            if (s_decoder_buf == NULL) {
+                DBG("[Remind] decoder buffer malloc FAILED (%d bytes)\n", REMIND_DECODER_BUF_SIZE);
                 return -1;
             }
             s_buf_in_use = 1;

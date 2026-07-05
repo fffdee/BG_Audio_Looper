@@ -30,7 +30,7 @@
 
 
 
-#define	USB_FIFO_LEN						(256 * 2 * 2 * 8)
+#define	USB_FIFO_LEN						(256 * 2 * 2 * 4)   /* RAM优化: 8→4帧, 8KB→4KB, 节省8KB */
 #define USB_AUDIO_SRC_BUF_LEN				(150 * 2 * 2)
 
 

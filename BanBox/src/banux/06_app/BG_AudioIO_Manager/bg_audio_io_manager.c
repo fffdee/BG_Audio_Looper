@@ -46,6 +46,7 @@
 // Effect Graph 模块
 #include "effect_graph.h"
 #include "effect_graph_config.h"
+#include "bg_event.h"
 #include "effect_graph_vfs.h"
 #include "chain_graph_apply.h"
 #include "shell_cmd_graph.h"
@@ -117,7 +118,7 @@ BG_Audio_Io_Manager BG_AudioManager __attribute__((section(".data"))) = {
 #define BT_SBC_LEVEL_START (BT_SBC_LEVEL_HIGH - BT_SBC_PACKET_SIZE * 3)
 #define SBC_DECODER_FIFO_MIN (119 * 2)
 /* 蓝牙解码最大帧长：SBC单帧最大128样本，双声道=256样本，640预留充足 */
-#define BT_DECODED_BUFFER_SIZE 256   /* 优化：与 EFFECT_GRAPH_BUFFER_SIZE 对齐 */
+#define BT_DECODED_BUFFER_SIZE 128   /* 与 EFFECT_GRAPH_BUFFER_SIZE 对齐 (Reverb RAM优化) */
 
 uint8_t a2dp_sbcBuf[BT_SBC_DECODER_INPUT_LEN];
 static uint8_t decoder_buf[1024 * 4] = {0};
@@ -197,12 +198,15 @@ static void A2dp_DecoderInit(void)
 }
 
 // 初始化USB和设备模式
+static bool s_usb_connected = false; /* USB 热拔插状态跟踪 */
+
 static void InitUSBDevice(void)
 {
 	// 使用AUDIO_MIC_CDC模式：音频+麦克风+CDC串口复合设备
 	OTG_DeviceModeSel(AUDIO_MIC_CDC, 0x1234, 0x1234);
 	UsbDevicePlayInit();
 	UsbDeviceEnable();
+	s_usb_connected = OTG_PortDeviceIsLink();
 }
 
 // 初始化DAC（数字模拟转换器）
@@ -1215,18 +1219,28 @@ static void AudioLoopWithGraph(void)
  * 音频主循环处理函数
  */
 /**
- * @brief USB 状态更新（不再动态 enable/disable，避免 USB 重初始化失败）
+ * @brief USB 热拔插检测
  *
- * USB 在 InitUSBDevice() 中已一次性完整初始化（OTG_DeviceModeSel + UsbDevicePlayInit + UsbDeviceEnable）。
- * 这里只更新连接状态供状态栏显示，不再对硬件做任何操作。
+ * 检测 USB 线缆连接/断开状态变化:
+ *   - 插入: UsbDeviceEnable() 使 USB 设备生效，发布 EVT_SYS_USB_CONNECT
+ *   - 拔出: UsbDeviceDisable() 关闭 USB 设备，发布 EVT_SYS_USB_DISCONNECT
  */
 static void USB_HotplugCheck(void)
 {
-	/* 只记录连接状态，不做 enable/disable操作 */
 	bool now_connected = OTG_PortDeviceIsLink();
-	// if (now_connected) {
-	// 	DBG("[USB] Device linked\n");
-	// }
+
+	if (now_connected != s_usb_connected) {
+		if (now_connected) {
+			DBG("[USB] Cable connected, enabling device\n");
+			UsbDeviceEnable();
+			BG_EVT_PUB(EVT_SYS_USB_CONNECT);
+		} else {
+			DBG("[USB] Cable disconnected, disabling device\n");
+			UsbDeviceDisable();
+			BG_EVT_PUB(EVT_SYS_USB_DISCONNECT);
+		}
+		s_usb_connected = now_connected;
+	}
 }
 
 void Audio_loop(void)

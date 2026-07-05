@@ -106,8 +106,7 @@ BG_EVT_SUB(EVT_SYS_BT_STREAMING,  on_bt_state);
 BG_EVT_SUB(EVT_SYS_BT_SUSPENDED,  on_bt_state);
 
 /* ============================================
- * 4. 音频插拔事件回调（Guitar / MIC / Headphone）
- * USB 已移出事件系统，在 InitUSBDevice() 中直接初始化
+ * 4. 音频插拔事件回调（Guitar / MIC / Headphone / USB）
  * ============================================ */
 
 static void on_audio_detect(BG_EventTopic_t topic, const void *data, uint8_t size)
@@ -130,9 +129,8 @@ static void on_usb_event(BG_EventTopic_t topic, const void *data, uint8_t size)
 BG_EVT_SUB(EVT_AUDIO_MIC_IN,       on_audio_detect);
 BG_EVT_SUB(EVT_AUDIO_GUITAR_IN,    on_audio_detect);
 BG_EVT_SUB(EVT_AUDIO_HP_OUT,       on_audio_detect);
-/* USB 事件订阅已移除：USB 直接初始化，不依赖事件系统 */
-/* BG_EVT_SUB(EVT_SYS_USB_CONNECT,    on_usb_event); */
-/* BG_EVT_SUB(EVT_SYS_USB_DISCONNECT, on_usb_event); */
+BG_EVT_SUB(EVT_SYS_USB_CONNECT,    on_usb_event);
+BG_EVT_SUB(EVT_SYS_USB_DISCONNECT, on_usb_event);
 
 /* ============================================
  * 5. 系统状态事件回调 (运行态 / 子系统状态)

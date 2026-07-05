@@ -17,6 +17,10 @@
 
 #include "shell_cmd_flash.h"
 #include "bg_shell.h"
+#include "product_def.h"
+
+#if FLASH_TEST_EN
+
 #include "flash_test.h"
 #include "looper_storage.h"  /* 存储抽象层 */
 #include <stdlib.h>
@@ -306,17 +310,20 @@ static const ShellModule_t g_NorModule = {
     2
 };
 
+#endif /* FLASH_TEST_EN */
+
 /*===========================================================================
  * 注册入口
  *===========================================================================*/
 
 void ShellCmdFlash_Register(void)
 {
+#if FLASH_TEST_EN
     Shell_RegisterModule(&g_FlashModule);
     Shell_RegisterModule(&g_PsramModule);
     Shell_RegisterModule(&g_SDCardModule);
     Shell_RegisterModule(&g_NorModule);
-    /* g_StorageModule 已合并到 looper 命令中 */
+#endif /* FLASH_TEST_EN */
 }
 
 /*===========================================================================

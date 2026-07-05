@@ -8,6 +8,7 @@
  */
 
 #include "internal_flash_test.h"
+#include "product_def.h"
 #include "spi_flash.h"
 #include "debug.h"
 #include "gpio.h"
@@ -20,12 +21,15 @@
 #define TEST_TIMEOUT        100             /* Flash操作超时(ms) */
 
 /* 测试缓冲区 */
+#if FLASH_TEST_EN
 static uint8_t test_write_buf[512];
 static uint8_t test_read_buf[512];
+#endif
 
 /**
  * @brief 测试单字节读写
  */
+#if FLASH_TEST_EN
 static bool test_single_byte(void)
 {
     uint8_t write_data = 0xAA;
@@ -336,3 +340,12 @@ void InternalFlash_QuickTest(void)
         write_val, read_val, 
         (write_val == read_val) ? "[OK]" : "[FAIL]");
 }
+
+#endif /* FLASH_TEST_EN */
+
+/* 公开接口：FLASH_TEST_EN=0 时提供空实现，避免链接错误 */
+#if !FLASH_TEST_EN
+void InternalFlash_Test(void) {}
+void InternalFlashTestTask(void) {}
+void InternalFlash_QuickTest(void) {}
+#endif

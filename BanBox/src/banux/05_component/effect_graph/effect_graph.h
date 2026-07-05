@@ -62,9 +62,14 @@ extern "C" {
 #define EFFECT_GRAPH_MAX_INPUTS     4    /* 最大输入端口数 */
 #define EFFECT_GRAPH_MAX_OUTPUTS    4    /* 最大输出端口数 */
 #define EFFECT_GRAPH_NAME_LEN       16   /* 节点名称长度 */
-#define EFFECT_GRAPH_BUFFER_SIZE    200 /* 节点缓冲区大小：21×256×4=21504字节 (21KB)
-                                          * 现在使用PSRAM分配，不占用内部RAM
+#if REVERB_RAM_OPTIMIZE
+#define EFFECT_GRAPH_BUFFER_SIZE    128 /* 节点缓冲区大小：22×128×4=11264字节 (11KB)
+                                          * Reverb RAM优化：从200降到128，节省6336 bytes
+                                          * SBC单帧最大128样本，ADC帧48样本，128足够 */
+#else
+#define EFFECT_GRAPH_BUFFER_SIZE    200 /* 节点缓冲区大小：22×200×4=17600字节 (17.2KB)
                                           * 支持蓝牙、ADC等最大帧长需求 */
+#endif
 
 /*******************************************************************************
  * 节点类型定义

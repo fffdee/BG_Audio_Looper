@@ -25,9 +25,9 @@
 00000000 t exception_vector	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:20
 000000a4 t exception_vector_end	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:354
 000000a4 T stub	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:353
-00000104 t flash_udelay	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:627
-00000180 t flash_delayms	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:665
-0000019a t FshcGpioSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:674
+00000104 t flash_udelay
+00000180 t flash_delayms
+0000019a t FshcGpioSet
 000001bc t FshcInit
 000001d6 t FshcSendCmd
 0000020a t FshcSpiIOModeCfg
@@ -142,782 +142,775 @@
 00002d6e T AudioADC_DataLenGet	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:143
 00002d9a T AudioADC_DataGet	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/adc_interface.c:161
 00002dfc T AudioDAC_Init	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:14
-000030ba T AudioDAC_DataSet	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:250
-000030e8 T AudioDAC0DataSet	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:279
-0000310c T UART0_InitWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:31
-0000311e T UART1_InitWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:36
-00003130 T UART0_SendByteWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:90
-00003142 T UART1_SendByteWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:103
-00003154 T MCUCircular_Config	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:20
-00003160 T MCUCircular_GetSpaceLen	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:28
-00003176 T MCUCircular_PutData	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:41
-000031c6 T MCUCircular_GetDataLen	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:59
-000031e4 T MCUCircular_GetData	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:85
-00003250 t prvInsertBlockIntoFreeList	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:750
-00003296 T pvPortMalloc	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:170
-00003354 T vPortFree	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:474
-000033be T vPortDefineHeapRegions	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:811
-00003496 T GetIPSR	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:911
-000034aa T GetCurrentTaskHandle	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:924
-000034c6 T DeleteTaskMallocMem	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:934
-000034fe T vListInitialise	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:75
-00003512 T vListInitialiseItem	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:95
-00003518 T vListInsertEnd	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:102
-00003530 T vListInsert	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:121
-0000355e T uxListRemove	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:179
-00003580 T CtxRestore	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/os_cpu_a.S:70
-000035fe T vPortEndScheduler	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:242
-0000361a T pxPortInitialiseStack	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:145
-000036d6 T xPortStartScheduler	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:227
-000036ee T vPortYield	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:254
-000036fc T vPortEnterCritical	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:264
-0000372a T vPortExitCritical	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:281
-00003754 T ulPortSetInterruptMask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:293
-00003768 T vPortClearInterruptMask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:314
-00003772 W vPortISRStartFirstTask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/portISR.c:80
-00003784 t prvResetNextTaskUnblockTime	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3092
-000037ac t prvDeleteTCB	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3076
-000037c6 t prvAllocateTCBAndStack	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2904
-0000380c t prvInitialiseTCBVariables	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2693
-00003868 t prvInitialiseTaskLists	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2801
-000038b6 t prvAddCurrentTaskToDelayedList	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2874
-000038fc T xTaskGenericCreate	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:516
-00003a08 T vTaskDelete	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:696
-00003a88 T vTaskStartScheduler	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1447
-00003ae4 T vTaskSuspendAll	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1536
-00003af0 T pcTaskGetTaskName	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1723
-00003b12 T xTaskIncrementTick	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1842
-00003c24 T xTaskResumeAll	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1574
-00003cf6 T vTaskDelay	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:870
-00003d40 t prvCheckTasksWaitingTermination	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2833
-00003d8e t prvIdleTask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2546
-00003dac T vTaskSwitchContext	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2107
-00003e5a T xTaskGetCurrentTaskHandle	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3119
-00003e60 T prvInitialiseHeap	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:99
-00003e88 T vApplicationIdleHook	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:230
-00003e8a T trace_TASK_SWITCHED_IN	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:310
-00003e98 T trace_TASK_SWITCHED_OUT	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:319
-00003f16 T audio_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:64
-00003fc6 T audio_process	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:93
-00004092 T OnDeviceAudioSendIsoPacket	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:154
-0000419c T OTG_DeviceAudioInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:222
-0000419e T OTG_DeviceAudioRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:231
-0000449c T UsbSraInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:453
-000044c4 T UsbSraDataProcess	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:465
-00004576 T OnDeviceAudioRcvIsoPacket	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:101
-0000467a T OnDeviceCDC_BulkOutReceived	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:161
-000046e2 T OTG_DeviceCDC_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:36
-00004756 T OTG_DeviceCDC_DeInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:75
-00004774 T OTG_DeviceCDC_Request	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:85
-00004a44 T OTG_DeviceCDC_Receive	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:263
-00004aa0 T OTG_DeviceCDC_GetRxCount	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:289
-00004aa6 T OTG_DeviceCDC_FlushTx	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:307
-00004b34 T OTG_DeviceCDC_Send	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:221
-00004ba8 T OTG_DeviceCDC_Task	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:375
-00004baa T OTG_DeviceModeSel	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:67
-00004bf4 T OTG_DeviceSendResp	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:89
-00004c10 T OTG_DeviceGetDescriptor	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:99
-00004dbc T OTG_DeviceStandardRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:213
-00004f0c T OTG_DeviceClassRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:320
-00004fba T OTG_DeviceOtherRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:442
-00004fce T OTG_DeviceRequestProcess	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:457
-0000507e T UsbDevicePlayInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:63
-0000511c T UsbAudioMicSampleRateChange	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:154
-00005158 T UsbAudioSpeakerSampleRateChange	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:165
-00005194 T UsbAudioSpeakerDataGet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:179
-000051c2 T UsbAudioSpeakerDataLenGet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:189
-000051e8 T UsbAudioMicDataSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:199
-00005286 T UsbDeviceEnable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:245
-00005312 T UsbAudioTimer1msProcess	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:295
-00005398 t Console_AddLineWithColor	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:381
-00005490 t Console_AddLine	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:435
-000054a6 T Shell_DbgToLcdIsEnabled	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:1097
-000054ac T Shell_DbgToLcd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:1102
-000054cc t UpgradeTask	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/main.c:108
-00005540 T Timer2Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/main.c:59
-0000555e T main	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/main.c:145
-0000574a t crc32_calc	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:45
-0000577e t part_flag_seal	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:150
-0000579c t part_flag_valid	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:157
-000057c8 t calc_crc16	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:554
-00005806 t parser_reset	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:623
-00005814 t upgrade_compute_target	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:747
-00005888 t parser_verify	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:630
-000058dc t flash_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:721
-000058f4 t cdc_rx_available	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:546
-0000590c t cdc_rx_read	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:534
-00005928 t parse_poll	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:643
-00005a78 t flash_service_usb	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:687
-00005a8e t flash_erase	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:694
-00005af6 t cdc_tx_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:541
-00005b08 t send_pkt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:572
-00005b78 T PartFlag_Read	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:165
-00005bb8 T PartFlag_Default	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:178
-00005bd2 T PartFlag_Write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:185
-00005c16 T PartFlag_GetCaps	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:210
-00005c32 T PartFlag_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:70
-00005f38 T Boot_JumpTo	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:227
-00006078 t upgrade_run	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:780
-000068dc T Boot_CheckAndJumpIfNeeded	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:308
-00006a7c T Upgrade_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:1080
-00006ad2 T Upgrade_Process	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:1089
-00006ae4 t Default_Handler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:47
-00006ae4 W FFTInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W GpioInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W I2C_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W I2sInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W IRInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W RtcInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W SDIO0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W SPIM_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W SPIS_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W SWInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W SpdifInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W Timer3Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W Timer4Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W Timer5Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W Timer6Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W UART0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae4 W WakeupInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
-00006ae6 T ExceptionCommHandler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:53
-000072ae T __c_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:186
-000072e2 T __cpu_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:213
-00007384 T HardwareStackProtectEnable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:316
-000073aa T __init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:336
-000073cc T GIE_ENABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:16
-000073d6 T GIE_DISABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:21
-000073e4 T GIE_STATE_GET	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:27
-000073ec T NVIC_EnableIRQ	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:70
-00007404 T NVIC_SetPriority	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:94
-0000744e t GetPswINTL	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:30
-0000745c W SwUartSend	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:25
-0000745e T putchar	/cygdrive/c/Andestech/AndeSight300RDS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
-000074ee T nds_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:85
-0000750e T DbgUartInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:94
-00007532 T AudioADC_LREnable
-00007634 T AudioADC_Enable
-00007652 T AudioADC_Disable
-0000769c T AudioADC_HighPassFilterConfig
-000076b0 T AudioADC_HighPassFilterSet
-000076e6 T AudioADC_Clear
-000076fc T AudioADC_SampleRateGet
-00007780 T AudioADC_SampleRateSet
-000078b6 T AudioADC_FadeTimeSet
-00007912 T AudioADC_FadeEnable
-00007948 T AudioADC_SoftMute
-000079d4 T AudioADC_VolSet
-00007a32 T AudioADC_AnaInit
-00007a72 T AudioADC_PGASel
-00007c3a T AudioADC_PGAGainSet
-00007da6 T AudioADC_MicBias1Enable
-00007dbc T AudioADC_VcomConfig
-00007de0 T AudioADC_DynamicElementMatch
-00007e40 T AudioADC_IsOverflow
-00007e58 T AudioADC_OverflowClear
-00007e7a T Chip_VMIDDetectDisable
-00007e8c T Chip_Init
-00007f22 T Chip_MemInit
-00007f2e T Clock_Config
-00007fb0 T WaitOscillateWork
-00007fca T Clock_USBClkDivSet
-00007fdc T Clock_RcFreqGet
-00008082 T Clock_PllLock
-00008178 T Clock_APllLock
-0000826e T Clock_SysClkSelect
-000082fc T Clock_USBClkSelect
-00008328 T Clock_UARTClkSelect
-00008380 T Clock_Timer3ClkSelect
-000083aa T Clock_Module1Enable
-000083ba T Clock_Module2Enable
-000083ca T Clock_Module3Enable
-000083da T Clock_AudioPllClockSet
-00008536 T Clock_AudioMclkSel
-0000860e T EnableMPU
-00008670 T EnableIDCache
-000086b2 T DataCacheInvalidAll
-000086bc T DataCacheRangeInvalid
-00008722 t AudioDAC0_ChannelEnable
-0000878a t AudioDAC1_ChannelEnable
-000087ce T AudioDAC_Enable
-000087ec T AudioDAC_DitherDisable
-0000880a T AudioDAC_ScrambleDisable
-00008828 T AudioDAC_DoutModeSet
-00008868 T AudioDAC_EdgeSet
-000088ae T AudioDAC_DsmOutdisModeSet
-000088dc T AudioDAC_ZeroNumSet
-000088f0 T AudioDAC_SampleRateGet
-00008974 T AudioDAC_SampleRateSet
-00008aba T AudioDAC_Reset
-00008adc T AudioDAC_FadeTimeSet
-00008b44 T AudioDAC_FadeEnable
-00008b76 T AudioDAC_DigitalMute
-00008bb6 T AudioDAC_VolSet
-00008bfc T AudioDAC_VmidChargeOp
-00008c32 t AudioDAC0_PowerOn
-00008d2e t AudioDAC1_PowerOn
-00008de2 T AudioDAC_ClkEnable
-00008e10 T AudioDAC_FuncReset
-00008e3e T AudioDAC_VIMDControl
-00008e50 T AudioDAC_SCFMute
-00008e96 T AudioDAC_IBSelect
-00008ee0 T AudioDAC_AllPowerOn
-00009004 T AudioDAC_AllChannelEnable
-00009090 T AudioDAC_PowerOn
-000090b2 T AudioDAC_ChannelEnable
-000090d0 T DMA_ChannelAllocTableSet
-000090e2 T DMA_ChannelEnable
-0000910e T DMA_ChannelDisable
-0000913c T DMA_InterruptFlagClear
-000091e2 T DMA_CircularConfig
-000093c6 T DMA_CircularDataLenGet
-00009438 T DMA_CircularSpaceLenGet
-00009518 T DMA_CircularWritePtrSet
-0000954c T DMA_CircularDataPut
-000096b6 T DMA_CircularReadPtrSet
-000096e8 T DMA_CircularDataGet
-0000988e T Efuse_ReadData
-000098f4 T GPIO_PortAModeSet
-0000a57e T OTG_PortGetDP
-0000a58c T OTG_PortGetDM
-0000a59a T OTG_PortEnableDPPullUp
-0000a5c0 T OTG_PortDisableDPPullUp
-0000a5e6 T OTG_PortIsEnableDPPullUp
-0000a5f6 T OTG_PortEnablePullDown
-0000a61c T OTG_PortDisablePullDown
-0000a642 T OTG_PortIsEnablePullDown
-0000a64e T OTG_PortEnablePullUp500K
-0000a674 T OTG_PortDisablePullUp500K
-0000a69a T OTG_PortSetSpeed
-0000a6c0 T OTG_PortLinkCheck
-0000a8e4 t OTG_DeviceWaitEnd
-0000a95a T OTG_DeviceStallSend
-0000a9b8 T OTG_DeviceEndpointReset
-0000aa6c T OTG_DeviceAddressSet
-0000aaa6 T OTG_DeviceInit
-0000ab28 T OTG_DeviceBusEventGet
-0000ab32 T OTG_DeviceControlSend
-0000ab8c T OTG_DeviceControlReceive
-0000ac04 T OTG_DeviceSetupReceive
-0000ac5a T OTG_DeviceBulkSend
-0000acba T OTG_DeviceBulkReceive
-0000ad5c T OTG_DeviceISOSend
-0000ad94 T OTG_DeviceISOReceive
-0000adde T UsbInterrupt
-0000ae3a T OTG_EndpointInterruptEnable
-0000ae6e T LoadFIFOData
-0000aed0 T UnloadFIFOData
-0000af32 T Remap_AddrRemapSet
-0000afcc T Remap_AddrRemapDisable
-0000b00c T Remap_InitTcm
-0000b03c T SysTickInit
-0000b066 T SysTimerIntFlagClear
-0000b074 T ClockFreqGet
-0000b0a0 T Timer_Config
-0000b238 T Timer_Start
-0000b2b0 T Timer_Pause
-0000b32c T Timer_InterruptFlagClear
-0000b3e0 t UART_BaudClkGet
-0000b436 T UART0_Init
-0000b5f6 T UART1_Init
-0000b7b6 T UART0_SendByte
-0000b7f6 T UART1_SendByte
-0000b836 T WDG_Disable
-0000b85c T sra_init
-0000b868 T sra_apply
-0000bde8 T resampler_init
-0000c29c T resampler_apply
-0000f19c T platform_reset
-0000f1ce T ld_channel_assess
-0000f21c T ld_read_clock
-0000f240 t ld_acl_rx_no_sync
-0000f2e6 t ld_acl_rsw_rx
-0000f34a t ld_acl_rsw_evt_start_cbk
-0000f3ac t ld_acl_tx_packet_type_select
-0000f45c t ld_acl_rsw_fhs_rx
-0000f4e0 t ld_acl_rx_sync2
-0000f604 t ld_acl_rsw_end
-0000f7c6 t ld_acl_automatic_data_flush
-0000fa1a t ld_acl_end
-0000fb3a t ld_acl_sched
-0000fc52 t ld_acl_rsw_start
-0000fefe t ld_acl_rsw_evt_canceled_cbk
-0000ff3a t ld_acl_rsw_frm_isr
-00010322 t ld_acl_rsw_frm_cbk
-00010350 t ld_acl_sniff_sched
-000105e6 t ld_acl_sniff_evt_canceled_cbk
-00010610 t ld_acl_sniff_trans_sched
-00010706 t ld_acl_sniff_enter
-000107d0 t ld_acl_resched
-00010830 t ld_acl_evt_stop_cbk
-00010862 t ld_acl_sket_isr
-000108a0 t ld_acl_sniff_evt_start_cbk
-00010ad2 t ld_acl_rx_sync
-00010c8a t ld_acl_sniff_exit
-00010d18 t ld_acl_sniff_frm_isr
-00010de0 t ld_acl_tx_prog
-00011078 t ld_acl_tx
-00011218 t ld_acl_rx_isr
-00011242 t ld_acl_sniff_frm_cbk
-00011284 t ld_acl_evt_start_cbk
-00011484 t ld_acl_test_mode_update
-00011944 t ld_acl_frm_isr
-00011b60 t ld_acl_frm_cbk
-00011b98 t ld_acl_evt_canceled_cbk
-00011c74 T ld_sco_audio_isr
-00011db0 T ld_fm_clk_isr
-00011dea T ld_fm_rx_isr
-00011e10 T ld_fm_frame_isr
-00011e5e T ld_fm_sket_isr
-00011ec2 T ld_fm_prog_enable
-00011ee2 T ld_fm_prog_disable
-00011efc T ld_fm_prog_push
-00011fae T ld_sched_compute
-000120be T ld_sched_acl_remove
-000120de T ld_sched_sniff_add
-00012112 T ld_sched_sniff_remove
-00012142 T ld_util_fhs_unpk
-00012236 t ea_conflict_check
-0001239a t ea_offset_update
-000123bc T ea_elt_cancel
-000124f2 T ea_elt_create
-00012516 T ea_finetimer_isr
-00012670 T ea_sw_isr
-0001269c T ea_offset_req
-00012832 T ea_time_get_halfslot_rounded
-00012856 T ea_time_get_slot_rounded
-00012896 t ea_prog_timer
-000129d8 T ea_elt_insert
-00012c50 T ea_elt_remove
-00012cc0 T ea_interval_duration_req
-00012d5c T ea_alarm_clear
-00012da2 t hci_evt_mask_check
-00012e18 t hci_evt_filter_inq_check
-00012eda t hci_evt_filter_con_check
-00013120 t hci_evt_filter_check
-00013284 T hci_send_2_host
-000132b0 T hci_fc_acl_packet_sent
-000132c2 T hci_fc_sync_packet_sent
-000132d4 T hci_fc_check_host_available_nb_acl_packets
-000132f6 T hci_fc_check_host_available_nb_sync_packets
-00013318 t hci_build_cc_evt
-000133aa t hci_build_cs_evt
-000133f0 t hci_build_evt
-0001344e t hci_build_le_evt
-000134b6 t hci_build_acl_rx_data
-000134f2 t hci_build_bt_acl_rx_data
-00013540 t hci_build_bt_sync_rx_data
-00013590 t hci_tx_start
-000136b0 t hci_tx_trigger
-000136ca t hci_tx_done
-00013792 T hci_tl_send
-00013810 t hci_util_read_array_size
-0001384a T hci_util_pack
-0001394c T co_htobs
-0001394e T co_btohs
-00013950 T co_list_init
-00013958 T co_list_push_front
-00013964 T co_list_extract
-000139aa T co_list_extract_after
-000139c0 T co_list_find
-000139d2 T co_list_insert_after
-00013a16 T co_rand_byte
-00013a2a T co_min
-00013a32 T co_max
-00013a3a T co_abs
-00013a40 T co_read16p
-00013a4c T co_read32p
-00013a6a T co_write32p
-00013a7e T co_write16p
-00013a86 t h4tl_tx_done
-00013aa0 T h4tl_write
-00013ade T h4tl_start
-00013ae0 T ke_event_set
-00013b0a t ke_mem_is_in_heap
-00013b32 T ke_malloc
-00013bfa T ke_free
-00013cd0 T ke_param2msg
-00013cd4 T ke_msg2param
-00013cd8 T ke_msg_alloc
-00013d12 T ke_msg_send
-00013d38 T ke_msg_send_basic
-00013d50 T ke_msg_free
-00013d62 T ke_queue_push
-00013d76 T ke_queue_pop
-00013d86 T ke_queue_extract
-00013dc8 T ke_queue_insert
-00013dfc t cmp_dest_id
-00013e06 t ke_task_saved_update
-00013e3e T ke_state_set
-00013e78 T ke_state_get
-00013ea2 t ke_time_cmp
-00013eb4 t cmp_abs_time
-00013ece t cmp_timer_id
-00013ee8 t ke_timer_hw_set
-00013f1a t ke_time
-00013f30 t ke_time_past
-00013f46 T ke_timer_set
-00013ff6 T ke_timer_clear
-00014052 T rwip_wakeup_end
-00014078 T rwip_prevent_sleep_set
-00014098 T rwip_wakeup
-000140b4 T rwip_prevent_sleep_clear
-000140d4 T rwip_sleep_lpcycles_2_us
-000140de T ble_rxwinszdef_getf
-000140ee T ble_intstat_get
-000140f8 T ble_intack_clear
-00014102 T ble_basetimecnt_get
-0001410c T ble_samp_getf
-00014118 T ble_samp_setf
-00014126 T bt_intcntl_set
-0001412e T bt_intcntl_grosstgtintmsk_getf
-0001413a T bt_intcntl_grosstgtintmsk_setf
-0001414e T bt_intcntl_finetgtintmsk_getf
-0001415a T bt_intcntl_finetgtintmsk_setf
-0001416e T bt_intack_clear
-00014176 T bt_intack_errorintack_clearf
-00014182 T bt_intack_audioint1ack_clearf
-0001418c T bt_intack_audioint0ack_clearf
-00014196 T bt_finetimecnt_get
-000141a0 T bt_deepslcntl_extwkupdsb_setf
-000141b8 T bt_deepslcntl_deep_sleep_corr_en_setf
-000141ce T bt_deepslstat_get
-000141d8 T bt_finecntcorr_setf
-000141e2 T bt_clkncntcorr_pack
-000141f2 T bt_rftestcntl_sserrren_setf
-0001420a T bt_rftestcntl_herrren_setf
-00014222 T bt_rftestfreq_directloopbacken_setf
-0001423a T bt_rftestfreq_testmodeen_setf
-00014252 T bt_rftestfreq_rxfreq_setf
-0001426a T bt_rftestfreq_txfreq_setf
-0001427e T bt_grosstimtgt_grosstarget_setf
-00014288 T bt_finetimtgt_get
-00014292 T bt_finetimtgt_finetarget_setf
-0001429c T bt_sketclkn_getf
-000142a6 T bt_e_scochancntl_pack
-000142ce T bt_e_scochancntl_tog_getf
-000142e0 T bt_e_scomutecntl_pack
-00014308 T bt_e_scomutecntl_invl_1_getf
-0001431c T bt_e_scomutecntl_invl_0_getf
-00014330 T bt_e_scocurrenttxptr_pack
-00014346 T bt_e_scocurrenttxptr_e_scoptrtx_1_getf
-00014358 T bt_e_scocurrenttxptr_e_scoptrtx_1_setf
-00014374 T bt_e_scocurrenttxptr_e_scoptrtx_0_getf
-00014386 T bt_e_scocurrenttxptr_e_scoptrtx_0_setf
-000143a2 T bt_e_scocurrentrxptr_pack
-000143b8 T bt_e_scocurrentrxptr_e_scoptrrx_1_getf
-000143ca T bt_e_scocurrentrxptr_e_scoptrrx_1_setf
-000143e6 T bt_e_scocurrentrxptr_e_scoptrrx_0_getf
-000143f8 T bt_e_scocurrentrxptr_e_scoptrrx_0_setf
-00014414 T bt_e_scoltcntl_pack
-00014436 T bt_e_scotrcntl_pack
-0001445c T em_bt_frcntl_format_setf
-0001447c T em_bt_bitoff_getf
-00014490 T em_bt_clkoff0_getf
-000144a4 T em_bt_clkoff1_getf
-000144b8 T em_bt_linkcntl_afhena_setf
-000144de T em_bt_linkcntl_laap_setf
-00014504 T em_bt_linkcntl_whdsb_setf
-0001452a T em_bt_linkcntl_acledr_setf
-00014550 T em_bt_linkcntl_aclltaddr_getf
-0001456a T em_bt_linkcntl_aclltaddr_setf
-0001458e T em_bt_bdaddr_setf
-000145a6 T em_bt_bch0_setf
-000145ba T em_bt_bch1_setf
-000145ce T em_bt_rxmaxbuf_bch2_pack
-000145e8 T em_bt_pwrcntl_fh_en_setf
-0001460c T em_bt_pwrcntl_freq_setf
-00014630 T em_bt_txrxcntl_rxthr_setf
-00014654 T em_bt_txrxcntl_rxbcry_setf
-0001467a T em_bt_txrxcntl_rxcrypt_setf
-0001469e T em_bt_txrxcntl_txbcry_setf
-000146c0 T em_bt_txrxcntl_txcrypt_setf
-000146e0 T em_bt_txdescptr_get
-000146f4 T em_bt_txdescptr_setf
-00014708 T em_bt_loopcntl_to_nb_setf
-00014728 T em_bt_loopcntl_att_nb_setf
-00014748 T em_bt_maxfrmtime_setf
-0001475c T em_bt_rxclkn0_getf
-00014770 T em_bt_rxclkn1_getf
-00014784 T em_bt_rxbit_rxbit_getf
-0001479c T em_bt_acltxstat_fcrc_setf
-000147c2 T em_bt_acltxstat_fnak_setf
-000147e8 T em_bt_acltxstat_rswitch_setf
-0001480e T em_bt_aclrxstat_rxid_getf
-00014826 T em_bt_acldmpriocntl_pack
-0001484c T em_bt_txptr_pack
-00014866 T em_bt_txheader_txltaddr_setf
-00014884 T em_bt_txpheader_pack
-000148a6 T BtStackRcvData
-00014922 T RXBUFF_Alloc
-000149fc T LEtoHost16
-00014a08 T _InsertTailList
-00014a16 T _RemoveHeadList
-00014a24 T HciBufferInd
-00014a54 T em_rd
-00014a6c T em_wr
-00014a88 T em_set
-00014aa4 T em_rd32p
-00014abc T em_wr16p
-00014ad4 T em_rd8p
-00014ade T em_wr8p
-00014ae8 T em_buf_rx_free
-00014afc T em_buf_rx_buff_addr_get
-00014b14 T em_buf_rx_current_get
-00014b1a T em_buf_rx_current_set
-00014b20 T em_buf_rx_next
-00014b26 T em_read_8
-00014b44 T em_read_16
-00014b66 T bt_util_buf_lmp_tx_free
-00014bb6 T bt_util_buf_acl_rx_alloc
-00014bca T bt_util_buf_acl_rx_free
-00014c28 T bt_util_buf_acl_tx_alloc
-00014c3c T bt_util_buf_acl_tx_free
-00014c9a T bt_util_buf_sync_tx_free
-00014cf4 T bt_util_buf_sync_rx_alloc
-00014d22 T bt_util_buf_sync_rx_free
-00014d88 T rwbt_sleep_wakeup
-00014e0c T rwbt_sleep_wakeup_end
-00014e2c t hci_pack_bytes
-00014e74 t hci_wr_curr_iac_lap_cmd_upk
-00014efc t hci_wr_stored_lk_cmd_upk
-00014fa6 t hci_set_evt_filter_cmd_upk
-000150f8 t hci_host_nb_cmp_pkts_cmd_pkupk
-00015184 t hci_le_dir_adv_report_evt_pkupk
-00015292 t hci_le_adv_report_evt_pkupk
-000153d0 T hci_look_for_cmd_desc
-0001541c T hci_look_for_evt_desc
-00015442 T hci_look_for_le_evt_desc
-00015466 T ble_rxdone_setf
-00015488 T ble_rxstat_get
-0001549a T ble_rxphce_get
-000154ac T ble_rxmd_getf
-000154c2 T ble_rxchass_unpack
-000154e6 T ble_rxdataptr_get
-000154f8 T llc_con_update_complete_send
-00015580 T llc_feats_rd_event_send
-000155c0 T llc_version_rd_event_send
-00015612 T llc_common_enc_key_ref_comp_evt_send
-00015636 T llc_common_enc_change_evt_send
-000156be T llc_lsto_con_update
-00015704 T llc_map_update_ind
-0001576a t llc_elt_in_process
-0001578a T llc_util_dicon_procedure
-000157c4 T llc_util_clear_operation_ptr
-000157ee T llc_start_enc_tx
-00015854 T llc_start_enc_rx
-000158bc T llc_util_ivs_set
-000158f6 T llc_util_set_operation_ptr
-00015904 T llc_util_get_operation_ptr
-00015912 T llc_state_chk
-0001591c T llc_state_update
-00015940 T lld_con_param_rsp
-00015a60 T lld_con_stop
-00015a76 T lld_get_mode
-00015a9c T lld_ch_map_ind
-00015aec T lld_con_update_ind
-00015b04 T lld_crypt_isr
-00015b18 t lld_evt_slave_wakeup
-00015b3a t lld_evt_priority_reset
-00015b44 t lld_evt_deferred_elt_push
-00015b82 t lld_evt_slave_instant_evt
-00015bd6 t lld_evt_elt_wait_insert
-00015c06 t lld_evt_elt_wait_get
-00015c48 t lld_evt_winsize_change
-00015cda t lld_evt_slave_time_compute
-00015dae t lld_evt_check_md_bit
-00015dda t lld_evt_get_next_free_slot
-00015e22 t lld_evt_continue
-00015e7a T lld_evt_sca_get
-00015e80 T lld_evt_delete_elt_push
-00015ee0 t lld_evt_slave_param_update_perform
-000160ba t lld_evt_slave_instant
-000160fc T lld_evt_channel_next
-0001614c T lld_evt_init_evt
-00016192 T lld_evt_drift_compute
-000161ae t lld_evt_rxwin_update
-000161fc t lld_evt_rxwin_compute
-00016244 T lld_evt_restart
-00016558 T lld_evt_elt_insert
-000165b4 T lld_evt_schedule_next
-00016776 T lld_evt_slave_update
-000168fe T lld_evt_end
-00016a2c T lld_evt_rx
-00016a66 T lld_evt_end_isr
-00016abc T lld_evt_rx_isr
-00016ad4 t lld_pdu_llcp_length_rsp_unpk
-00016b06 t lld_pdu_llcp_length_req_unpk
-00016b38 t lld_pdu_llcp_con_param_rsp_unpk
-00016bce t lld_pdu_llcp_con_param_req_unpk
-00016c64 t lld_pdu_cntl_aligned_unpk
-00016c80 t lld_pdu_llcp_unpack
-00016ce6 t lld_pdu_llcp_rx_handler
-00016d30 T lld_pdu_rx_handler
-00016ec6 T lld_util_get_local_offset
-00016ed6 T lld_util_get_peer_offset
-00016ee8 T lld_util_instant_ongoing
-00016ef4 T lld_util_compute_ce_max
-00016fbc T lld_util_priority_set
-000170a0 T lld_util_get_tx_pkt_cnt
-000170a6 T lld_util_eff_tx_time_set
-000170b0 T lld_util_max_lat_compute
-0001710e T llm_util_check_map_validity
-00017160 T llm_util_get_adv_type
-00017172 T llm_util_check_evt_mask
-0001718e T llm_util_get_supp_features
-0001719c T ble_fcntoffset_set
-000171b0 T ble_link_get
-000171c4 T ble_link_set
-000171d8 T ble_rxthr_getf
-000171ee T ble_hopcntl_get
-00017202 T ble_ch_idx_setf
-00017222 T ble_rxwincntl_get
-00017236 T ble_rxwincntl_set
-0001724a T ble_minevtime_get
-0001725e T ble_minevtime_set
-00017272 T ble_maxevtime_set
-00017286 T ble_chmap0_set
-0001729a T ble_chmap1_set
-000172ae T ble_chmap2_set
-000172c2 T ble_iv_setf
-000172da T ble_txccmpktcnt0_set
-000172ee T ble_txccmpktcnt1_set
-00017302 T ble_txccmpktcnt2_set
-00017316 T ble_rxccmpktcnt0_set
-0001732a T ble_rxccmpktcnt1_set
-0001733e T ble_rxccmpktcnt2_set
-00017352 T ble_btcntsync0_get
-00017366 T ble_btcntsync1_get
-0001737a T ble_evtrxok_getf
-00017390 T ble_fcntrxsync_getf
-000173a8 T ble_aclrxdesccnt_getf
-000173be T ble_acltxdesccnt_getf
-000173d4 T ble_isorxpktcntl_getf
-000173ea T ble_conflict_getf
-00017402 t llc_llcp_send
-00017484 t llcp_ping_rsp_handler
-000174f4 t llc_llcp_reject_ind
-00017738 t llcp_reject_ind_ext_handler
-00017750 t llcp_reject_ind_handler
-00017768 t llcp_enc_rsp_handler
-0001782e t llcp_pause_enc_req_handler
-00017906 t llcp_start_enc_req_handler
-00017980 t llcp_unknown_rsp_handler
-00017bb8 t llcp_enc_req_handler
-00017ca0 t llcp_terminate_ind_handler
-00017cee T llc_llcp_version_ind_pdu_send
-00017d2e t llcp_vers_ind_handler
-00017dce T llc_llcp_pause_enc_rsp_pdu_send
-00017e14 t llcp_pause_enc_rsp_handler
-00017f0e T llc_llcp_start_enc_rsp_pdu_send
-00017f46 t llcp_start_enc_rsp_handler
-00018080 T llc_llcp_reject_ind_pdu_send
-000180e8 t llcp_length_rsp_handler
-0001826c t llcp_con_param_rsp_handler
-000183c0 t llcp_feats_rsp_handler
-0001847c t llcp_channel_map_ind_handler
-000185d0 t llcp_con_upd_ind_handler
-00018760 T llc_llcp_con_param_rsp_pdu_send
-0001880a t llcp_con_param_req_handler
-00018b04 T llc_llcp_feats_rsp_pdu_send
-00018b2e t llcp_feats_req_handler
-00018b88 t llcp_slave_feature_req_handler
-00018b9a T llc_llcp_unknown_rsp_send_pdu
-00018bbc t llc_llcp_unknown_ind_handler
-00018bee T llc_llcp_ping_rsp_pdu_send
-00018c0c t llcp_ping_req_handler
-00018c3c T llc_llcp_length_rsp_pdu_send
-00018c96 t llcp_length_req_handler
-00018dbe T llc_llcp_recv_handler
-00018e58 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
-00018e98 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
-00018ef0 T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
-00019048 T __fixunsdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3929
-00019098 T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
-00019628 T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
-00019ad8 T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
-00019ad8 T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
-00019b7c T __ledf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:35
-00019b7c T __ltdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:36
-00019c20 T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
-0001a00c T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
-0001a076 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
-0001a09e T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
-0001a0c4 T memcmp
-0001a0fc T memcpy
-0001a128 T memset
-0001a158 T printf
-0001a162 T puts
-0001a1b2 T rand
-0001a1ec T snprintf
-0001a1f8 T strcpy
-0001a20c T strlen
-0001a218 t vprintf_help
-0001a24c T vprintf
-0001a298 t vsnprintf_help
-0001a2c6 T vsnprintf
-0001a2f0 T do_printf
-0001a798 t sep_frac
-0001a7ca T _printf_float
-0001ae9c T abs
-0001aea4 T _write
-0001af9c r DmaChannelMap	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:13
-0001b2a0 R DeviceString_LangID	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:52
-0001b2a4 R DeviceQualifier	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:45
-0001b2b0 R InterFaceNum_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:528
-0001b2b8 R ConfigDescriptor_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:477
-0001b3d4 R InterFaceNum_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:473
-0001b3dc R ConfigDescriptor_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:440
-0001b488 R InterFaceNum_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:436
-0001b490 R ConfigDescriptor_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:411
-0001b4d4 R InterFaceNum_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:407
-0001b4dc R ConfigDescriptor_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:399
-0001b4f0 R InterFaceNum_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:395
-0001b4f8 R ConfigDescriptor_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:346
-0001b60c R InterFaceNum_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:342
-0001b614 R ConfigDescriptor_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:303
-0001b6d0 R InterFaceNum_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:300
-0001b6d8 R ConfigDescriptor_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:259
-0001b78c R InterFaceNum_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:256
-0001b794 R ConfigDescriptor_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:246
-0001b7b4 R InterFaceNum_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:243
-0001b7bc R ConfigDescriptor_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:199
-0001b8b8 R InterFaceNum_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:197
-0001b8c0 R ConfigDescriptor_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:153
-0001b9bc R InterFaceNum_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:151
-0001b9c4 R ConfigDescriptor_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:116
-0001ba68 R InterFaceNum_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:112
-0001ba70 R ConfigDescriptor_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:78
-0001bb0c R HidDataReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:48
-0001bb30 R AudioCtrlReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:25
-0001cc70 R MPUConfigTable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:383
-0001cee0 r SRA_NI
-0001d750 r LARGE_FILTER_IMPD
-00021750 r LARGE_FILTER_IMP
-00025750 r SMALL_FILTER_IMPD
-00026f50 r SMALL_FILTER_IMP
-00027b50 R ld_acl_edr_sizes
-00027b60 R ld_acl_edr_types
-00027b68 R ld_acl_br_sizes
-00027b74 R ld_acl_br_types
-00027b7c r prbs_64bytes
-00027bbc R co_sca2ppm
-00027bcc R rwip_priority
-00027ec8 R hci_evt_le_desc_tab
-00027f20 R hci_evt_desc_tab
-000280a0 R hci_cmd_desc_root_tab
-000280e0 R hci_cmd_desc_tab_vs
-00028104 R hci_cmd_desc_tab_le
-0002832c R hci_cmd_desc_tab_testing
-00028368 R hci_cmd_desc_tab_stat_par
-000283bc R hci_cmd_desc_tab_info_par
-0002841c R hci_cmd_desc_tab_ctrl_bb
-000287ac R hci_cmd_desc_tab_lk_pol
-00028830 R hci_cmd_desc_tab_lk_ctrl
-00028a48 R lld_pdu_llcp_pk_desc_tab
-00028b50 R llm_local_le_feats
-00028b58 r llcp_pdu_handler
-00028c20 A __data_lmastart
-000290b0 A EILM_SIZE
+0000305c T AudioDAC_DataSet	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:250
+0000308a T AudioDAC0DataSet	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/dac_interface.c:279
+000030ae T UART0_InitWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:31
+000030c0 T UART1_InitWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:36
+000030d2 T UART0_SendByteWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:90
+000030e4 T UART1_SendByteWpr	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/src/uarts_interface.c:103
+000030f6 T MCUCircular_Config	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:20
+00003102 T MCUCircular_GetSpaceLen	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:28
+00003118 T MCUCircular_PutData	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:41
+00003168 T MCUCircular_GetDataLen	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:59
+00003186 T MCUCircular_GetData	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/mv_utils/src/mcu_circular_buf.c:85
+000031f2 t prvInsertBlockIntoFreeList	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:750
+00003238 T pvPortMalloc	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:170
+000032f6 T vPortFree	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:474
+00003360 T vPortDefineHeapRegions	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:811
+00003438 T GetIPSR	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:911
+0000344c T GetCurrentTaskHandle	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:924
+00003468 T DeleteTaskMallocMem	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/heap_5s.c:934
+000034a0 T vListInitialise	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:75
+000034b4 T vListInitialiseItem	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:95
+000034ba T vListInsertEnd	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:102
+000034d2 T vListInsert	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:121
+00003500 T uxListRemove	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/list.c:179
+00003522 T CtxRestore	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/os_cpu_a.S:70
+000035a0 T vPortEndScheduler	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:242
+000035bc T pxPortInitialiseStack	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:145
+00003678 T xPortStartScheduler	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:227
+00003690 T vPortYield	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:254
+0000369e T vPortEnterCritical	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:264
+000036cc T vPortExitCritical	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:281
+000036f6 T ulPortSetInterruptMask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:293
+0000370a T vPortClearInterruptMask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/port.c:314
+00003714 W vPortISRStartFirstTask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/portISR.c:80
+00003726 t prvResetNextTaskUnblockTime	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3092
+0000374e t prvDeleteTCB	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3076
+00003768 t prvAllocateTCBAndStack	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2904
+000037ae t prvInitialiseTCBVariables	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2693
+0000380a t prvInitialiseTaskLists	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2801
+00003858 t prvAddCurrentTaskToDelayedList	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2874
+0000389e T xTaskGenericCreate	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:516
+000039aa T vTaskDelete	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:696
+00003a2a T vTaskStartScheduler	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1447
+00003a86 T vTaskSuspendAll	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1536
+00003a92 T pcTaskGetTaskName	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1723
+00003ab4 T xTaskIncrementTick	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1842
+00003bc6 T xTaskResumeAll	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:1574
+00003c98 T vTaskDelay	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:870
+00003ce2 t prvCheckTasksWaitingTermination	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2833
+00003d30 t prvIdleTask	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2546
+00003d4e T vTaskSwitchContext	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:2107
+00003dfc T xTaskGetCurrentTaskHandle	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:3119
+00003e02 T prvInitialiseHeap	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:99
+00003e2a T vApplicationIdleHook	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:230
+00003e2c T trace_TASK_SWITCHED_IN	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:310
+00003e3a T trace_TASK_SWITCHED_OUT	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:319
+00003eb8 T audio_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:64
+00003f68 T audio_process	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:93
+00004034 T OnDeviceAudioSendIsoPacket	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:154
+0000413e T OTG_DeviceAudioInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:222
+00004140 T OTG_DeviceAudioRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:231
+0000439e T UsbSraInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:453
+000043c6 T UsbSraDataProcess	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:465
+00004478 T OnDeviceAudioRcvIsoPacket	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:101
+0000457c T OnDeviceCDC_BulkOutReceived	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:161
+000045e4 T OTG_DeviceCDC_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:36
+00004628 T OTG_DeviceCDC_DeInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:75
+00004648 T OTG_DeviceCDC_Request	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:85
+00004820 T OTG_DeviceCDC_Receive	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:263
+0000487c T OTG_DeviceCDC_GetRxCount	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:289
+00004882 T OTG_DeviceCDC_FlushTx	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:307
+00004910 T OTG_DeviceCDC_Send	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:221
+00004984 T OTG_DeviceCDC_Task	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:375
+00004986 T OTG_DeviceModeSel	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:67
+000049d0 T OTG_DeviceSendResp	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:89
+000049ec T OTG_DeviceGetDescriptor	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:99
+00004b80 T OTG_DeviceStandardRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:213
+00004cb8 T OTG_DeviceClassRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:320
+00004d48 T OTG_DeviceOtherRequest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:442
+00004d5c T OTG_DeviceRequestProcess	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:457
+00004e0c T UsbDevicePlayInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:63
+00004ea6 T UsbAudioMicSampleRateChange	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:154
+00004ee2 T UsbAudioSpeakerSampleRateChange	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:165
+00004f1e T UsbAudioSpeakerDataGet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:179
+00004f4c T UsbAudioSpeakerDataLenGet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:189
+00004f72 T UsbAudioMicDataSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:199
+00005010 T UsbDeviceEnable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:245
+0000507e T UsbAudioTimer1msProcess	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:295
+00005104 t UpgradeTask	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/main.c:108
+00005152 T Timer2Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/main.c:59
+00005170 T main	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/main.c:145
+000052a2 t crc32_calc	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:45
+000052d6 t part_flag_seal	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:150
+000052f4 t part_flag_valid	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:157
+00005320 t calc_crc16	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:554
+0000535e t parser_reset	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:623
+0000536c t upgrade_compute_target	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:747
+000053a6 t parser_verify	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:630
+000053fa t flash_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:721
+00005412 t cdc_rx_available	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:546
+0000542a t cdc_rx_read	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:534
+00005448 t parse_poll	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:643
+00005598 t flash_service_usb	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:687
+000055ae t flash_erase	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:694
+00005616 t cdc_tx_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:541
+00005628 t send_pkt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:572
+00005698 T PartFlag_Read	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:165
+000056d8 T PartFlag_Default	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:178
+000056f2 T PartFlag_Write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:185
+00005736 T PartFlag_GetCaps	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:210
+00005752 T PartFlag_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:70
+000058e2 T Boot_JumpTo	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:227
+00005a04 t upgrade_run	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:780
+00005fd4 T Boot_CheckAndJumpIfNeeded	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:308
+00006090 T Upgrade_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:1080
+000060c8 T Upgrade_Process	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:1089
+000060da t Default_Handler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:47
+000060da W FFTInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W GpioInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W I2C_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W I2sInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W IRInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W RtcInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W SDIO0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W SPIM_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W SPIS_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W SWInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W SpdifInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W Timer3Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W Timer4Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W Timer5Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W Timer6Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W UART0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060da W WakeupInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:49
+000060dc T ExceptionCommHandler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:53
+00006304 T __c_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:186
+00006338 T __cpu_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:213
+000063da T HardwareStackProtectEnable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:316
+00006400 T __init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:336
+00006422 T GIE_ENABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:16
+0000642c T GIE_DISABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:21
+0000643a T GIE_STATE_GET	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:27
+00006442 T NVIC_EnableIRQ	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:70
+0000645a T NVIC_SetPriority	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/interrupt.c:94
+000064a4 t GetPswINTL	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:30
+000064b2 W SwUartSend	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:25
+000064b4 T putchar	/cygdrive/c/Andestech/AndeSight300RDS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
+00006544 T nds_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:85
+00006564 T DbgUartInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:94
+00006588 T AudioADC_LREnable
+0000668a T AudioADC_Enable
+000066a8 T AudioADC_Disable
+000066f2 T AudioADC_HighPassFilterConfig
+00006706 T AudioADC_HighPassFilterSet
+0000673c T AudioADC_Clear
+00006752 T AudioADC_SampleRateGet
+000067d6 T AudioADC_SampleRateSet
+0000690c T AudioADC_FadeTimeSet
+00006968 T AudioADC_FadeEnable
+0000699e T AudioADC_SoftMute
+00006a2a T AudioADC_VolSet
+00006a88 T AudioADC_AnaInit
+00006ac8 T AudioADC_PGASel
+00006c90 T AudioADC_PGAGainSet
+00006dfc T AudioADC_MicBias1Enable
+00006e12 T AudioADC_VcomConfig
+00006e36 T AudioADC_DynamicElementMatch
+00006e96 T AudioADC_IsOverflow
+00006eae T AudioADC_OverflowClear
+00006ed0 T Chip_VMIDDetectDisable
+00006ee2 T Chip_Init
+00006f78 T Chip_MemInit
+00006f84 T Clock_Config
+00007006 T WaitOscillateWork
+00007020 T Clock_USBClkDivSet
+00007032 T Clock_RcFreqGet
+000070d8 T Clock_PllLock
+000071ce T Clock_APllLock
+000072c4 T Clock_SysClkSelect
+00007352 T Clock_USBClkSelect
+0000737e T Clock_UARTClkSelect
+000073d6 T Clock_Timer3ClkSelect
+00007400 T Clock_Module1Enable
+00007410 T Clock_Module2Enable
+00007420 T Clock_Module3Enable
+00007430 T Clock_AudioPllClockSet
+0000758c T Clock_AudioMclkSel
+00007664 T EnableMPU
+000076c6 T EnableIDCache
+00007708 T DataCacheInvalidAll
+00007712 T DataCacheRangeInvalid
+00007778 t AudioDAC0_ChannelEnable
+000077e0 t AudioDAC1_ChannelEnable
+00007824 T AudioDAC_Enable
+00007842 T AudioDAC_DitherDisable
+00007860 T AudioDAC_ScrambleDisable
+0000787e T AudioDAC_DoutModeSet
+000078be T AudioDAC_EdgeSet
+00007904 T AudioDAC_DsmOutdisModeSet
+00007932 T AudioDAC_ZeroNumSet
+00007946 T AudioDAC_SampleRateGet
+000079ca T AudioDAC_SampleRateSet
+00007b10 T AudioDAC_Reset
+00007b32 T AudioDAC_FadeTimeSet
+00007b9a T AudioDAC_FadeEnable
+00007bcc T AudioDAC_DigitalMute
+00007c0c T AudioDAC_VolSet
+00007c52 T AudioDAC_VmidChargeOp
+00007c88 t AudioDAC0_PowerOn
+00007d84 t AudioDAC1_PowerOn
+00007e38 T AudioDAC_ClkEnable
+00007e66 T AudioDAC_FuncReset
+00007e94 T AudioDAC_VIMDControl
+00007ea6 T AudioDAC_SCFMute
+00007eec T AudioDAC_IBSelect
+00007f36 T AudioDAC_AllPowerOn
+0000805a T AudioDAC_AllChannelEnable
+000080e6 T AudioDAC_PowerOn
+00008108 T AudioDAC_ChannelEnable
+00008126 T DMA_ChannelAllocTableSet
+00008138 T DMA_ChannelEnable
+00008164 T DMA_ChannelDisable
+00008192 T DMA_InterruptFlagClear
+00008238 T DMA_CircularConfig
+0000841c T DMA_CircularDataLenGet
+0000848e T DMA_CircularSpaceLenGet
+0000856e T DMA_CircularWritePtrSet
+000085a2 T DMA_CircularDataPut
+0000870c T DMA_CircularReadPtrSet
+0000873e T DMA_CircularDataGet
+000088e4 T Efuse_ReadData
+0000894a T GPIO_PortAModeSet
+000095d4 T OTG_PortGetDP
+000095e2 T OTG_PortGetDM
+000095f0 T OTG_PortEnableDPPullUp
+00009616 T OTG_PortDisableDPPullUp
+0000963c T OTG_PortIsEnableDPPullUp
+0000964c T OTG_PortEnablePullDown
+00009672 T OTG_PortDisablePullDown
+00009698 T OTG_PortIsEnablePullDown
+000096a4 T OTG_PortEnablePullUp500K
+000096ca T OTG_PortDisablePullUp500K
+000096f0 T OTG_PortSetSpeed
+00009716 T OTG_PortLinkCheck
+0000993a t OTG_DeviceWaitEnd
+000099b0 T OTG_DeviceStallSend
+00009a0e T OTG_DeviceEndpointReset
+00009ac2 T OTG_DeviceAddressSet
+00009afc T OTG_DeviceInit
+00009b7e T OTG_DeviceBusEventGet
+00009b88 T OTG_DeviceControlSend
+00009be2 T OTG_DeviceControlReceive
+00009c5a T OTG_DeviceSetupReceive
+00009cb0 T OTG_DeviceBulkSend
+00009d10 T OTG_DeviceBulkReceive
+00009db2 T OTG_DeviceISOSend
+00009dea T OTG_DeviceISOReceive
+00009e34 T UsbInterrupt
+00009e90 T OTG_EndpointInterruptEnable
+00009ec4 T LoadFIFOData
+00009f26 T UnloadFIFOData
+00009f88 T Remap_AddrRemapSet
+0000a022 T Remap_AddrRemapDisable
+0000a062 T Remap_InitTcm
+0000a092 T SysTickInit
+0000a0bc T SysTimerIntFlagClear
+0000a0ca T ClockFreqGet
+0000a0f8 T Timer_Config
+0000a290 T Timer_Start
+0000a308 T Timer_Pause
+0000a384 T Timer_InterruptFlagClear
+0000a438 t UART_BaudClkGet
+0000a48e T UART0_Init
+0000a64e T UART1_Init
+0000a80e T UART0_SendByte
+0000a84e T UART1_SendByte
+0000a88e T WDG_Disable
+0000a8b4 T sra_init
+0000a8c0 T sra_apply
+0000ae40 T resampler_init
+0000b2f4 T resampler_apply
+0000e1f4 T platform_reset
+0000e226 T ld_channel_assess
+0000e274 T ld_read_clock
+0000e298 t ld_acl_rx_no_sync
+0000e33e t ld_acl_rsw_rx
+0000e3a2 t ld_acl_rsw_evt_start_cbk
+0000e404 t ld_acl_tx_packet_type_select
+0000e4b4 t ld_acl_rsw_fhs_rx
+0000e538 t ld_acl_rx_sync2
+0000e65c t ld_acl_rsw_end
+0000e81e t ld_acl_automatic_data_flush
+0000ea72 t ld_acl_end
+0000eb92 t ld_acl_sched
+0000ecaa t ld_acl_rsw_start
+0000ef56 t ld_acl_rsw_evt_canceled_cbk
+0000ef92 t ld_acl_rsw_frm_isr
+0000f37a t ld_acl_rsw_frm_cbk
+0000f3a8 t ld_acl_sniff_sched
+0000f63e t ld_acl_sniff_evt_canceled_cbk
+0000f668 t ld_acl_sniff_trans_sched
+0000f75e t ld_acl_sniff_enter
+0000f828 t ld_acl_resched
+0000f888 t ld_acl_evt_stop_cbk
+0000f8ba t ld_acl_sket_isr
+0000f8f8 t ld_acl_sniff_evt_start_cbk
+0000fb2a t ld_acl_rx_sync
+0000fce2 t ld_acl_sniff_exit
+0000fd70 t ld_acl_sniff_frm_isr
+0000fe38 t ld_acl_tx_prog
+000100d0 t ld_acl_tx
+00010270 t ld_acl_rx_isr
+0001029a t ld_acl_sniff_frm_cbk
+000102dc t ld_acl_evt_start_cbk
+000104dc t ld_acl_test_mode_update
+0001099c t ld_acl_frm_isr
+00010bb8 t ld_acl_frm_cbk
+00010bf0 t ld_acl_evt_canceled_cbk
+00010ccc T ld_sco_audio_isr
+00010e08 T ld_fm_clk_isr
+00010e42 T ld_fm_rx_isr
+00010e68 T ld_fm_frame_isr
+00010eb6 T ld_fm_sket_isr
+00010f1a T ld_fm_prog_enable
+00010f3a T ld_fm_prog_disable
+00010f54 T ld_fm_prog_push
+00011006 T ld_sched_compute
+00011116 T ld_sched_acl_remove
+00011136 T ld_sched_sniff_add
+0001116a T ld_sched_sniff_remove
+0001119a T ld_util_fhs_unpk
+0001128e t ea_conflict_check
+000113f2 t ea_offset_update
+00011414 T ea_elt_cancel
+0001154a T ea_elt_create
+0001156e T ea_finetimer_isr
+000116c8 T ea_sw_isr
+000116f4 T ea_offset_req
+0001188a T ea_time_get_halfslot_rounded
+000118ae T ea_time_get_slot_rounded
+000118ee t ea_prog_timer
+00011a30 T ea_elt_insert
+00011ca8 T ea_elt_remove
+00011d18 T ea_interval_duration_req
+00011db4 T ea_alarm_clear
+00011dfa t hci_evt_mask_check
+00011e70 t hci_evt_filter_inq_check
+00011f32 t hci_evt_filter_con_check
+00012178 t hci_evt_filter_check
+000122dc T hci_send_2_host
+00012308 T hci_fc_acl_packet_sent
+0001231a T hci_fc_sync_packet_sent
+0001232c T hci_fc_check_host_available_nb_acl_packets
+0001234e T hci_fc_check_host_available_nb_sync_packets
+00012370 t hci_build_cc_evt
+00012402 t hci_build_cs_evt
+00012448 t hci_build_evt
+000124a6 t hci_build_le_evt
+0001250e t hci_build_acl_rx_data
+0001254a t hci_build_bt_acl_rx_data
+00012598 t hci_build_bt_sync_rx_data
+000125e8 t hci_tx_start
+00012708 t hci_tx_trigger
+00012722 t hci_tx_done
+000127ea T hci_tl_send
+00012868 t hci_util_read_array_size
+000128a2 T hci_util_pack
+000129a4 T co_htobs
+000129a6 T co_btohs
+000129a8 T co_list_init
+000129b0 T co_list_push_front
+000129bc T co_list_extract
+00012a02 T co_list_extract_after
+00012a18 T co_list_find
+00012a2a T co_list_insert_after
+00012a6e T co_rand_byte
+00012a82 T co_min
+00012a8a T co_max
+00012a92 T co_abs
+00012a98 T co_read16p
+00012aa4 T co_read32p
+00012ac2 T co_write32p
+00012ad6 T co_write16p
+00012ade t h4tl_tx_done
+00012af8 T h4tl_write
+00012b36 T h4tl_start
+00012b38 T ke_event_set
+00012b62 t ke_mem_is_in_heap
+00012b8a T ke_malloc
+00012c52 T ke_free
+00012d28 T ke_param2msg
+00012d2c T ke_msg2param
+00012d30 T ke_msg_alloc
+00012d6a T ke_msg_send
+00012d90 T ke_msg_send_basic
+00012da8 T ke_msg_free
+00012dba T ke_queue_push
+00012dce T ke_queue_pop
+00012dde T ke_queue_extract
+00012e20 T ke_queue_insert
+00012e54 t cmp_dest_id
+00012e5e t ke_task_saved_update
+00012e96 T ke_state_set
+00012ed0 T ke_state_get
+00012efa t ke_time_cmp
+00012f0c t cmp_abs_time
+00012f26 t cmp_timer_id
+00012f40 t ke_timer_hw_set
+00012f72 t ke_time
+00012f88 t ke_time_past
+00012f9e T ke_timer_set
+0001304e T ke_timer_clear
+000130aa T rwip_wakeup_end
+000130d0 T rwip_prevent_sleep_set
+000130f0 T rwip_wakeup
+0001310c T rwip_prevent_sleep_clear
+0001312c T rwip_sleep_lpcycles_2_us
+00013136 T ble_rxwinszdef_getf
+00013146 T ble_intstat_get
+00013150 T ble_intack_clear
+0001315a T ble_basetimecnt_get
+00013164 T ble_samp_getf
+00013170 T ble_samp_setf
+0001317e T bt_intcntl_set
+00013186 T bt_intcntl_grosstgtintmsk_getf
+00013192 T bt_intcntl_grosstgtintmsk_setf
+000131a6 T bt_intcntl_finetgtintmsk_getf
+000131b2 T bt_intcntl_finetgtintmsk_setf
+000131c6 T bt_intack_clear
+000131ce T bt_intack_errorintack_clearf
+000131da T bt_intack_audioint1ack_clearf
+000131e4 T bt_intack_audioint0ack_clearf
+000131ee T bt_finetimecnt_get
+000131f8 T bt_deepslcntl_extwkupdsb_setf
+00013210 T bt_deepslcntl_deep_sleep_corr_en_setf
+00013226 T bt_deepslstat_get
+00013230 T bt_finecntcorr_setf
+0001323a T bt_clkncntcorr_pack
+0001324a T bt_rftestcntl_sserrren_setf
+00013262 T bt_rftestcntl_herrren_setf
+0001327a T bt_rftestfreq_directloopbacken_setf
+00013292 T bt_rftestfreq_testmodeen_setf
+000132aa T bt_rftestfreq_rxfreq_setf
+000132c2 T bt_rftestfreq_txfreq_setf
+000132d6 T bt_grosstimtgt_grosstarget_setf
+000132e0 T bt_finetimtgt_get
+000132ea T bt_finetimtgt_finetarget_setf
+000132f4 T bt_sketclkn_getf
+000132fe T bt_e_scochancntl_pack
+00013326 T bt_e_scochancntl_tog_getf
+00013338 T bt_e_scomutecntl_pack
+00013360 T bt_e_scomutecntl_invl_1_getf
+00013374 T bt_e_scomutecntl_invl_0_getf
+00013388 T bt_e_scocurrenttxptr_pack
+0001339e T bt_e_scocurrenttxptr_e_scoptrtx_1_getf
+000133b0 T bt_e_scocurrenttxptr_e_scoptrtx_1_setf
+000133cc T bt_e_scocurrenttxptr_e_scoptrtx_0_getf
+000133de T bt_e_scocurrenttxptr_e_scoptrtx_0_setf
+000133fa T bt_e_scocurrentrxptr_pack
+00013410 T bt_e_scocurrentrxptr_e_scoptrrx_1_getf
+00013422 T bt_e_scocurrentrxptr_e_scoptrrx_1_setf
+0001343e T bt_e_scocurrentrxptr_e_scoptrrx_0_getf
+00013450 T bt_e_scocurrentrxptr_e_scoptrrx_0_setf
+0001346c T bt_e_scoltcntl_pack
+0001348e T bt_e_scotrcntl_pack
+000134b4 T em_bt_frcntl_format_setf
+000134d4 T em_bt_bitoff_getf
+000134e8 T em_bt_clkoff0_getf
+000134fc T em_bt_clkoff1_getf
+00013510 T em_bt_linkcntl_afhena_setf
+00013536 T em_bt_linkcntl_laap_setf
+0001355c T em_bt_linkcntl_whdsb_setf
+00013582 T em_bt_linkcntl_acledr_setf
+000135a8 T em_bt_linkcntl_aclltaddr_getf
+000135c2 T em_bt_linkcntl_aclltaddr_setf
+000135e6 T em_bt_bdaddr_setf
+000135fe T em_bt_bch0_setf
+00013612 T em_bt_bch1_setf
+00013626 T em_bt_rxmaxbuf_bch2_pack
+00013640 T em_bt_pwrcntl_fh_en_setf
+00013664 T em_bt_pwrcntl_freq_setf
+00013688 T em_bt_txrxcntl_rxthr_setf
+000136ac T em_bt_txrxcntl_rxbcry_setf
+000136d2 T em_bt_txrxcntl_rxcrypt_setf
+000136f6 T em_bt_txrxcntl_txbcry_setf
+00013718 T em_bt_txrxcntl_txcrypt_setf
+00013738 T em_bt_txdescptr_get
+0001374c T em_bt_txdescptr_setf
+00013760 T em_bt_loopcntl_to_nb_setf
+00013780 T em_bt_loopcntl_att_nb_setf
+000137a0 T em_bt_maxfrmtime_setf
+000137b4 T em_bt_rxclkn0_getf
+000137c8 T em_bt_rxclkn1_getf
+000137dc T em_bt_rxbit_rxbit_getf
+000137f4 T em_bt_acltxstat_fcrc_setf
+0001381a T em_bt_acltxstat_fnak_setf
+00013840 T em_bt_acltxstat_rswitch_setf
+00013866 T em_bt_aclrxstat_rxid_getf
+0001387e T em_bt_acldmpriocntl_pack
+000138a4 T em_bt_txptr_pack
+000138be T em_bt_txheader_txltaddr_setf
+000138dc T em_bt_txpheader_pack
+000138fe T BtStackRcvData
+0001397a T RXBUFF_Alloc
+00013a54 T LEtoHost16
+00013a60 T _InsertTailList
+00013a6e T _RemoveHeadList
+00013a7c T HciBufferInd
+00013aac T em_rd
+00013ac4 T em_wr
+00013ae0 T em_set
+00013afc T em_rd32p
+00013b14 T em_wr16p
+00013b2c T em_rd8p
+00013b36 T em_wr8p
+00013b40 T em_buf_rx_free
+00013b54 T em_buf_rx_buff_addr_get
+00013b6c T em_buf_rx_current_get
+00013b72 T em_buf_rx_current_set
+00013b78 T em_buf_rx_next
+00013b7e T em_read_8
+00013b9c T em_read_16
+00013bbe T bt_util_buf_lmp_tx_free
+00013c0e T bt_util_buf_acl_rx_alloc
+00013c22 T bt_util_buf_acl_rx_free
+00013c80 T bt_util_buf_acl_tx_alloc
+00013c94 T bt_util_buf_acl_tx_free
+00013cf2 T bt_util_buf_sync_tx_free
+00013d4c T bt_util_buf_sync_rx_alloc
+00013d7a T bt_util_buf_sync_rx_free
+00013de0 T rwbt_sleep_wakeup
+00013e64 T rwbt_sleep_wakeup_end
+00013e84 t hci_pack_bytes
+00013ecc t hci_wr_curr_iac_lap_cmd_upk
+00013f54 t hci_wr_stored_lk_cmd_upk
+00013ffe t hci_set_evt_filter_cmd_upk
+00014150 t hci_host_nb_cmp_pkts_cmd_pkupk
+000141dc t hci_le_dir_adv_report_evt_pkupk
+000142ea t hci_le_adv_report_evt_pkupk
+00014428 T hci_look_for_cmd_desc
+00014474 T hci_look_for_evt_desc
+0001449a T hci_look_for_le_evt_desc
+000144be T ble_rxdone_setf
+000144e0 T ble_rxstat_get
+000144f2 T ble_rxphce_get
+00014504 T ble_rxmd_getf
+0001451a T ble_rxchass_unpack
+0001453e T ble_rxdataptr_get
+00014550 T llc_con_update_complete_send
+000145d8 T llc_feats_rd_event_send
+00014618 T llc_version_rd_event_send
+0001466a T llc_common_enc_key_ref_comp_evt_send
+0001468e T llc_common_enc_change_evt_send
+00014716 T llc_lsto_con_update
+0001475c T llc_map_update_ind
+000147c2 t llc_elt_in_process
+000147e2 T llc_util_dicon_procedure
+0001481c T llc_util_clear_operation_ptr
+00014846 T llc_start_enc_tx
+000148ac T llc_start_enc_rx
+00014914 T llc_util_ivs_set
+0001494e T llc_util_set_operation_ptr
+0001495c T llc_util_get_operation_ptr
+0001496a T llc_state_chk
+00014974 T llc_state_update
+00014998 T lld_con_param_rsp
+00014ab8 T lld_con_stop
+00014ace T lld_get_mode
+00014af4 T lld_ch_map_ind
+00014b44 T lld_con_update_ind
+00014b5c T lld_crypt_isr
+00014b70 t lld_evt_slave_wakeup
+00014b92 t lld_evt_priority_reset
+00014b9c t lld_evt_deferred_elt_push
+00014bda t lld_evt_slave_instant_evt
+00014c2e t lld_evt_elt_wait_insert
+00014c5e t lld_evt_elt_wait_get
+00014ca0 t lld_evt_winsize_change
+00014d32 t lld_evt_slave_time_compute
+00014e06 t lld_evt_check_md_bit
+00014e32 t lld_evt_get_next_free_slot
+00014e7a t lld_evt_continue
+00014ed2 T lld_evt_sca_get
+00014ed8 T lld_evt_delete_elt_push
+00014f38 t lld_evt_slave_param_update_perform
+00015112 t lld_evt_slave_instant
+00015154 T lld_evt_channel_next
+000151a4 T lld_evt_init_evt
+000151ea T lld_evt_drift_compute
+00015206 t lld_evt_rxwin_update
+00015254 t lld_evt_rxwin_compute
+0001529c T lld_evt_restart
+000155b0 T lld_evt_elt_insert
+0001560c T lld_evt_schedule_next
+000157ce T lld_evt_slave_update
+00015956 T lld_evt_end
+00015a84 T lld_evt_rx
+00015abe T lld_evt_end_isr
+00015b14 T lld_evt_rx_isr
+00015b2c t lld_pdu_llcp_length_rsp_unpk
+00015b5e t lld_pdu_llcp_length_req_unpk
+00015b90 t lld_pdu_llcp_con_param_rsp_unpk
+00015c26 t lld_pdu_llcp_con_param_req_unpk
+00015cbc t lld_pdu_cntl_aligned_unpk
+00015cd8 t lld_pdu_llcp_unpack
+00015d3e t lld_pdu_llcp_rx_handler
+00015d88 T lld_pdu_rx_handler
+00015f1e T lld_util_get_local_offset
+00015f2e T lld_util_get_peer_offset
+00015f40 T lld_util_instant_ongoing
+00015f4c T lld_util_compute_ce_max
+00016014 T lld_util_priority_set
+000160f8 T lld_util_get_tx_pkt_cnt
+000160fe T lld_util_eff_tx_time_set
+00016108 T lld_util_max_lat_compute
+00016166 T llm_util_check_map_validity
+000161b8 T llm_util_get_adv_type
+000161ca T llm_util_check_evt_mask
+000161e6 T llm_util_get_supp_features
+000161f4 T ble_fcntoffset_set
+00016208 T ble_link_get
+0001621c T ble_link_set
+00016230 T ble_rxthr_getf
+00016246 T ble_hopcntl_get
+0001625a T ble_ch_idx_setf
+0001627a T ble_rxwincntl_get
+0001628e T ble_rxwincntl_set
+000162a2 T ble_minevtime_get
+000162b6 T ble_minevtime_set
+000162ca T ble_maxevtime_set
+000162de T ble_chmap0_set
+000162f2 T ble_chmap1_set
+00016306 T ble_chmap2_set
+0001631a T ble_iv_setf
+00016332 T ble_txccmpktcnt0_set
+00016346 T ble_txccmpktcnt1_set
+0001635a T ble_txccmpktcnt2_set
+0001636e T ble_rxccmpktcnt0_set
+00016382 T ble_rxccmpktcnt1_set
+00016396 T ble_rxccmpktcnt2_set
+000163aa T ble_btcntsync0_get
+000163be T ble_btcntsync1_get
+000163d2 T ble_evtrxok_getf
+000163e8 T ble_fcntrxsync_getf
+00016400 T ble_aclrxdesccnt_getf
+00016416 T ble_acltxdesccnt_getf
+0001642c T ble_isorxpktcntl_getf
+00016442 T ble_conflict_getf
+0001645a t llc_llcp_send
+000164dc t llcp_ping_rsp_handler
+0001654c t llc_llcp_reject_ind
+00016790 t llcp_reject_ind_ext_handler
+000167a8 t llcp_reject_ind_handler
+000167c0 t llcp_enc_rsp_handler
+00016886 t llcp_pause_enc_req_handler
+0001695e t llcp_start_enc_req_handler
+000169d8 t llcp_unknown_rsp_handler
+00016c10 t llcp_enc_req_handler
+00016cf8 t llcp_terminate_ind_handler
+00016d46 T llc_llcp_version_ind_pdu_send
+00016d86 t llcp_vers_ind_handler
+00016e26 T llc_llcp_pause_enc_rsp_pdu_send
+00016e6c t llcp_pause_enc_rsp_handler
+00016f66 T llc_llcp_start_enc_rsp_pdu_send
+00016f9e t llcp_start_enc_rsp_handler
+000170d8 T llc_llcp_reject_ind_pdu_send
+00017140 t llcp_length_rsp_handler
+000172c4 t llcp_con_param_rsp_handler
+00017418 t llcp_feats_rsp_handler
+000174d4 t llcp_channel_map_ind_handler
+00017628 t llcp_con_upd_ind_handler
+000177b8 T llc_llcp_con_param_rsp_pdu_send
+00017862 t llcp_con_param_req_handler
+00017b5c T llc_llcp_feats_rsp_pdu_send
+00017b86 t llcp_feats_req_handler
+00017be0 t llcp_slave_feature_req_handler
+00017bf2 T llc_llcp_unknown_rsp_send_pdu
+00017c14 t llc_llcp_unknown_ind_handler
+00017c46 T llc_llcp_ping_rsp_pdu_send
+00017c64 t llcp_ping_req_handler
+00017c94 T llc_llcp_length_rsp_pdu_send
+00017cee t llcp_length_req_handler
+00017e16 T llc_llcp_recv_handler
+00017eb0 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
+00017ef0 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
+00017f48 T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
+000180a0 T __fixunsdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3929
+000180f0 T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
+00018680 T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
+00018b30 T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
+00018b30 T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
+00018bd4 T __ledf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:35
+00018bd4 T __ltdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:36
+00018c78 T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
+00019064 T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
+000190ce T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
+000190f6 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
+0001911c T memcmp
+00019154 T memcpy
+00019180 T memset
+000191b0 T printf
+000191ba T puts
+0001920a T rand
+00019244 T strcpy
+00019258 T strlen
+00019264 t vprintf_help
+00019298 T vprintf
+000192e4 T do_printf
+0001978c t sep_frac
+000197be T _printf_float
+00019e90 T abs
+00019e98 T _write
+00019f4c r DmaChannelMap	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:13
+0001a18c R DeviceString_LangID	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:52
+0001a190 R DeviceQualifier	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:45
+0001a19c R InterFaceNum_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:528
+0001a1a4 R ConfigDescriptor_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:477
+0001a2c0 R InterFaceNum_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:473
+0001a2c8 R ConfigDescriptor_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:440
+0001a374 R InterFaceNum_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:436
+0001a37c R ConfigDescriptor_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:411
+0001a3c0 R InterFaceNum_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:407
+0001a3c8 R ConfigDescriptor_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:399
+0001a3dc R InterFaceNum_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:395
+0001a3e4 R ConfigDescriptor_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:346
+0001a4f8 R InterFaceNum_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:342
+0001a500 R ConfigDescriptor_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:303
+0001a5bc R InterFaceNum_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:300
+0001a5c4 R ConfigDescriptor_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:259
+0001a678 R InterFaceNum_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:256
+0001a680 R ConfigDescriptor_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:246
+0001a6a0 R InterFaceNum_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:243
+0001a6a8 R ConfigDescriptor_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:199
+0001a7a4 R InterFaceNum_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:197
+0001a7ac R ConfigDescriptor_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:153
+0001a8a8 R InterFaceNum_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:151
+0001a8b0 R ConfigDescriptor_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:116
+0001a954 R InterFaceNum_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:112
+0001a95c R ConfigDescriptor_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:78
+0001a9f8 R HidDataReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:48
+0001aa1c R AudioCtrlReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/bootloader/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:25
+0001b630 R MPUConfigTable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/init-default.c:383
+0001b8a0 r SRA_NI
+0001c110 r LARGE_FILTER_IMPD
+00020110 r LARGE_FILTER_IMP
+00024110 r SMALL_FILTER_IMPD
+00025910 r SMALL_FILTER_IMP
+00026510 R ld_acl_edr_sizes
+00026520 R ld_acl_edr_types
+00026528 R ld_acl_br_sizes
+00026534 R ld_acl_br_types
+0002653c r prbs_64bytes
+0002657c R co_sca2ppm
+0002658c R rwip_priority
+00026888 R hci_evt_le_desc_tab
+000268e0 R hci_evt_desc_tab
+00026a60 R hci_cmd_desc_root_tab
+00026aa0 R hci_cmd_desc_tab_vs
+00026ac4 R hci_cmd_desc_tab_le
+00026cec R hci_cmd_desc_tab_testing
+00026d28 R hci_cmd_desc_tab_stat_par
+00026d7c R hci_cmd_desc_tab_info_par
+00026ddc R hci_cmd_desc_tab_ctrl_bb
+0002716c R hci_cmd_desc_tab_lk_pol
+000271f0 R hci_cmd_desc_tab_lk_ctrl
+00027408 R lld_pdu_llcp_pk_desc_tab
+00027510 R llm_local_le_feats
+00027518 r llcp_pdu_handler
+000275e0 A __data_lmastart
+00027a70 A EILM_SIZE
 20004000 D UARTS_SendByte_MAP	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:267
 20004000 D __data_start
 20004000 A _stack
@@ -996,94 +989,85 @@
 20004664 B pxCurrentTCB	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/freertos/src/tasks.c:188
 20004668 b AllTaskCycle	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
 2000466c b IdleTaskCycle	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/middleware/rtos/rtos_api/rtos_api.c:309
-20004670 b WaterLevelCount.4550
-20004672 b AmountWaterLevel.4549
-20004674 b AdjustVal.4551
+20004670 b WaterLevelCount.4533
+20004672 b AmountWaterLevel.4532
+20004674 b AdjustVal.4534
 20004678 b FramCount	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:59
 2000467c B IsUsbAudioMode	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:56
 20004680 B usb_mic_enable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:41
 20004684 B usb_speaker_enable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:40
-20004688 b g_ConsoleDirty	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:53
-20004689 b g_ConsoleLineCount	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:52
-2000468c b g_ConsoleLineColors	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:51
-200046a8 b g_ConsoleLines	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:50
-20004808 b g_DbgToLcdEnabled	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:49
-20004809 b g_ConsoleEnabled	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:48
-2000480c b g_LCD	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/04_shell_commands/bg_shell.c:47
-20004810 b g_session	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:738
-20004828 b g_parser	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:621
-2000493c b g_part_b_usable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:68
-20004940 b g_part_a_usable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:67
-20004944 b g_flash_capacity	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:66
-20004948 b g_part_flag_addr	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:65
-2000494c B IsSwUartActedAsUARTFlag	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:17
-2000494d B DebugPrintPort	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:14
-2000494e b sIsDac1InitOK
-2000494f b sIsDac0InitOK
-20004950 B OtgPortDetectPause
-20004951 B gIsUsbRemove_USB1
-20004952 B UsbIntEn
-20004954 b FlashBusyFlag
-20004958 b SpiFlashInfo
-2000496c B gSysTick
-20004970 B ld_acl_cur_type
-20004974 B rx_hec_err_cnt
-20004978 B rx_sync_err_cnt
-2000497c b ld_sco_env
-20004980 b ld_acl_env
-2000498c b ld_fm_env
-200049d4 b ld_sched_env
-200049e4 b time_msb.8919
-200049e8 b ea_env
-20004a10 b hci_tl_env
-20004a3c b h4tl_env
-20004a50 b ke_event_env
-20004a80 b ke_task_env
-20004aa4 b rwip_env
-20004ab4 B hciHandle
-20004ab6 b rwbt_sleep_us_comp
-20004ab8 B _NDS32_REENT__errno
-20004abc b output_idx
-20004ac0 b output_buff
-20004ac4 b countNow
-20004ac8 b count
-20004acc B adc_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:57
-20004b8c B dac_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:56
-20004c4c B DAC1FIFO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:49
-2000504c B mic_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:59
-2000510c B MICFIFO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:52
-2000550c B mix_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:58
-200055cc B DAC0FIFO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:46
-200059cc B iso_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:39
-20005a8c B usb_speak_buff	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:41
-20005a9c B usb_in_buff	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:42
-2000629c B UsbAudioSpeaker	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:37
-200062ec B pcm_in_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:43
-200066ec B UsbAudioMic	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:38
-2000673c B pcm_out_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:44
-20006f3c B UsbCDC	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:24
-20007358 B Request	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:55
-20007458 B hid_tx_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:39
-20007558 B UsbAudioSpeaker_Resampler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:47
-20008d58 B UsbAudioSpeaker_PCMBuffer	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:48
-2000ad58 B UsbAudioMic_PCMBuffer	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:51
-2000b2a0 W _FP_BASE_
-2000b2a0 W _SDA_BASE_
-2000cd58 B UsbAudioMic_Resampler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:49
-2000e558 B UsbAudioMic_SRCOutBuf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:50
-2000e7b0 B FpUsbIntProcess
-2000e7c8 B OTG_FifoBufer
-2000ebc8 B ld_env
-2000ed78 B ld_sched_params
-2000ed88 B hci_env
-2000ede8 B hci_fc_env
-2000edf8 B rwip_rf
-2000ee30 B rwip_heap_non_ret
-2001003c B rwip_heap_env
-20011b48 B rwip_heap_msg
-20012190 B em_buf_env
-20012358 B bt_util_buf_env
-20012430 B ke_env
-2001245c B lld_evt_env
-20012488 B llm_le_env
-2001254c B _end
+20004688 b g_session	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:738
+200046a0 b g_parser	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:621
+200047b4 b g_part_b_usable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:68
+200047b8 b g_part_a_usable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:67
+200047bc b g_flash_capacity	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:66
+200047c0 b g_part_flag_addr	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/upgrade.c:65
+200047c4 B IsSwUartActedAsUARTFlag	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:17
+200047c5 B DebugPrintPort	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../startup/retarget.c:14
+200047c6 b sIsDac1InitOK
+200047c7 b sIsDac0InitOK
+200047c8 B OtgPortDetectPause
+200047c9 B gIsUsbRemove_USB1
+200047ca B UsbIntEn
+200047cc b FlashBusyFlag
+200047d0 b SpiFlashInfo
+200047e4 B gSysTick
+200047e8 B ld_acl_cur_type
+200047ec B rx_hec_err_cnt
+200047f0 B rx_sync_err_cnt
+200047f4 b ld_sco_env
+200047f8 b ld_acl_env
+20004804 b ld_fm_env
+2000484c b ld_sched_env
+2000485c b time_msb.8919
+20004860 b ea_env
+20004888 b hci_tl_env
+200048b4 b h4tl_env
+200048c8 b ke_event_env
+200048f8 b ke_task_env
+2000491c b rwip_env
+2000492c B hciHandle
+2000492e b rwbt_sleep_us_comp
+20004930 B _NDS32_REENT__errno
+20004934 b output_idx
+20004938 b output_buff
+2000493c B adc_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:57
+200049fc B dac_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:56
+20004abc B DAC1FIFO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:49
+20004ebc B mic_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:59
+20004f7c B MICFIFO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:52
+2000537c B mix_play_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:58
+2000543c B DAC0FIFO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/audio_api.c:46
+2000583c B iso_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:39
+200058fc B usb_speak_buff	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:41
+2000590c B usb_in_buff	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:42
+2000610c B UsbAudioSpeaker	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:37
+2000615c B pcm_in_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:43
+2000655c B UsbAudioMic	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:38
+200065ac B pcm_out_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_audio.c:44
+20006dac B UsbCDC	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_cdc.c:24
+200071c8 B Request	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:55
+200072c8 B hid_tx_buf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:39
+200073c8 B UsbAudioSpeaker_Resampler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:47
+20008bc8 B UsbAudioSpeaker_PCMBuffer	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:48
+2000abc8 B UsbAudioMic_PCMBuffer	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:51
+2000b1d8 W _FP_BASE_
+2000b1d8 W _SDA_BASE_
+2000cbc8 B UsbAudioMic_Resampler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:49
+2000e3c8 B UsbAudioMic_SRCOutBuf	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/bootloader/Debug/../src/banux/02_device_drivers/USB/src/usb_audio_api.c:50
+2000e620 B FpUsbIntProcess
+2000e638 B OTG_FifoBufer
+2000ea38 B ld_env
+2000ebe8 B ld_sched_params
+2000ebf8 B hci_env
+2000ec58 B hci_fc_env
+2000ec68 B rwip_rf
+2000eca0 B rwip_heap_non_ret
+2000feac B rwip_heap_env
+200119b8 B rwip_heap_msg
+20012000 B em_buf_env
+200121c8 B bt_util_buf_env
+200122a0 B ke_env
+200122cc B lld_evt_env
+200122f8 B llm_le_env
+200123bc B _end
