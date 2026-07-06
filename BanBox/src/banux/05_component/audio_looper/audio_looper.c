@@ -16,6 +16,9 @@
 #include "BG_FlashMgr.h"      /* 兼容性保留 */
 #include "looper_storage.h"    /* 存储抽象层 */
 #include "sys_param.h"    /* 系统参数持久化存储 */
+#include "bg_event.h"
+#include "bg_event_topics.h"
+#include "remind_sound.h"
 #include "type.h"
 #include <nds32_intrinsic.h>
 #include <math.h>
@@ -25,6 +28,7 @@
 static void metronome_update_timing_params(void);
 static float metronome_generate_sine_sample(float freq, float* phase);
 static void metronome_advance_beat(void);
+static void loop_offline_stop_recording(void);
 
 #if LOOPER_MULTI_FLASH_ENABLE
 /**
@@ -1791,7 +1795,13 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
 #endif
 
             /* 用 seg_page_to_addr 计算写入地址（支持分裂区域）*/
-            write_offset = seg_page_to_addr(segment, segment->length_pages);
+            if (g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE &&
+                segment_index == 0 &&
+                g_loop_manager.offline_overdub) {
+                write_offset = seg_page_to_addr(segment, g_loop_manager.offline_record_page);
+            } else {
+                write_offset = seg_page_to_addr(segment, segment->length_pages);
+            }
             
 #if LOOPER_IO_BUFFER_ENABLE
             {
@@ -1854,8 +1864,19 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
 #endif /* LOOPER_USE_STORAGE_ABSTRACTION */
 #endif /* LOOPER_IO_BUFFER_ENABLE */
             
-            segment->length_pages++;
-            segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+            if (g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE &&
+                segment_index == 0 &&
+                g_loop_manager.offline_overdub) {
+                g_loop_manager.offline_record_page++;
+                if (g_loop_manager.offline_record_page >= g_loop_manager.offline_ref_length_pages) {
+                    segment->rec_partial_count = 0;
+                    loop_offline_stop_recording();
+                    break;
+                }
+            } else {
+                segment->length_pages++;
+                segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
+            }
             segment->rec_partial_count = 0;
         }
     }
@@ -1919,7 +1940,12 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
     
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
     
-    if (segment->state != SEGMENT_PLAYING || !segment->is_active) {
+    if ((segment->state != SEGMENT_PLAYING &&
+         !(g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE &&
+           segment_index == 0 &&
+           g_loop_manager.offline_overdub &&
+           segment->state == SEGMENT_RECORDING)) ||
+        !segment->is_active) {
         return 0;
     }
 
@@ -4134,6 +4160,223 @@ void loop_on_app_exit(void)
         DBG("[Looper] App exit: flash is CLEAN, no erase needed\n");
     }
 }
+
+void loop_set_run_mode(LooperRunMode_t mode)
+{
+    g_loop_manager.run_mode = mode;
+    if (mode != LOOPER_RUN_MODE_OFFLINE) {
+        g_loop_manager.offline_button_down = 0;
+        g_loop_manager.offline_ignore_next_up = 0;
+    }
+    DBG("[Looper] run_mode=%d\n", (int)mode);
+}
+
+LooperRunMode_t loop_get_run_mode(void)
+{
+    return g_loop_manager.run_mode;
+}
+
+static void loop_offline_prepare_single_segment(void)
+{
+    uint8_t i;
+    for (i = 1; i < MAX_SEGMENTS; i++) {
+        loop_clear_segment(i);
+    }
+}
+
+void loop_offline_toggle(void)
+{
+    if (g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE) {
+        if (g_loop_manager.offline_recording) {
+            loop_offline_stop_recording();
+        }
+        if (g_loop_manager.segments[0].state == SEGMENT_PLAYING) {
+            loop_set_segment_stopped(0);
+        }
+        g_loop_manager.run_mode = LOOPER_RUN_MODE_IDLE;
+        DBG("[Looper][Offline] exit\n");
+    } else {
+        loop_offline_prepare_single_segment();
+        g_loop_manager.run_mode = LOOPER_RUN_MODE_OFFLINE;
+        g_loop_manager.offline_import_pending = 0;
+        g_loop_manager.offline_ref_length_pages = g_loop_manager.segments[0].length_pages;
+        DBG("[Looper][Offline] enter\n");
+    }
+    g_loop_manager.offline_button_down = 0;
+    g_loop_manager.offline_ignore_next_up = 1;
+    RemindSound_Start("on");
+}
+
+void loop_offline_button_down(void)
+{
+    SegmentInfo_t *seg;
+
+    if (g_loop_manager.run_mode != LOOPER_RUN_MODE_OFFLINE) return;
+    if (g_loop_manager.offline_button_down) return;
+    g_loop_manager.offline_button_down = 1;
+
+    seg = &g_loop_manager.segments[0];
+    if (seg->state == SEGMENT_INACTIVE || seg->length_pages == 0) {
+        loop_clear_segment(0);
+        loop_set_overdub_mode(0, 0);
+        loop_set_segment_recording(0);
+        g_loop_manager.offline_recording = 1;
+        g_loop_manager.offline_overdub = 0;
+        g_loop_manager.offline_ref_length_pages = 0;
+        DBG("[Looper][Offline] first record start\n");
+        return;
+    }
+
+    if (!g_loop_manager.support_overdub) {
+        DBG("[Looper][Offline] overdub not supported by storage\n");
+        return;
+    }
+
+    if (seg->state == SEGMENT_STOPPED) {
+        loop_set_segment_playing(0);
+    }
+
+    g_loop_manager.offline_ref_length_pages = seg->length_pages;
+    g_loop_manager.offline_record_start_page = seg->play_position;
+    g_loop_manager.offline_record_page = seg->play_position;
+    if (g_loop_manager.offline_record_page >= g_loop_manager.offline_ref_length_pages) {
+        g_loop_manager.offline_record_page = 0;
+        g_loop_manager.offline_record_start_page = 0;
+    }
+    seg->rec_partial_count = 0;
+    seg->state = SEGMENT_RECORDING;
+    seg->overdub_enabled = 1;
+    g_loop_manager.offline_recording = 1;
+    g_loop_manager.offline_overdub = 1;
+    loop_update_global_state();
+    DBG("[Looper][Offline] overdub start at page %lu/%lu\n",
+        (unsigned long)g_loop_manager.offline_record_page,
+        (unsigned long)g_loop_manager.offline_ref_length_pages);
+}
+
+static void loop_offline_stop_recording(void)
+{
+    SegmentInfo_t *seg;
+
+    if (!g_loop_manager.offline_recording) return;
+    seg = &g_loop_manager.segments[0];
+
+    if (g_loop_manager.offline_overdub) {
+        if (seg->rec_partial_count > 0 &&
+            g_loop_manager.offline_record_page < g_loop_manager.offline_ref_length_pages) {
+            uint32_t write_offset;
+            LooperStorageStatus_t wr;
+            memset(&seg->rec_partial_buf[seg->rec_partial_count], 0,
+                   LOOPER_PSRAM_PAGE_SIZE - seg->rec_partial_count);
+            write_offset = seg_page_to_addr(seg, g_loop_manager.offline_record_page);
+            wr = LooperStorage_OverdubWrite(&g_looper_storage, write_offset,
+                    seg->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE,
+                    g_loop_manager.overdub_mix_mode);
+            if (wr != LOOPER_STORAGE_OK) {
+                DBG("[Looper][Offline] partial overdub write failed: %d\n", wr);
+            }
+            seg->rec_partial_count = 0;
+        }
+        seg->overdub_enabled = 0;
+        seg->state = SEGMENT_PLAYING;
+        g_loop_manager.offline_overdub = 0;
+        DBG("[Looper][Offline] overdub stop\n");
+    } else {
+        loop_stop_current_segment(0);
+        g_loop_manager.offline_ref_length_pages = seg->length_pages;
+        DBG("[Looper][Offline] first record stop, ref=%lu pages\n",
+            (unsigned long)g_loop_manager.offline_ref_length_pages);
+    }
+
+    g_loop_manager.offline_recording = 0;
+    loop_update_global_state();
+}
+
+void loop_offline_button_up(void)
+{
+    if (g_loop_manager.run_mode != LOOPER_RUN_MODE_OFFLINE) return;
+    g_loop_manager.offline_button_down = 0;
+    if (g_loop_manager.offline_ignore_next_up) {
+        g_loop_manager.offline_ignore_next_up = 0;
+        return;
+    }
+    loop_offline_stop_recording();
+}
+
+void loop_offline_double_click(void)
+{
+    SegmentInfo_t *seg;
+
+    if (g_loop_manager.run_mode != LOOPER_RUN_MODE_OFFLINE) return;
+    if (g_loop_manager.offline_recording) return;
+
+    seg = &g_loop_manager.segments[0];
+    if (!seg->is_active || seg->length_pages == 0) return;
+
+    if (seg->state == SEGMENT_PLAYING) {
+        loop_set_segment_stopped(0);
+        DBG("[Looper][Offline] double click stop\n");
+    } else {
+        seg->play_position = 0;
+        seg->play_page_offset = 0;
+        seg->play_page_valid = 0;
+        loop_set_segment_playing(0);
+        DBG("[Looper][Offline] double click play from head\n");
+    }
+}
+
+static void on_looper_button_event(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    const BG_EventBtnData_t *btn;
+    extern uint8_t BleConnectFlag;
+    (void)size;
+
+    btn = (const BG_EventBtnData_t *)data;
+    if (btn != NULL && btn->btn_id != 0) return;
+
+    if ((uint16_t)topic == EVT_BTN_LONG_PRESS) {
+        if (!BleConnectFlag || g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE) {
+            uint16_t dur = btn ? btn->duration_ms : 3000;
+            if (dur >= 3000) {
+                loop_offline_toggle();
+            }
+        }
+    } else if ((uint16_t)topic == EVT_BTN_RAW_DOWN) {
+        if (g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE) {
+            loop_offline_button_down();
+        }
+    } else if ((uint16_t)topic == EVT_BTN_RAW_UP) {
+        if (g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE) {
+            loop_offline_button_up();
+        }
+    } else if ((uint16_t)topic == EVT_BTN_DOUBLE_CLICK) {
+        if (g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE) {
+            loop_offline_double_click();
+        }
+    }
+}
+
+static void on_looper_ble_connected(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    (void)topic; (void)data; (void)size;
+    if (g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE) {
+        if (g_loop_manager.offline_recording) {
+            loop_offline_stop_recording();
+        }
+        g_loop_manager.offline_import_pending =
+            (g_loop_manager.segments[0].is_active &&
+             g_loop_manager.segments[0].length_pages > 0) ? 1 : 0;
+        g_loop_manager.run_mode = LOOPER_RUN_MODE_ONLINE;
+        DBG("[Looper][Offline] BLE connected, switched to ONLINE (import=%d)\n",
+            g_loop_manager.offline_import_pending);
+    }
+}
+
+BG_EVT_SUB(EVT_BTN_LONG_PRESS, on_looper_button_event);
+BG_EVT_SUB(EVT_BTN_RAW_DOWN, on_looper_button_event);
+BG_EVT_SUB(EVT_BTN_RAW_UP, on_looper_button_event);
+BG_EVT_SUB(EVT_BTN_DOUBLE_CLICK, on_looper_button_event);
+BG_EVT_SUB(EVT_BLE_CONNECTED, on_looper_ble_connected);
 
 // ============================================================================
 // AudioLooper接口函数（段音量 & Flash生命周期 & Flash绑定）

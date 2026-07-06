@@ -148,7 +148,9 @@ static void BleApp_SyncProvider(void)
         buf[12] = sp->looper.export_mono_mix;
         buf[13] = (uint8_t)(sp->looper.export_gain_pct & 0xFF);
         buf[14] = (uint8_t)((sp->looper.export_gain_pct >> 8) & 0xFF);
-        BleProto_SendSyncFrame(BLE_CMD_LOOPER, buf, 15);
+        buf[15] = (uint8_t)loop_get_run_mode();
+        buf[16] = g_loop_manager.offline_import_pending;
+        BleProto_SendSyncFrame(BLE_CMD_LOOPER, buf, 17);
     }
 
     /* ---- LOOPER SEGMENT STATE ---- */

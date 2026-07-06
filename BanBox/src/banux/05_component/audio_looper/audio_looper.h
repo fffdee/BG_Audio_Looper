@@ -228,6 +228,13 @@ typedef enum {
     LOOP_MODE_FREE = 1
 } LoopMode_t;
 
+/* Looper runtime owner/mode.  This is independent from SONG/FREE play mode. */
+typedef enum {
+    LOOPER_RUN_MODE_IDLE = 0,
+    LOOPER_RUN_MODE_OFFLINE = 1,
+    LOOPER_RUN_MODE_ONLINE = 2
+} LooperRunMode_t;
+
 /* Metronome state enumeration */
 typedef enum {
     METRONOME_OFF = 0,
@@ -329,6 +336,15 @@ typedef struct {
     uint8_t support_overdub;              /* 是否支持叠录 */
     uint8_t overdub_mix_mode;             /* 叠录混音模式 (0=替换, 1=相加, 2=平均) */
     uint8_t storage_ready;               /* 存储后端就绪标志 (0=正在准备/擦除, 1=可录制) */
+    LooperRunMode_t run_mode;            /* IDLE / offline / online looper owner */
+    uint8_t offline_recording;           /* 离线模式下段0是否正在录制/叠录 */
+    uint8_t offline_overdub;             /* 1=当前离线录制为叠录 */
+    uint8_t offline_import_pending;      /* 离线段连接 App 后待导入提示 */
+    uint8_t offline_button_down;         /* 去抖后的物理按钮按下状态 */
+    uint8_t offline_ignore_next_up;      /* 长按切换模式后忽略对应释放 */
+    uint32_t offline_ref_length_pages;   /* 离线参考段长度，固定为第一段长度 */
+    uint32_t offline_record_page;        /* 当前离线叠录写入页位置 */
+    uint32_t offline_record_start_page;  /* 本次叠录按下时参考段播放位置 */
 } LoopManager_t;
 
 /* Global Loop manager */
@@ -594,6 +610,12 @@ uint8_t loop_get_segment_flash(uint8_t segment_index);                       /* 
  * ============================================================================ */
 void loop_check_flash_init_on_boot(void); /* 开机检查Flash是否已初始化，否则触发全片擦除 */
 void loop_on_app_exit(void);              /* 退出Looper界面时调用，如果Flash已使用则触发擦除 */
+void loop_set_run_mode(LooperRunMode_t mode);
+LooperRunMode_t loop_get_run_mode(void);
+void loop_offline_toggle(void);
+void loop_offline_button_down(void);
+void loop_offline_button_up(void);
+void loop_offline_double_click(void);
 
 /* ============================================================================
  * IO缓冲区管理 (仅 LOOPER_IO_BUFFER_ENABLE=1 时可用)

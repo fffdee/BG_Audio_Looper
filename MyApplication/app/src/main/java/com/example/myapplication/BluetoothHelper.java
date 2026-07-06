@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -35,6 +36,8 @@ public class BluetoothHelper {
     private BluetoothGatt bluetoothGatt;
     private boolean isConnected = false;
     private boolean isCccdEnabled = false;
+    private Context appContext;
+    private boolean offlineLooperAutoOpened = false;
     private String connectedDevice = null;
     private BluetoothGattCallback gattCallback;
     private final List<OnConnectionChangedListener> connectionListeners = new ArrayList<>();
@@ -251,6 +254,8 @@ public class BluetoothHelper {
     }
 
     public void connect(Context context, BluetoothDevice device) {
+        appContext = context.getApplicationContext();
+        offlineLooperAutoOpened = false;
         disconnect();
         gattCallback = new BluetoothGattCallback() {
             @Override
@@ -292,6 +297,7 @@ public class BluetoothHelper {
                     protoWriteBusy = false;
                     protoWriteQueue.clear();
                     cachedAb01Char = null;
+                    offlineLooperAutoOpened = false;
                     cancelSyncTimeout();
                     syncingLiveData.postValue(false);
                     BleParamCache.getInstance().clear();
@@ -603,10 +609,31 @@ public class BluetoothHelper {
         }
         isConnected = false;
         connectedDevice = null;
+        offlineLooperAutoOpened = false;
         dataBuffer.setLength(0);
         BleParamCache.getInstance().clear();
         connectionStateLiveData.postValue(BleConnectionState.disconnected());
         handler.post(() -> notifyDisconnected());
+    }
+
+    private void maybeOpenOfflineLooperImport() {
+        BleParamCache cache = BleParamCache.getInstance();
+        int[] segStates = cache.getLooperSegStates();
+        boolean hasFirstSegment = segStates != null && segStates.length >= 8 && segStates[4] > 0;
+
+        if (offlineLooperAutoOpened || appContext == null ||
+                !cache.hasOfflineLooperImport() || !hasFirstSegment) {
+            return;
+        }
+
+        offlineLooperAutoOpened = true;
+        handler.post(() -> {
+            Intent intent = new Intent(appContext, LooperControlActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("offline_looper_import", true);
+            appContext.startActivity(intent);
+            Log.d("BLE", "[Looper] Offline recording detected, opening LooperControlActivity");
+        });
     }
 
     private byte seqCounter = 1;
@@ -651,6 +678,7 @@ public class BluetoothHelper {
             case BleProtocol.CMD_SYNC_END:
                 Log.d("BLE", "[Proto] SYNC_END received");
                 BleParamCache.getInstance().setSyncComplete(true);
+                maybeOpenOfflineLooperImport();
                 cancelSyncTimeout();
                 syncingLiveData.postValue(false);
                 // 不回 ACK：同上

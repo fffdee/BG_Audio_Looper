@@ -125,8 +125,23 @@ public class BleParamCache {
         int exportMonoMix = (data.length >= 13) ? (data[12] & 0xFF) : 0;
         int exportGainPct = (data.length >= 15)
                 ? ((data[13] & 0xFF) | ((data[14] & 0xFF) << 8)) : 100;
+        /* 扩展：运行模式与离线导入标志 (17字节 payload) */
+        int runMode = (data.length >= 16) ? (data[15] & 0xFF) : BleProtocol.LOOPER_RUN_MODE_IDLE;
+        int offlineImportPending = (data.length >= 17) ? (data[16] & 0xFF) : 0;
         return new int[]{loopCount, overdub, quantize, clickVol, tempo, timeSig, fadeTime,
-                         src0, src1, src2, src3, exportMonoMix, exportGainPct};
+                         src0, src1, src2, src3, exportMonoMix, exportGainPct,
+                         runMode, offlineImportPending};
+    }
+
+    public int getLooperRunMode() {
+        int[] params = getLooperParams();
+        return (params != null && params.length >= 14)
+                ? params[13] : BleProtocol.LOOPER_RUN_MODE_IDLE;
+    }
+
+    public boolean hasOfflineLooperImport() {
+        int[] params = getLooperParams();
+        return params != null && params.length >= 15 && params[14] != 0;
     }
 
     public byte[] getEqRaw() {

@@ -52,6 +52,11 @@ public class BleProtocol {
     public static final byte SYS_STATE_NORMAL     = 0x01;
     public static final byte SYS_STATE_TRANSFER   = 0x02;
 
+    /* Looper runtime owner modes (CMD_LOOPER payload extension) */
+    public static final int LOOPER_RUN_MODE_IDLE    = 0;
+    public static final int LOOPER_RUN_MODE_OFFLINE = 1;
+    public static final int LOOPER_RUN_MODE_ONLINE  = 2;
+
     /* CMD_BATTERY_CALIB sub-types (App → MCU) */
     public static final byte CALIB_CMD_START      = 0x01;
     public static final byte CALIB_CMD_STOP       = 0x02;

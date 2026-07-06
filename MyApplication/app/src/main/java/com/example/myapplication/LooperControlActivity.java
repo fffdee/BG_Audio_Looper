@@ -342,6 +342,10 @@ public class LooperControlActivity extends BaseActivity {
         setupListeners();
         setupDrawerListeners();
         setupBleListener();
+        applyCachedLooperSyncIfReady();
+        if (getIntent() != null && getIntent().getBooleanExtra("offline_looper_import", false)) {
+            Toast.makeText(this, "已导入离线 Looper 到 LOOP 1", Toast.LENGTH_SHORT).show();
+        }
         refreshTopInfoBar();
 
         sendCommand("looper_mode on", null);
@@ -2685,6 +2689,14 @@ public class LooperControlActivity extends BaseActivity {
                 }
             });
         });
+    }
+
+    private void applyCachedLooperSyncIfReady() {
+        if (!BleParamCache.getInstance().isSyncComplete()) return;
+        int[] states = BleParamCache.getInstance().getLooperSegStates();
+        if (states != null) {
+            applyLooperSegStatesFromCache(states);
+        }
     }
 
     /**

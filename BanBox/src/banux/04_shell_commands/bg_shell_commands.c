@@ -2343,6 +2343,46 @@ static const ShellOpt_t looper_opts[] = {
 
 DEFINE_MODULE(looper, "Audio Looper control", MOD_CAT_HARDWARE, looper_opts);
 
+static int looper_runtime_mode_cmd(int argc, char *argv[])
+{
+    LooperRunMode_t mode;
+
+    if (argc < 1 || strcmp(argv[0], "status") == 0) {
+        mode = loop_get_run_mode();
+        Shell_Printf("Looper runtime mode: %s\r\n",
+            mode == LOOPER_RUN_MODE_ONLINE ? "ONLINE" :
+            (mode == LOOPER_RUN_MODE_OFFLINE ? "OFFLINE" : "IDLE"));
+        return 0;
+    }
+
+    if (strcmp(argv[0], "on") == 0 || strcmp(argv[0], "online") == 0) {
+        loop_set_run_mode(LOOPER_RUN_MODE_ONLINE);
+        g_loop_manager.offline_import_pending = 0;
+        Shell_Print("Looper runtime mode: ONLINE\r\n");
+    } else if (strcmp(argv[0], "off") == 0 || strcmp(argv[0], "idle") == 0) {
+        if (loop_get_run_mode() == LOOPER_RUN_MODE_ONLINE) {
+            loop_set_run_mode(LOOPER_RUN_MODE_IDLE);
+        }
+        g_loop_manager.offline_import_pending = 0;
+        Shell_Print("Looper runtime mode: IDLE\r\n");
+    } else if (strcmp(argv[0], "offline") == 0) {
+        loop_set_run_mode(LOOPER_RUN_MODE_OFFLINE);
+        Shell_Print("Looper runtime mode: OFFLINE\r\n");
+    } else {
+        Shell_Print("Usage: looper_mode [on|off|offline|status]\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+static const ShellOpt_t looper_runtime_mode_opts[] = {
+    OPT("", "", "[on|off|offline|status]", "Set looper runtime owner mode", looper_runtime_mode_cmd),
+    OPT_END()
+};
+
+DEFINE_MODULE(looper_mode, "Looper runtime mode", MOD_CAT_HARDWARE, looper_runtime_mode_opts);
+
 /*============================================================================
  * flash module - Flash storage management
  *===========================================================================*/
@@ -3201,6 +3241,7 @@ void Shell_RegisterAllModules(void)
     REGISTER_MODULE(led);
     REGISTER_MODULE(dbg);
     REGISTER_MODULE(looper);
+    REGISTER_MODULE(looper_mode);
     REGISTER_MODULE(flash);
     REGISTER_MODULE(battery);
     REGISTER_MODULE(bt);
