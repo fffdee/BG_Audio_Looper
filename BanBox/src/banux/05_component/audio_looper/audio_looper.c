@@ -2037,11 +2037,25 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
             {
                 uint32_t read_offset = seg_page_to_addr(segment, segment->play_position);
 #if LOOPER_USE_STORAGE_ABSTRACTION
-                LooperStorageStatus_t read_result = LooperStorage_Read(&g_looper_storage, read_offset, 
-                                                    segment->play_page_buf, LOOPER_PSRAM_PAGE_SIZE);
+                LooperStorageStatus_t read_result = LOOPER_STORAGE_ERROR;
+                {
+                    /* PSRAM DMA 通道偶发冲突（如 BT 音频共享）会导致超时，
+                     * 重试 2 次后仍失败则静音该帧，避免播放旧数据。 */
+                    uint8_t retry;
+                    for (retry = 0; retry < 3u; retry++) {
+                        read_result = LooperStorage_Read(&g_looper_storage, read_offset,
+                                            segment->play_page_buf, LOOPER_PSRAM_PAGE_SIZE);
+                        if (read_result == LOOPER_STORAGE_OK) break;
+                    }
+                }
                 if (read_result != LOOPER_STORAGE_OK) {
-                    DBG("Storage read error at offset %lu: %d\n",
+                    DBG("Storage read error at offset %lu: %d (after retries)\n",
                         (unsigned long)read_offset, read_result);
+                    memset(segment->play_page_buf, 0, LOOPER_PSRAM_PAGE_SIZE);
+                    memset(&segment_data[samples_served], 0, (samples_needed - samples_served) * 4);
+                    segment->play_page_offset = 0;
+                    segment->play_page_valid = 1;
+                    break;
                 }
 #else
 #if LOOPER_MULTI_FLASH_ENABLE
@@ -2342,28 +2356,89 @@ void loop_start_new_segment(void)
  */
 void loop_stop_current_segment(uint8_t segment_index)
 {
+    const uint8_t copy_pages_to_add = 10;  /* 尾拷贝页数（循环平滑用） */
+
     if (segment_index >= MAX_SEGMENTS) {
         DBG("Invalid segment index: %d\n", segment_index);
         return;
     }
-    
+
     SegmentInfo_t* segment = &g_loop_manager.segments[segment_index];
-    
+
     if (segment->state != SEGMENT_RECORDING) {
         DBG("Segment %d is not recording\n", segment_index);
         return;
     }
-    
+
 #if LOOPER_IO_BUFFER_ENABLE
     looper_flush_write_all(segment_index);
 #endif
+
+    /* ── 等长录制匹配：将录制段裁剪到参考段的精确播放循环长度 ──
+     * 关键：必须用参考段的【实际播放循环长度】而非 length_pages，
+     * 因为参考段可能设有 trim，实际播放范围 < length_pages。
+     * 例：段0 length_pages=1330 但 trim(0,1279) → 播放循环=1279页；
+     *     段1在段0回绕时停止，录了1280页，若不裁剪则播放循环=1290页，
+     *     每循环差11页 → 5循环后偏移约73ms。
+     *
+     * 修复：裁剪 target = 参考段播放循环长度（trim_start ~ trim_end），
+     * 追加尾拷贝后设置段1的 trim_end_page = target，使两者循环一致。
+     * 参考段 = sr_trigger_seg（SR match模式）或最长的活跃播放段。 */
+    {
+        uint32_t ref_play_length = 0;  /* 参考段的播放循环长度（页数）*/
+
+        if (g_looper_timed_ops.sr_match &&
+            g_looper_timed_ops.sr_trigger_seg < MAX_SEGMENTS) {
+            /* SR match 等长模式：参考段 = trigger 段 */
+            const SegmentInfo_t *ref_seg = &g_loop_manager.segments[g_looper_timed_ops.sr_trigger_seg];
+            uint32_t loop_end = ref_seg->length_pages;
+            if (ref_seg->trim_end_page > 0 && ref_seg->trim_end_page <= ref_seg->length_pages) {
+                loop_end = ref_seg->trim_end_page;
+            }
+            ref_play_length = loop_end - ref_seg->trim_start_page;
+        } else if (loop_is_song_mode()) {
+            /* SONG 模式：参考段 = 播放循环最长的活跃播放段 */
+            uint8_t i;
+            for (i = 0; i < MAX_SEGMENTS; i++) {
+                if (i != segment_index &&
+                    g_loop_manager.segments[i].is_active &&
+                    g_loop_manager.segments[i].state == SEGMENT_PLAYING) {
+                    const SegmentInfo_t *s = &g_loop_manager.segments[i];
+                    uint32_t le = s->length_pages;
+                    if (s->trim_end_page > 0 && s->trim_end_page <= s->length_pages) {
+                        le = s->trim_end_page;
+                    }
+                    uint32_t play_len = le - s->trim_start_page;
+                    if (play_len > ref_play_length) {
+                        ref_play_length = play_len;
+                    }
+                }
+            }
+        }
+
+        if (ref_play_length > 0) {
+            /* 裁剪到参考段的播放循环长度（不含尾拷贝），
+             * 尾拷贝将在后续追加，trim 在尾拷贝后设置。 */
+            if (segment->length_pages > ref_play_length ||
+                (segment->length_pages == ref_play_length && segment->rec_partial_count > 0)) {
+                DBG("[Looper] seg%d: trim %lu(+%u partial)->%lu pages (match ref play_len %lu)\n",
+                    (int)segment_index,
+                    (unsigned long)segment->length_pages,
+                    (unsigned)segment->rec_partial_count,
+                    (unsigned long)ref_play_length,
+                    (unsigned long)ref_play_length);
+                segment->length_pages = ref_play_length;
+                segment->rec_partial_count = 0;  /* 丢弃多余的部分页数据 */
+            }
+        }
+    }
 
     if (segment->rec_partial_count > 0) {
         memset(&segment->rec_partial_buf[segment->rec_partial_count], 0,
                LOOPER_PSRAM_PAGE_SIZE - segment->rec_partial_count);
         uint32_t flush_offset = seg_page_to_addr(segment, segment->length_pages);
 #if LOOPER_USE_STORAGE_ABSTRACTION
-        LooperStorageStatus_t flush_result = LooperStorage_Write(&g_looper_storage, flush_offset, 
+        LooperStorageStatus_t flush_result = LooperStorage_Write(&g_looper_storage, flush_offset,
                                             segment->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE);
         if (flush_result == LOOPER_STORAGE_OK) {
             segment->length_pages++;
@@ -2391,9 +2466,8 @@ void loop_stop_current_segment(uint8_t segment_index)
 #endif
 
     // 在录制结尾复制前面的数据，确保循环平滑
-    uint8_t copy_pages_to_add = 10;  // 复制前10页数据
     uint8_t copy_buffer[LOOPER_PSRAM_PAGE_SIZE];
-    
+
     // 确保有数据可以复制
     if (segment->length_pages == 0) {
         DBG("Warning: No data recorded for segment %d, marking inactive\n", segment_index);
@@ -2404,26 +2478,23 @@ void loop_stop_current_segment(uint8_t segment_index)
         loop_update_global_state();
         return;
     }
-    
+
     // 写入复制的数据页到当前段结尾
     uint8_t page_count;
     for (page_count = 0; page_count < copy_pages_to_add; page_count++) {
         // 计算要复制的源页地址（循环使用段开头的数据）
         uint32_t source_page_index = page_count % segment->length_pages;
-        uint32_t source_offset = segment->start_address + source_page_index * LOOPER_PSRAM_PAGE_SIZE;
-        
-        /* 读取源页数据（同一颗Flash，读写dev_id相同） */
+        uint32_t source_offset = seg_page_to_addr(segment, source_page_index);
+
+        /* 读取源页数据 */
 #if LOOPER_USE_STORAGE_ABSTRACTION
-        /* 使用存储抽象层 */
         LooperStorageStatus_t read_result = LooperStorage_Read(&g_looper_storage, source_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
         if (read_result != LOOPER_STORAGE_OK) {
             DBG("Storage read error at offset %lu: %d\n",
                 (unsigned long)source_offset, read_result);
-            /* 使用静音页进行平滑匹尾, 不中断复制 */
             memset(copy_buffer, 0, LOOPER_PSRAM_PAGE_SIZE);
         }
 #else
-        /* 使用传统 Flash API */
 #if LOOPER_MULTI_FLASH_ENABLE
         FlashStatus_t read_result = FlashPartition_LooperReadByDev(
             segment->flash_dev_id, source_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
@@ -2440,12 +2511,10 @@ void loop_stop_current_segment(uint8_t segment_index)
             break;
         }
 #endif /* LOOPER_USE_STORAGE_ABSTRACTION */
-        
-        /* 写入到段结尾（同一颗Flash） */
-        uint32_t dest_offset = segment->start_address + 
-                               (segment->length_pages + page_count) * LOOPER_PSRAM_PAGE_SIZE;
+
+        /* 写入到段结尾 */
+        uint32_t dest_offset = seg_page_to_addr(segment, segment->length_pages + page_count);
 #if LOOPER_USE_STORAGE_ABSTRACTION
-        /* 使用存储抽象层 */
         LooperStorageStatus_t write_result = LooperStorage_Write(&g_looper_storage, dest_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
         if (write_result != LOOPER_STORAGE_OK) {
             DBG("Storage write error at offset %lu: %d\n",
@@ -2453,7 +2522,6 @@ void loop_stop_current_segment(uint8_t segment_index)
             break;
         }
 #else
-        /* 使用传统 Flash API */
 #if LOOPER_MULTI_FLASH_ENABLE
         FlashStatus_t write_result = FlashPartition_LooperWriteByDev(
             segment->flash_dev_id, dest_offset, copy_buffer, LOOPER_PSRAM_PAGE_SIZE);
@@ -2471,37 +2539,73 @@ void loop_stop_current_segment(uint8_t segment_index)
         }
 #endif /* LOOPER_USE_STORAGE_ABSTRACTION */
     }
-    
-    // 更新段长度（包含复制的页）
-    segment->length_pages += copy_pages_to_add;
+
+    // 更新段长度（仅计入实际成功写入的尾拷贝页数）
+    segment->length_pages += page_count;
     segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
-    
-    DBG("Stop segment %d: recorded %lu pages (%lu bytes) with end-copy (copied %d pages)\n", 
-        segment_index, (unsigned long)(segment->length_pages - copy_pages_to_add),
-        (unsigned long)segment->length_bytes, copy_pages_to_add);
-    
+
+    DBG("Stop segment %d: recorded %lu pages (%lu bytes) with end-copy (copied %u/%u pages)\n",
+        segment_index, (unsigned long)(segment->length_pages - page_count),
+        (unsigned long)segment->length_bytes, (unsigned)page_count, (unsigned)copy_pages_to_add);
+
     if (segment->length_pages == 0) {
-        // 如果没有录制任何数据，标记段为无效
         segment->is_active = 0;
         segment->state = SEGMENT_INACTIVE;
         DBG("Segment %d has no data, marked as inactive\n", segment_index);
     } else {
-        // 设置段为播放状态
         segment->state = SEGMENT_PLAYING;
         segment->play_position = 0;
         segment->play_page_offset = 0;
         segment->play_page_valid = 0;
 
 #if LOOPER_IO_BUFFER_ENABLE
-        /* 初始化读缓存，预填播放数据 */
         looper_init_read_cache(segment_index);
 #endif
 
         DBG("Stopped segment %d: %lu pages, set to PLAYING state\n",
             segment_index, (unsigned long)segment->length_pages);
     }
-    
-    // 更新全局状态
+
+    /* ── 等长录制：同步录制段的 trim 与参考段一致 ──
+     * 核心问题：参考段有 trim(0,1279)，播放循环=1279页；
+     * 录制段无 trim，播放循环=length_pages=1290页，每循环差11页。
+     * 修复：设置录制段的 trim_end_page = 参考段播放循环长度，
+     * 使两者循环页数完全一致。
+     * 注：裁剪已在上方将 length_pages 对齐到 ref_play_length，
+     * 此处再设 trim_end_page 确保播放也只走相同页数。 */
+    if (g_looper_timed_ops.sr_match &&
+        g_looper_timed_ops.sr_trigger_seg < MAX_SEGMENTS) {
+        const SegmentInfo_t *ref_seg = &g_loop_manager.segments[g_looper_timed_ops.sr_trigger_seg];
+        uint32_t ref_loop_end = ref_seg->length_pages;
+        if (ref_seg->trim_end_page > 0 && ref_seg->trim_end_page <= ref_seg->length_pages) {
+            ref_loop_end = ref_seg->trim_end_page;
+        }
+        uint32_t ref_play_length = ref_loop_end - ref_seg->trim_start_page;
+        segment->trim_start_page = 0;
+        segment->trim_end_page = ref_play_length;
+        DBG("[Looper] seg%d: SyncRec trim set (0, %lu) match ref seg%d play_len\n",
+            (int)segment_index, (unsigned long)segment->trim_end_page,
+            (int)g_looper_timed_ops.sr_trigger_seg);
+    }
+
+    /* 诊断：打印所有活跃段的长度+trim，便于排查等长录制不同步 */
+    {
+        uint8_t i;
+        DBG("[SyncDiag]");
+        for (i = 0; i < MAX_SEGMENTS; i++) {
+            if (g_loop_manager.segments[i].is_active) {
+                SegmentInfo_t *s = &g_loop_manager.segments[i];
+                uint32_t le = s->length_pages;
+                if (s->trim_end_page > 0 && s->trim_end_page <= s->length_pages)
+                    le = s->trim_end_page;
+                DBG(" seg%d=len%lu/loop%lu", (int)i,
+                    (unsigned long)s->length_pages,
+                    (unsigned long)(le - s->trim_start_page));
+            }
+        }
+        DBG("\n");
+    }
+
     loop_update_global_state();
 }
 
