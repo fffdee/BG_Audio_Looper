@@ -147,20 +147,13 @@ extern "C" {
 
 /* FAT32 文件系统 (依赖 NAND 或 SD Card) */
 #if HW_DRV_FLASH_NAND_EN || HW_DRV_SDCARD_EN
-#define FAT32_EN                0   /* 启用 FAT32 文件系统 (CDC 文件管理器需要) */
+#define FAT32_EN                0   /* 启用 FAT32 文件系统 */
 #else
 #define FAT32_EN                0   /* 父级硬件未满足 */
 #endif
 
 /* Bootloader: 使用 SDK Flash Boot 升级方式 (SD卡/U盘/PC) */
 #define BOOTLOADER_EN           0
-
-/* CDC 文件管理器 (NAND Flash 下载接口) */
-#if HW_DRV_USB_CDC_EN && HW_DRV_FLASH_NAND_EN
-#define CDC_FILE_MANAGER_EN     0   /* 启用 USB CDC NAND 下载功能 */
-#else
-#define CDC_FILE_MANAGER_EN     0   /* 父级硬件未满足 */
-#endif
 
 /* Flash 测试模块 (RAM优化: 设0可释放~13KB, 测试时设1) */
 #define FLASH_TEST_EN           0
@@ -342,9 +335,7 @@ extern "C" {
 
 #endif    
 
-
-
-
+#include "banux/banux_config.h"
 
 #ifdef __cplusplus
 }

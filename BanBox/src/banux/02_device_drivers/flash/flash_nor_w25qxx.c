@@ -197,6 +197,13 @@ static FlashStatus_t W25Qxx_Init(FlashDevice_t *dev)
     dev->info.mfg_id   = id[0];
     dev->info.mem_type = id[1];
     dev->info.dev_id   = id[2];
+
+    if ((id[0] == 0x00u && id[1] == 0x00u && id[2] == 0x00u) ||
+        (id[0] == 0xFFu && id[1] == 0xFFu && id[2] == 0xFFu)) {
+        W25QXX_LOG("No valid JEDEC ID detected: %02X %02X %02X\n",
+                   id[0], id[1], id[2]);
+        return FLASH_ERR_NOT_FOUND;
+    }
     
     /* 验证厂商ID */
     if (dev->info.mfg_id != W25QXX_MFG_WINBOND) {
@@ -211,9 +218,8 @@ static FlashStatus_t W25Qxx_Init(FlashDevice_t *dev)
         case W25QXX_DEV_Q128: total_size = 16 * 1024 * 1024; break;
         case W25QXX_DEV_Q256: total_size = 32 * 1024 * 1024; break;
         default:
-            W25QXX_LOG("Unknown device ID: 0x%02X, assuming 8MB\n", dev->info.dev_id);
-            total_size = 8 * 1024 * 1024;
-            break;
+            W25QXX_LOG("Unknown device ID: 0x%02X\n", dev->info.dev_id);
+            return FLASH_ERR_NOT_FOUND;
     }
     
     dev->info.page_size   = W25QXX_PAGE_SIZE;

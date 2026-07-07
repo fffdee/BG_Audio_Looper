@@ -23,7 +23,167 @@
 #include "bg_flash_manager.h"
 #include "BG_FlashMgr.h"
 #include "flash_devices.h"
+#include "flash_bus.h"
+#include "product_def.h"
 #include "debug.h"
+
+typedef int (*DrvStaticRegisterFn_t)(void);
+typedef int (*DrvStaticProbeFn_t)(void);
+
+typedef struct {
+    const char             *name;
+    DrvStaticRegisterFn_t   register_fn;
+    DrvStaticProbeFn_t      probe_fn;
+} DrvStaticEntry_t;
+
+/*******************************************************************************
+ * 静态注册表探测函数
+ ******************************************************************************/
+
+static int DrvProbeValidId(uint8_t mfg_id, uint8_t dev_id)
+{
+    return (mfg_id != 0x00u && mfg_id != 0xFFu &&
+            dev_id != 0x00u && dev_id != 0xFFu);
+}
+
+static int DrvProbeW25n02Id(uint8_t dev_id)
+{
+    return (dev_id == W25N02_DEV_ID || dev_id == 0xAAu);
+}
+
+static int DrvProbeNorDevice(const char *name)
+{
+    FlashDevice_t *dev = FlashBus_GetDeviceByName(name);
+
+    if (!dev || !dev->initialized || dev->type != FLASH_TYPE_NOR) {
+        return 0;
+    }
+
+    switch (dev->info.dev_id) {
+        case W25QXX_DEV_Q32:
+        case W25QXX_DEV_Q64:
+        case W25QXX_DEV_Q128:
+        case W25QXX_DEV_Q256:
+            return DrvProbeValidId(dev->info.mfg_id, dev->info.dev_id);
+        default:
+            return 0;
+    }
+}
+
+static int DrvProbeW25qxx(void)
+{
+#if HW_FLASH0_EN
+    if (DrvProbeNorDevice("flash0_sys")) {
+        return 1;
+    }
+#endif
+
+#if HW_FLASH1_EN
+    if (DrvProbeNorDevice("flash1_stor")) {
+        return 1;
+    }
+#endif
+
+    return 0;
+}
+
+static int DrvProbeW25n02(void)
+{
+    FlashDevice_t *dev = FlashBus_GetDeviceByName("nand0");
+
+    return (dev && dev->initialized &&
+            dev->type == FLASH_TYPE_NAND &&
+            DrvProbeValidId(dev->info.mfg_id, dev->info.dev_id) &&
+            DrvProbeW25n02Id(dev->info.dev_id));
+}
+
+static int DrvProbePsram(void)
+{
+    FlashDevice_t *dev = FlashBus_GetDeviceByName("psram0");
+
+    return (dev && dev->initialized &&
+            dev->type == FLASH_TYPE_PSRAM &&
+            DrvProbeValidId(dev->info.mfg_id, dev->info.dev_id) &&
+            dev->info.dev_id == PSRAM64H_KNOWN_KGD);
+}
+
+static int DrvProbeSdCard(void)
+{
+    FlashDevice_t *dev = FlashBus_GetDeviceByName("sdcard0");
+
+    return (dev && dev->initialized &&
+            dev->type == FLASH_TYPE_SDCARD &&
+            dev->info.block_count > 0u &&
+            dev->info.block_size > 0u);
+}
+
+static int DrvRegisterBtVfs(void)
+{
+    VfsNode_t *driverDir;
+    VfsNode_t *btNode;
+    int ret;
+
+    ret = BtVfs_Init();
+    if (ret != 0) {
+        return ret;
+    }
+
+    driverDir = Vfs_FindNode("/driver");
+    if (!driverDir) {
+        DBG("[DrvInit] ERROR: /driver not found\n");
+        return -1;
+    }
+
+    btNode = BtVfs_Mount(driverDir);
+    return btNode ? 0 : -1;
+}
+
+static int DrvRegisterBleVfs(void)
+{
+    VfsNode_t *driverDir;
+    VfsNode_t *bleNode;
+    int ret;
+
+    ret = BleVfs_Init();
+    if (ret != 0) {
+        return ret;
+    }
+
+    driverDir = Vfs_FindNode("/driver");
+    if (!driverDir) {
+        DBG("[DrvInit] ERROR: /driver not found\n");
+        return -1;
+    }
+
+    bleNode = BleVfs_Mount(driverDir);
+    return bleNode ? 0 : -1;
+}
+
+static const DrvStaticEntry_t g_drv_static_table[] = {
+#if HW_DRV_FLASH_NOR_EN
+    { "W25Qxx NOR Flash", W25qxx_DrvRegister, DrvProbeW25qxx },
+#endif
+#if HW_DRV_FLASH_NAND_EN
+    { "W25N02 NAND Flash", W25n02_DrvRegister, DrvProbeW25n02 },
+#endif
+#if HW_DRV_PSRAM_EN
+    { "ESP-PSRAM64H", Psram_DrvRegister, DrvProbePsram },
+#endif
+#if HW_DRV_SDCARD_EN
+    { "SD Card", SDCard_DrvRegister, DrvProbeSdCard },
+#endif
+#if HW_DRV_BATTERY_EN
+    { "Battery", Battery_DrvRegister, NULL },
+#endif
+#if HW_DRV_USB_CDC_EN
+    { "USB CDC", UsbCdc_DrvRegister, NULL },
+#endif
+#if HW_DRV_BT_EN
+    { "Bluetooth", DrvRegisterBtVfs, NULL },
+    { "BLE", DrvRegisterBleVfs, NULL },
+#endif
+    { NULL, NULL, NULL }
+};
 
 /*******************************************************************************
  * 驱动框架初始化函数
@@ -81,137 +241,43 @@ int DrvFramework_RegisterAll(void)
     int ret;
     int total = 0;
     int failed = 0;
+    int skipped = 0;
+    unsigned int i;
     
     DBG("[DrvInit] Starting driver registration...\n");
 
-    /* Flash 管理器已在 DrvFramework_FullInit() 中初始化，此处跳过 */
+    /* FlashDevices_Init() is idempotent and provides the probed ID/status data
+     * used by the static driver table below. */
+#if HW_DRV_FLASH_NOR_EN || HW_DRV_FLASH_NAND_EN || HW_DRV_PSRAM_EN || HW_DRV_SDCARD_EN
+    ret = FlashDevices_Init();
+    if (ret != FLASH_OK) {
+        DBG("[DrvInit] FlashDevices_Init failed: %d\n", ret);
+    }
+#endif
 
-    /* 注册NOR Flash驱动 (W25Qxx) */
-#if HW_DRV_FLASH_NOR_EN
-    DBG("[DrvInit] Registering W25Qxx Flash driver...\n");
-    ret = W25qxx_DrvRegister();
-    if (ret == 0) {
-        total++;
-        DBG("[DrvInit] W25Qxx registered OK\n");
-    } else {
-        failed++;
-        DBG("[DrvInit] W25Qxx registration FAILED\n");
-    }
-#endif /* HW_DRV_FLASH_NOR_EN */
+    for (i = 0; i < (unsigned int)(sizeof(g_drv_static_table) / sizeof(g_drv_static_table[0])); i++) {
+        const DrvStaticEntry_t *entry = &g_drv_static_table[i];
 
-/* 注册NAND Flash驱动 (W25N02) */
-#if HW_DRV_FLASH_NAND_EN
-    DBG("[DrvInit] Registering W25N02 NAND Flash driver...\n");
-    ret = W25n02_DrvRegister();
-    if (ret == 0) {
-        total++;
-        DBG("[DrvInit] W25N02 NAND registered OK\n");
-    } else {
-        failed++;
-        DBG("[DrvInit] W25N02 NAND registration FAILED\n");
-    }
-#endif /* HW_DRV_FLASH_NAND_EN */
-    
-/* 注册PSRAM驱动 (ESP-PSRAM64H) */
-#if HW_DRV_PSRAM_EN
-    DBG("[DrvInit] Registering ESP-PSRAM64H driver...\n");
-    ret = Psram_DrvRegister();
-    if (ret == 0) {
-        total++;
-        DBG("[DrvInit] ESP-PSRAM64H registered OK\n");
-    } else {
-        failed++;
-        DBG("[DrvInit] ESP-PSRAM64H registration FAILED\n");
-    }
-#endif /* HW_DRV_PSRAM_EN */
+        if (!entry->register_fn) {
+            continue;
+        }
 
-/* 注册SD Card驱动 */
-#if HW_DRV_SDCARD_EN
-    DBG("[DrvInit] Registering SD Card driver...\n");
-    ret = SDCard_DrvRegister();
-    if (ret == 0) {
-        total++;
-        DBG("[DrvInit] SD Card registered OK\n");
-    } else {
-        failed++;
-        DBG("[DrvInit] SD Card registration FAILED\n");
-    }
-#endif /* HW_DRV_SDCARD_EN */
-    
-    /* 注册电池管理驱动 */
-#if HW_DRV_BATTERY_EN
-    DBG("[DrvInit] Registering Battery driver...\n");
-    ret = Battery_DrvRegister();
-    if (ret == 0) {
-        total++;
-        DBG("[DrvInit] Battery registered OK\n");
-    } else {
-        failed++;
-        DBG("[DrvInit] Battery registration FAILED\n");
-    }
-#endif /* HW_DRV_BATTERY_EN */
-    
-    /* 注册USB CDC驱动 */
-#if HW_DRV_USB_CDC_EN
-    DBG("[DrvInit] Registering USB CDC driver...\n");
-    ret = UsbCdc_DrvRegister();
-    if (ret == 0) {
-        total++;
-        DBG("[DrvInit] USB CDC registered OK\n");
-    } else {
-        failed++;
-        DBG("[DrvInit] USB CDC registration FAILED\n");
-    }
-#endif /* HW_DRV_USB_CDC_EN */
-    
-    /* 初始化并挂载蓝牙设备到VFS */
-#if HW_DRV_BT_EN
-    DBG("[DrvInit] Initializing Bluetooth VFS drivers...\n");
-    
-    /* 初始化BT驱动 */
-    ret = BtVfs_Init();
-    if (ret == 0) {
-        VfsNode_t *driverDir = Vfs_FindNode("/driver");
-        if (driverDir) {
-            VfsNode_t *btNode = BtVfs_Mount(driverDir);
-            if (btNode) {
-                total++;
-                DBG("[DrvInit] BT device mounted at /driver/bt\n");
-            } else {
-                failed++;
-                DBG("[DrvInit] BT mount FAILED\n");
-            }
+        if (entry->probe_fn && !entry->probe_fn()) {
+            skipped++;
+            DBG("[DrvInit] %s not detected, skip registration\n", entry->name);
+            continue;
+        }
+
+        DBG("[DrvInit] Registering %s driver...\n", entry->name);
+        ret = entry->register_fn();
+        if (ret == 0) {
+            total++;
+            DBG("[DrvInit] %s registered OK\n", entry->name);
         } else {
             failed++;
-            DBG("[DrvInit] ERROR: /driver not found\n");
+            DBG("[DrvInit] %s registration FAILED (ret=%d)\n", entry->name, ret);
         }
-    } else {
-        failed++;
-        DBG("[DrvInit] BT init FAILED\n");
     }
-    
-    /* 初始化BLE驱动 */
-    ret = BleVfs_Init();
-    if (ret == 0) {
-        VfsNode_t *driverDir = Vfs_FindNode("/driver");
-        if (driverDir) {
-            VfsNode_t *bleNode = BleVfs_Mount(driverDir);
-            if (bleNode) {
-                total++;
-                DBG("[DrvInit] BLE device mounted at /driver/ble\n");
-            } else {
-                failed++;
-                DBG("[DrvInit] BLE mount FAILED\n");
-            }
-        } else {
-            failed++;
-            DBG("[DrvInit] ERROR: /driver not found\n");
-        }
-    } else {
-        failed++;
-        DBG("[DrvInit] BLE init FAILED\n");
-    }
-#endif /* HW_DRV_BT_EN */
     
     /* 注册系统命令到 /bin */
     DBG("[DrvInit] Registering /bin commands...\n");
@@ -237,7 +303,8 @@ int DrvFramework_RegisterAll(void)
      * - Audio Codec
      */
     
-    DBG("[DrvInit] Registration complete: %d success, %d failed\n", total, failed);
+    DBG("[DrvInit] Registration complete: %d success, %d skipped, %d failed\n",
+        total, skipped, failed);
     return (failed > 0) ? -1 : 0;
 }
 

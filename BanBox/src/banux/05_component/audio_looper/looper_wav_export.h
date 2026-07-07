@@ -3,7 +3,7 @@
  * @brief Audio Looper WAV 文件导出功能
  *
  * 将 PSRAM 中的录音数据导出为 WAV 格式保存到 NAND Flash FAT32 分区，
- * 然后通过 CDC 文件管理器传输到 PC。
+ * 然后通过后续传输接口发送到 PC。
  *
  * 支持功能：
  * - 单段导出 (segment 0-3)

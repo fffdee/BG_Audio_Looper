@@ -262,8 +262,7 @@ void __cpu_init()
 	 * APP linked at 0x040000 → IVB=0x40000 so interrupts
 	 * use the APP's vector table, not the bootloader's.
 	 * With IVB=0 the first interrupt after vTaskStartScheduler()
-	 * enters the bootloader's vector table and crashes.
-	 * Matches BT_Audio_APP's FLASH_BOOT_EN approach. */
+	 * enters the bootloader's vector table and crashes. */
 	{
 		extern char __executable_start;
 		__nds32__mtsr((uint32_t)&__executable_start & 0xFFFF0000UL, NDS32_SR_IVB);

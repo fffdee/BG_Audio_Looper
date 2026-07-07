@@ -27,7 +27,6 @@
 #include "bt_a2dp_api.h"
 #include "battery_drv.h"
 #include "drv_init.h"
-#include "flash_boot.h"
 #include "vfs.h"       /* 铏氭嫙鏂囦欢绯荤粺API */
 #include "drv_fs.h"    /* 椹卞姩鏂囦欢绯荤粺API */
 #include "drv_device.h" /* 椹卞姩璁惧绠＄悊 */
@@ -3202,29 +3201,6 @@ static const ShellOpt_t ble_send_opts[] = {
 DEFINE_MODULE(ble_send, "Send string via BLE", MOD_CAT_SYSTEM, ble_send_opts);
 
 /*============================================================================
- * upg — 进入固件升级模式 (SDK Flash Boot)
- *===========================================================================*/
-#if FLASH_BOOT_EN
-extern void start_up_grate(uint32_t UpdateResource);
-
-static int cmd_upg_enter(int argc, char *argv[])
-{
-    (void)argc; (void)argv;
-    Shell_Print("Entering firmware upgrade mode (SDK Flash Boot)...\r\n");
-    Shell_Print("Device will reboot into bootloader.\r\n");
-    start_up_grate(AppResourceUsbDevice);
-    return 0;
-}
-
-static const ShellOpt_t upg_opts[] = {
-    OPT("", "", "", "Enter firmware upgrade mode (SDK Flash Boot)", cmd_upg_enter),
-    OPT_END()
-};
-
-DEFINE_MODULE(upg, "Enter firmware upgrade mode", MOD_CAT_SYSTEM, upg_opts);
-#endif /* FLASH_BOOT_EN */
-
-/*============================================================================
  * Module registration
  *===========================================================================*/
     /* 鍙傛暟淇濆瓨鍛戒护 */
@@ -3260,9 +3236,6 @@ void Shell_RegisterAllModules(void)
     #endif /* VFS_EN */
     REGISTER_MODULE(drivers);
     REGISTER_MODULE(ble_send);
-#if FLASH_BOOT_EN
-    REGISTER_MODULE(upg);
-#endif
     /* 鏁堟灉鍥惧拰鏁堟灉鍣ㄥ懡浠�*/
     ShellCmdEffect_Register();   /* effect 鍛戒护 */
     ShellCmdGraph_Register();    /* graph 鍜fx 鍛戒护 */
@@ -3388,35 +3361,39 @@ void ShellCmdRemind_Register(void)
  *   upg          进入升级模式（停止Audio/Shell，等待协议包）
  *   upg info     查询当前分区信息
  *===========================================================================*/
-#include "cdc_upgrade.h"
-#include "dual_partition.h"
+#include "banux/05_component/firmware_upgrade/fw_upgrade.h"
 
 static int upg_enter(int argc, char *argv[])
 {
     (void)argc; (void)argv;
     Shell_Printf("[UPG] Entering firmware upgrade mode via USB CDC...\r\n");
-    CDC_Upgrade_EnterMode();
+    FwUpgrade_EnterCdcMode();
     return 0;
 }
 
 static int upg_info(int argc, char *argv[])
 {
-    PartFlag_t flags;
+    FwUpgradeInfo_t info;
     (void)argc; (void)argv;
 
-    Shell_Printf("=== Partition Info ===\r\n");
-    Shell_Printf("Part A: 0x%06X (%d KB)\r\n", PART_A_BASE, PART_A_SIZE / 1024);
-    Shell_Printf("Part B: 0x%06X (%d KB)\r\n", PART_B_BASE, PART_B_SIZE / 1024);
-    Shell_Printf("Flags:  0x%06X\r\n", PART_FLAG_ADDR);
+    FwUpgrade_GetInfo(&info);
 
-    if (PartFlag_Read(&flags)) {
-        Shell_Printf("Active: %s\r\n", flags.active_part ? "B" : "A");
-        Shell_Printf("Boot fail count: %d / %d\r\n", flags.boot_fail_cnt, BOOT_FAIL_MAX);
+    Shell_Printf("=== Partition Info ===\r\n");
+    Shell_Printf("Part A: 0x%06X (%d KB)\r\n",
+                  (unsigned)info.part_a_base, (int)(info.part_a_size / 1024u));
+    Shell_Printf("Part B: 0x%06X (%d KB)\r\n",
+                  (unsigned)info.part_b_base, (int)(info.part_b_size / 1024u));
+    Shell_Printf("Flags:  0x%06X\r\n", (unsigned)info.flags_addr);
+
+    if (info.flags_valid) {
+        Shell_Printf("Active: %s\r\n", info.active_part ? "B" : "A");
+        Shell_Printf("Boot fail count: %d / %d\r\n",
+                      info.boot_fail_cnt, info.boot_fail_max);
     } else {
         Shell_Printf("No valid partition flags\r\n");
     }
 
-    Shell_Printf("Running: %s\r\n", Boot_IsRunningPart2() ? "Part B (remap)" : "Part A");
+    Shell_Printf("Running: %s\r\n", info.running_part_b ? "Part B (remap)" : "Part A");
     return 0;
 }
 
@@ -3433,23 +3410,11 @@ DEFINE_MODULE(upg, "Firmware upgrade (USB CDC)", MOD_CAT_SYSTEM, upg_opts);
  *   boot         写烧录标志到 Flash，然后复位芯片进入 Bootloader
  *   boot status  检查烧录标志是否已设置
  *===========================================================================*/
-#include "spi_flash.h"
-#include "reset.h"
-
 static int boot_enter(int argc, char *argv[])
 {
     (void)argc; (void)argv;
-    uint32_t magic = BURN_FLAG_MAGIC;
 
-    Shell_Printf("[BOOT] Writing burn flag to Flash @0x%06X ...\r\n",
-                 (unsigned)BURN_FLAG_ADDR);
-
-    /* Unlock flash, erase sector, write magic */
-    SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
-    SpiFlashErase(SECTOR_ERASE, BURN_FLAG_SECTOR, 1);
-    SpiFlashWrite(BURN_FLAG_ADDR, (uint8_t *)&magic, sizeof(magic), 100);
-
-    Shell_Printf("[BOOT] Burn flag written. Rebooting to bootloader ...\r\n");
+    Shell_Printf("[BOOT] Writing burn flag and rebooting to bootloader ...\r\n");
 
     /* Delay to ensure message is sent */
     {
@@ -3457,20 +3422,20 @@ static int boot_enter(int argc, char *argv[])
         for (delay = 0; delay < 200000; delay++) { ; }
     }
 
-    Reset_McuSystem();
+    FwUpgrade_RebootToBootloader();
     return 0;  /* Never reached */
 }
 
 static int boot_status(int argc, char *argv[])
 {
     (void)argc; (void)argv;
-    uint32_t val = *(volatile const uint32_t *)BURN_FLAG_ADDR;
+    uint32_t val = FwUpgrade_GetBootloaderFlag();
 
-    Shell_Printf("Burn flag @0x%06X = 0x%08X\r\n",
-                 (unsigned)BURN_FLAG_ADDR, (unsigned)val);
+    Shell_Printf("Burn flag = 0x%08X\r\n", (unsigned)val);
     Shell_Printf("Status: %s\r\n",
-                 (val == BURN_FLAG_MAGIC) ? "SET (will enter bootloader on next reboot)"
-                                          : "CLEARED (normal boot)");
+                 FwUpgrade_IsBootloaderFlagSet()
+                     ? "SET (will enter bootloader on next reboot)"
+                     : "CLEARED (normal boot)");
     return 0;
 }
 

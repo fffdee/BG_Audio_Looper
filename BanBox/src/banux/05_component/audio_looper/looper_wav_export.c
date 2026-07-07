@@ -3,7 +3,7 @@
  * @brief Audio Looper WAV 文件导出功能实现
  *
  * 功能: 将 PSRAM 中的 Looper 段录音导出为 WAV 文件保存到 NAND Flash FAT32 分区
- * 上位机通过 CDC 文件管理器读取和管理这些 WAV 文件
+ * 上位机可通过后续传输接口读取和管理这些 WAV 文件
  */
 
 #include "product_def.h"

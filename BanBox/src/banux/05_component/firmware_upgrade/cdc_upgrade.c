@@ -99,9 +99,8 @@ int CDC_Upgrade_CheckEnter(void)
     }
 
     /* Peek at first byte WITHOUT consuming it.
-     * This is critical: CDC_FileManager_CheckEnter may also be polling
-     * for its own SOF (0xAB). If we consume a non-matching byte here,
-     * the file manager would lose it (and vice versa). */
+     * If this is not an upgrade SOF, leave the byte for Shell or other
+     * CDC consumers instead of stealing input from the normal console path. */
     if (OTG_DeviceCDC_PeekByte(&byte) == 1) {
         if (byte == UPG_SOF) {
             /* SOF matched — now consume the byte */

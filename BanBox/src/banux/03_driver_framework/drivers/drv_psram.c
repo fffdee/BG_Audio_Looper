@@ -183,9 +183,10 @@ static DrvDevice_t psram_driver = {
 int Psram_DrvRegister(void)
 {
     /* 只有硬件设备已被成功创建并注册到 FlashBus 才进行 VFS 驱动注册 */
-    if (!FlashBus_GetDeviceByName("psram0")) {
-        DBG("[DrvPSRAM] psram0 not found in FlashBus, skip VFS registration\n");
-        return 0;
+    FlashDevice_t *dev = FlashBus_GetDeviceByName("psram0");
+    if (!dev || !dev->initialized) {
+        DBG("[DrvPSRAM] psram0 not detected, skip VFS registration\n");
+        return -1;
     }
     return DrvDevice_Register(&psram_driver);
 }

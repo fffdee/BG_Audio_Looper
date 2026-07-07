@@ -23,9 +23,6 @@
 
 #ifdef CFG_APP_CONFIG
 #include "app_config.h"
-#if FLASH_BOOT_EN
-#include "flash_boot.h"  /* Flash Boot鍗囩骇鍔熻兘 */
-#endif
 #endif
 
 //------------------------------------//
@@ -386,9 +383,6 @@ void OTG_DeviceClassRequest()
 				DBG("pc_upgrade start 2\n");
 				Setup[0] = 0x55;
 				OTG_DeviceControlSend(Setup,Setup[7]*256+Setup[6],1);
-				#if FLASH_BOOT_EN
-				start_up_grate(AppResourceUsbDevice);
-				#endif
 			}
 			else
 			{
@@ -446,7 +440,6 @@ void OTG_DeviceOtherRequest()
 }
 
 //__attribute__((weak))// bkd // 2019.5.7
-//void start_up_grate(uint32_t UpdateResource)
 //{
 //}
 

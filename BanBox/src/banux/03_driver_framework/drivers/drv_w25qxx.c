@@ -20,7 +20,10 @@
 #include "drv_device.h"
 #include "drv_fs.h"
 #include "flash_nor_w25qxx.h"
+#include "flash_devices.h"
+#include "flash_bus.h"
 #include "BG_FlashMgr.h"
+#include "debug.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -44,6 +47,33 @@ static W25qxxPrivData_t g_w25qxx_priv = {
     .name = "W25Qxx_Flash",
     .device_id = 0
 };
+
+static FlashDevice_t *w25qxx_find_present_device(void)
+{
+    FlashDevice_t *dev;
+
+    dev = FlashDevices_GetSystemFlash();
+    if (dev && dev->initialized && dev->type == FLASH_TYPE_NOR) {
+        return dev;
+    }
+
+    dev = FlashDevices_GetStorageFlash();
+    if (dev && dev->initialized && dev->type == FLASH_TYPE_NOR) {
+        return dev;
+    }
+
+    dev = FlashBus_GetDeviceByName("flash0_sys");
+    if (dev && dev->initialized && dev->type == FLASH_TYPE_NOR) {
+        return dev;
+    }
+
+    dev = FlashBus_GetDeviceByName("flash1_stor");
+    if (dev && dev->initialized && dev->type == FLASH_TYPE_NOR) {
+        return dev;
+    }
+
+    return NULL;
+}
 
 /*******************************************************************************
  * 参数读写回调函数
@@ -158,20 +188,22 @@ static const FsParamDef_t w25qxx_params[] = {
 static int w25qxx_drv_init(void *priv)
 {
     W25qxxPrivData_t *flash = (W25qxxPrivData_t *)priv;
+    FlashDevice_t *dev;
     
     if (flash->initialized) {
         return 0;
     }
-    
-    // 调用底层Flash初始化
-    // Flash_Init();  // 假设有此函数
-    
-    // 读取设备ID
-    // flash->device_id = Flash_ReadID();
-    flash->device_id = 0xEF40;  // W25Q64示例ID
-    
-    // 根据ID确定容量
-    flash->capacity = 8 * 1024 * 1024;  // 8MB for W25Q64
+
+    dev = w25qxx_find_present_device();
+    if (!dev) {
+        DBG("[DrvW25Qxx] No initialized W25Qxx device found\n");
+        return -1;
+    }
+
+    flash->device_id = ((uint16_t)dev->info.mfg_id << 8) | dev->info.dev_id;
+    flash->capacity = dev->info.total_size;
+    flash->page_size = (uint16_t)dev->info.page_size;
+    flash->sector_size = dev->info.sector_size;
     
     flash->initialized = true;
     
@@ -259,5 +291,10 @@ static DrvDevice_t w25qxx_driver = {
  ******************************************************************************/
 int W25qxx_DrvRegister(void)
 {
+    if (!w25qxx_find_present_device()) {
+        DBG("[DrvW25Qxx] W25Qxx not detected, skip VFS registration\n");
+        return -1;
+    }
+
     return DrvDevice_Register(&w25qxx_driver);
 }

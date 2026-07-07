@@ -178,6 +178,14 @@ static FlashStatus_t PSRAM64H_Init(FlashDevice_t *dev)
     dev->info.mfg_id   = mfg_id;
     dev->info.mem_type = 0;  /* PSRAM 无 mem_type */
     dev->info.dev_id   = kgd;
+
+    if ((mfg_id == 0x00u && kgd == 0x00u) ||
+        (mfg_id == 0xFFu && kgd == 0xFFu) ||
+        kgd != PSRAM64H_KNOWN_KGD) {
+        PSRAM64H_LOG("No valid ESP-PSRAM64H ID detected: MFG=0x%02X KGD=0x%02X\n",
+                     mfg_id, kgd);
+        return FLASH_ERR_NOT_FOUND;
+    }
     
     /* 验证 ID */
     if (mfg_id != PSRAM64H_KNOWN_MFG_ID) {

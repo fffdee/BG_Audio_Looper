@@ -63,10 +63,6 @@
 #include "otg_device_audio.h"
 #include "ctrlvars.h"
 #include "product_def.h"
-#include "flash_boot.h"
-#if CDC_FILE_MANAGER_EN
-#include "cdc_file_manager.h"  /* USB CDC NAND Flash download */
-#endif
 #if FAT32_EN
 #include "fat32_nand.h"         /* NAND FAT32 file system */
 #include "looper_wav_export.h"  /* Audio Looper WAV export */
@@ -91,7 +87,7 @@ extern uint8_t BleConnectFlag;
 
 
 #include "drv_init.h"           /* Driver Framework Initialization */
-#include "app_config.h"         /* HAS_BOOTLOADER, FLASH_BOOT_EN */
+#include "app_config.h"         /* HAS_BOOTLOADER */
 
 /* 事件发布-订阅系统 */
 #include "bg_event.h"
@@ -100,12 +96,8 @@ extern uint8_t BleConnectFlag;
 #include "sys_state.h"
 #include "app_sys_handler.h"
 
-/* Boot partition detection and confirmation */
-#include "dual_partition.h"
-
-/* Firmware upgrade engine */
-#include "app_upgrade.h"
-#include "cdc_upgrade.h"
+/* Firmware upgrade component */
+#include "banux/05_component/firmware_upgrade/fw_upgrade.h"
 
 /* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
 #include "remind_sound.h"
@@ -317,7 +309,7 @@ void power_on()
 #if FAT32_EN
 	/*=====================================================
 	 * NAND FAT32 文件系统初始化
-	 * 用于 WAV 导出和 CDC 文件管理器
+	 * 用于 WAV 导出
 	 *====================================================*/
 	DBG("[Task] Initializing NAND FAT32 file system...\n");
 	{
@@ -508,17 +500,11 @@ void MainTask() {
 
 	/* Confirm boot success — reset boot_fail_cnt in partition flags.
 	 * This tells the bootloader that the current partition booted OK. */
-	Boot_ConfirmSuccess();
+	FwUpgrade_ConfirmBootSuccess();
 
 	/* Initialize firmware upgrade engine (CDC + BLE OTA) */
-	App_Upgrade_Init();
-	CDC_Upgrade_Init();
+	FwUpgrade_Init();
 	DBG("[Main] Upgrade engine initialized\n");
-
-#if CDC_FILE_MANAGER_EN
-	/* Step 10: Initialise CDC file manager for NAND Flash download. */
-	CDC_FileManager_Init();
-#endif
 
 	while (1) {
 
@@ -535,23 +521,12 @@ void MainTask() {
 		/* WAV BLE export: send one data packet per tick */
 		LooperWavBle_ProcessTick();
 
-#if CDC_FILE_MANAGER_EN
-		/* CDC 文件管理模式检测和处理 (NAND Flash 下载) */
-		if (!CDC_FileManager_InMode()) {
-			CDC_FileManager_CheckEnter();  /* 检测上位机 ENTER_NAND 命令 */
-		}
-		if (CDC_FileManager_InMode()) {
-			CDC_FileManager_Process();      /* 处理文件下载命令 */
-			continue;                        /* 跳过 Audio/Shell 循环 */
-		}
-#endif /* CDC_FILE_MANAGER_EN */
-
 		/* CDC firmware upgrade mode — auto-detect SOF or process packets */
-		if (!CDC_Upgrade_InMode()) {
-			CDC_Upgrade_CheckEnter();  /* 嗅探 0xAA SOF，自动进入升级模式 */
+		if (!FwUpgrade_InCdcMode()) {
+			FwUpgrade_CheckCdcEnter();  /* 嗅探 0xAA SOF，自动进入升级模式 */
 		}
-		if (CDC_Upgrade_InMode()) {
-			CDC_Upgrade_Process();
+		if (FwUpgrade_InCdcMode()) {
+			FwUpgrade_ProcessCdc();
 			continue;  /* Skip Audio/Shell during upgrade */
 		}
 
@@ -682,14 +657,9 @@ int main(void) {
 	/* Boot partition detection — detect which partition we're running on.
 	 * With bootloader, the jump decision is already made by bootloader.
 	 * This just sets the internal tracking flag. */
-	diag_putc('4');  /* before DualPart_Init + Boot_CheckAndJump */
-	DualPart_Init();  /* detect flash capacity & compute layout (must precede Boot_CheckAndJump) */
-	Boot_CheckAndJump();
-	diag_putc('5');  /* Boot_CheckAndJump done */
-
-#if FLASH_BOOT_EN
-	report_up_grate();
-#endif
+	diag_putc('4');  /* before firmware upgrade boot init */
+	FwUpgrade_BootInit();
+	diag_putc('5');  /* firmware upgrade boot init done */
 
 	GIE_ENABLE();
 	diag_putc('6');  /* GIE_ENABLE done */

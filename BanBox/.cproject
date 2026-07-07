@@ -32,7 +32,7 @@
 								<option id="nds.c.compiler.option.include.paths.1257419758" name="Include paths (-I)" superClass="nds.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/middleware/mv_utils/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/middleware/fatfs/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/device}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/firmware_upgrade}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_hal_drivers}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_hal_drivers/adc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/01_hal_drivers/gpio}&quot;"/>

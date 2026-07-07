@@ -402,6 +402,15 @@ static FlashStatus_t W25N02_Init(FlashDevice_t *dev)
 
     NAND_LOG("JEDEC ID: %02X %02X %02X\n", id[0], id[1], id[2]);
 
+    if ((id[0] == 0x00u && id[1] == 0x00u && id[2] == 0x00u) ||
+        (id[0] == 0xFFu && id[1] == 0xFFu && id[2] == 0xFFu) ||
+        (id[2] != W25N02_DEV_ID && id[2] != 0xAAu)) {
+        NAND_LOG("No valid W25N02 ID detected\n");
+        vPortFree(priv);
+        dev->priv = NULL;
+        return FLASH_ERR_NOT_FOUND;
+    }
+
     if (id[0] != W25N02_MFG_WINBOND) {
         NAND_LOG("Warning: unexpected manufacturer 0x%02X\n", id[0]);
     }

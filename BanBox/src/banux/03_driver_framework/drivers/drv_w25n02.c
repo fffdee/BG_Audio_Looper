@@ -238,9 +238,10 @@ static DrvDevice_t w25n02_driver = {
 int W25n02_DrvRegister(void)
 {
     /* 只有硬件设备已被成功创建并注册到 FlashBus 才进行 VFS 驱动注册 */
-    if (!FlashBus_GetDeviceByName("nand0")) {
-        DBG("[DrvW25N02] nand0 not found in FlashBus, skip VFS registration\n");
-        return 0;
+    FlashDevice_t *dev = FlashBus_GetDeviceByName("nand0");
+    if (!dev || !dev->initialized) {
+        DBG("[DrvW25N02] nand0 not detected, skip VFS registration\n");
+        return -1;
     }
     return DrvDevice_Register(&w25n02_driver);
 }
