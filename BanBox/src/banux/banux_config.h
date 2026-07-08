@@ -27,6 +27,10 @@ extern "C" {
 #define BG_EVENT_EN                 1   /* Event publish/subscribe topics */
 #endif
 
+#ifndef SYS_LED_EN
+#define SYS_LED_EN                  1   /* System status LED (GPIOA15) */
+#endif
+
 #ifndef EFFECT_GRAPHICS_EN
 #define EFFECT_GRAPHICS_EN          1   /* Effect graph component */
 #endif

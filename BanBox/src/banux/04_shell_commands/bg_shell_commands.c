@@ -1210,10 +1210,22 @@ DEFINE_MODULE(gpio, "GPIO control", MOD_CAT_HARDWARE, gpio_opts);
 /*============================================================================
  * led module - LED control
  *===========================================================================*/
+#include "sys_led.h"
+
+static const char *led_mode_name(SysLedMode_t mode)
+{
+    switch (mode) {
+    case SYS_LED_MODE_ON:      return "on";
+    case SYS_LED_MODE_BLINK:   return "blink";
+    case SYS_LED_MODE_BREATHE: return "breathe";
+    default:                   return "off";
+    }
+}
 
 static int led_on(int argc, char *argv[])
 {
     (void)argc; (void)argv;
+    SysLed_SetMode(SYS_LED_MODE_ON);
     Shell_Print("LED ON\r\n");
     return 0;
 }
@@ -1221,22 +1233,65 @@ static int led_on(int argc, char *argv[])
 static int led_off(int argc, char *argv[])
 {
     (void)argc; (void)argv;
+    SysLed_SetMode(SYS_LED_MODE_OFF);
     Shell_Print("LED OFF\r\n");
     return 0;
 }
 
 static int led_blink(int argc, char *argv[])
 {
-    int ms = 500;
-    if(argc > 0) ms = atoi(argv[0]);
-    Shell_Printf("LED blinking: %dms\r\n", ms);
+    uint16_t half_ms = SYS_LED_BLINK_PERIOD_MS / 2U;
+    if (argc > 0) {
+        half_ms = (uint16_t)atoi(argv[0]);
+        if (half_ms == 0U) {
+            half_ms = 1U;
+        }
+    }
+    SysLed_SetBlinkPeriod(half_ms);
+    SysLed_SetMode(SYS_LED_MODE_BLINK);
+    Shell_Printf("LED blink: %u ms half-period\r\n", (unsigned)half_ms);
+    return 0;
+}
+
+static int led_breathe(int argc, char *argv[])
+{
+    uint16_t period_ms = SYS_LED_BREATHE_PERIOD_MS;
+    if (argc > 0) {
+        period_ms = (uint16_t)atoi(argv[0]);
+        if (period_ms == 0U) {
+            period_ms = 1U;
+        }
+    }
+    SysLed_SetBreathePeriod(period_ms);
+    SysLed_SetMode(SYS_LED_MODE_BREATHE);
+    Shell_Printf("LED breathe: %u ms period\r\n", (unsigned)period_ms);
+    return 0;
+}
+
+static int led_auto(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    SysLed_SetPolicy(SYS_LED_POLICY_SYSTEM);
+    Shell_Print("LED policy: system\r\n");
+    return 0;
+}
+
+static int led_status(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    Shell_Printf("LED mode=%s policy=%s\r\n",
+                 led_mode_name(SysLed_GetMode()),
+                 SysLed_GetPolicy() == SYS_LED_POLICY_SYSTEM ? "system" : "manual");
     return 0;
 }
 
 static const ShellOpt_t led_opts[] = {
-    OPT("o", "on",      NULL,       "LED on",               led_on),
-    OPT("f", "off",     NULL,       "LED off",              led_off),
-    OPT("b", "blink",   "[ms]",     "Blink (default 500ms)", led_blink),
+    OPT("o", "on",      NULL,       "LED on",                    led_on),
+    OPT("f", "off",     NULL,       "LED off",                   led_off),
+    OPT("b", "blink",   "[ms]",     "Blink half-period (default 250ms)", led_blink),
+    OPT("r", "breathe", "[ms]",     "Breathe period (default 2000ms)",   led_breathe),
+    OPT("a", "auto",    NULL,       "Follow system status",      led_auto),
+    OPT("s", "status",  NULL,       "Show LED state",            led_status),
     OPT_END()
 };
 

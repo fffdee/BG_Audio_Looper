@@ -99,6 +99,10 @@ extern uint8_t BleConnectFlag;
 /* Firmware upgrade component */
 #include "banux/05_component/firmware_upgrade/fw_upgrade.h"
 
+#if SYS_LED_EN
+#include "sys_led.h"
+#endif
+
 /* 开机提示音模块 — 音频数据已内嵌到 remind_sound.c 的调用表中 */
 #include "remind_sound.h"
 
@@ -150,6 +154,10 @@ void Timer2Interrupt(void) {
 
 	/* Increment BLE tick counter for sync command timing */
 	ble_tick_counter++;
+
+#if SYS_LED_EN
+	SysLed_Tick1ms();
+#endif
 
 	if(count_flag){
 		power_count++;
@@ -270,10 +278,13 @@ void power_on()
 	 * 以下代码是 legacy 直接初始化，逐步迁移到回调注册模式 */
 	SysState_PowerOn();
 
-	/* LED 指示灯初始化: GPIO_A16 输出，默认常亮 */
+#if SYS_LED_EN
+	SysLed_Init();
+#else
 	GPIO_RegOneBitClear(GPIO_A_IE, HW_LED_GPIO_PIN);
 	GPIO_RegOneBitSet(GPIO_A_OE, HW_LED_GPIO_PIN);
 	GPIO_RegOneBitSet(GPIO_A_OUT, HW_LED_GPIO_PIN);
+#endif
 
 	/* 初始化音频控制变量默认值（效果器参数、增益等）
 	 * 必须在 SysParam_Init() 和 Audio_Init() 之前调用，
@@ -388,8 +399,11 @@ void power_off()
 	RemindSound_Start("off");
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX20);
 	GPIO_RegOneBitClear(GPIO_A_OUT, GPIO_INDEX24);
-	/* 关机熄灭LED */
+#if SYS_LED_EN
+	SysLed_SetMode(SYS_LED_MODE_OFF);
+#else
 	GPIO_RegOneBitClear(GPIO_A_OUT, HW_LED_GPIO_PIN);
+#endif
 }
 void pwr_button_init()
 {
@@ -473,11 +487,11 @@ void MainTask() {
 	/* Configure power-on IO levels (applied by SysState_PowerOn) */
 	{
 		static const SysIoConfig_t io_cfg = {
-			.port_out_set   = HW_LED_GPIO_PIN,       /* LED 常亮 */
+			.port_out_set   = 0,
 			.port_out_clear = 0,
-			.port_oe_set    = HW_LED_GPIO_PIN,       /* LED 输出 */
+			.port_oe_set    = HW_LED_GPIO_PIN,
 			.port_oe_clear  = 0,
-			.port_ie_clear  = HW_LED_GPIO_PIN,       /* LED 禁用输入 */
+			.port_ie_clear  = HW_LED_GPIO_PIN,
 			.port_pu_set    = 0,
 			.port_pd_set    = 0,
 		};

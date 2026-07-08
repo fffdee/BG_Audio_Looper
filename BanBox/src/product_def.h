@@ -288,8 +288,8 @@ extern "C" {
 #define HW_BATTERY_ADC_GPIO_PIN  GPIO_INDEX31
 #define HW_BATTERY_ADC_CHANNEL   ADC_CHANNEL_GPIOA31
 
-/* LED 指示灯 (GPIO_A16) */
-#define HW_LED_GPIO_PIN          GPIO_INDEX16
+/* LED 指示灯 (GPIO_A15) */
+#define HW_LED_GPIO_PIN          GPIO_INDEX15
 
 #elif defined(BANBOX_II)
 /* 新板子配置 - 只有一片 NOR Flash */
@@ -313,6 +313,9 @@ extern "C" {
 #define HW_BATTERY_ADC_GPIO_PIN  GPIO_INDEX31
 #define HW_BATTERY_ADC_CHANNEL   ADC_CHANNEL_GPIOA31
 
+/* LED 指示灯 (GPIO_A15) */
+#define HW_LED_GPIO_PIN          GPIO_INDEX15
+
 #else
 /* 默认配置 */
 #define HW_FLASH0_CS_PIN        21
@@ -332,6 +335,9 @@ extern "C" {
 #define HW_BATTERY_ADC_GPIO_PORT GPIO_A_ANA_EN
 #define HW_BATTERY_ADC_GPIO_PIN  GPIO_INDEX31
 #define HW_BATTERY_ADC_CHANNEL   ADC_CHANNEL_GPIOA31
+
+/* LED 指示灯 (GPIO_A15) */
+#define HW_LED_GPIO_PIN          GPIO_INDEX15
 
 #endif    
 
