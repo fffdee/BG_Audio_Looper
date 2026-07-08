@@ -12,10 +12,6 @@
 #include "battery_calib.h"
 #include "bt_manager.h"
 
-#if SYS_LED_EN
-#include "sys_led.h"
-#endif
-
 #ifdef UI_EN
 #include "comp_statusbar.h"
 #endif
@@ -26,9 +22,7 @@ extern uint8_t BleConnectFlag;
 
 void AppSys_LedTick(void)
 {
-#if SYS_LED_EN
-    SysLed_Tick50ms();
-#endif
+    /* LED 由 sys_led 组件通过 BG_Event 事件驱动，无需轮询 */
 }
 
 /* ====================== BT 状态 UI 更新 ====================== */

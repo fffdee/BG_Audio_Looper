@@ -1,16 +1,14 @@
 /**
  * @file  sys_led.c
- * @brief System status LED driver implementation.
+ * @brief System status LED driver — event-driven via BG_Event topics.
  */
 
 #include "sys_led.h"
-#include "hal_gpio.h"
 #include "gpio.h"
 #include "product_def.h"
+#include "banux/banux_config.h"
 #include "sys_state.h"
 #include "bg_event.h"
-#include "battery_calib.h"
-#include "otg_detect.h"
 
 typedef struct {
     SysLedMode_t     mode;
@@ -27,8 +25,6 @@ typedef struct {
 } SysLedContext_t;
 
 static SysLedContext_t s_led;
-
-#include "banux/banux_config.h"
 
 #if SYS_LED_EN
 
@@ -115,12 +111,23 @@ static void led_set_mode_internal(SysLedMode_t mode)
     led_render();
 }
 
-static void led_refresh_system_mode(void)
+/**
+ * @brief Map current SysState run/sub states to LED pattern.
+ *
+ * Priority (high → low):
+ *   OFF/SHUTDOWN → off
+ *   BOOT         → fast blink
+ *   TRANSFER     → fast blink
+ *   BATT_LOW     → slow blink
+ *   USB full     → off
+ *   CHARGING     → breathe
+ *   IDLE         → slow breathe
+ *   RUNNING      → solid on
+ */
+static void led_apply_system_policy(void)
 {
     SysRunState_t run_state;
     uint16_t sub_state;
-    uint8_t soc;
-    uint8_t usb_connected;
 
     if (s_led.policy != SYS_LED_POLICY_SYSTEM) {
         return;
@@ -128,8 +135,6 @@ static void led_refresh_system_mode(void)
 
     run_state = SysState_GetRunState();
     sub_state = SysState_GetSubState();
-    soc = BattCalib_GetSOC();
-    usb_connected = OTG_PortDeviceIsLink() ? 1U : 0U;
 
     if (run_state == SYS_RUN_OFF || run_state == SYS_RUN_SHUTDOWN) {
         led_set_mode_internal(SYS_LED_MODE_OFF);
@@ -154,12 +159,12 @@ static void led_refresh_system_mode(void)
         return;
     }
 
-    if (usb_connected && soc >= 100U) {
+    if ((sub_state & SYS_SUB_USB_CONNECTED) && !(sub_state & SYS_SUB_BATT_CHARGING)) {
         led_set_mode_internal(SYS_LED_MODE_OFF);
         return;
     }
 
-    if ((sub_state & SYS_SUB_BATT_CHARGING) || usb_connected) {
+    if (sub_state & SYS_SUB_BATT_CHARGING) {
         led_set_mode_internal(SYS_LED_MODE_BREATHE);
         SysLed_SetBreathePeriod(SYS_LED_BREATHE_PERIOD_MS);
         return;
@@ -177,6 +182,13 @@ static void led_refresh_system_mode(void)
     }
 
     led_set_mode_internal(SYS_LED_MODE_ON);
+}
+
+static void led_on_system_event(void)
+{
+    if (s_led.policy == SYS_LED_POLICY_SYSTEM) {
+        led_apply_system_policy();
+    }
 }
 
 void SysLed_Init(void)
@@ -197,7 +209,7 @@ void SysLed_Init(void)
     GPIO_RegOneBitSet(GPIO_A_OE, HW_LED_GPIO_PIN);
     led_hw_write(0U);
 
-    led_refresh_system_mode();
+    led_apply_system_policy();
 }
 
 void SysLed_SetPolicy(SysLedPolicy_t policy)
@@ -206,7 +218,7 @@ void SysLed_SetPolicy(SysLedPolicy_t policy)
     if (policy == SYS_LED_POLICY_MANUAL) {
         led_set_mode_internal(s_led.manual_mode);
     } else {
-        led_refresh_system_mode();
+        led_apply_system_policy();
     }
 }
 
@@ -275,23 +287,17 @@ void SysLed_Tick1ms(void)
 
 void SysLed_Tick50ms(void)
 {
-    if (!s_led.inited) {
-        return;
-    }
-
-    if (s_led.policy == SYS_LED_POLICY_SYSTEM) {
-        led_refresh_system_mode();
-    }
+    /* Reserved: system policy is event-driven; no polling needed. */
 }
+
+/* ---- BG_Event subscriptions (system topics) ---- */
 
 static void on_run_state_led(BG_EventTopic_t topic, const void *data, uint8_t size)
 {
     (void)topic;
     (void)data;
     (void)size;
-    if (s_led.policy == SYS_LED_POLICY_SYSTEM) {
-        led_refresh_system_mode();
-    }
+    led_on_system_event();
 }
 BG_EVT_SUB(EVT_SYS_RUN_STATE, on_run_state_led);
 
@@ -308,8 +314,10 @@ static void on_sub_state_led(BG_EventTopic_t topic, const void *data, uint8_t si
     if (evt->changed_bits & (SYS_SUB_USB_CONNECTED |
                              SYS_SUB_BATT_CHARGING |
                              SYS_SUB_BATT_LOW |
-                             SYS_SUB_TRANSFER)) {
-        led_refresh_system_mode();
+                             SYS_SUB_TRANSFER |
+                             SYS_SUB_BT_CONNECTED |
+                             SYS_SUB_BLE_CONNECTED)) {
+        led_apply_system_policy();
     }
 }
 BG_EVT_SUB(EVT_SYS_SUB_STATE, on_sub_state_led);
@@ -319,11 +327,7 @@ static void on_power_on_led(BG_EventTopic_t topic, const void *data, uint8_t siz
     (void)topic;
     (void)data;
     (void)size;
-    if (s_led.policy == SYS_LED_POLICY_SYSTEM) {
-        led_refresh_system_mode();
-    } else {
-        led_set_mode_internal(s_led.manual_mode);
-    }
+    led_on_system_event();
 }
 BG_EVT_SUB(EVT_SYS_POWER_ON, on_power_on_led);
 
@@ -335,6 +339,42 @@ static void on_power_off_led(BG_EventTopic_t topic, const void *data, uint8_t si
     led_set_mode_internal(SYS_LED_MODE_OFF);
 }
 BG_EVT_SUB(EVT_SYS_POWER_OFF, on_power_off_led);
+
+static void on_idle_enter_led(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    (void)topic;
+    (void)data;
+    (void)size;
+    led_on_system_event();
+}
+BG_EVT_SUB(EVT_SYS_IDLE_ENTER, on_idle_enter_led);
+
+static void on_idle_exit_led(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    (void)topic;
+    (void)data;
+    (void)size;
+    led_on_system_event();
+}
+BG_EVT_SUB(EVT_SYS_IDLE_EXIT, on_idle_exit_led);
+
+static void on_transfer_enter_led(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    (void)topic;
+    (void)data;
+    (void)size;
+    led_on_system_event();
+}
+BG_EVT_SUB(EVT_SYS_TRANSFER_ENTER, on_transfer_enter_led);
+
+static void on_transfer_exit_led(BG_EventTopic_t topic, const void *data, uint8_t size)
+{
+    (void)topic;
+    (void)data;
+    (void)size;
+    led_on_system_event();
+}
+BG_EVT_SUB(EVT_SYS_TRANSFER_EXIT, on_transfer_exit_led);
 
 #else /* !SYS_LED_EN */
 

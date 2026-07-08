@@ -21,6 +21,9 @@
 /* USB 检测接口 */
 #include "otg_detect.h"
 
+/* 电池电量接口 */
+#include "battery_calib.h"
+
 /* BT 状态接口 */
 #include "bt_manager.h"
 
@@ -206,6 +209,23 @@ void SysState_Update(void)
     } else {
         new_sub &= ~SYS_SUB_USB_CONNECTED;
         new_sub &= ~SYS_SUB_USB_AUDIO;
+    }
+
+    /* ---- 自动探测电池状态 ---- */
+    {
+        uint8_t soc = BattCalib_GetSOC();
+
+        if (soc < 15U) {
+            new_sub |= SYS_SUB_BATT_LOW;
+        } else {
+            new_sub &= ~SYS_SUB_BATT_LOW;
+        }
+
+        if ((new_sub & SYS_SUB_USB_CONNECTED) && soc < 100U) {
+            new_sub |= SYS_SUB_BATT_CHARGING;
+        } else {
+            new_sub &= ~SYS_SUB_BATT_CHARGING;
+        }
     }
 
     /* ---- 自动探测 WAV BLE 传输 ---- */

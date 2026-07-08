@@ -3,7 +3,9 @@
  * @brief System status LED driver (GPIOA15 by default).
  *
  * Supports off, solid on, blink, and software-PWM breathe effects.
- * Optional system policy maps run/sub states to LED patterns automatically.
+ * In SYS_LED_POLICY_SYSTEM mode, subscribes to BG_Event system topics
+ * (run state, sub state, power on/off, idle, transfer) and maps them to
+ * LED patterns automatically.
  */
 #ifndef __SYS_LED_H__
 #define __SYS_LED_H__
@@ -49,10 +51,10 @@ SysLedMode_t SysLed_GetMode(void);
 void SysLed_SetBlinkPeriod(uint16_t half_period_ms);
 void SysLed_SetBreathePeriod(uint16_t period_ms);
 
-/** Drive blink/breathe timing and soft-PWM. Call every 1 ms (e.g. Timer2 ISR). */
+/** Drive blink/breathe soft-PWM timing. Call every 1 ms (e.g. Timer2 ISR). */
 void SysLed_Tick1ms(void);
 
-/** Refresh system-policy mapping. Call periodically (~50 ms). */
+/** Legacy hook (system policy is event-driven; kept for API compatibility). */
 void SysLed_Tick50ms(void);
 
 #ifdef __cplusplus

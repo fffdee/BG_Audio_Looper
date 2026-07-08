@@ -68,6 +68,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/middleware/rtos/freertos/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/@INCLUDES/middleware/rtos/rtos_api}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/metronome}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/sys_state}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/sys_led}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_Audio_Processor}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanBox/src/banux/05_component/bangtsynth/BG_Audio_Processor/effects}&quot;"/>
