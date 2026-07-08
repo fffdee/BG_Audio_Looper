@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file hal_sdio.h
  * @brief HAL层SDIO接口抽象
  * @note 封装SDK的SDIO和SD卡驱动接口

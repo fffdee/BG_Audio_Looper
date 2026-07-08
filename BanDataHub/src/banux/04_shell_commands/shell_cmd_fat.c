@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿/**
+/**
  * @file shell_cmd_fat.c
  * @brief FAT32 文件系统 Shell 命令模块实现
  *

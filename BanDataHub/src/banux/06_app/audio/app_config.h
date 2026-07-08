@@ -5,12 +5,12 @@
 #include "type.h"
 
 //******************************************************************************
-//                         FLASH BOOT升级功能配置
+//                         Bootloader配置
 //******************************************************************************
-// 使能Flash Boot升级功能（USB/SD卡/U盘升级）
-// 1: 使能Flash Boot升级功能
-// 0: 禁用Flash Boot升级功能
-#define FLASH_BOOT_EN				1
+// 是否使用Bootloader启动
+// 1: APP由Bootloader跳转启动，跳过Chip_Init等bootloader已完成的初始化
+// 0: APP独立运行（直接从0x0启动），需要完整初始化
+#define HAS_BOOTLOADER				1
 
 typedef uint16_t (*AudioCoreDataGetFunc)(void* Buf, uint16_t Samples);
 typedef uint16_t (*AudioCoreDataLenGetFunc)(void);

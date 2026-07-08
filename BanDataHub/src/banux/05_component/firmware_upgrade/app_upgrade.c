@@ -1,18 +1,19 @@
-﻿/**
+/**
  * @file  app_upgrade.c
- * @brief Firmware upgrade engine — No-Bootloader dual-partition scheme.
+ * @brief Firmware upgrade engine — dual/single partition scheme.
  *
  * Handles USB CDC and BLE OTA upgrade channels through a unified state machine.
  * Both channels feed packets into the same engine; only one upgrade at a time.
  *
- * Upgrade ALWAYS writes to Partition 2 (0x200000).
- * If currently running Partition 2, refuses upgrade (returns UPG_ERR_WRONG_PART).
+ * Dual-partition (8 MB flash): Upgrade writes to Partition B, then switches.
+ * Single-partition (2 MB flash): Upgrade overwrites Partition A directly.
  */
 
 #include "app_upgrade.h"
 #include "dual_partition.h"
 #include "spi_flash.h"
 #include "debug.h"
+#include "reset.h"
 #include <string.h>
 
 /* ── CRC32 utilities ─────────────────────────────────────────────────────── */
@@ -75,6 +76,42 @@ typedef struct {
 
 static UpgradeEngine_t g_engine;
 
+/* ── Helper: Compute upgrade write target based on flash layout ──────────── */
+static uint32_t g_upg_base;   /* Write target base address */
+static uint32_t g_upg_max;    /* Write target max size */
+static uint8_t  g_upg_part;   /* 0=A, 1=B */
+
+static void upgrade_compute_target(void)
+{
+    const DualPart_Layout_t *layout = DualPart_GetLayout();
+
+    if (layout->is_dual) {
+        /* Dual-partition: write to the inactive partition */
+        PartFlag_t flags;
+        if (PartFlag_Read(&flags) && flags.active_part == 1u) {
+            /* Active = B → write to A */
+            g_upg_part = 0;
+            g_upg_base = PART_A_BASE;
+            g_upg_max  = layout->part_a_usable;
+        } else {
+            /* Active = A → write to B */
+            g_upg_part = 1;
+            g_upg_base = PART_B_BASE;
+            g_upg_max  = layout->part_b_usable;
+        }
+    } else {
+        /* Single-partition: overwrite Partition A directly */
+        g_upg_part = 0;
+        g_upg_base = PART_A_BASE;
+        g_upg_max  = layout->part_a_usable;
+        DBG("[UPG] Single-partition mode: upgrade overwrites Part A\n");
+    }
+
+    DBG("[UPG] Target: Part %c @ 0x%08X max=%u KB\n",
+        g_upg_part ? 'B' : 'A', (unsigned)g_upg_base,
+        (unsigned)(g_upg_max / 1024));
+}
+
 /* ── Helper: Check which partition is currently running ──────────────────── */
 static uint8_t get_running_partition(void)
 {
@@ -82,16 +119,16 @@ static uint8_t get_running_partition(void)
     if (PartFlag_Read(&flags) != 0) {
         return flags.active_part;
     }
-    /* Default: assume Partition 1 */
+    /* Default: assume Partition A */
     return 0;
 }
 
-/* ── Helper: Check if Partition 2 has valid firmware ──────────────────────── */
-static int is_partition2_valid(void)
+/* ── Helper: Check if upgrade target has valid firmware ──────────────────── */
+static int is_target_firmware_valid(void)
 {
     /* Internal flash is memory-mapped — read magic directly */
     volatile const uint32_t *magic_ptr =
-        (volatile const uint32_t *)(PART2_BASE + FW_VALID_MAGIC_OFFSET);
+        (volatile const uint32_t *)(g_upg_base + FW_VALID_MAGIC_OFFSET);
     return (*magic_ptr == FW_VALID_MAGIC) ? 1 : 0;
 }
 
@@ -133,26 +170,27 @@ static void handle_query(const UpgradeChannel_t *ch)
     DevInfo_t info;
     uint8_t buf[sizeof(info) + 3];
     PartFlag_t flags;
-    
+    const DualPart_Layout_t *layout = DualPart_GetLayout();
+
     memset(&info, 0, sizeof(info));
-    info.boot_mode = BOOT_MODE_NO_BL_DUAL;
+    info.boot_mode = layout->is_dual ? BOOT_MODE_DUAL_AB : BOOT_MODE_SINGLE;
     info.active_part = get_running_partition();
-    
+
     /* Read current boot_fail_cnt */
     if (PartFlag_Read(&flags) != 0) {
         info.boot_fail_cnt = flags.boot_fail_cnt;
     }
-    
+
     info.protocol_ver = UPG_VERSION;
-    info.part1_base = PART1_BASE;
-    info.part1_size = PART1_SIZE;
-    info.part2_base = PART2_BASE;
-    info.part2_size = PART2_SIZE;
-    
+    info.part_a_base = PART_A_BASE;
+    info.part_a_size = layout->part_a_usable;
+    info.part_b_base = PART_B_BASE;
+    info.part_b_size = layout->part_b_usable;
+
     buf[0] = UPG_SOF;
     buf[1] = RSP_ACK;
     memcpy(&buf[2], &info, sizeof(info));
-    
+
     ch->tx_write(buf, 2 + sizeof(info));
     g_engine.state = STATE_QUERY;
 }
@@ -161,45 +199,48 @@ static void handle_query(const UpgradeChannel_t *ch)
 static void handle_start(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16_t len)
 {
     uint32_t fw_size;
-    
+
     /* Payload: [1:SOF][1:CMD][4:size] = 6 bytes minimum */
     if (len < 6) {
         send_nack(ch, UPG_ERR_PARAM);
         return;
     }
-    
+
     /* Extract firmware size (big-endian) */
     fw_size = ((uint32_t)pkt[2] << 24) |
               ((uint32_t)pkt[3] << 16) |
               ((uint32_t)pkt[4] << 8) |
               ((uint32_t)pkt[5]);
-    
-    /* Validate size */
-    if (fw_size == 0 || fw_size > PART2_SIZE) {
+
+    /* Compute upgrade target (depends on flash layout) */
+    upgrade_compute_target();
+
+    /* Validate size against upgrade target capacity */
+    if (fw_size == 0 || fw_size > g_upg_max) {
         send_nack(ch, UPG_ERR_SIZE);
         return;
     }
-    
-    /* Check if currently running Partition 2 */
-    if (get_running_partition() == 1) {
+
+    /* In dual-partition mode, refuse if running the same partition as target */
+    if (DualPart_GetLayout()->is_dual && get_running_partition() == g_upg_part) {
         send_nack(ch, UPG_ERR_WRONG_PART);
         return;
     }
-    
-    /* Erase Partition 2 — FlashErase takes (Offset, Size) in bytes, aligns to sector */
-    if (FlashErase(PART2_BASE, fw_size) != FLASH_NONE_ERR) {
+
+    /* Erase target partition area */
+    if (FlashErase(g_upg_base, fw_size) != FLASH_NONE_ERR) {
         send_nack(ch, UPG_ERR_FLASH);
         return;
     }
-    
+
     /* Initialize state for firmware writing */
     g_engine.state = STATE_WRITING;
     g_engine.active_ch = ch;
-    g_engine.write_addr = PART2_BASE;
+    g_engine.write_addr = g_upg_base;
     g_engine.total_size = fw_size;
     g_engine.written_size = 0;
     g_engine.data_crc = 0;
-    
+
     send_ack(ch, 0);
 }
 
@@ -270,24 +311,29 @@ static void handle_finish(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16
         return;
     }
     
-    /* Verify firmware has valid magic at Partition 2 + FW_VALID_MAGIC_OFFSET */
-    if (!is_partition2_valid()) {
+    /* Verify firmware has valid magic at upgrade target + FW_VALID_MAGIC_OFFSET */
+    if (!is_target_firmware_valid()) {
         send_nack(ch, UPG_ERR_CRC);  /* Not a valid magic, treat as invalid */
         return;
     }
-    
-    /* Update partition flags: set active_part = 1 (Partition 2) */
-    if (PartFlag_Read(&flags) == 0) {
-        PartFlag_Default(&flags);
-    }
-    
-    flags.active_part = 1;           /* Activate Partition 2 */
-    flags.upgrade_pending = 0;
-    flags.boot_fail_cnt = 1;         /* Will be reset on successful boot */
-    
-    if (PartFlag_Write(&flags) != 0) {
-        send_nack(ch, UPG_ERR_FLASH);
-        return;
+
+    /* Update partition flags (only in dual-partition mode) */
+    if (DualPart_GetLayout()->is_dual) {
+        /* Dual-partition: switch active partition to the upgrade target */
+        if (PartFlag_Read(&flags) == 0) {
+            PartFlag_Default(&flags);
+        }
+        flags.active_part = g_upg_part;
+        flags.reserved1 = 0;
+        flags.boot_fail_cnt = 1;     /* Will be reset on successful boot */
+
+        if (PartFlag_Write(&flags) != 0) {
+            send_nack(ch, UPG_ERR_FLASH);
+            return;
+        }
+    } else {
+        /* Single-partition: no partition switch needed, just confirm valid firmware */
+        DBG("[UPG] Single-partition: firmware written to Part A, no partition switch\n");
     }
     
     send_ack(ch, 0);
@@ -295,6 +341,37 @@ static void handle_finish(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16
     /* Transition to FINISH state (app should call Boot_CheckAndJump() / reboot soon) */
     g_engine.state = STATE_FINISH;
     g_engine.active_ch = NULL;
+}
+
+/* ── Protocol: Handle CMD_ENTER_BOOT ─────────────────────────────────────── */
+static void handle_enter_boot(const UpgradeChannel_t *ch)
+{
+    uint32_t magic = BURN_FLAG_MAGIC;
+
+    DBG("[UPG] CMD_ENTER_BOOT: writing burn flag to Flash and rebooting\n");
+    send_ack(ch, 0);
+
+    /* Small delay to ensure ACK is sent before Flash operation */
+    {
+        volatile uint32_t delay;
+        for (delay = 0; delay < 50000; delay++) { ; }
+    }
+
+    /* Write burn flag to Flash (one-time, bootloader will erase it) */
+    SpiFlashIOCtrl(IOCTL_FLASH_UNPROTECT, "\x35\xBA\x69", 3);
+    SpiFlashErase(SECTOR_ERASE, BURN_FLAG_SECTOR, 1);
+    SpiFlashWrite(BURN_FLAG_ADDR, (uint8_t *)&magic, sizeof(magic), 100);
+    DBG("[UPG] Burn flag written @0x%08X = 0x%08X\n",
+        (unsigned)BURN_FLAG_ADDR, (unsigned)magic);
+
+    /* Small delay to ensure Flash write completes */
+    {
+        volatile uint32_t delay;
+        for (delay = 0; delay < 50000; delay++) { ; }
+    }
+
+    Reset_McuSystem();
+    /* Never reaches here */
 }
 
 /* ── Protocol: Dispatch command ──────────────────────────────────────────── */
@@ -332,7 +409,10 @@ static void dispatch_command(const UpgradeChannel_t *ch, const uint8_t *pkt, uin
         case CMD_FINISH:
             handle_finish(ch, pkt, len);
             break;
-        /* Other commands not implemented in this phase */
+        case CMD_ENTER_BOOT:
+            handle_enter_boot(ch);
+            break;
+    /* Other commands not implemented in this phase */
         default:
             send_nack(ch, UPG_ERR_PARAM);
             break;

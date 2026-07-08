@@ -1,26 +1,27 @@
-﻿/**
+/**
  * @file  app_upgrade.h
- * @brief Firmware upgrade engine — No-Bootloader dual-partition scheme.
+ * @brief Firmware upgrade engine — Bootloader + dual-partition scheme.
  *
  * Architecture
  * ────────────
- * No separate bootloader. The application firmware runs at 0x000000
- * (Partition 1 = factory) or via address remap (Partition 2 = upgrade).
+ * A separate bootloader runs at 0x000000 and jumps to the active partition.
+ * The application firmware runs at 0x040000 (Partition A) or via address
+ * remap (Partition B at 0x240000).
  *
  * Upgrade channels:
  *   - USB CDC: handled in cdc_upgrade.c, packets feed into this engine.
  *   - BLE OTA: packets arrive via GATT AB01, feed into this engine.
  *
  * Both channels share the same protocol and state machine.
- * Upgrade ALWAYS writes to Partition 2 (0x200000).
- * If currently running Partition 2, the engine refuses and returns
- * UPG_ERR_WRONG_PART — the app must reboot to Partition 1 first.
+ * Upgrade ALWAYS writes to Partition B (0x240000).
+ * If currently running Partition B, the engine refuses and returns
+ * UPG_ERR_WRONG_PART — the app must reboot to Partition A first.
  *
  * Upgrade flow:
  *   1. SYNC  → ACK with protocol version
  *   2. QUERY → ACK with device info (partition layout, active part, etc.)
- *   3. START → validate size, erase Partition 2, set state=WRITING
- *   4. DATA  → write chunks to Partition 2
+ *   3. START → validate size, erase Partition B, set state=WRITING
+ *   4. DATA  → write chunks to Partition B
  *   5. FINISH→ verify magic, set active_part=1, reboot
  */
 #ifndef __APP_UPGRADE_H__

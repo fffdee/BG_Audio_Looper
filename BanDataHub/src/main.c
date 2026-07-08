@@ -55,7 +55,6 @@
 #include "otg_detect.h"
 #include "ctrlvars.h"
 #include "product_def.h"
-#include "flash_boot.h"
 
 #if HW_DRV_LCD_EN
 #include "bg_lcd.h"
@@ -75,7 +74,6 @@
 #endif
 
 #include "bg_audio_io_manager.h"
-
 #if HW_DRV_BATTERY_EN
 #include "battery_drv.h"
 #include "battery_calib.h"
@@ -96,6 +94,10 @@ extern uint8_t BleConnectFlag;
 #include "bg_event.h"
 #include "sys_state.h"
 #include "remind_sound.h"
+#include "app_config.h"         /* HAS_BOOTLOADER */
+
+/* Firmware upgrade component */
+#include "banux/05_component/firmware_upgrade/fw_upgrade.h"
 
 #if BANGTSYNTH_EN
 #include "bangtsynth_node.h"
@@ -520,6 +522,14 @@ void MainTask() {
 	DBG("Power ON directly (BUTTON_POWER_ENABLE disabled)\n");
 #endif
 
+	/* Confirm boot success — reset boot_fail_cnt in partition flags.
+	 * This tells the bootloader that the current partition booted OK. */
+	FwUpgrade_ConfirmBootSuccess();
+
+	/* Initialize firmware upgrade engine (CDC + BLE OTA) */
+	FwUpgrade_Init();
+	DBG("[Main] Upgrade engine initialized\n");
+
 #if CDC_FILE_MANAGER_EN
 	CDC_FileManager_Init();
 #endif
@@ -543,6 +553,15 @@ void MainTask() {
 			continue;
 		}
 #endif
+
+		/* CDC firmware upgrade mode — auto-detect SOF or process packets */
+		if (!FwUpgrade_InCdcMode()) {
+			FwUpgrade_CheckCdcEnter();  /* 嗅探 0xAA SOF，自动进入升级模式 */
+		}
+		if (FwUpgrade_InCdcMode()) {
+			FwUpgrade_ProcessCdc();
+			continue;  /* Skip Audio/Shell during upgrade */
+		}
 
 		BG_AudioManager.Audio_Loop();
 
@@ -584,7 +603,39 @@ uint8_t BLE_IsDelayElapsed(uint32_t start_tick, uint32_t delay_ms) {
 
 void prvInitialiseHeap(void);
 
+/* Direct UART1 write for early diagnostics — bypasses DBG/printf.
+ * UART1 is already initialized by the bootloader. */
+#define DIAG_UART1_STATUS  (*(volatile uint32_t *)0x40006014)
+#define DIAG_UART1_TX      (*(volatile uint32_t *)0x40006018)
+static inline void diag_putc(char c)
+{
+	while (!(DIAG_UART1_STATUS & (1u << 9))) ;
+	DIAG_UART1_TX = (uint32_t)(unsigned char)c;
+}
+
 int main(void) {
+#if HAS_BOOTLOADER
+	diag_putc('M');  /* main() entered — confirms startup completed */
+	/* When started by bootloader, Chip_Init, clock, UART, SPI flash, DMA,
+	 * and TCM are already configured.  Re-initializing them can hang
+	 * (e.g. PLL re-lock failure) or break the running UART.              */
+	WDG_Disable();
+	diag_putc('1');  /* WDG_Disable done */
+
+	/* Re-initialize UART driver software state.
+	 * __c_init() just cleared .bss and copied .data from flash, wiping out
+	 * the UART driver's runtime state that the bootloader had set up.     */
+	DbgUartInit(1, 115200, 8, 0, 1);
+	diag_putc('U');  /* DbgUartInit done */
+
+	/* Re-init SPI flash and DMA driver state (same reason as UART above). */
+	Remap_InitTcm(0, 12);
+	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
+	DMA_ChannelAllocTableSet(DmaChannelMap);
+	diag_putc('R');  /* Remap/SPI/DMA re-init done */
+
+	DBG("[APP] main() entered (from bootloader)\n");
+#else
 	Chip_Init(1);
 	WDG_Disable();
 
@@ -617,10 +668,12 @@ int main(void) {
 	Remap_InitTcm(0, 12);
 	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
 	DMA_ChannelAllocTableSet(DmaChannelMap);
-
-#if FLASH_BOOT_EN
-	report_up_grate();
 #endif
+
+	/* Boot partition detection — detect which partition we're running on.
+	 * With bootloader, the jump decision is already made by bootloader.
+	 * This just sets the internal tracking flag. */
+	FwUpgrade_BootInit();
 
 	GIE_ENABLE();
 	Timer_Config(TIMER2, 1000, 0);
@@ -638,9 +691,15 @@ int main(void) {
 	SarADC_Init();
 	xQueue = xQueueCreate(4, sizeof(uint32_t));
 
+	/* Initialize SPI hardware BEFORE driver framework (drivers need it).
+	 * In bootloader path, skip spi_init() — it breaks XIP Flash access.
+	 * The SPI controller was already configured by SpiFlashInit() above. */
+#if !HAS_BOOTLOADER
 	DBG("[Main] Initializing SPI hardware...\n");
+	SpiFlashInit(80000000, MODE_4BIT, 0, 1);
 	spi_init();
 	DBG("[Main] SPI initialized successfully\n");
+#endif
 
 	DBG("[Main] Initializing Driver Framework (before RTOS)...\n");
 	DrvFramework_FullInit();

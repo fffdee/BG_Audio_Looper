@@ -2,10 +2,12 @@
 ENTRY(_start)
 SECTIONS
 {
-	PROVIDE (__executable_start = 0x000000);
-	NDS_SAG_LMA_EILM = 0x000000 ;
+	/* APP linked at PART_A_BASE (0x040000) — bootloader jumps here.
+	 * For Partition B, hardware remap maps 0x040000->0x240000 transparently. */
+	PROVIDE (__executable_start = 0x040000);
+	NDS_SAG_LMA_EILM = 0x040000 ;
 	EILM_BEGIN = NDS_SAG_LMA_EILM;
-	. = 0x000000;
+	. = 0x040000;
 	.vector 	: { KEEP(*(.vector )) }
 	.stub_section 	: { KEEP(*(.stub_section )) }
 	".nds32_init_*spi_flash.o" 	: { KEEP(*spi_flash.o(.nds32_init )) }
@@ -232,4 +234,4 @@ SECTIONS
 	.debug_typenames	0 : { *(.debug_typenames) }
 	.debug_varnames	0 : { *(.debug_varnames) }
 }
-ASSERT((DEFINED (_RELAX_END_) ? EILM_SIZE : 0x0)<= 0x00800000, "EILM OVERFLOW");
+ASSERT((DEFINED (_RELAX_END_) ? EILM_SIZE : 0x0)<= 0x001C0000, "EILM OVERFLOW");
