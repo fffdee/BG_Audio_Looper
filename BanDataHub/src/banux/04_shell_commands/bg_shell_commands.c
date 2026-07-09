@@ -27,7 +27,6 @@
 #include "bt_a2dp_api.h"
 #include "battery_drv.h"
 #include "drv_init.h"
-#include "flash_boot.h"
 #include "vfs.h"
 #include "drv_fs.h"
 #include "drv_device.h"
@@ -36,6 +35,8 @@
 #include "task.h"
 
 #include "audio_setting.h"
+
+#include "app_config.h"         /* HAS_BOOTLOADER */
 
 
 
@@ -2909,27 +2910,97 @@ static const ShellOpt_t ble_send_opts[] = {
 DEFINE_MODULE(ble_send, "Send string via BLE", MOD_CAT_SYSTEM, ble_send_opts);
 
 /*============================================================================
- * upg — 进入固件升级模式 (SDK Flash Boot)
+ * upg 模块 - 固件升级 (USB CDC)
+ *   upg          进入升级模式（停止Audio/Shell，等待协议包）
+ *   upg info     查询当前分区信息
  *===========================================================================*/
-#if FLASH_BOOT_EN
-extern void start_up_grate(uint32_t UpdateResource);
+#if HAS_BOOTLOADER
+#include "banux/05_component/firmware_upgrade/fw_upgrade.h"
 
-static int cmd_upg_enter(int argc, char *argv[])
+static int upg_enter(int argc, char *argv[])
 {
     (void)argc; (void)argv;
-    Shell_Print("Entering firmware upgrade mode (SDK Flash Boot)...\r\n");
-    Shell_Print("Device will reboot into bootloader.\r\n");
-    start_up_grate(AppResourceUsbDevice);
+    Shell_Printf("[UPG] Entering firmware upgrade mode via USB CDC...\r\n");
+    FwUpgrade_EnterCdcMode();
+    return 0;
+}
+
+static int upg_info(int argc, char *argv[])
+{
+    FwUpgradeInfo_t info;
+    (void)argc; (void)argv;
+
+    FwUpgrade_GetInfo(&info);
+
+    Shell_Printf("=== Partition Info ===\r\n");
+    Shell_Printf("Part A: 0x%06X (%d KB)\r\n",
+                  (unsigned)info.part_a_base, (int)(info.part_a_size / 1024u));
+    Shell_Printf("Part B: 0x%06X (%d KB)\r\n",
+                  (unsigned)info.part_b_base, (int)(info.part_b_size / 1024u));
+    Shell_Printf("Flags:  0x%06X\r\n", (unsigned)info.flags_addr);
+
+    if (info.flags_valid) {
+        Shell_Printf("Active: %s\r\n", info.active_part ? "B" : "A");
+        Shell_Printf("Boot fail count: %d / %d\r\n",
+                      info.boot_fail_cnt, info.boot_fail_max);
+    } else {
+        Shell_Printf("No valid partition flags\r\n");
+    }
+
+    Shell_Printf("Running: %s\r\n", info.running_part_b ? "Part B (remap)" : "Part A");
     return 0;
 }
 
 static const ShellOpt_t upg_opts[] = {
-    OPT("", "", "", "Enter firmware upgrade mode (SDK Flash Boot)", cmd_upg_enter),
+    OPT("", "", NULL, "Enter upgrade mode (default action)", upg_enter),
+    OPT("i", "info", NULL, "Show partition info", upg_info),
     OPT_END()
 };
 
-DEFINE_MODULE(upg, "Enter firmware upgrade mode", MOD_CAT_SYSTEM, upg_opts);
-#endif /* FLASH_BOOT_EN */
+DEFINE_MODULE(upg, "Firmware upgrade (USB CDC)", MOD_CAT_SYSTEM, upg_opts);
+
+/*============================================================================
+ * boot 模块 - 重启到 Bootloader 烧录模式
+ *   boot         写烧录标志到 Flash，然后复位芯片进入 Bootloader
+ *   boot status  检查烧录标志是否已设置
+ *===========================================================================*/
+static int boot_enter(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+
+    Shell_Printf("[BOOT] Writing burn flag and rebooting to bootloader ...\r\n");
+
+    /* Delay to ensure message is sent */
+    {
+        volatile uint32_t delay;
+        for (delay = 0; delay < 200000; delay++) { ; }
+    }
+
+    FwUpgrade_RebootToBootloader();
+    return 0;  /* Never reached */
+}
+
+static int boot_status(int argc, char *argv[])
+{
+    (void)argc; (void)argv;
+    uint32_t val = FwUpgrade_GetBootloaderFlag();
+
+    Shell_Printf("Burn flag = 0x%08X\r\n", (unsigned)val);
+    Shell_Printf("Status: %s\r\n",
+                 FwUpgrade_IsBootloaderFlagSet()
+                     ? "SET (will enter bootloader on next reboot)"
+                     : "NOT SET");
+    return 0;
+}
+
+static const ShellOpt_t boot_opts[] = {
+    OPT("", "", NULL, "Reboot to bootloader", boot_enter),
+    OPT("s", "status", NULL, "Check bootloader flag", boot_status),
+    OPT_END()
+};
+
+DEFINE_MODULE(boot, "Bootloader control", MOD_CAT_SYSTEM, boot_opts);
+#endif /* HAS_BOOTLOADER */
 
 /*============================================================================
  * Module registration
@@ -2966,9 +3037,6 @@ void Shell_RegisterAllModules(void)
     #endif /* VFS_EN */
     REGISTER_MODULE(drivers);
     REGISTER_MODULE(ble_send);
-#if FLASH_BOOT_EN
-    REGISTER_MODULE(upg);
-#endif
 
 
     ShellCmd_Param_Init();       /* param 鍛戒护 */
@@ -3017,6 +3085,12 @@ void Shell_RegisterAllModules(void)
         extern void ShellCmdHwtest_Register(void);
         ShellCmdHwtest_Register();
     }
+#endif
+
+    /* 固件升级和 Bootloader 命令 */
+#if HAS_BOOTLOADER
+    REGISTER_MODULE(upg);
+    REGISTER_MODULE(boot);
 #endif
 }
 
@@ -3087,3 +3161,5 @@ void ShellCmdRemind_Register(void)
 {
     REGISTER_MODULE(remind);
 }
+
+

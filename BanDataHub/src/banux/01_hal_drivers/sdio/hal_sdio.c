@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file hal_sdio.c
  * @brief HAL层SDIO接口实现
  */

@@ -1,5 +1,5 @@
 ################################################################################
-# 自动生成的文件。不要编辑！
+# Automatically-generated file. Do not edit!
 ################################################################################
 
 O_SRCS := 
@@ -46,15 +46,40 @@ src/banux/03_driver_framework/drivers \
 src/banux/03_driver_framework \
 src/banux/03_driver_framework/event \
 src/banux/04_shell_commands \
+src/banux/05_component/bangtsynth/01_hal \
+src/banux/05_component/bangtsynth/01_hal/port/bandatahub \
+src/banux/05_component/bangtsynth/01_hal/port/bp10 \
+src/banux/05_component/bangtsynth/01_hal/port/embedded \
+src/banux/05_component/bangtsynth/02_core/envelope \
+src/banux/05_component/bangtsynth/02_core/fat32 \
+src/banux/05_component/bangtsynth/02_core/midi \
+src/banux/05_component/bangtsynth/02_core/nand_store \
+src/banux/05_component/bangtsynth/02_core/psram_buffer \
+src/banux/05_component/bangtsynth/02_core/sampler \
+src/banux/05_component/bangtsynth/02_core/soundbank \
+src/banux/05_component/bangtsynth/02_core/synth_integration \
+src/banux/05_component/bangtsynth/03_app/drum_machine \
+src/banux/05_component/bangtsynth/03_app/synth_node \
+src/banux/05_component/bangtsynth/BG_Audio_Processor \
+src/banux/05_component/bangtsynth/BG_Audio_Processor/effects \
+src/banux/05_component/bangtsynth/BG_Envelope_Generator \
+src/banux/05_component/bangtsynth/BG_HAL \
+src/banux/05_component/bangtsynth/BG_Midi_Controller \
+src/banux/05_component/bangtsynth/BG_Soundbank \
 src/banux/05_component/bangtsynth \
+src/banux/05_component/bangtsynth/data/drum_data \
+src/banux/05_component/bangtsynth/data/soundbank_data \
+src/banux/05_component/bangtsynth/drum_machine \
+src/banux/05_component/bangtsynth/durm_data \
+src/banux/05_component/bangtsynth/soundbank_data \
 src/banux/05_component/fat32 \
+src/banux/05_component/firmware_upgrade \
 src/banux/05_component/sys_param \
 src/banux/06_app/BG_AudioIO_Manager \
 src/banux/06_app \
 src/banux/06_app/audio \
 src/banux/06_app/audio/effect_parameter \
 src/banux/06_app/audio/music_parameter \
-src/device \
 src \
 startup \
 

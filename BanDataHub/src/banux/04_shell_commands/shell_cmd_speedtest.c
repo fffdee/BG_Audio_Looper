@@ -18,6 +18,7 @@
 #include "bg_config.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* HAL 依赖 */
 #if HW_DRV_PSRAM_EN
@@ -64,9 +65,9 @@ static int speedtest_all_cmd(int argc, char *argv[]);
  * ============================================ */
 
 static const ShellOpt_t speedtest_options[] = {
-    OPT("psram", "[size_kb]", "PSRAM read/write speed test (default 1024 KB)", speedtest_psram_cmd),
-    OPT("sd",    "[size_kb]", "SD card read/write speed test (default 1024 KB)", speedtest_sd_cmd),
-    OPT("all",   "[size_kb]", "Test both PSRAM and SD card", speedtest_all_cmd),
+    OPT("p", "psram", "[size_kb]", "PSRAM read/write speed test (default 1024 KB)", speedtest_psram_cmd),
+    OPT("s", "sd",    "[size_kb]", "SD card read/write speed test (default 1024 KB)", speedtest_sd_cmd),
+    OPT("a", "all",   "[size_kb]", "Test both PSRAM and SD card", speedtest_all_cmd),
     OPT_END()
 };
 

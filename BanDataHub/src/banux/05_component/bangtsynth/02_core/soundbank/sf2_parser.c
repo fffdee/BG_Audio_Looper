@@ -1,4 +1,4 @@
-﻿#include "product_def.h"
+#include "product_def.h"
 
 #if BANGTSYNTH_EN
 

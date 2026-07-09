@@ -4,14 +4,12 @@
  *
  * 升级模式流程：
  *   1. 正常运行时 CDC 数据完全给 Shell，本模块不做任何拦截。
- *   2. Shell 命令 "upg" 调用 CDC_Upgrade_EnterMode()：
- *      a. 清空 CDC RX 缓冲区（丢弃遗留的 shell 回车等数据）
- *      b. 通过 CDC TX 发送提示字符串，告知上位机可以开始传输
- *      c. 置位 s_upgrade_mode = 1
+ *   2. 进入升级模式有两种方式：
+ *      a. Shell 命令 "upg" 调用 CDC_Upgrade_EnterMode()
+ *      b. CDC_Upgrade_CheckEnter() 自动嗅探 0xAA SOF 字节
  *   3. main loop 检查 CDC_Upgrade_InMode()，进入升级分支：
  *      只调用 CDC_Upgrade_Process()，不再调用 Audio_Loop()/Shell。
  *   4. CDC_Upgrade_Process() 直接把 CDC RX 全部数据喂给 App_Upgrade 引擎。
- *      不再需要 0xAA SOF 嗅探，彻底消除缓冲区冲突。
  *   5. 升级完成 (STATE_FINISH) 后调用 Reset_McuSystem() 重启。
  */
 
@@ -85,6 +83,44 @@ void CDC_Upgrade_EnterMode(void)
 int CDC_Upgrade_InMode(void)
 {
     return s_upgrade_mode;
+}
+
+int CDC_Upgrade_CheckEnter(void)
+{
+    uint8_t byte;
+
+    if (!s_initialised || s_upgrade_mode) {
+        return 0;
+    }
+
+    /* 没有 CDC 数据，不处理 */
+    if (OTG_DeviceCDC_GetRxCount() == 0) {
+        return 0;
+    }
+
+    /* Peek at first byte WITHOUT consuming it.
+     * If this is not an upgrade SOF, leave the byte for Shell or other
+     * CDC consumers instead of stealing input from the normal console path. */
+    if (OTG_DeviceCDC_PeekByte(&byte) == 1) {
+        if (byte == UPG_SOF) {
+            /* SOF matched — now consume the byte */
+            OTG_DeviceCDC_Receive(&byte, 1);
+            DBG("[CDC_UPG] SOF detected, entering upgrade mode\n");
+
+            /* 进入升级模式 */
+            s_upgrade_mode = 1;
+
+            /* 把嗅探到的 SOF 字节注入升级引擎 */
+            {
+                uint8_t sof_pkt[1] = { UPG_SOF };
+                App_Upgrade_InjectRaw(UPG_CH_CDC, sof_pkt, 1, cdc_tx);
+            }
+            return 1;
+        }
+        /* 不是 SOF (0xAA)，不消费字节，留给 Shell 或其他模块处理 */
+    }
+
+    return 0;
 }
 
 void CDC_Upgrade_Process(void)

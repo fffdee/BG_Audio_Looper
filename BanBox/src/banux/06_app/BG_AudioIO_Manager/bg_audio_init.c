@@ -21,12 +21,14 @@
 #include "audio_effect.h"
 #include "ctrlvars.h"
 #include "otg_device_hcd.h"
+#include "otg_device_standard_request.h"  /* AUDIO_MIC_CDC */
 #include "usb_audio_api.h"
 #include "otg_detect.h"
 #include "remind_sound.h"
 #include "metronome.h"
 #include "bg_low_power.h"
 #include "bt_manager.h"
+#include "bt_stack_service.h"  /* BtStackServiceStart */
 #include "rtos_api.h"
 #include "FreeRTOS.h"
 #include "sys_param.h"

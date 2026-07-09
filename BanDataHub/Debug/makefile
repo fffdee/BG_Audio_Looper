@@ -72,13 +72,13 @@ RM := rm -rf
 -include src/banux/05_component/bangtsynth/durm_data/subdir.mk
 -include src/banux/05_component/bangtsynth/soundbank_data/subdir.mk
 -include src/banux/05_component/fat32/subdir.mk
+-include src/banux/05_component/firmware_upgrade/subdir.mk
 -include src/banux/05_component/sys_param/subdir.mk
 -include src/banux/06_app/BG_AudioIO_Manager/subdir.mk
 -include src/banux/06_app/subdir.mk
 -include src/banux/06_app/audio/subdir.mk
 -include src/banux/06_app/audio/effect_parameter/subdir.mk
 -include src/banux/06_app/audio/music_parameter/subdir.mk
--include src/device/subdir.mk
 -include src/subdir.mk
 -include startup/subdir.mk
 -include objects.mk

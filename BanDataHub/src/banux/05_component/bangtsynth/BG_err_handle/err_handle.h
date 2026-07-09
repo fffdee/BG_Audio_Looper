@@ -1,6 +1,8 @@
 #ifndef __ERR_HANDLE_H__
 #define __ERR_HANDLE_H__
 
+#ifndef BG_ERR_DEFINED
+#define BG_ERR_DEFINED
 typedef enum {
     SUCCESS = 0,
     ENABLE_INVALID_INPUT,
@@ -30,5 +32,6 @@ typedef enum {
     ENABLE_SOFTWARE_ERROR,
     ENABLE_UNKNOWN_ERROR
 } BG_ERR;
+#endif /* BG_ERR_DEFINED */
 
 #endif
