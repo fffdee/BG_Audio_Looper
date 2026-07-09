@@ -20,6 +20,7 @@
 #include "bt_manager.h"
 #include "audio_looper.h"
 #include "reverb.h"
+#include "pitch_shift.h"
 
 #if !USE_EFFECT_GRAPH_MODE
 
@@ -194,6 +195,11 @@ static void BuildFinalOutput(uint16_t len, uint32_t *bt_audio_buffer)
  */
 static void OutputAudioData(uint16_t len)
 {
+#if BG_PITCH_SHIFT_TEST_EN
+	PitchShift_ProcessPackedStereo(PitchShift_GetDefault(),
+	                               BG_AudioManager.Audio_data.OutPut_buf,
+	                               (int32_t)len);
+#endif
 	AudioDAC_DataSet(DAC0, BG_AudioManager.Audio_data.OutPut_buf, len);
 }
 

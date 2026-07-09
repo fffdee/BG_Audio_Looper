@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "bg_audio_io_internal.h"
+#include "pitch_shift.h"
 #include "product_def.h"
 #include "debug.h"
 
@@ -277,6 +278,14 @@ void BG_audio_Init(uint16_t SampleRate)
 	/* DAC音量将在Audio_loop()的SetVolume()中恢复，无需手动解除 */
 
 	InitAudioEffects(SampleRate);
+
+#if BG_PITCH_SHIFT_TEST_EN
+	/* 吉他→贝斯试听：降八度 + 低通塑形，挂在 DAC 输出 */
+	PitchShift_Init(PitchShift_GetDefault(), SampleRate, BG_PITCH_SHIFT_TEST_SEMITONE);
+	DBG("[Audio] Guitar->Bass test ON, semitone=%d, lpf=%dHz\n",
+	    BG_PITCH_SHIFT_TEST_SEMITONE, BG_PITCH_SHIFT_BASS_LPF_HZ);
+#endif
+
 	InitControlGPIO();
 	InitDetectionGPIO();
 

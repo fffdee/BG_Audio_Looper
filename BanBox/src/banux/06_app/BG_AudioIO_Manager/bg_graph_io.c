@@ -17,6 +17,7 @@
 #include "bt_manager.h"
 #include "bg_low_power.h"
 #include "remind_sound.h"
+#include "pitch_shift.h"
 
 uint16_t ADC0_GetAvailableData(EffectNode_t *node)
 {
@@ -222,6 +223,12 @@ void DAC0_WriteSpeakerData(EffectNode_t *node, uint32_t *in_buf, uint16_t len)
 	}
 	
 	if (samples_to_write > 0) {
+#if BG_PITCH_SHIFT_TEST_EN
+		/* 试听：不进音效图，在最终输出处临时做半音移调 */
+		PitchShift_ProcessPackedStereo(PitchShift_GetDefault(),
+		                               in_buf,
+		                               (int32_t)samples_to_write);
+#endif
 		// 直接写入数据，无需类型转换
 		AudioDAC_DataSet(DAC0, in_buf, samples_to_write);
 	}
