@@ -1774,11 +1774,13 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
         if (segment->rec_partial_count >= LOOPER_PSRAM_PAGE_SIZE) {
             uint32_t write_offset;
 
-            /* PSRAM 容量检查：超出两区域总页容量时停止录制 */
+            /* PSRAM 容量检查：超出两区域总页容量时停止录制（在线叠录跳过，因为覆写已有页）*/
 #if LOOPER_USE_STORAGE_ABSTRACTION
             if (g_looper_storage.initialized &&
                 g_looper_storage.info.type == LOOPER_STORAGE_PSRAM &&
-                segment->region1_pages > 0u) {
+                segment->region1_pages > 0u &&
+                !(segment->overdub_enabled &&
+                  g_loop_manager.run_mode == LOOPER_RUN_MODE_ONLINE)) {
                 uint32_t max_pages = segment->region1_pages + segment->region2_pages;
                 /* 即将写入 length_pages 页，若等于/超出容量则停止 */
                 if (segment->length_pages >= max_pages ||
@@ -1799,6 +1801,10 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
                 segment_index == 0 &&
                 g_loop_manager.offline_overdub) {
                 write_offset = seg_page_to_addr(segment, g_loop_manager.offline_record_page);
+            } else if (segment->overdub_enabled &&
+                       g_loop_manager.run_mode == LOOPER_RUN_MODE_ONLINE) {
+                /* 在线叠录：写入位置跟随播放位置回绕 */
+                write_offset = seg_page_to_addr(segment, segment->overdub_rec_page);
             } else {
                 write_offset = seg_page_to_addr(segment, segment->length_pages);
             }
@@ -1873,6 +1879,19 @@ void loop_process_segment_recording(uint8_t segment_index, uint32_t* audio_data,
                     loop_offline_stop_recording();
                     break;
                 }
+            } else if (segment->overdub_enabled &&
+                       g_loop_manager.run_mode == LOOPER_RUN_MODE_ONLINE) {
+                /* 在线叠录：写入页回绕到循环起点 */
+                segment->overdub_rec_page++;
+                {
+                    uint32_t ls = segment->trim_start_page;
+                    uint32_t le = (segment->trim_end_page > 0 &&
+                                   segment->trim_end_page <= segment->length_pages)
+                                  ? segment->trim_end_page : segment->length_pages;
+                    if (segment->overdub_rec_page >= le) {
+                        segment->overdub_rec_page = ls;
+                    }
+                }
             } else {
                 segment->length_pages++;
                 segment->length_bytes = segment->length_pages * LOOPER_PSRAM_PAGE_SIZE;
@@ -1944,6 +1963,9 @@ uint8_t loop_process_segment_playback(uint8_t segment_index, uint32_t* output_da
          !(g_loop_manager.run_mode == LOOPER_RUN_MODE_OFFLINE &&
            segment_index == 0 &&
            g_loop_manager.offline_overdub &&
+           segment->state == SEGMENT_RECORDING) &&
+         !(segment->overdub_enabled &&
+           g_loop_manager.run_mode == LOOPER_RUN_MODE_ONLINE &&
            segment->state == SEGMENT_RECORDING)) ||
         !segment->is_active) {
         return 0;
@@ -4394,6 +4416,105 @@ static void loop_offline_stop_recording(void)
 
     g_loop_manager.offline_recording = 0;
     loop_update_global_state();
+}
+
+/* ============================================================================
+ * 在线叠录功能 (Online Overdub)
+ * ============================================================================ */
+
+void loop_start_overdub_online(uint8_t segment_index)
+{
+    SegmentInfo_t *seg;
+
+    if (segment_index >= MAX_SEGMENTS) return;
+    seg = &g_loop_manager.segments[segment_index];
+
+    /* 段必须有数据才能叠录 */
+    if (seg->length_pages == 0) {
+        DBG("[Looper] seg%d: cannot overdub (no data)\n", (int)segment_index);
+        return;
+    }
+
+    /* 必须处于 PLAYING 或 STOPPED 状态 */
+    if (seg->state != SEGMENT_PLAYING && seg->state != SEGMENT_STOPPED) {
+        DBG("[Looper] seg%d: cannot overdub in state %d\n",
+            (int)segment_index, (int)seg->state);
+        return;
+    }
+
+    /* 检查存储是否支持叠录 */
+    if (!g_loop_manager.support_overdub) {
+        DBG("[Looper] seg%d: overdub not supported by storage\n",
+            (int)segment_index);
+        return;
+    }
+
+    /* 如果处于 STOPPED，先切到 PLAYING */
+    if (seg->state == SEGMENT_STOPPED) {
+        loop_set_segment_playing(segment_index);
+    }
+
+    /* 记录当前播放位置作为叠录起点 */
+    seg->overdub_rec_page = seg->play_position;
+    seg->overdub_enabled = 1;
+    seg->rec_partial_count = 0;
+    seg->state = SEGMENT_RECORDING;
+
+    loop_update_global_state();
+    DBG("[Looper] seg%d: online overdub ON at page %lu/%lu\n",
+        (int)segment_index,
+        (unsigned long)seg->overdub_rec_page,
+        (unsigned long)seg->length_pages);
+}
+
+void loop_stop_overdub_online(uint8_t segment_index)
+{
+    SegmentInfo_t *seg;
+
+    if (segment_index >= MAX_SEGMENTS) return;
+    seg = &g_loop_manager.segments[segment_index];
+
+    if (!seg->overdub_enabled) return;
+
+    /* 刷写剩余的部分页 */
+    if (seg->rec_partial_count > 0) {
+        uint32_t write_offset;
+        LooperStorageStatus_t wr;
+
+        memset(&seg->rec_partial_buf[seg->rec_partial_count], 0,
+               LOOPER_PSRAM_PAGE_SIZE - seg->rec_partial_count);
+        write_offset = seg_page_to_addr(seg, seg->overdub_rec_page);
+        wr = LooperStorage_OverdubWrite(&g_looper_storage, write_offset,
+                seg->rec_partial_buf, LOOPER_PSRAM_PAGE_SIZE,
+                g_loop_manager.overdub_mix_mode);
+        if (wr != LOOPER_STORAGE_OK) {
+            DBG("[Looper] seg%d: overdub partial flush failed: %d\n",
+                (int)segment_index, (int)wr);
+        }
+        seg->rec_partial_count = 0;
+    }
+
+    seg->overdub_enabled = 0;
+    seg->state = SEGMENT_PLAYING;
+
+    loop_update_global_state();
+    DBG("[Looper] seg%d: online overdub OFF\n", (int)segment_index);
+}
+
+uint8_t loop_toggle_overdub_online(uint8_t segment_index)
+{
+    SegmentInfo_t *seg;
+
+    if (segment_index >= MAX_SEGMENTS) return 0;
+    seg = &g_loop_manager.segments[segment_index];
+
+    if (seg->overdub_enabled) {
+        loop_stop_overdub_online(segment_index);
+        return 0;
+    } else {
+        loop_start_overdub_online(segment_index);
+        return seg->overdub_enabled ? 1 : 0;
+    }
 }
 
 void loop_offline_button_up(void)

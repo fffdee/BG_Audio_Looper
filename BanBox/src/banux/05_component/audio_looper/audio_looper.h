@@ -270,6 +270,7 @@ typedef struct {
     
     /* 新增：叠录相关字段 */
     uint8_t  overdub_enabled; /* 叠录模式使能 (1=启用, 0=禁用) */
+    uint32_t overdub_rec_page;/* 在线叠录当前写入页号（跟随播放位置回绕） */
     uint8_t  rec_source;      /* 录制源 (LoopRecSource_t)，决定单/双声道存储 */
 
     uint16_t rec_partial_count;                                    /* rec_partial_buf中的字节数 (0-255) */
@@ -598,6 +599,32 @@ void loop_set_overdub_mix_mode(uint8_t mix_mode);
  * @return 混音模式: 0=替换, 1=相加, 2=平均
  */
 uint8_t loop_get_overdub_mix_mode(void);
+
+/* ============================================================================
+ * 在线叠录功能 (Online Overdub)
+ *
+ * 在线模式下对已录制的段进行叠录：段继续播放，同时将新音频混合写入存储。
+ * 写入位置跟随播放位置回绕，实现循环叠录。
+ * ============================================================================ */
+
+/**
+ * @brief 开始在线叠录（段必须已录制且有数据，状态为 PLAYING/STOPPED）
+ * @param segment_index 段索引 (0-3)
+ */
+void loop_start_overdub_online(uint8_t segment_index);
+
+/**
+ * @brief 停止在线叠录，段回到 PLAYING 状态
+ * @param segment_index 段索引 (0-3)
+ */
+void loop_stop_overdub_online(uint8_t segment_index);
+
+/**
+ * @brief 切换在线叠录开关
+ * @param segment_index 段索引 (0-3)
+ * @return 1=叠录已开启, 0=叠录已关闭
+ */
+uint8_t loop_toggle_overdub_online(uint8_t segment_index);
 
 /* 段与Flash绑定控制 (仅多Flash模式) */
 #if LOOPER_MULTI_FLASH_ENABLE

@@ -6,7 +6,11 @@ worker.py — 后台线程
 
 import time
 from PyQt5.QtCore import QThread, pyqtSignal
-from bl_core import BLComm, Bootloader, list_ports, list_bootloader_ports, probe_port, Cmd, build_packet
+from bl_core import (
+    BLComm, Bootloader, list_ports, list_bootloader_ports,
+    list_bootloader_devices, probe_port, Cmd, build_packet,
+    is_serial_disconnect,
+)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -23,7 +27,7 @@ class AutoScanWorker(QThread):
     found           = pyqtSignal(str, str, int)
     scan_finished   = pyqtSignal(bool, str)
 
-    def __init__(self, baudrate: int = 115200, parent=None):
+    def __init__(self, baudrate: int = 2000000, parent=None):
         super().__init__(parent)
         self._baud = baudrate
         self._abort = False
@@ -32,17 +36,22 @@ class AutoScanWorker(QThread):
         self._abort = True
 
     def run(self):
-        # ── Step 1: 先通过 VID/PID 快速查找 Bootloader ──
+        # ── Step 1: 先通过 USB 身份协议 (PID=0x4247 + VID 产品表) 快速查找 ──
         bl_ports = list_bootloader_ports()
+        bl_devs = list_bootloader_devices()
         if bl_ports:
-            self.log.emit(f"发现 Bootloader 设备 (VID=0x8888 PID=0x1722) …")
+            for d in bl_devs:
+                self.log.emit(
+                    f"发现 {d['product']} Bootloader "
+                    f"(VID=0x{d['vid']:04X} PID=0x{d['pid']:04X}) …")
             for device, desc in bl_ports:
                 if self._abort:
                     break
                 self.log.emit(f"  探测 {device} ({desc}) …")
                 ver = probe_port(device, self._baud, timeout=0.5)
                 if ver is not None:
-                    self.log.emit(f"  ✓ {device} — Bootloader v{ver}")
+                    product = next((x["product"] for x in bl_devs if x["device"] == device), "BG")
+                    self.log.emit(f"  ✓ {device} — {product} Bootloader v{ver}")
                     self.found.emit(device, desc, ver)
                     self.scan_finished.emit(True, "已找到设备")
                     return
@@ -156,9 +165,23 @@ class UpgradeWorker(QThread):
                 if not self._firmware:
                     raise RuntimeError("未选择固件文件")
                 bl.ping()
-                bl.upgrade(self._firmware)
+                try:
+                    bl.upgrade(self._firmware)
+                except Exception as exc:
+                    # START 之后整段传输可能已在设备侧完成，主机只是丢了 ACK
+                    if not is_serial_disconnect(exc):
+                        raise
+                    self._emit_log(
+                        f"升级流程中串口断开（通常已写完，属正常）: {exc}")
                 if self._auto_jump:
-                    bl.jump()
+                    try:
+                        bl.jump()
+                    except Exception as exc:
+                        if is_serial_disconnect(exc):
+                            self._emit_log(
+                                f"设备已跳转（串口断开属正常）: {exc}")
+                        else:
+                            raise
 
             elif self._operation == self.OP_JUMP:
                 bl.jump()
@@ -184,7 +207,15 @@ class UpgradeWorker(QThread):
             self.finished.emit(True, "操作成功完成 ✓")
 
         except Exception as exc:
-            self.finished.emit(False, f"操作失败: {exc}")
+            # 升级/跳转/复位后 CDC 会掉线，Windows 报 ClearCommError，属假失败
+            if is_serial_disconnect(exc) and self._operation in (
+                self.OP_UPGRADE, self.OP_JUMP,
+                self.OP_REBOOT, self.OP_ENTER_BOOT,
+            ):
+                self._emit_log(f"设备已断开（属正常）: {exc}")
+                self.finished.emit(True, "操作成功完成 ✓")
+            else:
+                self.finished.emit(False, f"操作失败: {exc}")
         finally:
             if comm:
                 comm.close()

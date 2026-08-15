@@ -49,6 +49,7 @@
 #include "audio_api.h"
 
 #include "upgrade.h"
+#include "usb_identity.h"
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Timer2 ISR (1 ms tick)
@@ -108,10 +109,10 @@ static uint8_t DmaChannelMap[29] = {
 static void UpgradeTask(void)
 {
 	/* AUDIO_MIC_CDC: CDC+声卡复合设备模式
-	 * Bootloader 使用专用 VID=0x8888/PID=0x1722，上位机通过此标识
-	 * 识别设备处于可升级状态。APP 使用不同的 VID/PID (0x1234/0x1234)。
+	 * Bootloader 使用 BG 身份协议 VID/PID（见 usb_identity.h），
+	 * 上位机据此识别产品并进入升级。APP 使用不同 VID/PID (0x1234/0x1234)。
 	 * UsbDeviceEnable() 内部调用 OTG_DeviceInit() + NVIC_EnableIRQ(Usb_IRQn) */
-	OTG_DeviceModeSel(AUDIO_MIC_CDC, 0x8888, 0x1722);
+	OTG_DeviceModeSel(AUDIO_MIC_CDC, BOOTLOADER_USB_VID, BOOTLOADER_USB_PID);
 	UsbDevicePlayInit();
 	UsbDeviceEnable();
 	/* audio_init() 复用 USB 输入流（speaker 播放）和麦克风输入流（mic capture）
@@ -119,7 +120,8 @@ static void UpgradeTask(void)
 	audio_init(44100);
 	Upgrade_Init();
 
-	DBG("[BOOT] USB CDC+Audio upgrade ready (VID=0x%04X PID=0x%04X)\n", 0x8888, 0x1722);
+	DBG("[BOOT] USB CDC+Audio upgrade ready (VID=0x%04X PID=0x%04X)\n",
+	    BOOTLOADER_USB_VID, BOOTLOADER_USB_PID);
 
 	while (1) {
 		/* Service USB enumeration and control requests */

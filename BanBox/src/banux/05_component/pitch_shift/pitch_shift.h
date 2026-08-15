@@ -23,7 +23,8 @@ extern "C" {
  * 试听宏（先不进音效图，在 DAC 输出处临时挂接）
  * ============================================================================ */
 #ifndef BG_PITCH_SHIFT_TEST_EN
-#define BG_PITCH_SHIFT_TEST_EN              1
+/* 默认关闭：挂在 DAC0 最终输出时，算法 priming/欠载会写零 → 整机无声 */
+#define BG_PITCH_SHIFT_TEST_EN              0
 #endif
 
 /* 吉他→贝斯：降 1 个八度 = -12 半音 */

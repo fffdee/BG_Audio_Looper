@@ -340,12 +340,14 @@ void PitchShift_Process(PitchShiftContext_t *ct,
         need_span = PITCH_SHIFT_FRAME_SIZE;
     }
 
-    /* 启动：先攒够一窗，避免开头咔哒声 */
+    /* 启动：先攒够一窗；未就绪时直通干声，避免 DAC 试听路径整机静音 */
     if (!ct->primed) {
         if (ct->in_count >= (uint16_t)need_span) {
             ct->primed = 1;
         } else {
-            memset(pcm_out, 0, (size_t)n * sizeof(int16_t));
+            if (pcm_out != pcm_in) {
+                memcpy(pcm_out, pcm_in, (size_t)n * sizeof(int16_t));
+            }
             return;
         }
     }
@@ -358,17 +360,17 @@ void PitchShift_Process(PitchShiftContext_t *ct,
         }
     }
 
-    /* 读出与输入等长的输出，并做贝斯塑形 */
+    /* 读出与输入等长的输出；欠载时回退干声，禁止填零 */
     for (i = 0; i < n; i++) {
         int16_t s;
         if (ct->out_count > 0) {
             s = ct->out_buf[ct->out_r];
             ct->out_r = (uint16_t)((ct->out_r + 1) & out_mask);
             ct->out_count--;
+            pcm_out[i] = pitch_shift_bass_tone(ct, s);
         } else {
-            s = 0;
+            pcm_out[i] = pcm_in[i];
         }
-        pcm_out[i] = pitch_shift_bass_tone(ct, s);
     }
 }
 

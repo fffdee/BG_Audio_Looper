@@ -155,8 +155,8 @@ void Expander_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, 
 		return;
 	}
 	
-	/* 调用 SDK 扩展器效果 */
-	if (gCtrlVars.mic_expander_unit.enable) {
+	/* ct==NULL 时必须旁通：Apply 遇 ct==NULL 不写 out_buf → ADC 链静音 */
+	if (gCtrlVars.mic_expander_unit.enable && gCtrlVars.mic_expander_unit.ct != NULL) {
 		AudioEffectExpanderApply(&gCtrlVars.mic_expander_unit,
 		                         (int16_t *)in_bufs[0],
 		                         (int16_t *)out_buf,
@@ -207,8 +207,10 @@ void DRC_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint3
 		}
 	}
 
+	/* ct==NULL 时必须旁通：DRC 已挂在 Final_Mixer 之后，
+	 * Apply 不写 out_buf 会导致整机（Mic/吉他/USB/BT/提示音）无声。 */
 	#if CFG_AUDIO_EFFECT_MIC_DRC_EN
-	if (gCtrlVars.mic_drc_unit.enable) {
+	if (gCtrlVars.mic_drc_unit.enable && gCtrlVars.mic_drc_unit.ct != NULL) {
 		AudioEffectDRCApply(&gCtrlVars.mic_drc_unit,
 		                    (int16_t *)in_bufs[0],
 		                    (int16_t *)out_buf,

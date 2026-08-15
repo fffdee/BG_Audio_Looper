@@ -153,6 +153,10 @@ public class LooperControlActivity extends BaseActivity {
     private ImageButton[]  btnSegJoin        = new ImageButton[SEG_COUNT];
     /** 卡片底部：等待本轮播完再停止（每段独立）*/
     private ImageButton[]  btnSegWaitFinish = new ImageButton[SEG_COUNT];
+    /** 卡片底部：在线叠录（每段独立）*/
+    private ImageButton[]  btnSegOverdub    = new ImageButton[SEG_COUNT];
+    /** 叠录状态（每段独立）*/
+    private boolean[]      segOverdubActive = new boolean[SEG_COUNT];
 
     // -------- UI：全局控制按钮 --------
     private Button btnPlayAll;    // 全部同时播放
@@ -492,6 +496,9 @@ public class LooperControlActivity extends BaseActivity {
         int[] waitFinishBtnIds = {
                 R.id.btn_seg0_wait_finish, R.id.btn_seg1_wait_finish, R.id.btn_seg2_wait_finish, R.id.btn_seg3_wait_finish
         };
+        int[] overdubBtnIds = {
+                R.id.btn_seg0_overdub, R.id.btn_seg1_overdub, R.id.btn_seg2_overdub, R.id.btn_seg3_overdub
+        };
         for (int i = 0; i < SEG_COUNT; i++) {
             segCards[i]        = findViewById(cardIds[i]);
             segMainAreas[i]    = findViewById(mainAreaIds[i]);
@@ -508,6 +515,7 @@ public class LooperControlActivity extends BaseActivity {
             btnSegChain[i]     = findViewById(chainBtnIds[i]);
             btnSegJoin[i]      = findViewById(joinBtnIds[i]);
             btnSegWaitFinish[i]= findViewById(waitFinishBtnIds[i]);
+            btnSegOverdub[i]   = findViewById(overdubBtnIds[i]);
         }
 
         // 全局控制区
@@ -1167,6 +1175,8 @@ public class LooperControlActivity extends BaseActivity {
             btnSegJoin[i].setOnClickListener(v -> onJoinClick(idx));
             // 底部等待本轮播完再停止按钮（每段独立）
             btnSegWaitFinish[i].setOnClickListener(v -> onWaitFinishToggle(idx));
+            // 底部在线叠录按钮（每段独立）
+            btnSegOverdub[i].setOnClickListener(v -> onOverdubToggle(idx));
         }
 
         // 全局控制按钮
@@ -1884,6 +1894,7 @@ public class LooperControlActivity extends BaseActivity {
         segPlayStartTime[idx]   = 0;
         segTrimStartPage[idx]   = 0;
         segTrimEndPage[idx]     = 0;
+        segOverdubActive[idx]   = false;
         removeAudioTrackCard(idx);
         recordingQueue.remove(Integer.valueOf(idx));
         for (int j = 0; j < SEG_COUNT; j++) {
@@ -2148,6 +2159,7 @@ public class LooperControlActivity extends BaseActivity {
                                     waitFinishPredictRunnables[i] = null;
                                 }
                                 waitFinishEnabled[i] = false;
+                                segOverdubActive[i]  = false;
 
                                 segStates[i] = SegState.INACTIVE;
                                 segLoopDurationMs[i] = 0;
@@ -2294,6 +2306,28 @@ public class LooperControlActivity extends BaseActivity {
             if (!success) {
                 // 回滚
                 waitFinishEnabled[idx] = !waitFinishEnabled[idx];
+                updateControlButtonStates();
+            }
+        });
+    }
+
+    /** 叠录开关：对已录制的段进行实时叠录 */
+    private void onOverdubToggle(int idx) {
+        if (!checkConnection()) return;
+        // 段必须有数据才能叠录
+        if (segStates[idx] == SegState.INACTIVE) {
+            Toast.makeText(this, "LOOP " + (idx+1) + " 无数据，无法叠录", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // 乐观更新
+        segOverdubActive[idx] = !segOverdubActive[idx];
+        updateControlButtonStates();
+        Toast.makeText(this,
+                "LOOP " + (idx+1) + " 叠录：" + (segOverdubActive[idx] ? "开" : "关"),
+                Toast.LENGTH_SHORT).show();
+        sendCommandWithCallback("looper -D " + idx, success -> {
+            if (!success) {
+                segOverdubActive[idx] = !segOverdubActive[idx];
                 updateControlButtonStates();
             }
         });
@@ -2506,6 +2540,12 @@ public class LooperControlActivity extends BaseActivity {
         for (int i = 0; i < SEG_COUNT; i++) {
             boolean segPlayable = (segStates[i] == SegState.PLAYING || segStates[i] == SegState.STOPPED);
             applyButtonState(btnSegWaitFinish[i], segPlayable, waitFinishEnabled[i], 0xFFE08B0A);
+        }
+
+        // ---------- 每段独立：在线叠录 ----------
+        for (int i = 0; i < SEG_COUNT; i++) {
+            boolean segPlayable = (segStates[i] == SegState.PLAYING || segStates[i] == SegState.STOPPED);
+            applyButtonState(btnSegOverdub[i], segPlayable, segOverdubActive[i], 0xFFE91E63);
         }
 
         // ---------- 全局按钮 ----------
@@ -2849,6 +2889,10 @@ public class LooperControlActivity extends BaseActivity {
                 default: newState = SegState.INACTIVE;  break;
             }
             if (newState != SegState.INACTIVE && lenPages > 0) {
+                // 段从 RECORDING 变为 PLAYING 时，叠录已结束，清除标志
+                if (segStates[i] == SegState.RECORDING && newState == SegState.PLAYING) {
+                    segOverdubActive[i] = false;
+                }
                 segStates[i] = newState;
                 if (segLoopDurationMs[i] <= 0) {
                     segLoopDurationMs[i] = pagesToMs(lenPages, i);
@@ -2858,6 +2902,7 @@ public class LooperControlActivity extends BaseActivity {
                 if (segStates[i] != SegState.INACTIVE && segStates[i] != SegState.QUEUED) {
                     segStates[i]        = SegState.INACTIVE;
                     segLoopDurationMs[i] = 0;
+                    segOverdubActive[i]  = false;
                     removeAudioTrackCard(i);
                 }
             }

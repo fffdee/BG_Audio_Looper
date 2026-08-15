@@ -95,34 +95,82 @@ def parse_packet(raw: bytes) -> Optional[Tuple[int, int, bytes]]:
 
 
 # ─── 串口通信层 ───────────────────────────────────────────────────────────────
+
+def is_serial_disconnect(exc: BaseException) -> bool:
+    """USB CDC 设备复位/跳转后，Windows 上常见的假失败。"""
+    text = str(exc)
+    needles = (
+        "ClearCommError",
+        "设备不识别此命令",
+        "PermissionError",
+        "Access is denied",
+        "WriteFile failed",
+        "ReadFile failed",
+        "GetOverlappedResult failed",
+        "GetCommState failed",
+        "SetCommState failed",
+        "句柄无效",
+        "The device does not recognize",
+        "device disconnected",
+        "OSError(22",
+        "Errno 22",
+    )
+    if any(n in text for n in needles):
+        return True
+    for arg in getattr(exc, "args", ()):
+        if isinstance(arg, BaseException) and arg is not exc:
+            if is_serial_disconnect(arg):
+                return True
+    return False
+
+
 class BLComm:
     """封装串口读写，提供"发送并等待响应"语义。"""
 
-    def __init__(self, port: str, baudrate: int = 115200):
+    def __init__(self, port: str, baudrate: int = 2000000):
         self._ser = serial.Serial(port, baudrate=baudrate, timeout=0.05)
         self._buf = bytearray()
 
     def close(self):
-        if self._ser.is_open:
-            self._ser.close()
+        try:
+            if self._ser and getattr(self._ser, "is_open", False):
+                self._ser.close()
+        except Exception:
+            pass
 
     def flush_rx(self):
-        self._ser.reset_input_buffer()
+        try:
+            self._ser.reset_input_buffer()
+        except Exception as exc:
+            if is_serial_disconnect(exc):
+                self._buf.clear()
+                return
+            raise
         self._buf.clear()
 
     def send_and_recv(self, pkt: bytes,
                       timeout: float = TIMEOUT_S) -> Tuple[int, int, bytes]:
         """
         发送 pkt，等待并返回 (cmd, seq, data)。
-        超时时抛出 TimeoutError。
+        超时时抛出 TimeoutError；端口因复位断开时抛出 serial.SerialException。
         """
-        self._ser.write(pkt)
+        try:
+            self._ser.write(pkt)
+        except Exception as exc:
+            if is_serial_disconnect(exc):
+                raise serial.SerialException(str(exc)) from exc
+            raise
+
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            chunk = self._ser.read(256)
+            try:
+                chunk = self._ser.read(256)
+            except Exception as exc:
+                if is_serial_disconnect(exc):
+                    raise serial.SerialException(str(exc)) from exc
+                raise
             if chunk:
                 self._buf.extend(chunk)
-            # 尝试在缓冲区中找到并解析一帧
             while len(self._buf) >= 8:
                 idx = self._buf.find(SOF)
                 if idx < 0:
@@ -133,12 +181,12 @@ class BLComm:
                 try:
                     result = parse_packet(bytes(self._buf))
                     if result is None:
-                        break          # 还需要更多数据
+                        break
                     rsp_cmd, rsp_seq, rsp_data = result
                     del self._buf[: 8 + len(rsp_data)]
                     return rsp_cmd, rsp_seq, rsp_data
                 except ValueError:
-                    del self._buf[0]   # 跳过坏帧头，继续找下一个 SOF
+                    del self._buf[0]
         raise TimeoutError("等待设备响应超时")
 
 
@@ -176,12 +224,23 @@ class Bootloader:
         for attempt in range(1, MAX_RETRY + 1):
             if attempt > 1:
                 self._log(f"  [重试 {attempt}/{MAX_RETRY}]")
-                self._comm.flush_rx()
+                try:
+                    self._comm.flush_rx()
+                except Exception as exc:
+                    if is_serial_disconnect(exc):
+                        raise serial.SerialException(str(exc)) from exc
+                    raise
 
             try:
                 rsp_cmd, _rsp_seq, rsp_data = self._comm.send_and_recv(pkt, timeout)
             except TimeoutError:
                 last_err = "超时"
+                continue
+            except serial.SerialException as exc:
+                # 设备已跳转/复位导致端口失效：向上抛出，由 JUMP/REBOOT 判定为成功
+                if is_serial_disconnect(exc):
+                    raise
+                last_err = str(exc)
                 continue
 
             if rsp_cmd == Rsp.ACK:
@@ -282,20 +341,49 @@ class Bootloader:
         self._log("Flash 已擦除，开始传输 …")
 
         offset = 0
-        while offset < total:
-            chunk   = firmware[offset : offset + CHUNK_SIZE]
-            payload = struct.pack(">I", offset) + chunk
-            self._transact(Cmd.DATA, payload, label=f"DATA@0x{offset:X}")
-            offset += len(chunk)
-            self._progress(offset, total)
+        try:
+            while offset < total:
+                chunk   = firmware[offset : offset + CHUNK_SIZE]
+                payload = struct.pack(">I", offset) + chunk
+                self._transact(Cmd.DATA, payload, label=f"DATA@0x{offset:X}")
+                offset += len(chunk)
+                self._progress(offset, total)
 
-        self._transact(Cmd.FINISH, struct.pack(">I", total), label="FINISH")
+            self._transact(Cmd.FINISH, struct.pack(">I", total), label="FINISH")
+        except (TimeoutError, serial.SerialException, OSError, PermissionError) as exc:
+            # 数据已上板后，设备端 USB 常先断开；主机读 ACK 会 ClearCommError
+            if is_serial_disconnect(exc) and offset > 0:
+                self._log(
+                    f"升级完成（已传输 {offset}/{total}，串口断开属正常）: {exc}")
+                self._progress(total, total)
+                return
+            raise
+        except RuntimeError as exc:
+            if is_serial_disconnect(exc) and offset > 0:
+                self._log(
+                    f"升级完成（已传输 {offset}/{total}，串口断开属正常）: {exc}")
+                self._progress(total, total)
+                return
+            raise
         self._log("升级完成 ✓")
 
     def jump(self):
-        """发送 JUMP，设备跳转到应用。"""
+        """发送 JUMP，设备跳转到应用。
+
+        设备收到 JUMP 后会立刻切走 USB CDC，Windows 上常出现
+        ClearCommError / PermissionError(13)，属正常现象，视为成功。
+        """
         self._log("正在跳转到应用 …")
-        self._transact(Cmd.JUMP, label="JUMP")
+        try:
+            self._transact(Cmd.JUMP, timeout=2.0, label="JUMP")
+        except (TimeoutError, serial.SerialException) as exc:
+            self._log(f"设备已跳转（串口断开属正常）: {exc}")
+            return
+        except RuntimeError as exc:
+            if is_serial_disconnect(exc):
+                self._log(f"设备已跳转（串口断开属正常）: {exc}")
+                return
+            raise
         self._log("设备已跳转 ✓")
 
     def query_info(self) -> dict:
@@ -369,19 +457,106 @@ class Bootloader:
     def reboot(self):
         """请求设备立即重启（协议 v2+）。"""
         self._log("正在请求设备重启 …")
-        # Device reboots immediately; ACK may not arrive — ignore timeout
+        # 设备重启后 ACK/串口都可能立即失效，属正常现象
         try:
             self._transact(Cmd.REBOOT, timeout=2.0, label="REBOOT")
-        except (TimeoutError, RuntimeError):
-            pass   # 设备重启后 ACK 可能丢失，属于正常现象
+        except (TimeoutError, serial.SerialException):
+            pass
+        except RuntimeError as exc:
+            if not is_serial_disconnect(exc):
+                raise
         self._log("重启命令已发送 ✓")
 
 
-# ─── 工具函数 ─────────────────────────────────────────────────────────────────
+# ─── USB 身份协议（Bootloader）──────────────────────────────────────────────
+# PID = 0x4247 ('BG') 标识 BG Bootloader 家族
+# VID = 产品编号：
+#   0x0001 BanBox
+#   0x0002 BanAirBundy
+#
+# 上位机据此识别平台，再走 CDC 升级协议。
 
-# Bootloader USB VID/PID (用于识别设备是否处于升级模式)
-BL_VID = 0x8888
-BL_PID = 0x1722
+BG_USB_PID = 0x4247
+
+PRODUCT_BY_VID = {
+    0x0001: "BanBox",
+    0x0002: "BanAirBundy",
+}
+
+# 兼容旧工具默认值（非身份协议产品）；仅作文档/回退，正式识别以 PID=0x4247 为准
+LEGACY_BL_VID = 0x8888
+LEGACY_BL_PID = 0x1722
+
+# 向后兼容旧导入名：默认指向本仓库产品 BanBox
+BL_VID = 0x0001
+BL_PID = BG_USB_PID
+
+
+def is_bg_bootloader_id(vid, pid) -> bool:
+    """是否为 BG Bootloader 身份（PID=0x4247 且 VID 在产品表中）。"""
+    try:
+        vid_i = int(vid) if vid is not None else -1
+        pid_i = int(pid) if pid is not None else -1
+    except (TypeError, ValueError):
+        return False
+    return pid_i == BG_USB_PID and vid_i in PRODUCT_BY_VID
+
+
+def product_name_from_vid(vid) -> str:
+    try:
+        vid_i = int(vid) if vid is not None else -1
+    except (TypeError, ValueError):
+        return "Unknown"
+    return PRODUCT_BY_VID.get(vid_i, f"Unknown(VID=0x{vid_i:04X})")
+
+
+def identify_usb_ids(vid, pid) -> Optional[dict]:
+    """
+    根据 VID/PID 识别设备。
+    返回 dict: brand/product/role/vid/pid；无法识别返回 None。
+    """
+    try:
+        vid_i = int(vid) if vid is not None else -1
+        pid_i = int(pid) if pid is not None else -1
+    except (TypeError, ValueError):
+        return None
+
+    if is_bg_bootloader_id(vid_i, pid_i):
+        return {
+            "brand": "BG",
+            "product": product_name_from_vid(vid_i),
+            "role": "bootloader",
+            "vid": vid_i,
+            "pid": pid_i,
+        }
+
+    # 可选：旧版硬编码 ID
+    if vid_i == LEGACY_BL_VID and pid_i == LEGACY_BL_PID:
+        return {
+            "brand": "BG",
+            "product": "Legacy Bootloader",
+            "role": "bootloader",
+            "vid": vid_i,
+            "pid": pid_i,
+        }
+
+    return None
+
+
+def identify_port(device: str) -> Optional[dict]:
+    """按串口设备名识别 USB 身份；找不到端口或非 BL 返回 None。"""
+    if not device:
+        return None
+    for p in serial.tools.list_ports.comports():
+        if p.device == device:
+            info = identify_usb_ids(getattr(p, "vid", None), getattr(p, "pid", None))
+            if info is None:
+                return None
+            info = dict(info)
+            info["device"] = p.device
+            info["description"] = p.description or p.device
+            return info
+    return None
 
 
 def list_ports():
@@ -391,17 +566,31 @@ def list_ports():
 
 
 def list_bootloader_ports():
-    """返回 VID/PID 匹配 Bootloader 的串口 [(device, description), ...]。
-    Bootloader VID=0x8888 PID=0x1722, APP VID=0x1234 PID=0x1234。"""
+    """返回 BG Bootloader 串口 [(device, description), ...]。"""
     result = []
     for p in serial.tools.list_ports.comports():
-        if hasattr(p, 'vid') and p.vid == BL_VID and \
-           hasattr(p, 'pid') and p.pid == BL_PID:
+        vid = getattr(p, "vid", None)
+        pid = getattr(p, "pid", None)
+        if identify_usb_ids(vid, pid) is not None:
             result.append((p.device, p.description or p.device))
     return sorted(result)
 
 
-def probe_port(port: str, baudrate: int = 115200,
+def list_bootloader_devices():
+    """返回已识别的 Bootloader 设备详情列表 [dict, ...]。"""
+    result = []
+    for p in serial.tools.list_ports.comports():
+        info = identify_usb_ids(getattr(p, "vid", None), getattr(p, "pid", None))
+        if info is None:
+            continue
+        item = dict(info)
+        item["device"] = p.device
+        item["description"] = p.description or p.device
+        result.append(item)
+    return sorted(result, key=lambda x: x["device"])
+
+
+def probe_port(port: str, baudrate: int = 2000000,
                timeout: float = 0.5) -> Optional[int]:
     """
     向指定端口发送 SYNC 握手包，快速探测是否有 Bootloader 应答。

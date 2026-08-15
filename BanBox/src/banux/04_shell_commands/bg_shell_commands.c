@@ -2258,6 +2258,26 @@ static int looper_sr_cmd(int argc, char *argv[])
     return 0;
 }
 
+/* looper -D <seg>  — 在线叠录开关 (Online Overdub toggle) */
+static int looper_overdub_cmd(int argc, char *argv[])
+{
+    int seg;
+    if (argc < 1) {
+        Shell_Print("Usage: looper -D <seg>\r\n");
+        return -1;
+    }
+    seg = atoi(argv[0]);
+    if (seg < 0 || seg >= MAX_SEGMENTS) {
+        Shell_Print("Error: segment must be 0-3\r\n");
+        return -1;
+    }
+    {
+        uint8_t on = loop_toggle_overdub_online((uint8_t)seg);
+        Shell_Printf("Segment %d: overdub %s\r\n", seg, on ? "ON" : "OFF");
+    }
+    return 0;
+}
+
 /* -----------------------------------------------------------------------
  * looper -q  — App专用：以二进制格式返回Looper参数（用于APP读取）
  * 响应格式: [0xAA][0x55][0x21][0x0D]
@@ -2386,6 +2406,7 @@ static const ShellOpt_t looper_opts[] = {
     OPT("J", "join",    "<start>|cancel",        "Join play at loop boundary (fw-timed)",  looper_join_cmd),
     OPT("W", "wf",      "[seg]",                 "Toggle wait-finish-before-stop for seg", looper_wf_cmd),
     OPT("SR", "sync-rec", "<trig> <rec>|cancel", "Sync-record at boundary (fw-timed)",    looper_sr_cmd),
+    OPT("D", "overdub", "<seg>",                 "Toggle online overdub for segment",      looper_overdub_cmd),
     /* 存储抽象层命令 (合并自 storagetest) */
     OPT("Si", "init-s", NULL,           "Initialize storage layer",            looper_storage_init_cmd),
     OPT("Ss", "info-s", NULL,           "Show storage information",            looper_storage_info_cmd),

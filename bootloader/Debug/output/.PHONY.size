@@ -1,2 +1,2 @@
    text (code + rodata)	   data	    bss	    dec	    hex	filename
- 161066 (105662 +  55404)	   1168	  57132	 219366	  358e6	bootloader.adx
+ 161062 (105658 +  55404)	   1168	  57132	 219362	  358e2	bootloader.adx

@@ -28,7 +28,10 @@ from PyQt5.QtWidgets import (
     QFrame, QSizePolicy, QGroupBox,
 )
 
-from bl_core import list_ports, list_bootloader_ports, BL_VID, BL_PID
+from bl_core import (
+    list_ports, list_bootloader_ports, identify_port, identify_usb_ids,
+    is_bg_bootloader_id, BL_VID, BL_PID, BG_USB_PID,
+)
 from worker import AutoScanWorker, UpgradeWorker
 
 
@@ -90,6 +93,32 @@ QLabel#StatusError {
 QLabel#StatusBusy {
     color: #f59e0b;
     font-weight: 600;
+}
+
+/* ── 顶部产品身份 Banner ── */
+QLabel#ProductBannerDisconnected {
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 8px;
+}
+QLabel#ProductBannerConnected {
+    background-color: #10b981;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 8px;
+}
+QLabel#ProductBannerBusy {
+    background-color: #f59e0b;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 8px;
 }
 
 /* ── 数据展示（信息卡） ── */
@@ -301,9 +330,12 @@ class MainWindow(QMainWindow):
         self._worker: UpgradeWorker | None = None
         self._scan_worker: AutoScanWorker | None = None
         self._boot_mode: int = 0   # 0 = single, 1 = dual
+        self._connected_product: str = ""
+        self._connected_port: str = ""
 
         self._build_ui()
         self._connect_signals()
+        self._set_banner_disconnected()
 
         # 启动后自动扫描
         QTimer.singleShot(200, self._on_auto_scan)
@@ -318,8 +350,15 @@ class MainWindow(QMainWindow):
         root.setContentsMargins(16, 16, 16, 16)
         root.setSpacing(12)
 
+        # 顶部产品身份 Banner：未连接红 / 已连接绿+产品名
+        self.lbl_banner = QLabel("未连接")
+        self.lbl_banner.setObjectName("ProductBannerDisconnected")
+        self.lbl_banner.setAlignment(Qt.AlignCenter)
+        self.lbl_banner.setMinimumHeight(40)
+        root.addWidget(self.lbl_banner)
+
         # ════════════════════════════════════════════════════════════════════
-        #  Layer 1: 连接状态卡 (顶部，最显眼)
+        #  Layer 1: 连接状态卡
         # ════════════════════════════════════════════════════════════════════
         card_conn = make_card()
         card_conn_layout = QVBoxLayout(card_conn)
@@ -348,8 +387,9 @@ class MainWindow(QMainWindow):
         ctrl_row.addWidget(make_caption("波特率"))
         self.combo_baud = QComboBox()
         self.combo_baud.addItems(["9600", "19200", "38400", "57600",
-                                  "115200", "230400", "460800", "921600"])
-        self.combo_baud.setCurrentText("115200")
+                                  "115200", "230400", "460800", "921600",
+                                  "2000000"])
+        self.combo_baud.setCurrentText("2000000")
         self.combo_baud.setFixedWidth(96)
         ctrl_row.addWidget(self.combo_baud)
 
@@ -574,20 +614,20 @@ class MainWindow(QMainWindow):
         self._on_port_changed()
 
     def _on_port_changed(self):
-        """端口选择变化时，根据 VID/PID 决定是否显示'进入 Boot 模式'按钮。"""
+        """端口选择变化时，根据 USB 身份协议决定是否显示'进入 Boot 模式'按钮。"""
         import serial.tools.list_ports as sp
         port_data = self.combo_port.currentData()
         if not port_data:
             self.btn_enter_boot.setVisible(False)
             return
 
-        # 查找该端口的 VID/PID
         is_bootloader = False
         for p in sp.comports():
             if p.device == port_data:
-                vid = getattr(p, 'vid', None) or 0
-                pid = getattr(p, 'pid', None) or 0
-                is_bootloader = (vid == BL_VID and pid == BL_PID)
+                vid = getattr(p, 'vid', None)
+                pid = getattr(p, 'pid', None)
+                is_bootloader = is_bg_bootloader_id(vid, pid) or (
+                    identify_usb_ids(vid, pid) is not None)
                 break
 
         # 非 Bootloader 设备 → 显示"进入 Boot 模式"按钮
@@ -643,12 +683,15 @@ class MainWindow(QMainWindow):
         bl_ports = list_bootloader_ports()
         if bl_ports:
             for bdev, bdesc in bl_ports:
-                self._append_log(f"  发现 Bootloader: {bdev} ({bdesc})")
+                info = identify_port(bdev)
+                product = info["product"] if info else "BG"
+                self._append_log(f"  发现 {product} Bootloader: {bdev} ({bdesc})")
                 # 选中该端口
                 for i in range(self.combo_port.count()):
                     if self.combo_port.itemData(i) == bdev:
                         self.combo_port.setCurrentIndex(i)
                         break
+                self._set_connected(bdev, product)
                 break
             # 自动查询信息
             QTimer.singleShot(300, lambda: self._start_op(UpgradeWorker.OP_QUERY))
@@ -656,6 +699,7 @@ class MainWindow(QMainWindow):
         else:
             self._append_log("  ✗ 未发现 Bootloader 设备，请确认设备已重启")
             self._set_status("● 未连接", "StatusDisconnected")
+            self._set_banner_disconnected()
 
         self._set_busy(False)
 
@@ -680,6 +724,9 @@ class MainWindow(QMainWindow):
             if self.combo_port.itemData(i) == port:
                 self.combo_port.setCurrentIndex(i)
                 break
+        info = identify_port(port)
+        product = info["product"] if info else "BG"
+        self._set_connected(port, product, ver)
         self._set_status(f"● 已连接  {port}  (协议 v{ver})", "StatusConnected")
         # 自动查询分区信息，触发 UI 模式适配
         QTimer.singleShot(300, lambda: self._start_op(UpgradeWorker.OP_QUERY))
@@ -688,6 +735,7 @@ class MainWindow(QMainWindow):
         self._set_busy(False)
         if not found:
             self._set_status("● 未连接", "StatusDisconnected")
+            self._set_banner_disconnected()
             self._append_log(msg)
 
     # ────────────────────────────────────────────────────────────────────────
@@ -744,6 +792,7 @@ class MainWindow(QMainWindow):
         self.progress.setFormat("进行中 …")
         self._set_busy(True)
         self._set_status("● 操作中", "StatusBusy")
+        self._set_banner_busy()
 
         self._worker = UpgradeWorker(
             port_data, baud, operation,
@@ -810,21 +859,71 @@ class MainWindow(QMainWindow):
         self._append_log(msg)
         if success:
             self._set_status("● 已连接", "StatusConnected")
+            if self._connected_product:
+                self._set_banner_connected(self._connected_product, self._connected_port)
+            else:
+                port = self.combo_port.currentData() or ""
+                info = identify_port(port) if port else None
+                product = info["product"] if info else "BG"
+                self._set_connected(port, product)
             if self.progress.value() == 0 or self.progress.value() == self.progress.maximum():
                 self.progress.setFormat("完成")
         else:
             self._set_status("● 操作失败", "StatusError")
             self.progress.setFormat("失败")
+            if self._connected_product:
+                self._set_banner_connected(self._connected_product, self._connected_port)
 
     # ────────────────────────────────────────────────────────────────────────
-    #  辅助
+    #  产品 Banner / 状态
     # ────────────────────────────────────────────────────────────────────────
+    def _polish_label(self, lbl: QLabel, object_name: str):
+        lbl.setObjectName(object_name)
+        lbl.style().unpolish(lbl)
+        lbl.style().polish(lbl)
+
+    def _set_banner_disconnected(self):
+        self._connected_product = ""
+        self._connected_port = ""
+        self.lbl_banner.setText("未连接")
+        self._polish_label(self.lbl_banner, "ProductBannerDisconnected")
+
+    def _set_banner_connected(self, product: str, port: str = "", ver=None):
+        text = f"已连接 · {product}"
+        if port:
+            text += f"  ({port})"
+        if ver is not None:
+            text += f"  · 协议 v{ver}"
+        self.lbl_banner.setText(text)
+        self._polish_label(self.lbl_banner, "ProductBannerConnected")
+
+    def _set_banner_busy(self):
+        product = self._connected_product or "设备"
+        self.lbl_banner.setText(f"操作中 · {product}")
+        self._polish_label(self.lbl_banner, "ProductBannerBusy")
+
+    def _set_connected(self, port: str, product: str, ver=None):
+        self._connected_port = port or ""
+        self._connected_product = product or "BG"
+        self._set_banner_connected(self._connected_product, self._connected_port, ver)
+
     def _set_status(self, text: str, object_name: str):
         self.lbl_status.setText(text)
-        self.lbl_status.setObjectName(object_name)
-        # 强制重绘以应用 QSS
-        self.lbl_status.style().unpolish(self.lbl_status)
-        self.lbl_status.style().polish(self.lbl_status)
+        self._polish_label(self.lbl_status, object_name)
+        if object_name == "StatusDisconnected":
+            self._set_banner_disconnected()
+        elif object_name == "StatusBusy":
+            self._set_banner_busy()
+        elif object_name == "StatusConnected":
+            if self._connected_product:
+                self._set_banner_connected(self._connected_product, self._connected_port)
+            else:
+                port = self.combo_port.currentData() or ""
+                info = identify_port(port) if port else None
+                if info:
+                    self._set_connected(port, info["product"])
+                elif port:
+                    self._set_banner_connected("BG Bootloader", port)
 
     def _append_log(self, msg: str):
         # 简单着色：成功/失败/警告

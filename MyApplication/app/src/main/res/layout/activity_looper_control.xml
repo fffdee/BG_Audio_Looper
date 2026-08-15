@@ -597,7 +597,7 @@
                                         android:contentDescription="等待本轮播完再停止" />
                                 </LinearLayout>
 
-                                <!-- 第二行：最大时长 chip + 删除按钮 -->
+                                <!-- 第三行：叠录 + 最大时长 chip + 删除按钮 -->
                                 <LinearLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
@@ -607,6 +607,18 @@
                                     android:paddingEnd="6dp"
                                     android:paddingTop="2dp"
                                     android:paddingBottom="4dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg0_overdub"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_add"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="叠录" />
                                     <TextView
                                         android:id="@+id/tv_seg0_max_rec"
                                         android:layout_width="0dp"
@@ -829,6 +841,18 @@
                                     android:paddingEnd="6dp"
                                     android:paddingTop="2dp"
                                     android:paddingBottom="4dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg1_overdub"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_add"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="叠录" />
                                     <TextView
                                         android:id="@+id/tv_seg1_max_rec"
                                         android:layout_width="0dp"
@@ -1051,6 +1075,18 @@
                                     android:paddingEnd="6dp"
                                     android:paddingTop="2dp"
                                     android:paddingBottom="4dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg2_overdub"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_add"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="叠录" />
                                     <TextView
                                         android:id="@+id/tv_seg2_max_rec"
                                         android:layout_width="0dp"
@@ -1273,6 +1309,18 @@
                                     android:paddingEnd="6dp"
                                     android:paddingTop="2dp"
                                     android:paddingBottom="4dp">
+                                    <ImageButton
+                                        android:id="@+id/btn_seg3_overdub"
+                                        android:layout_width="36dp"
+                                        android:layout_height="32dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:src="@android:drawable/ic_menu_add"
+                                        android:tint="#888888"
+                                        android:scaleType="fitCenter"
+                                        android:padding="5dp"
+                                        android:enabled="false"
+                                        android:alpha="0.4"
+                                        android:contentDescription="叠录" />
                                     <TextView
                                         android:id="@+id/tv_seg3_max_rec"
                                         android:layout_width="0dp"

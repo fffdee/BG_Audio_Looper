@@ -32,6 +32,7 @@
 #include "rtos_api.h"
 #include "FreeRTOS.h"
 #include "sys_param.h"
+#include "audio_setting.h"
 #include "audio_looper.h"
 #include "bg_shell.h"
 #include "shell_io_manager.h"
@@ -88,12 +89,23 @@ static void InitADC1Mic(uint16_t SampleRate)
 	AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 28, 1);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  28, 1);
-	AudioADC_MicBias1Enable(TRUE);
+
+	/* 对齐 audio_api.c 可工作麦克风配置：
+	 * Gain=0 → 最大模拟增益(+21dB)，Boost=4 → MIC_BOOST bypass。
+	 * 旧值 (28,1)/(15,2) 都会把麦电平压得几乎听不到。 */
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 0, 4);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  0, 4);
 	AudioADC_VcomConfig(1);
+	AudioADC_MicBias1Enable(TRUE);
 	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void *)AudioADC2Buf, sizeof(AudioADC2Buf));
 
+	/* DigitalInit 后再设一遍模拟前端（与 audio_api.c 一致） */
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 0, 4);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  0, 4);
+	AudioADC_VcomConfig(1);
+	AudioADC_MicBias1Enable(TRUE);
 }
 
 
@@ -197,8 +209,10 @@ static void InitAudioEffects(uint16_t SampleRate)
 	AudioEffectSilenceDectorInit(&gCtrlVars.MicAudioSdct_unit, 2, SampleRate);
 	#endif
 
-	// 扩展器（Expander）- 麦克风通道
-	gCtrlVars.mic_expander_unit.enable = 1;
+	// 扩展器（Expander）- 麦克风通道噪声门
+	/* 默认关闭：阈值过高会把弱麦克风信号整段压掉，表现为“只有 LineIn 有声”。
+	 * 需要降噪时再通过效果图/上位机打开。 */
+	gCtrlVars.mic_expander_unit.enable = 0;
 	AudioEffectExpanderInit(&gCtrlVars.mic_expander_unit, 2, SampleRate);
 }
 
@@ -277,6 +291,13 @@ void BG_audio_Init(uint16_t SampleRate)
 	vTaskDelay((300 + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS);
 	AudioADC_SoftMute(ADC0_MODULE, FALSE, FALSE);
 	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
+	/* SoftMute 后再恢复麦克风模拟前端，避免 Bias/PGA 被冲掉 */
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 0, 4);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  0, 4);
+	AudioADC_VcomConfig(1);
+	AudioADC_MicBias1Enable(TRUE);
 	/* DAC音量将在Audio_loop()的SetVolume()中恢复，无需手动解除 */
 
 	InitAudioEffects(SampleRate);
@@ -358,21 +379,21 @@ void BG_audio_Init(uint16_t SampleRate)
 	// 初始化低功耗管理器（所有音频模块初始化完毕后调用）
 	LowPower_Init();
 
-//	AudioDAC_FadeDisable(DAC0);
-//
-//
-//	AudioSetting_SetMic1VolumePercent(g_sys_param.volume.mic1_volume);
-//
-//
-//	AudioSetting_SetMic2VolumePercent(g_sys_param.volume.mic2_volume);
-//
-//
-//
-//	AudioSetting_SetGuitar1VolumePercent( g_sys_param.volume.guitar1_volume );
-//
-//
-//	AudioSetting_SetGuitar2VolumePercent( g_sys_param.volume.guitar2_volume );
-
-
-
+	/* SysParam_ApplyToAudio() 可能在 AudioADC_DigitalInit 之前调用，
+	 * DigitalInit 会重置数字音量；此处在 ADC 就绪后再次应用，避免麦克风/吉他无声。
+	 * 若 Flash 里 mic 音量为 0（旧版本误存），回退到默认 80，避免永久静音。 */
+	{
+		uint8_t mic1 = g_sys_param.volume.mic1_volume;
+		uint8_t mic2 = g_sys_param.volume.mic2_volume;
+		if (mic1 == 0) {
+			mic1 = 80;
+		}
+		if (mic2 == 0) {
+			mic2 = 80;
+		}
+		AudioSetting_SetMic1VolumePercent(mic1);
+		AudioSetting_SetMic2VolumePercent(mic2);
+		AudioSetting_SetGuitar1VolumePercent(g_sys_param.volume.guitar1_volume);
+		AudioSetting_SetGuitar2VolumePercent(g_sys_param.volume.guitar2_volume);
+	}
 }
