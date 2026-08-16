@@ -17,12 +17,15 @@
 #endif
 
 #include "ble_protocol.h"
+#include "sys_led.h"
 
 extern uint8_t BleConnectFlag;
 
 void AppSys_LedTick(void)
 {
-    /* LED 由 sys_led 组件通过 BG_Event 事件驱动，无需轮询 */
+#if SYS_LED_EN
+    SysLed_Tick50ms();
+#endif
 }
 
 /* ====================== BT 状态 UI 更新 ====================== */

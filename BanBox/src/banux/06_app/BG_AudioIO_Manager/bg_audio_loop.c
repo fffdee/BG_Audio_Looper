@@ -86,10 +86,9 @@ void AudioLoopWithGraph(void)
 	graph->min_frame_size = MIN_FRAME;
 	graph->max_frame_size = MAX_FRAME;
 	
-	/* 【修正】只看 A2DP 流状态，不依赖预解码数据状态 */
-	/* 这样即使 SBC 缓冲区暂时数据不足，也保持蓝牙模式 */
+	/* A2DP 是否在推流；本帧是否用 BT 驱动帧长（SBC 有数据时） */
 	bt_streaming = (GetA2dpState() == BT_A2DP_STATE_STREAMING);
-	
+
 	/* 检测模式切换，只在真正切换时打印 */
 	if (bt_streaming != last_bt_streaming) {
 		if (bt_streaming) {
@@ -99,79 +98,60 @@ void AudioLoopWithGraph(void)
 		}
 		last_bt_streaming = bt_streaming;
 	}
-	
-	if (bt_streaming) {
-		/* ========== 蓝牙驱动模式 (严格参考 AudioLoopWithBT) ========== */
-		
-		/* 1. 【关键】检查 SBC 缓冲区是否有数据（与老方案一致） */
-		if (mv_msize(&SBC_MemHandle) <= SBC_DECODER_FIFO_MIN && !bt_has_decoded_data) {
-			/* SBC 数据不足且无预解码数据，等待数据到来，不切换到 ADC 模式 */
-			return;
-		}
-		
-		/* 2. 预解码获取实际帧长（与老方案一致：先解码才知道 n） */
+
+	if (bt_streaming &&
+	    (bt_has_decoded_data || mv_msize(&SBC_MemHandle) > SBC_DECODER_FIFO_MIN)) {
+		/* ========== 蓝牙驱动模式 ========== */
 		frame_size = BT_GetAvailableData(NULL);
-		if (frame_size == 0) {
-			return;  /* 蓝牙真的没数据，等待 */
+		if (frame_size > 0) {
+			while (AudioDAC_DataSpaceLenGet(DAC0) < frame_size) {
+			}
+			while (AudioADC_DataLenGet(ADC0_MODULE) < frame_size ||
+			       AudioADC_DataLenGet(ADC1_MODULE) < frame_size) {
+			}
+			graph->drive_mode = DRIVE_MODE_BT;
+		} else {
+			/* 推流中但本帧无解码输出：回退 ADC/USB，避免整路饿死 */
+			bt_streaming = false;
 		}
-		
-		/* frame_size 现在是 BT 解码后的实际帧长 */
-		
-		/* 3. 【关键】阻塞等待 DAC 有足够空间 (与老方案一致!) */
-		while (AudioDAC_DataSpaceLenGet(DAC0) < frame_size) {
-			/* 忙等待 */
+	} else if (bt_streaming) {
+		/* 推流中但 SBC 暂空：回退 ADC/USB，保持 USB 音乐可播 */
+		bt_streaming = false;
+	}
+
+	if (!bt_streaming) {
+		/* ========== ADC/USB 驱动模式 ========== */
+		/* 仅在 A2DP 真正结束时清预解码并恢复采样率 */
+		if (GetA2dpState() != BT_A2DP_STATE_STREAMING) {
+			if (bt_has_decoded_data) {
+				bt_has_decoded_data = false;
+				bt_decoded_len = 0;
+			}
+			if (bt_current_sample_rate != 0 &&
+			    BG_AudioManager.Audio_data.SampleRate != system_default_sample_rate) {
+				DBG("[Audio] BT disconnected, restoring sample rate to %ld Hz\n",
+				    (long)system_default_sample_rate);
+				AudioDAC_SampleRateChange(DAC0, system_default_sample_rate);
+				AudioDAC_SampleRateChange(DAC1, system_default_sample_rate);
+				AudioADC_SampleRateSet(ADC0_MODULE, system_default_sample_rate);
+				AudioADC_SampleRateSet(ADC1_MODULE, system_default_sample_rate);
+				BG_AudioManager.Audio_data.SampleRate = system_default_sample_rate;
+				bt_current_sample_rate = 0;
+			}
 		}
-		
-		/* 4. 【关键】阻塞等待 ADC 有足够数据 (与老方案一致!) */
-		while (AudioADC_DataLenGet(ADC0_MODULE) < frame_size || AudioADC_DataLenGet(ADC1_MODULE) < frame_size) {
-			/* 忙等待 */
-		}
-		
-		/* 5. 设置 BT 驱动模式（不打印日志避免刷屏） */
-		graph->drive_mode = DRIVE_MODE_BT;
-		
-	} else {
-		/* ========== ADC 驱动模式 (参考 AudioLoopMinimal) ========== */
-		/* 清除可能残留的蓝牙预解码数据 */
-		if (bt_has_decoded_data) {
-			bt_has_decoded_data = false;
-			bt_decoded_len = 0;
-		}
-		
-		/* 【关键】蓝牙断开后恢复默认采样率 */
-		if (bt_current_sample_rate != 0 && 
-		    BG_AudioManager.Audio_data.SampleRate != system_default_sample_rate) {
-			DBG("[Audio] BT disconnected, restoring sample rate to %ld Hz\n", 
-			    (long)system_default_sample_rate);
-			
-			AudioDAC_SampleRateChange(DAC0, system_default_sample_rate);
-			AudioDAC_SampleRateChange(DAC1, system_default_sample_rate);
-			AudioADC_SampleRateSet(ADC0_MODULE, system_default_sample_rate);
-			AudioADC_SampleRateSet(ADC1_MODULE, system_default_sample_rate);
-			
-			BG_AudioManager.Audio_data.SampleRate = system_default_sample_rate;
-			bt_current_sample_rate = 0;
-		}
-		
-		/* 获取 ADC 数据可用量 */
+
 		adc0_avail = AudioADC_DataLenGet(ADC0_MODULE);
 		adc1_avail = AudioADC_DataLenGet(ADC1_MODULE);
-		
-		/* 取最小值 */
 		frame_size = (adc0_avail < adc1_avail) ? adc0_avail : adc1_avail;
-		
-		/* 帧大小限制 */
 		if (frame_size < MIN_FRAME) {
-			return; /* 数据不足 */
+			return;
 		}
 		if (frame_size > MAX_FRAME) {
 			frame_size = MAX_FRAME;
 		}
-		
-		/* 设置 ADC 驱动模式（不打印日志避免刷屏） */
 		graph->drive_mode = DRIVE_MODE_ADC;
 	}
-	
+
 	/* 6. Looper 录制/播放时强制 frame_size=48
 	 * 原因：Looper 每帧处理 48 个采样，凑满 64 采样(256字节)写一页 PSRAM。
 	 * 若 frame_size>48，录制端只保存前 48 个采样（丢弃剩余），

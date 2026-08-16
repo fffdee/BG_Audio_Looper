@@ -75,7 +75,7 @@ void DualPart_Init(void);
 typedef struct {
     uint32_t magic;           /* Must equal PART_FLAG_MAGIC                  */
     uint8_t  active_part;     /* 0 = A is active, 1 = B is active           */
-    uint8_t  reserved1;       /* (was upgrade_pending — no longer used)      */
+    uint8_t  upgrade_pending; /* 1 = upgrade in progress; boot stays in BL  */
     uint8_t  boot_fail_cnt;   /* Incremented before each jump; reset on OK  */
     uint8_t  reserved2;
     uint32_t crc32;           /* CRC32 of preceding 8 bytes                  */

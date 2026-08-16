@@ -90,11 +90,19 @@ typedef struct {
 #define BURN_FLAG_MAGIC       0x4F4F5442UL  /* "BOOT" in little-endian       */
 #define BURN_FLAG_SECTOR      (BURN_FLAG_ADDR / 4096U)
 
+/* ── Upgrade-pending sticky flag (same sector as burn flag) ──
+ * Set at CMD_START BEFORE erasing/writing APP. Cleared only on successful
+ * CMD_FINISH. Survives USB unplug / power loss. Boot must stay in BL while
+ * this is set — otherwise a half-written image with early BGPF magic would
+ * be jumped to and brick the device. */
+#define UPG_PENDING_ADDR      (BURN_FLAG_ADDR + 4UL)
+#define UPG_PENDING_MAGIC     0x444E4550UL  /* "PEND" little-endian          */
+
 /* ── Partition flag structure ── */
 typedef struct {
     uint32_t magic;           /* Must equal PART_FLAG_MAGIC                  */
     uint8_t  active_part;     /* 0 = A is active/primary, 1 = B is active   */
-    uint8_t  reserved1;
+    uint8_t  upgrade_pending; /* 1 = upgrade in progress; do not jump APP   */
     uint8_t  boot_fail_cnt;   /* Incremented before each jump; reset on OK  */
     uint8_t  reserved2;
     uint32_t crc32;           /* CRC32 of all preceding bytes in struct      */

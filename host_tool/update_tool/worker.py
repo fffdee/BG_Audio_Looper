@@ -165,14 +165,9 @@ class UpgradeWorker(QThread):
                 if not self._firmware:
                     raise RuntimeError("未选择固件文件")
                 bl.ping()
-                try:
-                    bl.upgrade(self._firmware)
-                except Exception as exc:
-                    # START 之后整段传输可能已在设备侧完成，主机只是丢了 ACK
-                    if not is_serial_disconnect(exc):
-                        raise
-                    self._emit_log(
-                        f"升级流程中串口断开（通常已写完，属正常）: {exc}")
+                bl.upgrade(self._firmware)
+                # 仅在 upgrade() 完整成功（含 FINISH）后才允许 JUMP。
+                # 中途断线会抛异常，绝不能再跳转到半截固件。
                 if self._auto_jump:
                     try:
                         bl.jump()

@@ -93,17 +93,17 @@ static void InitADC1Mic(uint16_t SampleRate)
 	/* 对齐 audio_api.c 可工作麦克风配置：
 	 * Gain=0 → 最大模拟增益(+21dB)，Boost=4 → MIC_BOOST bypass。
 	 * 旧值 (28,1)/(15,2) 都会把麦电平压得几乎听不到。 */
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 0, 4);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  0, 4);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 32, 2);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  32, 2);
 	AudioADC_VcomConfig(1);
-	AudioADC_MicBias1Enable(TRUE);
+	AudioADC_MicBias1Enable(FALSE);
 	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void *)AudioADC2Buf, sizeof(AudioADC2Buf));
 
 	/* DigitalInit 后再设一遍模拟前端（与 audio_api.c 一致） */
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
 	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 0, 4);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  0, 4);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 32, 2);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  32, 2);
 	AudioADC_VcomConfig(1);
 	AudioADC_MicBias1Enable(TRUE);
 }

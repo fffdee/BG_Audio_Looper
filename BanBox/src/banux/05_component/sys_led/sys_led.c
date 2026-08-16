@@ -96,6 +96,14 @@ static void led_render(void)
 
 static void led_set_mode_internal(SysLedMode_t mode)
 {
+    /* 同模式重复进入时不重置计时，否则事件频繁刷新会把闪烁卡在灭灯相位 */
+    if (s_led.mode == mode &&
+        (mode == SYS_LED_MODE_ON || mode == SYS_LED_MODE_OFF ||
+         mode == SYS_LED_MODE_BLINK || mode == SYS_LED_MODE_BREATHE)) {
+        led_render();
+        return;
+    }
+
     s_led.mode = mode;
     s_led.blink_ms = 0U;
     s_led.breathe_ms = 0U;
@@ -118,9 +126,10 @@ static void led_set_mode_internal(SysLedMode_t mode)
  *   OFF/SHUTDOWN → off
  *   BOOT         → fast blink
  *   TRANSFER     → fast blink
- *   BATT_LOW     → slow blink
+ *   BATT_LOW     → blink (仅电压 SOC < 15%)
+ *   AUDIO ACTIVE → slow blink (BT 播放 / USB 音频 / ADC 已插入)
  *   USB full     → off
- *   CHARGING     → breathe
+ *   CHARGING     → solid on
  *   IDLE         → slow breathe
  *   RUNNING      → solid on
  */
@@ -128,6 +137,7 @@ static void led_apply_system_policy(void)
 {
     SysRunState_t run_state;
     uint16_t sub_state;
+    uint16_t audio_active;
 
     if (s_led.policy != SYS_LED_POLICY_SYSTEM) {
         return;
@@ -135,6 +145,9 @@ static void led_apply_system_policy(void)
 
     run_state = SysState_GetRunState();
     sub_state = SysState_GetSubState();
+    audio_active = (uint16_t)(sub_state & (SYS_SUB_BT_STREAMING |
+                                              SYS_SUB_USB_AUDIO |
+                                              SYS_SUB_ADC_SIGNAL));
 
     if (run_state == SYS_RUN_OFF || run_state == SYS_RUN_SHUTDOWN) {
         led_set_mode_internal(SYS_LED_MODE_OFF);
@@ -159,14 +172,19 @@ static void led_apply_system_policy(void)
         return;
     }
 
+    if (audio_active) {
+        led_set_mode_internal(SYS_LED_MODE_BLINK);
+        SysLed_SetBlinkPeriod(SYS_LED_AUDIO_BLINK_HALF_MS);
+        return;
+    }
+
     if ((sub_state & SYS_SUB_USB_CONNECTED) && !(sub_state & SYS_SUB_BATT_CHARGING)) {
         led_set_mode_internal(SYS_LED_MODE_OFF);
         return;
     }
 
     if (sub_state & SYS_SUB_BATT_CHARGING) {
-        led_set_mode_internal(SYS_LED_MODE_BREATHE);
-        SysLed_SetBreathePeriod(SYS_LED_BREATHE_PERIOD_MS);
+        led_set_mode_internal(SYS_LED_MODE_ON);
         return;
     }
 
@@ -287,7 +305,10 @@ void SysLed_Tick1ms(void)
 
 void SysLed_Tick50ms(void)
 {
-    /* Reserved: system policy is event-driven; no polling needed. */
+    /* 轮询刷新：避免仅依赖事件时漏掉 BT_STREAMING / USB_AUDIO */
+    if (s_led.policy == SYS_LED_POLICY_SYSTEM) {
+        led_apply_system_policy();
+    }
 }
 
 /* ---- BG_Event subscriptions (system topics) ---- */
@@ -312,6 +333,9 @@ static void on_sub_state_led(BG_EventTopic_t topic, const void *data, uint8_t si
     }
 
     if (evt->changed_bits & (SYS_SUB_USB_CONNECTED |
+                             SYS_SUB_USB_AUDIO |
+                             SYS_SUB_ADC_SIGNAL |
+                             SYS_SUB_BT_STREAMING |
                              SYS_SUB_BATT_CHARGING |
                              SYS_SUB_BATT_LOW |
                              SYS_SUB_TRANSFER |

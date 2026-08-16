@@ -386,9 +386,10 @@ uint8_t BattCalib_GetSOC(void)
 
     step = ((uint32_t)BATT_CALIB_V_TOP_MV - (uint32_t)current_mv) / BATT_CALIB_V_STEP_MV;
 
-    /* Below the lowest calibrated step — battery essentially empty */
+    /* Below the lowest calibrated step — fall back to voltage table.
+     * 旧逻辑直接 return 1 会在校准数据不全时把高电量误报成低电。 */
     if (step >= (uint32_t)g_calib.valid_steps) {
-        return 1u;
+        return battery_get_soc();
     }
     if (step >= BATT_CALIB_MAX_STEPS) {
         step = BATT_CALIB_MAX_STEPS - 1u;

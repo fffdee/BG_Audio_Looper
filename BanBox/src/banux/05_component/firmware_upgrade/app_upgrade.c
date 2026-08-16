@@ -324,7 +324,7 @@ static void handle_finish(const UpgradeChannel_t *ch, const uint8_t *pkt, uint16
             PartFlag_Default(&flags);
         }
         flags.active_part = g_upg_part;
-        flags.reserved1 = 0;
+        flags.upgrade_pending = 0;
         flags.boot_fail_cnt = 1;     /* Will be reset on successful boot */
 
         if (PartFlag_Write(&flags) != 0) {

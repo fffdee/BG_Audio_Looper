@@ -25,7 +25,7 @@ BG_Audio_Io_Manager BG_AudioManager __attribute__((section(".data"))) = {
 };
 
 uint8_t a2dp_sbcBuf[BT_SBC_DECODER_INPUT_LEN];
-uint8_t decoder_buf[1024 * 4] = {0};
+uint8_t decoder_buf[BT_DECODER_BUF_SIZE] = {0};
 uint8_t DecoderInitialized = 0;
 
 MemHandle SBC_MemHandle;

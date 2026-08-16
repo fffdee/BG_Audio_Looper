@@ -25,6 +25,11 @@ extern "C" {
 #define SYS_LED_BLINK_PERIOD_MS     500U
 #endif
 
+/* 音频活动时慢闪：半周期 (全周期约为 2x) */
+#ifndef SYS_LED_AUDIO_BLINK_HALF_MS
+#define SYS_LED_AUDIO_BLINK_HALF_MS 800U
+#endif
+
 #ifndef SYS_LED_BREATHE_PERIOD_MS
 #define SYS_LED_BREATHE_PERIOD_MS   2000U
 #endif

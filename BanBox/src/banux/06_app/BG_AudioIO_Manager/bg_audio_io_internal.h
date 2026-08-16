@@ -28,6 +28,8 @@ extern "C" {
 #define BT_SBC_LEVEL_START      (BT_SBC_LEVEL_HIGH - BT_SBC_PACKET_SIZE * 3U)
 #define SBC_DECODER_FIFO_MIN    (119U * 2U)
 #define BT_DECODED_BUFFER_SIZE  128U
+/* SBC: AudioDecoderContext + inbuf(2560) + SBCContext(3856) + BufferContext + SongInfo ≈ 7KB+ */
+#define BT_DECODER_BUF_SIZE     (8U * 1024U)
 
 extern BG_Audio_Io_Manager BG_AudioManager;
 
@@ -42,7 +44,7 @@ extern uint32_t usb_speaker_enable;
 extern uint32_t usb_mic_enable;
 
 extern uint8_t  a2dp_sbcBuf[BT_SBC_DECODER_INPUT_LEN];
-extern uint8_t  decoder_buf[1024 * 4];
+extern uint8_t  decoder_buf[BT_DECODER_BUF_SIZE];
 extern uint8_t  DecoderInitialized;
 extern MemHandle SBC_MemHandle;
 extern ResamplerContext bt_resmaper;

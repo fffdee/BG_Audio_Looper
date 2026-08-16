@@ -8,6 +8,7 @@
 #include "sys_state.h"
 #include "debug.h"
 #include "gpio.h"
+#include "product_def.h"
 
 /* 低功耗模块接口 (可选依赖) */
 #include "bg_low_power.h"
@@ -23,6 +24,7 @@
 
 /* 电池电量接口 */
 #include "battery_calib.h"
+#include "battery_drv.h"
 
 /* BT 状态接口 */
 #include "bt_manager.h"
@@ -32,6 +34,10 @@
 
 /* BLE 连接标志 (定义在 ble_app_callback.c) */
 extern uint8_t BleConnectFlag;
+
+/* USB Audio 流标志 (定义在 usb_audio_api.c) */
+extern uint32_t usb_speaker_enable;
+extern uint32_t usb_mic_enable;
 
 /* ====================== 私有类型 ====================== */
 
@@ -206,16 +212,47 @@ void SysState_Update(void)
     /* ---- 自动探测 USB 状态 ---- */
     if (OTG_PortDeviceIsLink()) {
         new_sub |= SYS_SUB_USB_CONNECTED;
+        if (usb_speaker_enable || usb_mic_enable) {
+            new_sub |= SYS_SUB_USB_AUDIO;
+        } else {
+            new_sub &= ~SYS_SUB_USB_AUDIO;
+        }
     } else {
         new_sub &= ~SYS_SUB_USB_CONNECTED;
         new_sub &= ~SYS_SUB_USB_AUDIO;
     }
 
+    /* ---- ADC 插拔检测 (与 bg_audio_detection 极性一致) ---- */
+    {
+        uint8_t adc_plugged = 0U;
+
+#if LINE1_INPUT_DETECT_EN && !defined(BANBOX_II)
+        /* A29 上拉：高 = 吉他已插入 (GUITAR_DET_IN) */
+        if (GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX29)) {
+            adc_plugged = 1U;
+        }
+#endif
+#if MIC_INPUT_DETECT_EN
+        /* A30 下拉：低 = 麦克风已插入 (MIC_DET_IN) */
+        if (!GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX30)) {
+            adc_plugged = 1U;
+        }
+#endif
+        if (adc_plugged) {
+            new_sub |= SYS_SUB_ADC_SIGNAL;
+        } else {
+            new_sub &= ~SYS_SUB_ADC_SIGNAL;
+        }
+    }
+
     /* ---- 自动探测电池状态 ---- */
     {
         uint8_t soc = BattCalib_GetSOC();
+        /* 低电闪烁必须用电压查表 SOC：校准曲线异常时 BattCalib_GetSOC()
+         * 会在实际仍有 60%+ 时返回极低值，导致误闪。 */
+        uint8_t soc_volt = battery_get_soc();
 
-        if (soc < 15U) {
+        if (soc_volt < 15U) {
             new_sub |= SYS_SUB_BATT_LOW;
         } else {
             new_sub &= ~SYS_SUB_BATT_LOW;

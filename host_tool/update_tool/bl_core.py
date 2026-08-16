@@ -232,7 +232,7 @@ class Bootloader:
                     raise
 
             try:
-                rsp_cmd, _rsp_seq, rsp_data = self._comm.send_and_recv(pkt, timeout)
+                rsp_cmd, rsp_seq, rsp_data = self._comm.send_and_recv(pkt, timeout)
             except TimeoutError:
                 last_err = "超时"
                 continue
@@ -241,6 +241,11 @@ class Bootloader:
                 if is_serial_disconnect(exc):
                     raise
                 last_err = str(exc)
+                continue
+
+            # 必须匹配序号，否则会把重试前残留的旧 ACK/NACK 当成当前命令成功
+            if rsp_seq != seq:
+                last_err = f"序号不匹配 (expect {seq}, got {rsp_seq})"
                 continue
 
             if rsp_cmd == Rsp.ACK:
@@ -351,20 +356,22 @@ class Bootloader:
 
             self._transact(Cmd.FINISH, struct.pack(">I", total), label="FINISH")
         except (TimeoutError, serial.SerialException, OSError, PermissionError) as exc:
-            # 数据已上板后，设备端 USB 常先断开；主机读 ACK 会 ClearCommError
-            if is_serial_disconnect(exc) and offset > 0:
-                self._log(
-                    f"升级完成（已传输 {offset}/{total}，串口断开属正常）: {exc}")
-                self._progress(total, total)
-                return
+            # 中途断线 ≠ 升级成功。半截固件若被误判成功再 JUMP 会砖机。
+            if is_serial_disconnect(exc):
+                raise RuntimeError(
+                    f"升级中断（已传输 {offset}/{total}，串口断开）: {exc}。"
+                    f"请勿跳转应用；重新上电应留在 Bootloader，再重试升级。"
+                ) from exc
             raise
         except RuntimeError as exc:
-            if is_serial_disconnect(exc) and offset > 0:
-                self._log(
-                    f"升级完成（已传输 {offset}/{total}，串口断开属正常）: {exc}")
-                self._progress(total, total)
-                return
+            if is_serial_disconnect(exc):
+                raise RuntimeError(
+                    f"升级中断（已传输 {offset}/{total}，串口断开）: {exc}。"
+                    f"请勿跳转应用；重新上电应留在 Bootloader，再重试升级。"
+                ) from exc
             raise
+        if offset != total:
+            raise RuntimeError(f"升级不完整: 已传输 {offset}/{total}")
         self._log("升级完成 ✓")
 
     def jump(self):

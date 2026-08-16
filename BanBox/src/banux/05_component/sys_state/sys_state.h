@@ -73,8 +73,8 @@ typedef enum {
 #define SYS_SUB_BT_STREAMING   0x0002U  /* 蓝牙 A2DP 推流中 */
 #define SYS_SUB_BLE_CONNECTED  0x0004U  /* BLE 已连接 */
 #define SYS_SUB_USB_CONNECTED  0x0008U  /* USB 已连接 (设备模式) */
-#define SYS_SUB_USB_AUDIO      0x0010U  /* USB 音频活跃 */
-#define SYS_SUB_ADC_SIGNAL     0x0020U  /* ADC 输入有信号 */
+#define SYS_SUB_USB_AUDIO      0x0010U  /* USB 音频活跃 (Speaker/Mic 流) */
+#define SYS_SUB_ADC_SIGNAL     0x0020U  /* ADC 设备已插入 (吉他/麦克风) */
 #define SYS_SUB_CDC_COMM       0x0040U  /* CDC 串口通信中 */
 #define SYS_SUB_TRANSFER       0x0080U  /* 数据传输中 (WAV/OTA) */
 #define SYS_SUB_BATT_CHARGING  0x0100U  /* 电池充电中 */

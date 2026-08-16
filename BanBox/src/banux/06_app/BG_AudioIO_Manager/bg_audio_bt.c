@@ -13,6 +13,7 @@
 #include "audio_decoder_api.h"
 #include "bt_app_interface.h"
 #include "bt_stack_service.h"
+#include "remind_sound.h"
 
 void A2dp_DecoderInit(void)
 {
@@ -53,9 +54,17 @@ void SaveDataToSbcBuffer(uint8_t *data, uint16_t dataLen)
 		DBG("insert data len err! i:%ld,d:%d\n", insertLen, dataLen);
 	}
 
-	if (!DecoderInitialized)
+	/* 提示音占用全局 audio_decoder 时不要抢初始化，结束后由 remind_cleanup 清标志 */
+	if (RemindSound_IsPlaying()) {
+		return;
+	}
+
+	/* A2DP 音乐必须用 SBC_DECODER；MSBC 仅用于 HFP 通话 */
+	if (!DecoderInitialized ||
+	    (audio_decoder != NULL && audio_decoder->decoder_type != SBC_DECODER))
 	{
-		int32_t ret = audio_decoder_initialize(decoder_buf, &SBC_MemHandle, (int32_t)IO_TYPE_MEMORY, MSBC_DECODER);
+		int32_t ret = audio_decoder_initialize(decoder_buf, &SBC_MemHandle,
+		                                      (int32_t)IO_TYPE_MEMORY, SBC_DECODER);
 		if (ret != RT_SUCCESS)
 			printf(" error audio_decoder_initialize %ld\n", (long)ret);
 		else

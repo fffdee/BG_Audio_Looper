@@ -222,6 +222,42 @@ uint8_t PartFlag_GetCaps(void)
 }
 
 /* =========================================================================
+ * Sticky upgrade-pending flag (bootloader sector — never erased by APP write)
+ * ========================================================================= */
+static int UpgradePending_IsSet(void)
+{
+    DataCacheInvalidAll();
+    __nds32__dsb();
+    return (*(volatile const uint32_t *)UPG_PENDING_ADDR == UPG_PENDING_MAGIC) ? 1 : 0;
+}
+
+static int UpgradePending_Set(void)
+{
+    uint32_t magic = UPG_PENDING_MAGIC;
+    /* Sector erase clears burn-flag too; OK — upgrade session owns this sector. */
+    SpiFlashErase(SECTOR_ERASE, BURN_FLAG_SECTOR, 0);
+    if (SpiFlashWrite(UPG_PENDING_ADDR, (uint8_t *)&magic, sizeof(magic), 0)
+        != FLASH_NONE_ERR) {
+        DBG("[UPG] FATAL: failed to set upgrade-pending flag\n");
+        return 0;
+    }
+    DataCacheInvalidAll();
+    __nds32__dsb();
+    DBG("[UPG] upgrade-pending SET @0x%08X\n", (unsigned)UPG_PENDING_ADDR);
+    return 1;
+}
+
+static int UpgradePending_Clear(void)
+{
+    /* Erase whole sector: clears both BURN_FLAG and UPG_PENDING */
+    SpiFlashErase(SECTOR_ERASE, BURN_FLAG_SECTOR, 0);
+    DataCacheInvalidAll();
+    __nds32__dsb();
+    DBG("[UPG] upgrade-pending CLEARED\n");
+    return 1;
+}
+
+/* =========================================================================
  * Boot decision
  * ========================================================================= */
 void Boot_JumpTo(uint32_t addr)
@@ -307,6 +343,15 @@ void Boot_JumpTo(uint32_t addr)
 
 void Boot_CheckAndJumpIfNeeded(void)
 {
+    /* ── Sticky upgrade-pending (interrupted / failed USB upgrade) ──
+     * Must be checked BEFORE burn-flag and BEFORE any APP jump.
+     * Do NOT clear here — only a successful CMD_FINISH clears it. */
+    if (UpgradePending_IsSet()) {
+        DBG("[BOOT] upgrade-pending detected — staying in bootloader "
+            "(incomplete firmware write)\n");
+        return;
+    }
+
     /* ── Burn flag check (Flash, one-time) ──
      * APP writes BURN_FLAG_MAGIC to Flash before rebooting to request
      * bootloader stay.  Must check and clear BEFORE any other boot logic.
@@ -505,18 +550,9 @@ void Boot_CheckAndJumpIfNeeded(void)
             (unsigned)PART_A_BASE, (unsigned)*first_word,
             (unsigned)*fw_magic);
 
-        /* Accept firmware if BGPF magic present at offset 0xA4 */
-        int valid = (*fw_magic == FW_VALID_MAGIC);
-
-        /* Fallback: accept if first word looks like a valid instruction
-         * (non-empty AND not partition flag magic) */
-        if (!valid && *first_word != 0xFFFFFFFFu &&
-            *first_word != PART_FLAG_MAGIC) {
-            valid = 1;
-            DBG("[BOOT] No BGPF magic, but first word looks valid → accept\n");
-        }
-
-        if (!valid) {
+        /* Require BGPF magic. Incomplete upgrades are blocked by
+         * upgrade-pending sticky flag checked earlier. */
+        if (*fw_magic != FW_VALID_MAGIC) {
             DBG("[BOOT] No valid firmware at Part A — "
                 "staying in bootloader for upgrade\n");
             return;  /* Fall through to USB CDC upgrade task */
@@ -900,6 +936,10 @@ static void upgrade_run(void)
     case CMD_ERASE:
         DBG("[UPG] ERASE base=0x%08X sz=0x%X\n",
             (unsigned)g_session.fw_base, (unsigned)g_session.fw_max);
+        /* Mark incomplete until a later successful FINISH */
+        if (!UpgradePending_Set()) {
+            SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
+        }
         if (!flash_erase(g_session.fw_base, g_session.fw_max)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
@@ -920,6 +960,11 @@ static void upgrade_run(void)
             (unsigned)(g_session.fw_max / 1024));
         if (g_session.total_size == 0 || g_session.total_size > g_session.fw_max) {
             SEND_NACK(pkt->seq, UPG_ERR_SIZE); break;
+        }
+        /* CRITICAL: set sticky pending BEFORE erase/write. If USB dies mid-way,
+         * boot must stay in BL instead of jumping half-written firmware. */
+        if (!UpgradePending_Set()) {
+            SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
         if (!flash_erase(g_session.fw_base, g_session.total_size)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
@@ -946,7 +991,14 @@ static void upgrade_run(void)
         if (!flash_write(g_session.fw_base + offset, pkt->data + 4, dlen)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
-        g_session.written += dlen;
+        /* High-water mark: retries of the same offset must NOT inflate written.
+         * Otherwise FINISH sees written != total → pending stuck → forever BL. */
+        {
+            uint32_t end = offset + (uint32_t)dlen;
+            if (end > g_session.written) {
+                g_session.written = end;
+            }
+        }
         DBG("[UPG] DATA off=0x%X len=%u  %u/%u\n",
             (unsigned)offset, dlen,
             (unsigned)g_session.written, (unsigned)g_session.total_size);
@@ -960,11 +1012,15 @@ static void upgrade_run(void)
         if (g_session.state != UPG_WRITING) {
             SEND_NACK(pkt->seq, UPG_ERR_STATE); break;
         }
+        if (g_session.written < g_session.total_size) {
+            DBG("[UPG] FINISH size mismatch written=%u total=%u\n",
+                (unsigned)g_session.written, (unsigned)g_session.total_size);
+            SEND_NACK(pkt->seq, UPG_ERR_SIZE); break;
+        }
         DBG("[UPG] FINISH: verifying firmware write to Part %c @ 0x%08X\n",
             g_session.target_part ? 'B' : 'A', (unsigned)g_session.fw_base);
 
-        /* Verify firmware was written correctly.
-         * Lenient check: accept BGPF magic OR valid first word. */
+        /* Strict: require BGPF magic — first-word fallback alone is unsafe */
         DataCacheInvalidAll();
         __nds32__dsb();
         {
@@ -972,9 +1028,9 @@ static void upgrade_run(void)
                 (volatile const uint32_t *)(g_session.fw_base + FW_VALID_MAGIC_OFFSET);
             volatile const uint32_t *fw_first =
                 (volatile const uint32_t *)g_session.fw_base;
-            int fw_ok = (*fw_magic_check == FW_VALID_MAGIC) ||
-                        (*fw_first != 0xFFFFFFFFu &&
-                         *fw_first != PART_FLAG_MAGIC);
+            int fw_ok = (*fw_magic_check == FW_VALID_MAGIC) &&
+                        (*fw_first != 0xFFFFFFFFu) &&
+                        (*fw_first != PART_FLAG_MAGIC);
             DBG("[UPG] Verify: @0x%08X=0x%08X magic@0xA4=0x%08X → %s\n",
                 (unsigned)g_session.fw_base, (unsigned)*fw_first,
                 (unsigned)*fw_magic_check, fw_ok ? "OK" : "FAIL");
@@ -987,8 +1043,9 @@ static void upgrade_run(void)
         DBG("[UPG] FINISH: updating partition flags → active=%d\n",
             (int)g_session.target_part);
         if (!PartFlag_Read(&flag)) PartFlag_Default(&flag);
-        flag.active_part     = g_session.target_part;  /* boot from written partition */
-        flag.boot_fail_cnt   = 0u;
+        flag.active_part      = g_session.target_part;
+        flag.upgrade_pending  = 0u;
+        flag.boot_fail_cnt    = 0u;
         if (!PartFlag_Write(&flag)) {
             SEND_NACK(pkt->seq, UPG_ERR_FLASH); break;
         }
@@ -1010,10 +1067,14 @@ static void upgrade_run(void)
         if (g_session.state != UPG_WRITING) {
             SEND_NACK(pkt->seq, UPG_ERR_STATE); break;
         }
+        if (g_session.written < g_session.total_size) {
+            DBG("[UPG] FINISH size mismatch written=%u total=%u\n",
+                (unsigned)g_session.written, (unsigned)g_session.total_size);
+            SEND_NACK(pkt->seq, UPG_ERR_SIZE); break;
+        }
         DBG("[UPG] FINISH: verifying firmware write to Part A @ 0x%08X\n",
             (unsigned)g_session.fw_base);
 
-        /* Verify firmware was written correctly */
         DataCacheInvalidAll();
         __nds32__dsb();
         {
@@ -1021,9 +1082,9 @@ static void upgrade_run(void)
                 (volatile const uint32_t *)(g_session.fw_base + FW_VALID_MAGIC_OFFSET);
             volatile const uint32_t *fw_first =
                 (volatile const uint32_t *)g_session.fw_base;
-            int fw_ok = (*fw_magic_check == FW_VALID_MAGIC) ||
-                        (*fw_first != 0xFFFFFFFFu &&
-                         *fw_first != PART_FLAG_MAGIC);
+            int fw_ok = (*fw_magic_check == FW_VALID_MAGIC) &&
+                        (*fw_first != 0xFFFFFFFFu) &&
+                        (*fw_first != PART_FLAG_MAGIC);
             DBG("[UPG] Verify: @0x%08X=0x%08X magic@0xA4=0x%08X → %s\n",
                 (unsigned)g_session.fw_base, (unsigned)*fw_first,
                 (unsigned)*fw_magic_check, fw_ok ? "OK" : "FAIL");
@@ -1034,6 +1095,8 @@ static void upgrade_run(void)
         }
         DBG("[UPG] FINISH written=%u\n", (unsigned)g_session.written);
 #endif
+        /* Clear sticky pending only after full successful verify */
+        UpgradePending_Clear();
         g_session.state = UPG_DONE;
         SEND_ACK(pkt->seq);
         break;
@@ -1043,6 +1106,32 @@ static void upgrade_run(void)
     case CMD_JUMP: {
         uint32_t jump_addr;
         DBG("[UPG] JUMP\n");
+
+        /* Recovery: if pending stuck after a transfer that actually completed
+         * (e.g. FINISH ACK lost / written accounting glitch), allow JUMP when
+         * Part A has a valid BGPF image, and clear pending. */
+        if (UpgradePending_IsSet()) {
+            volatile const uint32_t *fw_magic =
+                (volatile const uint32_t *)(PART_A_BASE + FW_VALID_MAGIC_OFFSET);
+            volatile const uint32_t *fw_first =
+                (volatile const uint32_t *)PART_A_BASE;
+            DataCacheInvalidAll();
+            __nds32__dsb();
+            if (*fw_magic == FW_VALID_MAGIC &&
+                *fw_first != 0xFFFFFFFFu &&
+                *fw_first != PART_FLAG_MAGIC) {
+                DBG("[UPG] JUMP: pending set but FW valid — clearing pending\n");
+                UpgradePending_Clear();
+                g_session.state = UPG_DONE;
+            } else {
+                DBG("[UPG] JUMP refused: upgrade-pending, FW not valid\n");
+                SEND_NACK(pkt->seq, UPG_ERR_STATE); break;
+            }
+        }
+        if (g_session.state != UPG_DONE && g_session.state != UPG_IDLE) {
+            DBG("[UPG] JUMP refused: session state=%d\n", (int)g_session.state);
+            SEND_NACK(pkt->seq, UPG_ERR_STATE); break;
+        }
         SEND_ACK(pkt->seq);
 #if (BOOT_CURRENT_MODE == BOOT_MODE_DUAL_AB)
         {

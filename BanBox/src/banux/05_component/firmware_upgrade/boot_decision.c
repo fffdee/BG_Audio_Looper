@@ -132,7 +132,7 @@ void PartFlag_Default(PartFlag_t *flag)
 {
     memset(flag, 0, sizeof(PartFlag_t));
     flag->active_part     = 0;   /* boot Partition A */
-    flag->reserved1       = 0;
+    flag->upgrade_pending = 0;
     flag->boot_fail_cnt   = 0;
     flag->reserved2       = 0;
     part_flag_seal(flag);

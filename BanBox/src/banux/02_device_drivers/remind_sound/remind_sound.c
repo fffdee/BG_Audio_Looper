@@ -29,6 +29,9 @@
 #include "product_def.h"
 #include "rtos_api.h"  /* osPortMalloc / osPortFree */
 
+/* A2DP 与提示音共用全局 audio_decoder；提示音结束后需允许 SBC 重新初始化 */
+extern uint8_t DecoderInitialized;
+
 /* ---- 音频数据头文件（mp3_to_c_array.py 生成）---- */
 #include "g_remind_power_on.h"
 
@@ -164,6 +167,8 @@ static void remind_cleanup(void)
     s_pcm_read_pos = 0;
     s_error_cnt = 0;
     s_fade_pos = 0;
+    /* 提示音占用全局 audio_decoder；结束后让 A2DP 可重新初始化 SBC */
+    DecoderInitialized = 0;
     DBG("[Remind] Playback finished, resources released\n");
 }
 

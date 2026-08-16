@@ -77,6 +77,11 @@ uint16_t BT_GetAvailableData(EffectNode_t *node)
 	if (GetA2dpState() != BT_A2DP_STATE_STREAMING) {
 		return 0;
 	}
+
+	/* 提示音占用全局解码器时，暂停 A2DP 解码，仅缓冲 SBC */
+	if (RemindSound_IsPlaying()) {
+		return 0;
+	}
 	
 	/* 检查SBC缓冲区是否有足够数据（与老方案一致） */
 	if (mv_msize(&SBC_MemHandle) <= SBC_DECODER_FIFO_MIN) {
