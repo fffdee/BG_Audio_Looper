@@ -62,6 +62,7 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
     EdgeConfig_t edges[MAX_GRAPH_EDGES];
     int i, node_idx;
     uint8_t node_id;
+    uint8_t source_port_count[MAX_GRAPH_NODES];
 
     if (!ac || graph_idx < 0 || graph_idx >= ac->graph_count) {
         DBG("[ChainGraph] Invalid graph index: %d\n", graph_idx);
@@ -252,6 +253,8 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
         }
     }
 
+    memset(source_port_count, 0, sizeof(source_port_count));
+
     // Copy edges (connections)
     for (i = 0; i < chain_graph->edge_count && i < MAX_GRAPH_EDGES; i++) {
         GraphEdge_t *chain_edge = &chain_graph->edges[i];
@@ -260,7 +263,24 @@ int ChainGraph_ApplyToEffectGraph(int graph_idx)
         edge_config->src_node_id = chain_edge->from_node;
         edge_config->dst_node_id = chain_edge->to_node;
         edge_config->src_port = 0;  // Default port
-        edge_config->dst_port = 0;    // Default port
+        edge_config->dst_port = 0;  // Input order is preserved by edge order
+
+        /* Older saved graphs do not store ports. Rebuild ADC L/R source ports
+         * for the default split-channel EQ topology so right-channel inputs
+         * are not silently read from the left channel after auto-apply. */
+        if (chain_edge->from_node < MAX_GRAPH_NODES &&
+            chain_edge->to_node < MAX_GRAPH_NODES) {
+            GraphNode_t *src_chain_node = &ac->node_pool[chain_edge->from_node];
+            GraphNode_t *dst_chain_node = &ac->node_pool[chain_edge->to_node];
+            if (src_chain_node->node_type == NODE_TYPE_SOURCE &&
+                (src_chain_node->subtype == SOURCE_TYPE_GUITAR ||
+                 src_chain_node->subtype == SOURCE_TYPE_MIC) &&
+                dst_chain_node->node_type == NODE_TYPE_EFFECT &&
+                dst_chain_node->subtype == EFFECT_TYPE_EQ) {
+                edge_config->src_port = source_port_count[chain_edge->from_node] & 0x01U;
+                source_port_count[chain_edge->from_node]++;
+            }
+        }
     }
 
     // Apply to running EffectGraph

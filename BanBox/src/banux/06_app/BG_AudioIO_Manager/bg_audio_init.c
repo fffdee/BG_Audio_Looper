@@ -49,6 +49,11 @@
 #define DAC0_FIFO_LEN (sizeof(DAC0_FIFO))
 #define DAC1_FIFO_LEN (sizeof(DAC1_FIFO))
 
+/* ADC1 is used by the mic/line3 front-end. Keep the analog gain below
+ * unity so the following mixer/effects have headroom before clipping. */
+#define ADC1_MIC_PGA_GAIN       20  /* mic_db_table: about -4.46 dB */
+#define ADC1_MIC_BOOST_BYPASS   4
+
 static void InitUSBDevice(void)
 {
 	// 使用AUDIO_MIC_CDC模式：音频+麦克风+CDC串口复合设备
@@ -65,7 +70,7 @@ static void InitDAC(uint16_t SampleRate)
 	AudioDAC_DoutModeSet(DAC0, MODE2, WIDTH_16_BIT);
 	AudioDAC_DoutModeSet(DAC1, MODE2, WIDTH_16_BIT);
 	AudioDAC_VolSet(DAC0, 0x3FFF, 0x3FFF);
-	AudioDAC_VolSet(DAC1, 0x3FFF, 0);
+	AudioDAC_VolSet(DAC1, 0x3FFF, 0x3FFF);
 }
 
 // 初始化ADC0（LineIn5）
@@ -86,28 +91,28 @@ static void InitADC0LineIn(uint16_t SampleRate)
 }
 
 // 初始化ADC1（麦克风）
+static void ConfigADC1MicFrontend(void)
+{
+	AudioADC_VcomConfig(1);
+	AudioADC_MicBias1Enable(TRUE);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN_NONE);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN_NONE);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
+	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2,
+	                     ADC1_MIC_PGA_GAIN, ADC1_MIC_BOOST_BYPASS);
+	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1,
+	                     ADC1_MIC_PGA_GAIN, ADC1_MIC_BOOST_BYPASS);
+}
+
 static void InitADC1Mic(uint16_t SampleRate)
 {
 	AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
-	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
-	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
-
-	/* 对齐 audio_api.c 可工作麦克风配置：
-	 * Gain=0 → 最大模拟增益(+21dB)，Boost=4 → MIC_BOOST bypass。
-	 * 旧值 (28,1)/(15,2) 都会把麦电平压得几乎听不到。 */
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 16,4);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  16, 4);
-	AudioADC_VcomConfig(0);
-	AudioADC_MicBias1Enable(FALSE);
+	ConfigADC1MicFrontend();
 	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void *)AudioADC2Buf, sizeof(AudioADC2Buf));
 
-	/* DigitalInit 后再设一遍模拟前端（与 audio_api.c 一致） */
-	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
-	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 16, 4);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  16, 4);
-	AudioADC_VcomConfig(0);
-	AudioADC_MicBias1Enable(FALSE);
+	/* DigitalInit touches ADC registers; restore the analog front-end. */
+	ConfigADC1MicFrontend();
 }
 
 
@@ -293,16 +298,8 @@ void BG_audio_Init(uint16_t SampleRate)
 	vTaskDelay((300 + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS);
 	AudioADC_SoftMute(ADC0_MODULE, FALSE, FALSE);
 	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
-	/* SoftMute 后再恢复麦克风模拟前端，避免 Bias/PGA 被冲掉。
-	 * CRITICAL: Gain 必须与 InitADC1Mic 一致（16 → 约 +0.42dB）。
-	 * 旧值 0 是最大模拟增益 +21.14dB，把驻极体麦克风信号放大 ~11 倍，
-	 * ADC 输入削波饱和 → 音量稍大就"炸麦"，输出全是削波噪声。 */
-	AudioADC_PGASel(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2);
-	AudioADC_PGASel(ADC1_MODULE, CHANNEL_LEFT, LINEIN3_LEFT_OR_MIC1);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_RIGHT, LINEIN3_RIGHT_OR_MIC2, 16, 4);
-	AudioADC_PGAGainSet(ADC1_MODULE, CHANNEL_LEFT,  LINEIN3_LEFT_OR_MIC1,  16, 4);
-	AudioADC_VcomConfig(1);
-	AudioADC_MicBias1Enable(TRUE);
+	/* SoftMute 后再恢复麦克风模拟前端，避免 Bias/PGA 被冲掉。 */
+	ConfigADC1MicFrontend();
 	/* DAC音量将在Audio_loop()的SetVolume()中恢复，无需手动解除 */
 
 	InitAudioEffects(SampleRate);

@@ -109,7 +109,7 @@ void LowPower_FeedActivity(uint8_t mask)
 void LowPower_CheckADCSignal(const uint32_t *buf, uint16_t len)
 {
     uint16_t i;
-    int16_t l, r;
+    int32_t l, r;
 
     if (!buf || len == 0) {
         return;
@@ -118,8 +118,8 @@ void LowPower_CheckADCSignal(const uint32_t *buf, uint16_t len)
     for (i = 0; i < len; i += 4) {
         l = (int16_t)(buf[i] & 0xFFFFU);
         r = (int16_t)((buf[i] >> 16) & 0xFFFFU);
-        if (l < 0) l = (int16_t)-l;
-        if (r < 0) r = (int16_t)-r;
+        if (l < 0) l = -l;
+        if (r < 0) r = -r;
         if (l > LP_ADC_THRESHOLD || r > LP_ADC_THRESHOLD) {
             g_frame_activity |= LP_ACT_ADC_SIGNAL;
             return;
@@ -143,10 +143,18 @@ void LowPower_Tick(void)
 
         if (elapsed >= LP_ADC_PEEK_INTERVAL_MS) {
             s_last_peek_tick = now;
+
             avail = AudioADC_DataLenGet(ADC0_MODULE);
             if (avail > LP_ADC_PEEK_SIZE) avail = LP_ADC_PEEK_SIZE;
             if (avail > 0) {
                 AudioADC_DataGet(ADC0_MODULE, s_peek_buf, avail);
+                LowPower_CheckADCSignal(s_peek_buf, avail);
+            }
+
+            avail = AudioADC_DataLenGet(ADC1_MODULE);
+            if (avail > LP_ADC_PEEK_SIZE) avail = LP_ADC_PEEK_SIZE;
+            if (avail > 0) {
+                AudioADC_DataGet(ADC1_MODULE, s_peek_buf, avail);
                 LowPower_CheckADCSignal(s_peek_buf, avail);
             }
         }

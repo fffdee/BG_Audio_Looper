@@ -46,7 +46,7 @@ void SetVolume(void)
 	DC_Data = 0x3FFF;
 #endif
 	AudioDAC_VolSet(DAC0, DC_Data, DC_Data);
-	AudioDAC_VolSet(DAC1, DC_Data, 0);
+	AudioDAC_VolSet(DAC1, DC_Data, DC_Data);
 
 	/* 计算BT/USB增益映射 */
 	wheel_pct = DC_Data;  /* 0~16383 */
@@ -234,10 +234,14 @@ void Audio_loop(void)
 		OTG_DeviceCDC_Task();
 		USB_HotplugCheck();
 
-		if (usb_speaker_enable || usb_mic_enable) {
+		/* Wake only for actual playback data. Merely enumerating USB audio or
+		 * connecting Bluetooth must not keep the system permanently awake. */
+		if (usb_speaker_enable && UsbAudioSpeakerDataLenGet() > 0) {
 			lp_activity |= LP_ACT_USB_AUDIO;
 		}
-		if (GetA2dpState() == BT_A2DP_STATE_STREAMING) {
+		if (GetA2dpState() == BT_A2DP_STATE_STREAMING &&
+		    (bt_has_decoded_data ||
+		     mv_msize(&SBC_MemHandle) > SBC_DECODER_FIFO_MIN)) {
 			lp_activity |= LP_ACT_BT_AUDIO;
 		}
 		if (OTG_DeviceCDC_GetRxCount() > 0) {

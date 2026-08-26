@@ -463,14 +463,11 @@ void hardware_check()
 {
 	time_count++;
 	if(time_count>=100){
-		if(ADC_SingleModeDataGet(ADC_CHANNEL_POWERKEY)>4000){
-			 AudioSetting_SetGuitar2VolumePercent(AudioSetting_GetGuitar2VolumePercent()) ;
-		}else{
-			 AudioSetting_SetGuitar2VolumePercent(0) ;
-		}
+		/* Do not gate ADC0 right (Line In R/Guitar2) with POWERKEY ADC here.
+		 * On BanBox this check can read low during normal operation and repeatedly
+		 * mute the right input channel. Plug detection is handled elsewhere. */
 		time_count = 0;
 	}
-
 	/* Battery calibration voltage tick (每次 hardware_check 调用约 50ms) */
 	BattCalib_Tick();
 
