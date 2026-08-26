@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * BG_Storage - 音源存储抽象层实现
  */
@@ -297,3 +300,5 @@ BG_Storage_t BG_Storage = {
  * ============================================ */
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

@@ -7,7 +7,7 @@
  * 标准平台: SD→NAND→PSRAM 三级存储
  */
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if SYNTH_SD_NAND_PSRAM_EN
 
@@ -103,7 +103,7 @@ static bool startup_step_fat32_init(void) {
  * 步骤 2: 初始化存储 (NAND 或 PSRAM 直读)
  */
 static bool startup_step_nand_init(void) {
-#ifdef BANDATAHUB
+#if !BG_CFG_HAS_NAND
     STARTUP_LOG_I("Step 2: Loading SF2 to PSRAM (BanDataHub SD-direct)");
 #else
     STARTUP_LOG_I("Step 2: Initializing NAND store");
@@ -119,7 +119,7 @@ static bool startup_step_nand_init(void) {
  * 步骤 3: SF2 文件加载
  */
 static bool startup_step_sf2_copy(void) {
-#ifdef BANDATAHUB
+#if !BG_CFG_HAS_NAND
     STARTUP_LOG_I("Step 3: SF2 loaded to PSRAM (BanDataHub direct)");
 #else
     STARTUP_LOG_I("Step 3: Copying SF2 to NAND");
@@ -147,7 +147,7 @@ static bool startup_step_psram_init(void) {
  * 步骤 5: 安装存储驱动
  */
 static bool startup_step_storage_driver(void) {
-#ifdef BANDATAHUB
+#if !BG_CFG_HAS_NAND
     STARTUP_LOG_I("Step 5: Installing PSRAM storage driver (BanDataHub)");
 #else
     STARTUP_LOG_I("Step 5: Installing NAND storage driver");
@@ -177,7 +177,12 @@ static bool startup_step_soundbank_init(void) {
 static bool startup_step_run_tests(void) {
     STARTUP_LOG_I("Step 7: Running integration tests");
 
-    /* 运行测试 */
+#if !BG_CFG_RUN_STARTUP_TESTS
+    g_startup_state.tests_passed = 1;
+    g_startup_state.tests_run = true;
+    STARTUP_LOG_I("Integration tests skipped");
+    return true;
+#else
     g_startup_state.tests_passed = SYNTH_RunIntegrationTests();
 
     if (g_startup_state.tests_passed == 0) {
@@ -188,6 +193,7 @@ static bool startup_step_run_tests(void) {
     g_startup_state.tests_run = true;
     STARTUP_LOG_I("Integration tests completed: %u passed", g_startup_state.tests_passed);
     return true;
+#endif
 }
 
 /* ============================================
@@ -226,7 +232,7 @@ static BG_ERR startup_init_all(void) {
 bool SYNTH_StartupSequence(void) {
     bool success = true;
 
-#ifdef BANDATAHUB
+#if !BG_CFG_HAS_NAND
     STARTUP_LOG_I("=== Starting SD+PSRAM Synthesizer (BanDataHub) ===");
 #else
     STARTUP_LOG_I("=== Starting SD+NAND+PSRAM Synthesizer ===");

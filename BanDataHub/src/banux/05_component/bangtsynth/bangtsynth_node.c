@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file    bangtsynth_node.c
  * @brief   BanGTsynth 合成�?Effect Graph 源节点桥接层实现
@@ -24,10 +27,10 @@
 #ifdef BANGTSYNTH_EN
 
 #include "bangtsynth_node.h"
-#include "drum_machine.h"
+#include "03_app/drum_machine/drum_machine.h"
 #include "midi_controller.h"
 #include "midi_soundbank_bridge.h"
-#include "soundbank_manager.h"
+#include "02_core/soundbank/soundbank_manager.h"
 #include "bg_config.h"
 #include "debug.h"
 #include "FreeRTOS.h"
@@ -718,3 +721,5 @@ void BanGTsynth_SetDirectMode(uint8_t enable)
 }
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

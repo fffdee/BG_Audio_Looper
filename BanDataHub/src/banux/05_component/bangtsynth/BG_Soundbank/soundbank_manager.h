@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "err_handle.h"
-#include "hardware_interfance.h"  /* BG_ReadData (BGS_Data) */
+#include "hardware_interfance.h"  /* → bgs_types.h: BG_ReadData / BGS_Data */
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,12 +25,6 @@ typedef enum {
     SOUNDBANK_FORMAT_BG,            /* BGS 自有格式 */
     SOUNDBANK_FORMAT_SF2            /* SoundFont 2 格式 */
 } SoundBank_Format;
-
-/* ============================================
- * BGS 数据类型别名
- * ============================================ */
-/** BGS_Data 是 BG_ReadData 的类型别名 (定义在 hardware_interfance.h) */
-typedef BG_ReadData BGS_Data;
 
 /* ============================================
  * 下载进度回调
@@ -108,6 +102,27 @@ typedef struct {
      * @param program  MIDI 程序号
      */
     void (*AllNoteOff)(uint8_t program);
+
+    /**
+     * 设置通道弯音值 (Pitch Bend)
+     * @param channel  MIDI 通道 (0-15)
+     * @param value    14-bit 弯音值 (-8192..+8191)
+     */
+    void (*PitchBend)(uint8_t channel, int16_t value);
+
+    /**
+     * 处理通道 CC 消息
+     * @param channel  MIDI 通道 (0-15)
+     * @param cc_num   CC 编号
+     * @param value    CC 值 (0-127)
+     */
+    void (*CC)(uint8_t channel, uint8_t cc_num, uint8_t value);
+
+    /**
+     * 设置当前 MIDI 通道 (在 NoteOn 之前调用)
+     * @param channel  MIDI 通道 (0-15)
+     */
+    void (*SetChannel)(uint8_t channel);
 
     /**
      * 下载音源数据到存储设备

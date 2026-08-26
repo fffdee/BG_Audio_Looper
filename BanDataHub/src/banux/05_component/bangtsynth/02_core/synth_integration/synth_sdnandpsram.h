@@ -19,7 +19,7 @@
 #ifndef __SYNTH_SDNANDPSRAM_H__
 #define __SYNTH_SDNANDPSRAM_H__
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if SYNTH_SD_NAND_PSRAM_EN
 
@@ -194,6 +194,12 @@ void SYNTH_LoadProgram(uint8_t program);
  * 不依赖 RTOS 任务或 vTaskDelay，仅依赖 bg_get_tick_ms()。
  */
 void SYNTH_LoadTick(void);
+
+/**
+ * 执行完整的合成器启动序列 (实现见 synth_startup.c)
+ * @return true=启动成功, false=启动失败
+ */
+bool SYNTH_StartupSequence(void);
 
 #ifdef __cplusplus
 }

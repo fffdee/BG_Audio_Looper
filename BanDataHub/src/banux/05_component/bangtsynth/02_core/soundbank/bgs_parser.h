@@ -10,24 +10,11 @@
 
 #include <stdint.h>
 #include "err_handle.h"
-#include "hardware_interfance.h"  /* BG_ReadData, Read_Note_Info, BG_Reader 等 */
+#include "bgs_types.h"  /* BG_ReadData, Read_Note_Info, BG_Reader, BGS_Data */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* ============================================
- * BGS 数据类型
- * ============================================ */
-/** BGS_Data 类型别名 (也在 soundbank_manager.h 中定义) */
-#ifndef __SOUNDBANK_MANAGER_H__
-typedef BG_ReadData BGS_Data;
-#endif
-
-/* ============================================
- * BGS 全局读取器实例 (hardware_interfance.h 中 extern)
- * ============================================ */
-/* extern BG_Reader BG_reader; — 已在 hardware_interfance.h 中声明 */
 
 /* ============================================
  * BGS 解析器接口函数

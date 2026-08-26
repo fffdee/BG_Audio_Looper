@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "err_handle.h"
-#include "hardware_interfance.h"  /* BG_ReadData (BGS_Data) */
+#include "bgs_types.h"  /* BG_ReadData / BGS_Data */
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,12 +26,6 @@ typedef enum {
     SOUNDBANK_FORMAT_SF2,           /* SoundFont 2 格式 */
     SOUNDBANK_FORMAT_SAMPLER        /* 采样器格式 (WAV/PCM) */
 } SoundBank_Format;
-
-/* ============================================
- * BGS 数据类型别名
- * ============================================ */
-/** BGS_Data 是 BG_ReadData 的类型别名 (定义在 hardware_interfance.h) */
-typedef BG_ReadData BGS_Data;
 
 /* ============================================
  * 下载进度回调

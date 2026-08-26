@@ -6,7 +6,7 @@
  * ─────────────────────────────────────
  * Bootloader runs from 0x000000 (256KB). On boot it checks partition
  * flags and jumps to the active partition (A or B).
- * The BanBox APP is linked to start at 0x040000 (Partition A).
+ * The BanDataHub/BanBox APP is linked to start at 0x040000 (Partition A).
  * When Partition B is active, hardware address remap maps
  * [0x040000, 0x240000) → [0x240000, 0x440000) transparently.
  *

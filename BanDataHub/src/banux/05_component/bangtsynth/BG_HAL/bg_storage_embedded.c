@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file bg_storage_embedded.c
  * @brief BG_Storage 驱动 — 内嵌 C 数组音源 (只读)
@@ -128,3 +131,5 @@ const BG_Storage_Driver_t bg_storage_driver_embedded = {
 };
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

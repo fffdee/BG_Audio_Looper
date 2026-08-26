@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 #include "product_def.h"
 
 #ifdef BANGTSYNTH_EN
@@ -273,3 +276,5 @@ const BG_Storage_Driver_t bg_storage_driver_linux = {
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

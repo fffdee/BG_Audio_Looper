@@ -56,6 +56,10 @@ typedef enum {
     BG_LOG_TAG_EFFECT_DRC,      // DRC 效果
     BG_LOG_TAG_EFFECT_EQ,       // EQ 效果
     BG_LOG_TAG_PLAY,            // 播放模块
+    BG_LOG_TAG_FAT32,           // FAT32 文件系统
+    BG_LOG_TAG_NAND,            // NAND Flash 存储
+    BG_LOG_TAG_PSRAM,           // PSRAM 缓冲区
+    BG_LOG_TAG_SYNTH,           // 合成器集成模块
     BG_LOG_TAG_MAX
 } bg_log_tag_t;
 

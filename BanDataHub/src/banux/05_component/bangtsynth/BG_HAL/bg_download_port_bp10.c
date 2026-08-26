@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file bg_download_port_bp10.c
  * @brief BG_Download_Port — BP10 平台实现 (数据包协议)
@@ -357,3 +360,5 @@ static void dl_send_response(uint8_t rsp, uint16_t seq, uint8_t status)
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_BP10 */
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

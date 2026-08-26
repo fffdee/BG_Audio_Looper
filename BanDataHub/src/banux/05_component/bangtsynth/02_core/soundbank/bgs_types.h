@@ -140,6 +140,9 @@ typedef struct {
     BG_ProgramData *ProgramData;
 } BG_ReadData;
 
+/** BGS_Data 是 BG_ReadData 的别名 */
+typedef BG_ReadData BGS_Data;
+
 /** BGS 格式读取器接口 (回调式) */
 typedef struct {
     BG_ERR  (*Init)(void);

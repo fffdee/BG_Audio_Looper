@@ -9,14 +9,14 @@
  *   - 简易包络控制
  */
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if SYNTH_SD_NAND_PSRAM_EN || BANGTSYNTH_EN
 
 #include "sampler.h"
-#include "psram_heap.h"
+#include "../fat32/psram_heap.h"
 #if FAT32_EN
-#include "fat32_reader.h"
+#include "../fat32/fat32_reader.h"
 #endif
 #include "bg_log.h"
 #include <string.h>

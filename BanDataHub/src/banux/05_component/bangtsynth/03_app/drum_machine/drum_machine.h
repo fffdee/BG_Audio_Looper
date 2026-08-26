@@ -33,7 +33,7 @@
 #ifndef __DRUM_MACHINE_H__
 #define __DRUM_MACHINE_H__
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 

@@ -66,6 +66,13 @@ typedef struct
     uint8_t ms_sample;
     uint16_t sample_rate;
     BG_Channel_Info BG_channel_info[16];
+
+    /* MIDI CC / Pitch Bend 状态 (per-channel) */
+    int16_t  pitch_bend[16];      /* 14-bit 弯音值, -8192..+8191, 中心=0 */
+    uint8_t  sustain_pedal[16];   /* CC64: 0=off, 1=on (value>=64) */
+    uint8_t  expression[16];      /* CC11: 表情控制 (0-127, 默认127) */
+    uint8_t  modulation[16];      /* CC1:  调制轮 (0-127, 默认0) */
+    uint8_t  bend_range;          /* 弯音范围 (半音数, 默认2) */
     
 }BG_MIDI_Data;
 

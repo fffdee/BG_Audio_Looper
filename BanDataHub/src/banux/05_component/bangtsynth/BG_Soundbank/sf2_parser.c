@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 #include "product_def.h"
 
 #ifdef BANGTSYNTH_EN
@@ -1224,3 +1227,5 @@ static SF2_Engine_Type detect_engine_type(const char *engine_name)
 }
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

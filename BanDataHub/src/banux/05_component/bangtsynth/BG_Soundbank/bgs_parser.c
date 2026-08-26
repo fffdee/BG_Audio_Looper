@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 #include "product_def.h"
 
 #ifdef BANGTSYNTH_EN
@@ -496,3 +499,5 @@ void bgs_all_note_off(uint8_t program)
 }
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

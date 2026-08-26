@@ -234,4 +234,4 @@ SECTIONS
 	.debug_typenames	0 : { *(.debug_typenames) }
 	.debug_varnames	0 : { *(.debug_varnames) }
 }
-ASSERT((DEFINED (_RELAX_END_) ? EILM_SIZE : 0x0)<= 0x001C0000, "EILM OVERFLOW");
+ASSERT((DEFINED (_RELAX_END_) ? EILM_SIZE : 0x0)<= 0x001BF000, "EILM OVERFLOW");

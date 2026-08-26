@@ -22,6 +22,8 @@
 #include "otg_device_stor.h"
 #include "otg_detect.h"
 #include "otg_device_cdc.h"
+#include "usb_identity.h"
+#include "app_config.h"
 #include "otg_device_audio.h"
 #include "hal_sdio.h"
 #include "irqn.h"
@@ -33,6 +35,15 @@
 #include "rtos_api.h"
 #include "FreeRTOS.h"
 #include "shell_cmd_sysmon.h"
+
+#if BANGTSYNTH_EN
+#include "bg_synth.h"
+#include "sf2_browser.h"
+#endif
+
+#ifndef BANDATAHUB_SYNTH_ONLY
+#define BANDATAHUB_SYNTH_ONLY 0
+#endif
 
 #if HW_DRV_SSD1306_EN
 #include "ssd1306.h"
@@ -81,16 +92,19 @@ static uint8_t DmaChannelMap[29] = {
 
 static void InitUSBDevice(void)
 {
-	OTG_DeviceModeSel(CDC_READER, 0x1234, 0x1234);
+#if !HAS_BOOTLOADER
+	Clock_USBClkDivSet(4);
+	Clock_USBClkSelect(APLL_CLK_MODE);
+#endif
+	/* APP 与 bootloader 使用不同 VID/PID，避免和升级口冲突 */
+	OTG_DeviceModeSel(CDC_READER, APP_USB_VID, APP_USB_PID);
 	OTG_DeviceInit();
 	NVIC_EnableIRQ(Usb_IRQn);
 	NVIC_SetPriority(Usb_IRQn, 0);
 
-	/* SD 卡已在 BG_FlashMgr.Init() → FlashDevices_Init() 中初始化，
-	   不再重复初始化，避免 SDIO 端口重配置导致问题 */
-
 	OTG_DeviceCDC_Init();
-	DBG("USB CDC+MassStorage mode initialized\n");
+	DBG("USB CDC + U-disk (VID=0x%04X PID=0x%04X)\n",
+	    APP_USB_VID, APP_USB_PID);
 }
 
 static void InitDAC(uint16_t SampleRate)
@@ -283,8 +297,14 @@ void BG_audio_Init(uint16_t SampleRate)
 {
 	BG_AudioManager.Audio_data.SampleRate = SampleRate;
 
+	/* USB: CDC Shell + Mass Storage（SD 当 U 盘） */
 	InitUSBDevice();
 	InitDAC(SampleRate);
+
+#if BANDATAHUB_SYNTH_ONLY
+	/* 纯合成器：不初始化 ADC / 效果链，屏蔽原采集直通 */
+	DBG("[Audio] Synth-only mode: ADC/FX passthrough disabled\n");
+#else
 	InitADC0LineIn(SampleRate);
 	InitADC1Mic(SampleRate);
 
@@ -295,6 +315,8 @@ void BG_audio_Init(uint16_t SampleRate)
 	AudioADC_SoftMute(ADC1_MODULE, FALSE, FALSE);
 
 	InitAudioEffects(SampleRate);
+#endif
+
 	InitControlGPIO();
 
 	ShellIOManager_Init();
@@ -302,17 +324,19 @@ void BG_audio_Init(uint16_t SampleRate)
 
 	LowPower_Init();
 
-	DBG("[Audio] BanDataHub audio system initialized at %d Hz\n", SampleRate);
+	DBG("[Audio] BanDataHub synth engine ready at %d Hz (USB MSC+CDC)\n", SampleRate);
 }
 
 void BG_AudioIO_PrepareForShutdown(void)
 {
+#if !BANDATAHUB_SYNTH_ONLY
 	if (gCtrlVars.reverb_unit.ct != NULL) {
 		gCtrlVars.reverb_unit.enable = 0;
 		osPortFree(gCtrlVars.reverb_unit.ct);
 		gCtrlVars.reverb_unit.ct = NULL;
 		DBG("[Audio] Reverb freed for shutdown sound\n");
 	}
+#endif
 }
 
 static void USB_HotplugCheck(void)
@@ -322,9 +346,11 @@ static void USB_HotplugCheck(void)
 
 void Audio_loop(void)
 {
+#if !BANDATAHUB_SYNTH_ONLY
 	uint16_t RealLen = 0;
 	const uint16_t MIN_SAMPLE = 48;
 	static uint16_t s_gpio_div = 0;
+#endif
 
 #ifdef BANDATAHUB
 	/* SD卡热拔插检测: 使用 DET 引脚 (GPIO_B5)
@@ -425,17 +451,33 @@ void Audio_loop(void)
 	OTG_DeviceStorProcess();
 	USB_HotplugCheck();
 
-	/* MIC 插入检测: 检测到低电平表示MIC插入，切换模拟开关防止MIC电源对信号干扰 */
+#if BANDATAHUB_SYNTH_ONLY && BANGTSYNTH_EN
+	{
+		const uint16_t FRAME = 48;
+		static int16_t pcm[128];
+		static uint32_t packed[128];
+		uint16_t i;
+
+		while (AudioDAC_DataSpaceLenGet(DAC0) >= FRAME) {
+			bg_synth_render(pcm, FRAME);
+			for (i = 0; i < FRAME; i++) {
+				uint16_t s = (uint16_t)pcm[i];
+				packed[i] = ((uint32_t)s << 16) | (uint32_t)s;
+			}
+			AudioDAC_DataSet(DAC0, packed, FRAME);
+		}
+	}
+	Sf2Browser_Tick();
+#else
+	/* 遗留：ADC 采集 + 效果直通 */
 	if (s_gpio_div == 0)
 	{
 		if (GPIO_RegOneBitGet(GPIO_A_IN, (1 << HW_MIC_DET_PIN)))
 		{
-			/* MIC 未插入: 模拟开关断开 */
 			GPIO_RegOneBitClear(GPIO_A_OUT, (1 << HW_MIC_SWITCH_PIN));
 		}
 		else
 		{
-			/* MIC 已插入: 模拟开关接通 */
 			GPIO_RegOneBitSet(GPIO_A_OUT, (1 << HW_MIC_SWITCH_PIN));
 		}
 	}
@@ -450,9 +492,9 @@ void Audio_loop(void)
 			s_gpio_div = 0;
 		}
 
-		/* 直接输出效果处理后的音频到 DAC */
 		AudioDAC_DataSet(DAC0, BG_AudioManager.Audio_data.guitar_buf_out, RealLen);
 	}
+#endif
 
 	ShellIOManager_Process();
 }

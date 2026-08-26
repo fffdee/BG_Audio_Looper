@@ -26,7 +26,7 @@
 #ifndef __SAMPLER_H__
 #define __SAMPLER_H__
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if SYNTH_SD_NAND_PSRAM_EN || BANGTSYNTH_EN
 

@@ -1,2 +1,2 @@
    text (code + rodata)	   data	    bss	    dec	    hex	filename
- 746366 (359422 + 386944)	   5640	  81736	 833742	  cb8ce	BanDataHub.adx
+ 714068 (336020 + 378048)	   6328	  77908	 798304	  c2e60	BanDataHub.adx

@@ -11,8 +11,8 @@
 
 #include "bg_config.h"
 
-/* 仅 FreeRTOS 平台编译 */
-#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
+/* BanDataHub 使用 01_hal/port/bandatahub；本文件仅非 Hub 的 BP10 平台 */
+#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10) && !defined(BANDATAHUB)
 
 #include "bg_osal.h"
 #include "FreeRTOS.h"

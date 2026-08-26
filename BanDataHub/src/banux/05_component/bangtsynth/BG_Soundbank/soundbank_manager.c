@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 #include "product_def.h"
 
 #ifdef BANGTSYNTH_EN
@@ -58,6 +61,9 @@ static BGS_Data* soundbank_get_bgs_data(void);
 static void soundbank_note_on(uint8_t note, uint8_t velocity, uint8_t program);
 static void soundbank_note_off(uint8_t note, uint8_t program);
 static void soundbank_all_note_off(uint8_t program);
+static void soundbank_pitch_bend(uint8_t channel, int16_t value);
+static void soundbank_cc(uint8_t channel, uint8_t cc_num, uint8_t value);
+static void soundbank_set_channel(uint8_t channel);
 static BG_ERR soundbank_download(const char *data_source, uint32_t offset, size_t size,
                                  soundbank_download_progress_cb_t progress_cb, void *user_data);
 static uint8_t soundbank_read_active_samples(short *data, uint32_t count);
@@ -75,6 +81,9 @@ SoundBank_Manager soundbank_manager = {
     .NoteOn = soundbank_note_on,
     .NoteOff = soundbank_note_off,
     .AllNoteOff = soundbank_all_note_off,
+    .PitchBend = soundbank_pitch_bend,
+    .CC = soundbank_cc,
+    .SetChannel = soundbank_set_channel,
     .Download = soundbank_download,
     .ReadActiveSamples = soundbank_read_active_samples,
 };
@@ -351,6 +360,25 @@ static void soundbank_all_note_off(uint8_t program)
     }
 }
 
+static void soundbank_pitch_bend(uint8_t channel, int16_t value)
+{
+    (void)channel;
+    (void)value;
+    /* 旧 BG_Soundbank 路径未实现弯音；完整实现见 02_core/soundbank */
+}
+
+static void soundbank_cc(uint8_t channel, uint8_t cc_num, uint8_t value)
+{
+    (void)channel;
+    (void)cc_num;
+    (void)value;
+}
+
+static void soundbank_set_channel(uint8_t channel)
+{
+    (void)channel;
+}
+
 /* ============================================
  * 内部辅助函数 (供解析器使用)
  * ============================================ */
@@ -535,3 +563,4 @@ static BG_ERR soundbank_download(const char *data_source, uint32_t offset, size_
 #endif /* ENABLE_SOUNDBANK_DOWNLOAD */
 
 #endif /* BANGTSYNTH_EN */
+#endif /* BANGTSYNTH_LEGACY */

@@ -24,7 +24,7 @@
 #if BANGTSYNTH_EN
 
 #include "bg_config.h"
-#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
+#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10) && !defined(BANDATAHUB)
 
 #include "bg_download_port.h"
 #include "bg_soundbank_dl_protocol.h"

@@ -1,4 +1,4 @@
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 

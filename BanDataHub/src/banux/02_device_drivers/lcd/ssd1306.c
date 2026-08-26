@@ -11,8 +11,15 @@ static SSD1306_t g_ssd1306;
 
 #define SCL_HIGH()  GPIO_RegOneBitSet(GPIO_A_OUT, (1 << HW_SSD1306_SCL_PIN))
 #define SCL_LOW()   GPIO_RegOneBitClear(GPIO_A_OUT, (1 << HW_SSD1306_SCL_PIN))
-#define SDA_HIGH()  GPIO_RegOneBitSet(GPIO_A_OUT, (1 << HW_SSD1306_SDA_PIN))
-#define SDA_LOW()   GPIO_RegOneBitClear(GPIO_A_OUT, (1 << HW_SSD1306_SDA_PIN))
+#define SDA_HIGH()  do { \
+        GPIO_RegOneBitSet(GPIO_A_OUT, (1 << HW_SSD1306_SDA_PIN)); \
+        GPIO_RegOneBitClear(GPIO_A_OE, (1 << HW_SSD1306_SDA_PIN)); \
+        GPIO_RegOneBitSet(GPIO_A_IE, (1 << HW_SSD1306_SDA_PIN)); \
+    } while (0)
+#define SDA_LOW()   do { \
+        GPIO_RegOneBitClear(GPIO_A_OUT, (1 << HW_SSD1306_SDA_PIN)); \
+        GPIO_RegOneBitSet(GPIO_A_OE, (1 << HW_SSD1306_SDA_PIN)); \
+    } while (0)
 #define SDA_READ()  ((GPIO_RegOneBitGet(GPIO_A_IN, (1 << HW_SSD1306_SDA_PIN))) ? 1 : 0)
 
 static const uint8_t font_6x8[][6] = {
@@ -115,7 +122,7 @@ static const uint8_t font_6x8[][6] = {
 static void I2C_Delay(void)
 {
     volatile uint32_t i;
-    for (i = 0; i < 20; i++);
+    for (i = 0; i < 80; i++);
 }
 
 static void I2C_Start(void)
@@ -194,10 +201,19 @@ static void SSD1306_WriteData(uint8_t data)
 
 static void I2C_GPIO_Init(void)
 {
+    /* A30/A31 必须关掉模拟，否则软件 I2C 推不动 OLED */
+    GPIO_RegOneBitClear(GPIO_A_ANA_EN, (1 << HW_SSD1306_SCL_PIN));
+    GPIO_RegOneBitClear(GPIO_A_ANA_EN, (1 << HW_SSD1306_SDA_PIN));
+
+    GPIO_RegOneBitSet(GPIO_A_PU, (1 << HW_SSD1306_SCL_PIN));
+    GPIO_RegOneBitSet(GPIO_A_PU, (1 << HW_SSD1306_SDA_PIN));
+    GPIO_RegOneBitClear(GPIO_A_PD, (1 << HW_SSD1306_SCL_PIN));
+    GPIO_RegOneBitClear(GPIO_A_PD, (1 << HW_SSD1306_SDA_PIN));
+
     GPIO_RegOneBitSet(GPIO_A_OE, (1 << HW_SSD1306_SCL_PIN));
     GPIO_RegOneBitClear(GPIO_A_IE, (1 << HW_SSD1306_SCL_PIN));
     GPIO_RegOneBitSet(GPIO_A_OE, (1 << HW_SSD1306_SDA_PIN));
-    GPIO_RegOneBitClear(GPIO_A_IE, (1 << HW_SSD1306_SDA_PIN));
+    GPIO_RegOneBitSet(GPIO_A_IE, (1 << HW_SSD1306_SDA_PIN));
     SCL_HIGH();
     SDA_HIGH();
 }

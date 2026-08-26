@@ -29,7 +29,7 @@
 #ifndef __BANGTSYNTH_NODE_H__
 #define __BANGTSYNTH_NODE_H__
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
@@ -54,6 +54,11 @@ int BanGTsynth_Node_Init(void);
  * @brief 反初始化合成器节点
  */
 void BanGTsynth_Node_DeInit(void);
+
+/**
+ * @brief 渲染 int16 PCM（音频线程调用；内部消化 Note 队列）
+ */
+uint32_t BanGTsynth_RenderS16(int16_t *out, uint32_t frames);
 
 /**
  * @brief 合成器源节点回调 - 供 Effect Graph 调用

@@ -1,4 +1,4 @@
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
@@ -12,7 +12,7 @@
 #include <string.h>
 
 #if SYNTH_SD_NAND_PSRAM_EN
-#include "synth_sdnandpsram.h"
+#include "../synth_integration/synth_sdnandpsram.h"
 #endif
 
 void NoteOnHandle(uint8_t *data, uint8_t len);

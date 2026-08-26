@@ -7,10 +7,10 @@
 
 #include "product_def.h"
 
-#if SYNTH_SD_NAND_PSRAM_EN
+#if SYNTH_SD_NAND_PSRAM_EN && !defined(BANDATAHUB)
 
 #include "synth_sdnandpsram.h"
-#include "psram_buffer.h"
+#include "../psram_buffer/psram_buffer.h"
 #include "bg_log.h"
 #include "bg_osal.h"
 #include <string.h>
@@ -340,4 +340,4 @@ void SYNTH_PrintPerformanceReport(void) {
              g_perf_metrics.buffer_read_success_rate);
 }
 
-#endif /* SYNTH_SD_NAND_PSRAM_EN */
+#endif /* SYNTH_SD_NAND_PSRAM_EN && !BANDATAHUB */

@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /*****************************************************
  * BanGTsynth - Linux 平台接口实现
  * 功能: Linux ALSA 音频系统适配 (移植参考)
@@ -436,3 +439,5 @@ bg_hal_storage_t bg_hal_storage = {
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

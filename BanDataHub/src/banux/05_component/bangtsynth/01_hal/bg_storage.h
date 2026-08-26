@@ -196,9 +196,8 @@ extern const BG_Storage_Driver_t bg_storage_driver_stm32;
 #elif (BG_TARGET_PLATFORM == BG_PLATFORM_ESP32)
 extern const BG_Storage_Driver_t bg_storage_driver_esp32;
 #elif (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
-/* BP10 平台下按板级选择存储驱动 */
-#ifdef BANDATAHUB
-extern const BG_Storage_Driver_t bg_storage_driver_bandatahub;
+#if BG_CFG_USE_PORT_STORAGE
+extern const BG_Storage_Driver_t bg_storage_driver_port;
 #else
 extern const BG_Storage_Driver_t bg_storage_driver_bp10;
 #endif

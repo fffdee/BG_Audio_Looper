@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file psram_heap.c
  * @brief PSRAM 通用堆内存管理器实现
@@ -11,7 +14,7 @@
 
 #include "product_def.h"
 
-#if HW_DRV_PSRAM_EN
+#if HW_DRV_PSRAM_EN && !defined(BANDATAHUB)
 
 #include "psram_heap.h"
 #include "flash_devices.h"
@@ -197,3 +200,5 @@ void PSRAM_HeapGetRecords(const PSRAM_AllocRecord_t **records, uint32_t *count)
 }
 
 #endif /* HW_DRV_PSRAM_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

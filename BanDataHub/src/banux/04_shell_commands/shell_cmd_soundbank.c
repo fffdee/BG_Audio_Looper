@@ -23,6 +23,11 @@
 #include "bg_download_port.h"
 #include "bg_log.h"
 #include "bangtsynth_node.h"
+#if defined(BANDATAHUB)
+#include "bg_sf2_sd.h"
+#include "bg_synth.h"
+#include "otg_device_stor.h"
+#endif
 #include "midi_controller.h"   /* BG_MIDI_data 直接访问 */
 #include "dac_interface.h"
 #include "dac.h"
@@ -90,7 +95,7 @@ static int cmd_sb_download(int argc, char *argv[])
     Shell_Printf("  File size  : %u bytes\n", file_size);
     Shell_Printf("  Flash      : Storage partition (Flash#1)\n");
 
-#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
+#if (BG_TARGET_PLATFORM == BG_PLATFORM_BP10) && !defined(BANDATAHUB)
     /* 1. 检查 FlashMgr */
     if (!BG_FlashMgr.IsReady()) {
         Shell_Printf("Error: FlashMgr not ready!\n");
@@ -147,7 +152,11 @@ static int cmd_sb_download(int argc, char *argv[])
     }
 
 #else
+#ifdef BANDATAHUB
+    Shell_Printf("Error: Shell download disabled on BanDataHub; use USB MSC + SD .sf2\n");
+#else
     Shell_Printf("Error: Download only supported on BP10 platform\n");
+#endif
     return -1;
 #endif
 
@@ -181,9 +190,68 @@ static int cmd_sb_info(int argc, char *argv[])
                  fmt == SOUNDBANK_FORMAT_BG  ? "BGS" :
                  fmt == SOUNDBANK_FORMAT_SF2 ? "SF2" : "Unknown");
     Shell_Printf("  Info       : %s\n", info ? info : "N/A");
+#if defined(BANDATAHUB)
+    {
+        const char *cur = bg_sf2_sd_current();
+        Shell_Printf("  TF file    : %s\n", (cur && cur[0]) ? cur : "(none)");
+        Shell_Printf("  USB Udisk  : %s\n", OTG_DeviceStorIsBusy() ? "busy" : "idle");
+    }
+#endif
 
     return 0;
 }
+
+#if defined(BANDATAHUB)
+static int cmd_sb_ls(int argc, char *argv[])
+{
+    int i;
+    int n;
+
+    (void)argc;
+    (void)argv;
+    if (OTG_DeviceStorIsBusy()) {
+        Shell_Printf("USB U-disk is using TF, try later\n");
+        return -1;
+    }
+    n = bg_sf2_sd_scan();
+    Shell_Printf("=== TF .sf2 (%d) ===\n", n);
+    for (i = 0; i < n; i++) {
+        Shell_Printf("  [%d] %s  %u bytes\n", i, bg_sf2_sd_name(i), bg_sf2_sd_size(i));
+    }
+    return 0;
+}
+
+static int cmd_sb_file(int argc, char *argv[])
+{
+    const char *name;
+    int idx;
+
+    if (argc < 1) {
+        Shell_Printf("Usage: sb -f <index|filename.sf2>\n");
+        return -1;
+    }
+    if (OTG_DeviceStorIsBusy()) {
+        Shell_Printf("USB U-disk is using TF, try later\n");
+        return -1;
+    }
+    name = argv[0];
+    if (name[0] >= '0' && name[0] <= '9' && !strchr(name, '.')) {
+        idx = (int)strtol(name, NULL, 10);
+        name = bg_sf2_sd_name(idx);
+        if (!name) {
+            Shell_Printf("Invalid index\n");
+            return -1;
+        }
+    }
+    Shell_Printf("Loading %s ...\n", name);
+    if (bg_synth_load_file(name) != 0) {
+        Shell_Printf("Load FAILED\n");
+        return -1;
+    }
+    Shell_Printf("Load OK: %s\n", soundbank_manager.GetInfo());
+    return 0;
+}
+#endif
 
 /* ============================================
  * 命令: sb -e  擦除音源存储
@@ -764,6 +832,10 @@ static const ShellOpt_t sb_options[] = {
     OPT("p", "play",     "[bpm] [bars]|stop", "Drum sequencer (tick-driven, non-blocking)", cmd_sb_play_drum),
     OPT("g", "graph",    "[dur]",      "Test graph path (500Hz tone, no soundbank)", cmd_sb_graph_test),
     OPT("V", "volume",   "[0-100]",    "Set/query synth volume (0=mute, 100=full)", cmd_sb_volume),
+#if defined(BANDATAHUB)
+    OPT("L", "list",     NULL,         "List .sf2 files on TF card",               cmd_sb_ls),
+    OPT("f", "file",     "<idx|name>", "Load .sf2 from TF into PSRAM",             cmd_sb_file),
+#endif
     OPT_END()
 };
 
@@ -777,7 +849,11 @@ int ShellCmdSoundbank_Register(void)
         "Soundbank management (download/info/erase/verify/test)",
         MOD_CAT_AUDIO,
         sb_options,
+#if defined(BANDATAHUB)
+        13
+#else
         11
+#endif
     };
     return Shell_RegisterModule(&sb_module) ? 0 : -1;
 }

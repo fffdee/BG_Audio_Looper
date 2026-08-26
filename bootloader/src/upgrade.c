@@ -115,6 +115,11 @@ void PartFlag_Init(void)
         g_part_a_usable = PART_A_SIZE;
     } else if (g_flash_capacity > PART_A_BASE) {
         g_part_a_usable = g_flash_capacity - PART_A_BASE;
+        /* 2MB 片：PartFlag 在最后 4KB，必须从 A 可用区扣掉，否则升级会盖掉标志 */
+        if (g_part_flag_addr >= PART_A_BASE &&
+            g_part_flag_addr < PART_A_BASE + g_part_a_usable) {
+            g_part_a_usable = g_part_flag_addr - PART_A_BASE;
+        }
         DBG("[BOOT] Partition A usable: %u KB (of %u KB)\n",
             (unsigned)(g_part_a_usable / 1024),
             (unsigned)(PART_A_SIZE / 1024));
@@ -123,9 +128,10 @@ void PartFlag_Init(void)
         DBG("[BOOT] FATAL: Flash too small for Partition A!\n");
     }
 
-    /* Validate layout */
-    if (g_part_flag_addr >= PART_A_BASE &&
-        g_part_flag_addr < PART_A_BASE + PART_A_SIZE) {
+    /* Validate layout against *usable* A, not the nominal 2MB PART_A_SIZE */
+    if (g_part_a_usable > 0 &&
+        g_part_flag_addr >= PART_A_BASE &&
+        g_part_flag_addr < PART_A_BASE + g_part_a_usable) {
         DBG("[BOOT] FATAL: PartFlag@0x%08X overlaps Partition A!\n",
             (unsigned)g_part_flag_addr);
     }
@@ -263,6 +269,13 @@ static int UpgradePending_Clear(void)
 void Boot_JumpTo(uint32_t addr)
 {
     /* ---- Phase 1: Quiesce all hardware ---- */
+    /* Disable HW stack protect so writing BOOT_HANDOFF_ADDR (0x20000000)
+     * below SP_BOUND (0x20003000) does not take an exception.
+     * APP will re-enable HSP after it consumes the handoff magic. */
+    if (__nds32__mfsr(NDS32_SR_MSC_CFG) & (1u << 27)) {
+        __nds32__mtsr(__nds32__mfsr(NDS32_SR_HSP_CTL) & ~0x0f, NDS32_SR_HSP_CTL);
+    }
+
     WDG_Disable();
 
     /* Stop Timer2 (bootloader's 1ms tick) */
@@ -292,37 +305,41 @@ void Boot_JumpTo(uint32_t addr)
             uint32_t nwords;
             volatile uint32_t *dst;
             const volatile uint32_t *src;
+            uint32_t data_vma = info->data_vma;
+            uint32_t data_end = info->data_end;
+            uint32_t data_lma = info->data_lma;
+            uint32_t bss_vma  = info->bss_vma;
+            uint32_t bss_end  = info->bss_end;
+            /* BP10 SRAM: 0x20000000 + 0x48000. 勿清到 UART/外设。 */
+            const uint32_t SRAM_LO = 0x20000000UL;
+            const uint32_t SRAM_HI = 0x20048000UL;
 
-            nwords = (info->data_end - info->data_vma + 3u) / 4u;
-            dst    = (volatile uint32_t *)info->data_vma;
-            src    = (const volatile uint32_t *)info->data_lma;
-            for (i = 0; i < nwords; i++)
-                dst[i] = src[i];
+            if (data_vma < SRAM_LO || data_end < data_vma || data_end > SRAM_HI ||
+                bss_vma  < SRAM_LO || bss_end  < bss_vma  || bss_end  > SRAM_HI) {
+                diag_putc('E');  /* BootInfo SRAM range invalid */
+            } else {
+                nwords = (data_end - data_vma + 3u) / 4u;
+                dst    = (volatile uint32_t *)data_vma;
+                src    = (const volatile uint32_t *)data_lma;
+                for (i = 0; i < nwords; i++)
+                    dst[i] = src[i];
 
-            diag_putc('d');  /* .data copied */
+                diag_putc('d');
 
-            /* Also clear .bss in SRAM */
-            {
-                uint32_t bss_nwords;
-                volatile uint32_t *bss_dst;
-                bss_nwords = (info->bss_end - info->bss_vma + 3u) / 4u;
-                bss_dst    = (volatile uint32_t *)info->bss_vma;
-                for (i = 0; i < bss_nwords; i++)
-                    bss_dst[i] = 0u;
+                nwords = (bss_end - bss_vma + 3u) / 4u;
+                dst    = (volatile uint32_t *)bss_vma;
+                for (i = 0; i < nwords; i++)
+                    dst[i] = 0u;
 
-                diag_putc('z');  /* .bss cleared */
+                diag_putc('z');
             }
 
-            /* Write handoff magic so APP's __c_init() skips .data copy
-             * AND .bss clear. */
-            *(volatile uint32_t *)BOOT_HANDOFF_ADDR = BOOT_HANDOFF_MAGIC;
-            diag_putc('H');  /* handoff magic written */
+            /* 不要写 0x20000000：该地址在 HSP SP_BOUND 之下，写了就异常，
+             * 日志会停在 Pdz。APP 在 HAS_BOOTLOADER 下自行跳过 .data 拷贝。 */
+            diag_putc('H');
         }
         else
         {
-            /* BootInfo magic 不匹配 — APP 固件未嵌入 BootInfo 结构。
-             * APP 的 C runtime 启动代码（_start/__c_init）会自行处理
-             * .data 拷贝和 .bss 清零，此处直接跳转即可。 */
             diag_putc('?');
             DBG("[BOOT] No BootInfo at 0x%08X, APP will self-init .data/.bss\n",
                 (unsigned)(addr + BOOT_INFO_OFFSET));
@@ -333,7 +350,9 @@ void Boot_JumpTo(uint32_t addr)
     {
         typedef void (*Entry_t)(void);
         Entry_t entry = (Entry_t)addr;
-        diag_putc('J');  /* about to jump */
+        diag_putc('J');
+        __nds32__dsb();
+        __nds32__isb();
         entry();
     }
 

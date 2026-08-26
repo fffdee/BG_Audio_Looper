@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 #include "product_def.h"
 
 #ifdef BANGTSYNTH_EN
@@ -28,7 +31,11 @@ static const char *g_tag_names[] = {
     "Envelope",
     "DRC",
     "EQ",
-    "Play"
+    "Play",
+    "FAT32",
+    "NAND",
+    "PSRAM",
+    "SYNTH"
 };
 
 /* 日志级别名称表 */
@@ -145,3 +152,5 @@ static void log_print(bg_log_level_t level, bg_log_tag_t tag, const char *format
 }
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

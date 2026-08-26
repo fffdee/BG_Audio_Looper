@@ -7,14 +7,12 @@
 
 #include "product_def.h"
 
-#if SYNTH_SD_NAND_PSRAM_EN
+#if SYNTH_SD_NAND_PSRAM_EN && !defined(BANDATAHUB)
 
 #include "synth_sdnandpsram.h"
-#include "fat32_reader.h"
-#ifndef BANDATAHUB
-#include "nand_store.h"
-#endif
-#include "psram_buffer.h"
+#include "../fat32/fat32_reader.h"
+#include "../nand_store/nand_store.h"
+#include "../psram_buffer/psram_buffer.h"
 #include "soundbank_manager.h"
 #include "bg_log.h"
 #include <string.h>
@@ -302,4 +300,4 @@ const char* SYNTH_GetLastTestError(void) {
     return g_test_state.last_error;
 }
 
-#endif /* SYNTH_SD_NAND_PSRAM_EN */
+#endif /* SYNTH_SD_NAND_PSRAM_EN && !BANDATAHUB */

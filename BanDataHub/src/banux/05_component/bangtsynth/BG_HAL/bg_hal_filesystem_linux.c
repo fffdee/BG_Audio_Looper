@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * BanGTsynth - 文件系统HAL Linux实现
  * 功能: 使用stdio实现文件访问接口
@@ -77,3 +80,5 @@ bg_filesystem_t bg_filesystem = {
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

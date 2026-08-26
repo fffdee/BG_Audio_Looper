@@ -5,17 +5,18 @@
  * 实现 NAND Flash 中的音色数据存储、索引管理、磨损均衡等功能。
  */
 
-#include "product_def.h"
+#include "bg_config.h"
 
-#if SYNTH_SD_NAND_PSRAM_EN
+#if SYNTH_SD_NAND_PSRAM_EN && BG_CFG_HAS_NAND
 
 #include "nand_store.h"
 #include "flash_devices.h"
 #include "flash_nand_w25n02.h"
 #include "bg_log.h"
+#include "bg_mem.h"
 #include "bg_osal.h"
 #ifdef NAND_STORE_USE_PSRAM_INDEX
-#include "psram_heap.h"
+#include "../fat32/psram_heap.h"
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -146,7 +147,7 @@ BG_ERR NAND_StoreInit(void)
     }
 #else
     /* 在 SRAM 中分配索引表缓存 */
-    g_nand_state.public_state.index_cache = (NAND_ProgramIndex_t *)malloc(NAND_INDEX_TABLE_SIZE);
+    g_nand_state.public_state.index_cache = (NAND_ProgramIndex_t *)bg_mem_alloc(NAND_INDEX_TABLE_SIZE);
     if (!g_nand_state.public_state.index_cache) {
         BG_LOG_E(BG_LOG_TAG_NAND, "Failed to allocate index cache in SRAM");
         return ENABLE_OUT_OF_MEMORY;
@@ -204,7 +205,7 @@ void NAND_StoreDeInit(void)
 #ifdef NAND_STORE_USE_PSRAM_INDEX
     PSRAM_HeapFree(g_nand_state.public_state.index_cache_addr, NAND_INDEX_TABLE_SIZE);
 #else
-    free(g_nand_state.public_state.index_cache);
+    bg_mem_free(g_nand_state.public_state.index_cache);
 #endif
     /* NAND 设备由 FlashDevices 管理，不需要释放 */
 
@@ -496,7 +497,7 @@ BG_ERR NAND_VerifyIntegrity(uint8_t program)
         return ENABLE_INVALID_INPUT;
     }
 
-    temp_buffer = (uint8_t *)malloc(buffer_size);
+    temp_buffer = (uint8_t *)bg_mem_alloc(buffer_size);
     if (!temp_buffer) {
         return ENABLE_OUT_OF_MEMORY;
     }
@@ -512,7 +513,7 @@ BG_ERR NAND_VerifyIntegrity(uint8_t program)
                 if (ret != SUCCESS) {
                     BG_LOG_E(BG_LOG_TAG_NAND, "Integrity check failed for program %d: %d",
                              idx_e.program, ret);
-                    free(temp_buffer);
+                    bg_mem_free(temp_buffer);
                     return ret;
                 }
             }
@@ -522,12 +523,12 @@ BG_ERR NAND_VerifyIntegrity(uint8_t program)
         ret = NAND_LoadProgram(program, temp_buffer, buffer_size, NULL);
         if (ret != SUCCESS) {
             BG_LOG_E(BG_LOG_TAG_NAND, "Integrity check failed for program %d: %d", program, ret);
-            free(temp_buffer);
+            bg_mem_free(temp_buffer);
             return ret;
         }
     }
 
-    free(temp_buffer);
+    bg_mem_free(temp_buffer);
     BG_LOG_I(BG_LOG_TAG_NAND, "Integrity check passed");
     return SUCCESS;
 }
@@ -739,4 +740,4 @@ static uint32_t nand_calculate_checksum(const void *data, uint32_t size)
     return checksum;
 }
 
-#endif /* SYNTH_SD_NAND_PSRAM_EN */
+#endif /* SYNTH_SD_NAND_PSRAM_EN && BG_CFG_HAS_NAND */

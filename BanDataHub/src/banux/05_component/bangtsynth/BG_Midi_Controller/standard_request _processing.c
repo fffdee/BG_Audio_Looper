@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 #include "product_def.h"
 
 #ifdef BANGTSYNTH_EN
@@ -7,7 +10,7 @@
 #include "hardware_interfance.h"
 #include "midi_controller.h"
 #include "soundbank_manager.h"
-#include "bgs_parser.h"  // 添加 bgs_parser.h 以调�?bgs_note_on/off
+#include "bgs_parser.h"  // 添加 bgs_parser.h 以调�?bgs_note_on/off
 #include <stdio.h>
 #include <string.h>
 
@@ -46,11 +49,11 @@ MIDI_Funcstion CC_funcstion[CC_COUNT] = {
 void NoteOnHandle(uint8_t *data, uint8_t len)
 {
     uint8_t channel;
-    uint8_t is_note = 1;  // 默认接受所有音�?
+    uint8_t is_note = 1;  // 默认接受所有音�?
 
     channel = data[0] & 0x0F;
  
-    /* v2.0: 使用统一�?bgs_note_on 接口（包含力度层选择�?*/
+    /* v2.0: 使用统一�?bgs_note_on 接口（包含力度层选择�?*/
     if (soundbank_manager.GetFormat() == SOUNDBANK_FORMAT_BG) {
         BGS_Data *bgs_data;
         uint8_t program;
@@ -73,7 +76,7 @@ void NoteOnHandle(uint8_t *data, uint8_t len)
         /* v2.0: 调用 BGS 音符激活接口（自动选择力度层） */
         bgs_note_on(note, velocity, program);
         
-        /* 检查是否成功选择了采�?*/
+        /* 检查是否成功选择了采�?*/
         is_note = 0;
         if (program < bgs_data->program_count) {
             int sample_idx;
@@ -99,7 +102,7 @@ void NoteOnHandle(uint8_t *data, uint8_t len)
             BG_MIDI_data.BG_channel_info[channel].NoteOn_count = 0;    
         }
         
-        /* 调用 SF2 声部分配 (关键! 否则 sf2_callback 找不到活跃声�? */
+        /* 调用 SF2 声部分配 (关键! 否则 sf2_callback 找不到活跃声�? */
         soundbank_manager.NoteOn(sf2_note, sf2_vel, sf2_prog);
         printf("[NoteOn-SF2] Voice allocated OK\n");
     }
@@ -125,10 +128,10 @@ void NoteOffHandle(uint8_t *data, uint8_t len)
     channel = data[0] & 0x0F;
     program = BG_MIDI_data.BG_channel_info[channel].program_index;
     
-    /* 使用统一的音符关闭接�?*/
+    /* 使用统一的音符关闭接�?*/
     soundbank_manager.NoteOff(note, program);
     
-    /* 清除 Note Map 和计�?*/
+    /* 清除 Note Map 和计�?*/
     if (BG_MIDI_data.BG_channel_info[channel].NoteOn_count > 0 && 
         BG_MIDI_data.BG_channel_info[channel].Note_Map[note] > 0)
         BG_MIDI_data.BG_channel_info[channel].NoteOn_count--;
@@ -193,10 +196,10 @@ void AllNoteOff(uint8_t *data, uint8_t len){
     channel = data[0] & 0x0F;
     program = BG_MIDI_data.BG_channel_info[channel].program_index;
     
-    /* 使用统一的全部音符关闭接�?*/
+    /* 使用统一的全部音符关闭接�?*/
     soundbank_manager.AllNoteOff(program);
     
-    /* 清除所�?Note Map */
+    /* 清除所�?Note Map */
     memset((void*)BG_MIDI_data.BG_channel_info[channel].Note_Map, 0x00, 
            sizeof(BG_MIDI_data.BG_channel_info[channel].Note_Map));
     BG_MIDI_data.BG_channel_info[channel].NoteOn_count = 0;
@@ -204,3 +207,5 @@ void AllNoteOff(uint8_t *data, uint8_t len){
 }
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

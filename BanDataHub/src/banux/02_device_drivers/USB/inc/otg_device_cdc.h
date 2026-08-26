@@ -151,6 +151,12 @@ uint16_t OTG_DeviceCDC_Receive(uint8_t *buf, uint16_t len);
 uint16_t OTG_DeviceCDC_GetRxCount(void);
 
 /**
+ * @brief  Peek at next RX byte without consuming
+ * @return 1 if peeked, 0 if empty
+ */
+uint16_t OTG_DeviceCDC_PeekByte(uint8_t *byte);
+
+/**
  * @brief  Get available space in CDC TX buffer
  * @return number of available bytes
  */

@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 #include "product_def.h"
 
 #ifdef BANGTSYNTH_EN
@@ -119,3 +122,5 @@ int bg_download_port_read(const char *source, void *buffer, size_t size, size_t 
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_LINUX */
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

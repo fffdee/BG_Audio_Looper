@@ -11,7 +11,9 @@
 #define SF2_SOURCE_H
 
 #include <stdint.h>
-#if DRUM_MCH_EN == 1
+#include "product_def.h"
+
+#if defined(DRUM_MCH_EN) && (DRUM_MCH_EN == 1)
 /* SF2音源数据大小 */
 #define SF2_SOURCE_SIZE 314376U
 

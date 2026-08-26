@@ -20,14 +20,16 @@
 
 #if BANGTSYNTH_EN
 
+#if BG_CFG_EMBEDDED_SF2
 /* ============================================
  * 内嵌音源数据 (由 sf2_to_c_converter.py 生成)
+ * BanDataHub 走 SD→PSRAM，不嵌入 tip.sf2
  * ============================================ */
-
-    #include "tip_data.h"
-    #define EMBEDDED_SF2_DATA       tip_data
-    #define EMBEDDED_SF2_SIZE       TIP_SIZE
-    #define EMBEDDED_SF2_NAME       "Thrift Store Spinet Piano"
+#include "tip_data.h"
+#define EMBEDDED_SF2_DATA       tip_data
+#define EMBEDDED_SF2_SIZE       TIP_SIZE
+#define EMBEDDED_SF2_NAME       "Thrift Store Spinet Piano"
+#endif
 
 /* ============================================
  * 内部状态
@@ -43,10 +45,14 @@ static uint8_t        g_emb_initialized = 0;
 static BG_ERR emb_storage_init(const char *path, BG_Storage_Mode_t mode)
 {
     (void)path;
+    (void)mode;
 
+#if !BG_CFG_EMBEDDED_SF2
+    BG_LOG_W(BG_LOG_TAG_HAL, "[EMB] Embedded SF2 disabled on BanDataHub (use SD)\n");
+    return ENABLE_INVALID_INPUT;
+#else
     if (mode != BG_STORAGE_MODE_READ_ONLY) {
         BG_LOG_W(BG_LOG_TAG_HAL, "[EMB] Embedded storage is read-only\n");
-        /* 仍然允许, 写入操作会返回错误 */
     }
 
     g_emb_data = EMBEDDED_SF2_DATA;
@@ -56,6 +62,7 @@ static BG_ERR emb_storage_init(const char *path, BG_Storage_Mode_t mode)
     BG_LOG_I(BG_LOG_TAG_HAL, "[EMB] %s loaded, size=%u bytes\n", EMBEDDED_SF2_NAME, g_emb_size);
 
     return SUCCESS;
+#endif
 }
 
 static BG_ERR emb_storage_deinit(void)

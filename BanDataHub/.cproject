@@ -54,6 +54,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/BanGUI/menu_slider}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/BanGUI/page}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/startup}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/06_app/audio}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/06_app/audio/effect_parameter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/06_app/audio/music_parameter}&quot;"/>
@@ -79,7 +80,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/middleware/rtos/freertos/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/middleware/rtos/rtos_api}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/metronome}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/BanDataHubv/src/banux/05_component/bangtsynth/BG_Audio_Processor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_Audio_Processor}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_Audio_Processor/effects}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_Envelope_Generator}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_err_handle}&quot;"/>
@@ -88,7 +89,18 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/BG_Soundbank}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/01_hal}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/BanDataHub/src/banux/05_component/bangtsynth/drum_machine}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/drum_machine}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/03_app/drum_machine}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/03_app/synth_node}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/midi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/soundbank}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/synth_integration}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/psram_buffer}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/nand_store}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/fat32}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/sampler}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/02_core/envelope}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/05_component/bangtsynth/soundbank_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/02_device_drivers/remind_sound}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/BanDataHub/src/banux/01_hal_drivers/sdio}&quot;"/>
@@ -156,7 +168,7 @@
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="middleware/rtos/freertos/src/shell.c|FreeRTOS/inc/shell.h|FreeRTOS/src/heap_5.c|DriverAPI/src/adc_interface.c|DriverAPI/src/dac_interface.c|DriverAPI/src/sd_card.c|DriverAPI/src/i2c_interface.c|FreeRTOS/src/shell.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="middleware/rtos/freertos/src/shell.c|FreeRTOS/inc/shell.h|FreeRTOS/src/heap_5.c|DriverAPI/src/adc_interface.c|DriverAPI/src/dac_interface.c|DriverAPI/src/sd_card.c|DriverAPI/src/i2c_interface.c|FreeRTOS/src/shell.c|src/banux/05_component/bangtsynth/BG_HAL|src/banux/05_component/bangtsynth/BG_Midi_Controller|src/banux/05_component/bangtsynth/BG_Soundbank|src/banux/05_component/bangtsynth/BG_Envelope_Generator|src/banux/05_component/bangtsynth/BG_Audio_Processor|src/banux/05_component/bangtsynth/drum_machine|src/banux/05_component/bangtsynth/durm_data|src/banux/05_component/bangtsynth/soundbank_data|src/banux/05_component/bangtsynth/data|src/banux/05_component/bangtsynth/01_hal/port/bp10|src/banux/05_component/bangtsynth/01_hal/port/template|src/banux/05_component/bangtsynth/02_core/fat32|src/banux/05_component/bangtsynth/02_core/synth_integration/synth_integration_test.c|src/banux/05_component/bangtsynth/02_core/synth_integration/synth_performance_test.c|src/banux/05_component/bangtsynth/bangtsynth_node.c|src/banux/05_component/bangtsynth/hardware_interfance.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

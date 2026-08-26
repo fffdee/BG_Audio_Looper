@@ -1,14 +1,15 @@
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
 #include "soundbank_manager.h"
 #include "bgs_parser.h"
 #include "sf2_parser.h"
-#include "sampler.h"
+#include "../sampler/sampler.h"
 #include "bg_storage.h"
 #include "bg_config.h"
 #include "bg_log.h"
+#include "bg_mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -502,7 +503,7 @@ static BG_ERR soundbank_download(const char *data_source, uint32_t offset, size_
     
     /* 缓冲区: 64KB 分块传输 */
     #define DOWNLOAD_BUFFER_SIZE (64 * 1024)
-    buffer = (uint8_t*)malloc(DOWNLOAD_BUFFER_SIZE);
+    buffer = (uint8_t*)bg_mem_alloc(DOWNLOAD_BUFFER_SIZE);
     if (!buffer) {
         BG_LOG_E(BG_LOG_TAG_SOUNDBANK, "Failed to allocate download buffer\n");
         BG_Storage.DeInit();
@@ -561,7 +562,7 @@ static BG_ERR soundbank_download(const char *data_source, uint32_t offset, size_
     }
     
     /* 清理资源 */
-    free(buffer);
+    bg_mem_free(buffer);
     BG_Storage.DeInit();
     
     return ret;

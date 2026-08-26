@@ -71,7 +71,8 @@ extern "C" {
 #endif // BANBOX_II
 
 #ifdef BANDATAHUB
-/* BANDATAHUB 硬件资源: SSD1306 OLED + PSRAM + SD Card + Encoder + ADC Volume */
+/* BanDataHub 硬件资源: SSD1306 OLED + PSRAM + SD Card + Encoder
+ * 定位: 纯合成器工程 — SD 读 SF2、参数/样本在 PSRAM、USB 作 U 盘 */
 #define HW_DRV_LCD_EN           0   /* ST7735 LCD 驱动 - 不使用 */
 #define HW_DRV_SSD1306_EN       1   /* SSD1306 OLED IIC 驱动 */
 #define HW_DRV_ENCODER_EN       1   /* 旋转编码器驱动 (带按键) */
@@ -79,9 +80,9 @@ extern "C" {
 #define HW_DRV_FLASH_NAND_EN    0   /* 无 NAND Flash */
 #define HW_DRV_PSRAM_EN         1   /* ESP-PSRAM64H PSRAM 驱动 */
 #define HW_DRV_SDCARD_EN        1   /* SD Card SDIO 驱动 */
-#define HW_DRV_BATTERY_EN       1   /* 无电池管理 */
-#define HW_DRV_USB_CDC_EN       1   /* USB CDC 串口驱动 */
-#define HW_DRV_BT_EN            1   /* 无蓝牙/BLE */
+#define HW_DRV_BATTERY_EN       0   /* 无电池管理 */
+#define HW_DRV_USB_CDC_EN       1   /* USB CDC + MSC(U盘) */
+#define HW_DRV_BT_EN            0   /* 无蓝牙 */
 #endif // BANDATAHUB
 
 /*===========================================================================
@@ -118,11 +119,15 @@ extern "C" {
 #define LINE2_INPUT_DETECT_EN   1
 #define MIC_INPUT_DETECT_EN     0
 #elif defined(BANDATAHUB)
-#define LINEIN_EN               1
+#define LINEIN_EN               0   /* 纯合成器：关闭 LineIn 采集 */
 #define MIC_EN                  0
 #define LINE1_INPUT_DETECT_EN   0
 #define LINE2_INPUT_DETECT_EN   0
 #define MIC_INPUT_DETECT_EN     0
+/* 纯合成器工程：SF2 自 SD，样本/元数据在 PSRAM，USB 作 U 盘，无 ADC 采集直通 */
+#ifndef BANDATAHUB_SYNTH_ONLY
+#define BANDATAHUB_SYNTH_ONLY   1
+#endif
 #else
 #define LINEIN_EN               0
 #define MIC_EN                  0
@@ -153,9 +158,16 @@ extern "C" {
 #elif defined(BANBOX_II)
 #define BANGTSYNTH_EN           0   /* 暂未移植到新板 */
 #elif defined(BANDATAHUB)
-#define BANGTSYNTH_EN           1   /* BanDataHub: SD卡+PSRAM方案启用合成器 */
+#define BANGTSYNTH_EN           1   /* 纯合成器：SD→PSRAM SF2 + 实时 DAC 输出 */
+#ifndef DRUM_MCH_EN
+#define DRUM_MCH_EN             0   /* 内嵌鼓机 SF2 不进 Flash，改由 SD 加载 */
+#endif
 #else
 //#define BANGTSYNTH_EN           0
+#endif
+
+#ifndef DRUM_MCH_EN
+#define DRUM_MCH_EN             0
 #endif
 
 /* 高级合成器功能 (SD卡 + PSRAM 直读方案, 无需NAND) */

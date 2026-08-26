@@ -5,16 +5,17 @@
  * 实现 PSRAM 中的音符数据缓冲区管理，支持 LRU 缓存、多线程并发访问�?
  */
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if SYNTH_SD_NAND_PSRAM_EN
 
 #include "psram_buffer.h"
-#include "flash_devices.h"
-#ifndef BANDATAHUB
-#include "nand_store.h"
+#include "bg_extmem.h"
+#include "bg_mem.h"
+#if BG_CFG_HAS_NAND
+#include "../nand_store/nand_store.h"
 #endif
-#include "synth_sdnandpsram.h"
+#include "../synth_integration/synth_sdnandpsram.h"
 #include "bg_log.h"
 #include <string.h>
 #include <stdlib.h>
@@ -102,8 +103,6 @@ static BG_ERR psram_load_data_chunk(uint32_t buffer_id, uint32_t nand_offset,
 
 BG_ERR PSRAM_BufferInit(void)
 {
-    BG_ERR ret;
-    FlashDevice_t *psram_dev;
     uint32_t i;
 
     if (g_psram_state.public_state.initialized) {
@@ -111,15 +110,13 @@ BG_ERR PSRAM_BufferInit(void)
         return SUCCESS;
     }
 
-    /* 获取 PSRAM 设备 */
-    psram_dev = FlashDevices_GetPsramFlash();
-    if (!psram_dev) {
+    if (!bg_extmem_ready()) {
         BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to get PSRAM device");
         return ENABLE_INVALID_INPUT;
     }
 
     /* 分配缓冲区信息表内存 */
-    g_psram_state.public_state.buffer_table = (PSRAM_BufferInfo_t *)malloc(PSRAM_BUFFER_TABLE_SIZE);
+    g_psram_state.public_state.buffer_table = (PSRAM_BufferInfo_t *)bg_mem_alloc(PSRAM_BUFFER_TABLE_SIZE);
     if (!g_psram_state.public_state.buffer_table) {
         BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to allocate buffer table");
         return ENABLE_OUT_OF_MEMORY;
@@ -141,7 +138,7 @@ BG_ERR PSRAM_BufferInit(void)
     g_psram_state.mutex = bg_mutex_create();
     if (!g_psram_state.mutex) {
         BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to create mutex");
-        free(g_psram_state.public_state.buffer_table);
+        bg_mem_free(g_psram_state.public_state.buffer_table);
         return ENABLE_INVALID_INPUT;
     }
 
@@ -150,7 +147,7 @@ BG_ERR PSRAM_BufferInit(void)
     if (!g_psram_state.load_queue) {
         BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to create load queue");
         bg_mutex_delete(g_psram_state.mutex);
-        free(g_psram_state.public_state.buffer_table);
+        bg_mem_free(g_psram_state.public_state.buffer_table);
         return ENABLE_INVALID_INPUT;
     }
 
@@ -160,7 +157,7 @@ BG_ERR PSRAM_BufferInit(void)
         BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to create loader task");
         bg_queue_delete(g_psram_state.load_queue);
         bg_mutex_delete(g_psram_state.mutex);
-        free(g_psram_state.public_state.buffer_table);
+        bg_mem_free(g_psram_state.public_state.buffer_table);
         return ENABLE_INVALID_INPUT;
     }
 
@@ -197,7 +194,7 @@ void PSRAM_BufferDeInit(void)
     }
 
     /* 释放内存 */
-    free(g_psram_state.public_state.buffer_table);
+    bg_mem_free(g_psram_state.public_state.buffer_table);
     g_psram_state.public_state.buffer_table = NULL;
 
     memset(&g_psram_state, 0, sizeof(PSRAM_PrivateState_t));
@@ -337,13 +334,20 @@ BG_ERR PSRAM_LoadNoteData(uint32_t buffer_id, uint32_t nand_offset, uint32_t dat
     request.nand_offset = nand_offset;
     request.data_size = data_size;
 
-    /* �?NAND 读取校验�?(如果 NAND 存储可用) */
-    NAND_ProgramIndex_t index;
-    if (NAND_GetProgramInfo(0, &index) == SUCCESS) {  /* 假设 program 0 包含校验和信�?*/
-        request.checksum = index.checksum;
-    } else {
-        request.checksum = 0;  /* 无校验和 */
+#if BG_CFG_HAS_NAND
+    /* 从 NAND 读取校验和 (如果 NAND 存储可用) */
+    {
+        NAND_ProgramIndex_t index;
+        if (NAND_GetProgramInfo(0, &index) == SUCCESS) {
+            request.checksum = index.checksum;
+        } else {
+            request.checksum = 0;
+        }
     }
+#else
+    /* BanDataHub: SD→PSRAM，无 NAND 索引校验 */
+    request.checksum = 0;
+#endif
 
     /* 发送加载请求到队列 */
     if (bg_queue_send(g_psram_state.load_queue, &request, BG_OSAL_NO_WAIT) != BG_OSAL_OK) {
@@ -393,9 +397,7 @@ BG_ERR PSRAM_GetBufferInfo(uint32_t buffer_id, PSRAM_BufferInfo_t *info)
 int32_t PSRAM_ReadBufferData(uint32_t buffer_id, uint32_t offset, void *data, uint32_t size)
 {
     PSRAM_BufferInfo_t *buffer;
-    FlashDevice_t *psram_dev;
     uint32_t read_size;
-    BG_ERR ret;
 
     if (!g_psram_state.public_state.initialized || buffer_id >= PSRAM_MAX_NOTE_BUFFERS || !data) {
         return -1;
@@ -417,15 +419,7 @@ int32_t PSRAM_ReadBufferData(uint32_t buffer_id, uint32_t offset, void *data, ui
         read_size = size;
     }
 
-    /* 获取 PSRAM 设备 */
-    psram_dev = FlashDevices_GetPsramFlash();
-    if (!psram_dev) {
-        return -1;
-    }
-
-    /* �?PSRAM 读取数据 */
-    ret = (BG_ERR)psram_dev->ops->read(psram_dev, buffer->address + offset, (uint8_t *)data, read_size);
-    if (ret != SUCCESS) {
+    if (bg_extmem_read(buffer->address + offset, data, read_size) != 0) {
         BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to read buffer data: buffer=%u, offset=%u, size=%u",
                  buffer_id, offset, read_size);
         return -1;
@@ -566,8 +560,7 @@ BG_ERR PSRAM_PrefetchNote(uint8_t note, uint8_t program)
         /* 这里使用简化的定位，实际应该调�?synth_locate_note_data */
         /* 由于这里没有访问synth_integration模块，我们使用简化的计算 */
         prefetch_data_size = PSRAM_NOTE_BUFFER_SIZE; /* 64KB */
-#ifdef BANDATAHUB
-        /* BanDataHub: SF2 在 PSRAM 样本区 (0x000000)，直接使用文件内偏移 */
+#if !BG_CFG_HAS_NAND
         prefetch_nand_offset = ((uint32_t)prefetch_note * prefetch_data_size);
 #else
         prefetch_nand_offset = SYNTH_SF2_NAND_BLOB_OFFSET + SYNTH_SF2_HEADER_SIZE +
@@ -791,15 +784,11 @@ static void psram_loader_task(void *param)
         checksum = 0;
         if (request.checksum != 0) {
             /* 读取缓冲区数据计算校验和并验�?*/
-            uint8_t *verify_buffer = (uint8_t *)malloc(request.data_size);
+            uint8_t *verify_buffer = (uint8_t *)bg_mem_alloc(request.data_size);
             if (verify_buffer) {
-                /* 直接从PSRAM读取已加载的数据进行校验和计�?*/
-                FlashDevice_t *psram_dev = FlashDevices_GetPsramFlash();
-                if (psram_dev) {
+                {
                     PSRAM_BufferInfo_t *buffer = &g_psram_state.public_state.buffer_table[request.buffer_id];
-                    BG_ERR verify_ret = psram_dev->ops->read(psram_dev, buffer->address,
-                                                           verify_buffer, request.data_size);
-                    if (verify_ret == SUCCESS) {
+                    if (bg_extmem_read(buffer->address, verify_buffer, request.data_size) == 0) {
                         checksum = psram_calculate_checksum(verify_buffer, request.data_size);
                         if (checksum != request.checksum) {
                             BG_LOG_W(BG_LOG_TAG_PSRAM, "Checksum mismatch: expected=0x%08X, got=0x%08X",
@@ -812,7 +801,7 @@ static void psram_loader_task(void *param)
                         BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to read PSRAM for checksum verification");
                     }
                 }
-                free(verify_buffer);
+                bg_mem_free(verify_buffer);
             } else {
                 BG_LOG_W(BG_LOG_TAG_PSRAM, "Failed to allocate buffer for checksum verification");
             }
@@ -837,62 +826,41 @@ static BG_ERR psram_load_data_chunk(uint32_t buffer_id, uint32_t nand_offset,
                                    uint32_t psram_offset, uint32_t size)
 {
     PSRAM_BufferInfo_t *buffer;
-    FlashDevice_t *src_dev, *psram_dev;
     uint8_t *temp_buffer;
     uint32_t remaining = size;
     uint32_t chunk_size;
     uint32_t current_src_offset;
     uint32_t current_psram_offset;
-    BG_ERR ret;
 
-#ifdef BANDATAHUB
-    /* BanDataHub: SF2数据已在PSRAM样本区 (0x000000~0x5FFFFF)
-     * 源设备也是 PSRAM, nand_offset 是 SF2 内部偏移 */
-    src_dev = FlashDevices_GetPsramFlash();
-    psram_dev = FlashDevices_GetPsramFlash();
-    if (!src_dev || !psram_dev) {
+    if (!bg_extmem_ready()) {
         return ENABLE_INVALID_INPUT;
     }
-#else
-    /* 获取设备 */
-    src_dev = FlashDevices_GetNandFlash();
-    psram_dev = FlashDevices_GetPsramFlash();
-    if (!src_dev || !psram_dev) {
-        return ENABLE_INVALID_INPUT;
-    }
-#endif
 
     buffer = &g_psram_state.public_state.buffer_table[buffer_id];
 
-    /* 分配临时缓冲�?*/
-    temp_buffer = (uint8_t *)malloc(PSRAM_DMA_CHUNK_SIZE);
+    temp_buffer = (uint8_t *)bg_mem_alloc(PSRAM_DMA_CHUNK_SIZE);
     if (!temp_buffer) {
         return ENABLE_OUT_OF_MEMORY;
     }
 
-    /* 分块传输数据 */
     current_src_offset = nand_offset;
     current_psram_offset = buffer->address + psram_offset;
 
     while (remaining > 0) {
         chunk_size = (remaining > PSRAM_DMA_CHUNK_SIZE) ? PSRAM_DMA_CHUNK_SIZE : remaining;
 
-        /* 从源设备读取数据到临时缓冲区 */
-        ret = (BG_ERR)src_dev->ops->read(src_dev, current_src_offset, temp_buffer, chunk_size);
-        if (ret != SUCCESS) {
+        if (bg_extmem_src_read(current_src_offset, temp_buffer, chunk_size) != 0) {
             BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to read from source: offset=0x%08X, size=%u",
                      current_src_offset, chunk_size);
-            free(temp_buffer);
-            return ret;
+            bg_mem_free(temp_buffer);
+            return ENABLE_INVALID_INPUT;
         }
 
-        /* 将数据写�?PSRAM */
-        ret = (BG_ERR)psram_dev->ops->write(psram_dev, current_psram_offset, temp_buffer, chunk_size);
-        if (ret != SUCCESS) {
+        if (bg_extmem_write(current_psram_offset, temp_buffer, chunk_size) != 0) {
             BG_LOG_E(BG_LOG_TAG_PSRAM, "Failed to write to PSRAM: offset=0x%08X, size=%u",
                      current_psram_offset, chunk_size);
-            free(temp_buffer);
-            return ret;
+            bg_mem_free(temp_buffer);
+            return ENABLE_INVALID_INPUT;
         }
 
         current_src_offset += chunk_size;
@@ -900,7 +868,7 @@ static BG_ERR psram_load_data_chunk(uint32_t buffer_id, uint32_t nand_offset,
         remaining -= chunk_size;
     }
 
-    free(temp_buffer);
+    bg_mem_free(temp_buffer);
 
     BG_LOG_I(BG_LOG_TAG_PSRAM, "Data chunk loaded: buffer=%u, src_offset=0x%08X, psram_offset=0x%08X, size=%u",
              buffer_id, nand_offset, buffer->address + psram_offset, size);

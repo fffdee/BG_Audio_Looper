@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file fat32_diskio.c
  * @brief FAT32 底层磁盘IO抽象层实现
@@ -7,7 +10,7 @@
 
 #include "product_def.h"
 
-#if FAT32_EN
+#if FAT32_EN && !defined(BANDATAHUB)
 
 #include "fat32_diskio.h"
 #include "hal_sdio.h"
@@ -226,3 +229,5 @@ const FAT32_DiskIO_t fat32_diskio_nand = {
 };
 
 #endif /* FAT32_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

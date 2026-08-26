@@ -167,6 +167,20 @@ TIMER DeviceStorCmdTimer;
 bool DeviceStorIsCardInitOK;
 
 static uint8_t sReaderState = READER_UNREADY;
+static bool sMscBusy;
+static TIMER sMscBusyTimer;
+
+int OTG_DeviceStorIsBusy(void)
+{
+	if (sReaderState == READER_READ || sReaderState == READER_WIRTE) {
+		return 1;
+	}
+	if (sMscBusy && !IsTimeOut(&sMscBusyTimer)) {
+		return 1;
+	}
+	sMscBusy = FALSE;
+	return 0;
+}
 
 typedef struct
 {
@@ -628,4 +642,8 @@ void OTG_DeviceStorProcess(void)
 
 	DeviceStorCmdFlag = TRUE;
 	TimeOutSet(&DeviceStorCmdTimer, 1500);
+	if (gCBW[15] == READ_10 || gCBW[15] == WRITE_10) {
+		sMscBusy = TRUE;
+		TimeOutSet(&sMscBusyTimer, 3000);
+	}
 }

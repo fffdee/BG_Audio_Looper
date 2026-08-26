@@ -1,28 +1,24 @@
 /**
  * @file bg_storage_bandatahub.c
- * @brief BanDataHub 平台 SD卡+PSRAM 音源存储驱动
- * 
- * 架构: SD卡(FAT32) → PSRAM(音色数据缓存) → 合成器
- * 
+ * @brief BanDataHub 平台 SD卡+PSRAM 音源存储驱动（纯合成器工程）
+ *
+ * 架构: SD卡(FAT32/U盘可写) → PSRAM(SF2 样本+元数据) → BanGTsynth
+ *
  * 工作流程:
- *   1. Init: 通过 FAT32 从 SD卡查找 SF2 文件
- *   2. 解析 SF2 文件头, 获取音色元数据
- *   3. 将音色参数数据加载到 PSRAM
- *   4. 合成时通过 PSRAM 读取音频样本数据
- * 
- * 依赖:
- *   - BanDataHub FAT32 文件系统 (05_component/fat32/)
- *   - BanDataHub PSRAM 驱动 (02_device_drivers/flash/psram_esp64h)
- *   - BanDataHub PSRAM 堆管理器 (05_component/fat32/psram_heap)
- *   - BanDataHub FlashBus 框架 (02_device_drivers/flash/flash_bus)
+ *   1. Init: 通过 FAT32 从 SD 查找 SF2（如 drumset.sf2 / 4OPFM.sf2）
+ *   2. 整文件写入 PSRAM 样本区 (0–6MB)
+ *   3. 元数据索引写入 PSRAM (6–7MB)
+ *   4. soundbank_manager / sf2_parser 从 PSRAM 读样本发声
+ *   5. USB MSC 仍可把同一张 SD 当 U 盘给 PC 更新 SF2
  */
 
 #include "bg_storage.h"
 #include "bg_config.h"
-#include "../../fat32/fat32.h"
-#include "../../fat32/psram_heap.h"
-#include "../../../02_device_drivers/flash/flash_devices.h"
-#include "../../../02_device_drivers/flash/flash_bus.h"
+#include "bg_sf2_sd.h"
+#include "fat32.h"
+#include "psram_heap.h"
+#include "flash_devices.h"
+#include "flash_bus.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -57,6 +53,14 @@
 static bool s_initialized = false;
 static bool s_sf2_loaded = false;
 static char s_sf2_filename[SYNTH_SF2_FILENAME_MAX];
+
+typedef struct {
+    char name[BG_SF2_SD_NAME_MAX];
+    uint32_t size;
+} Sf2Item_t;
+
+static Sf2Item_t s_catalog[BG_SF2_SD_MAX];
+static int s_catalog_count;
 
 /* PSRAM 设备指针 (缓存) */
 static FlashDevice_t *s_psram_dev = NULL;
@@ -102,44 +106,103 @@ static int psram_direct_write(uint32_t psram_addr, const void *buf, uint32_t len
  * SD卡 SF2 文件查找
  * ============================================ */
 
-/**
- * @brief 在SD卡根目录递归查找 .sf2 文件
- */
+static int name_is_sf2(const char *name)
+{
+    int n;
+    if (!name) {
+        return 0;
+    }
+    n = (int)strlen(name);
+    if (n < 4) {
+        return 0;
+    }
+    return (name[n - 4] == '.' &&
+            (name[n - 3] == 'S' || name[n - 3] == 's') &&
+            (name[n - 2] == 'F' || name[n - 2] == 'f') &&
+            name[n - 1] == '2');
+}
+
+static int catalog_cb(const FAT32_FileInfo_t *info, void *user)
+{
+    (void)user;
+    if (!info || (info->attr & DIR_ATTR_DIRECTORY)) {
+        return 0;
+    }
+    if (!name_is_sf2(info->name)) {
+        return 0;
+    }
+    if (s_catalog_count >= BG_SF2_SD_MAX) {
+        return 1;
+    }
+    strncpy(s_catalog[s_catalog_count].name, info->name, BG_SF2_SD_NAME_MAX - 1);
+    s_catalog[s_catalog_count].name[BG_SF2_SD_NAME_MAX - 1] = '\0';
+    s_catalog[s_catalog_count].size = info->size;
+    s_catalog_count++;
+    return 0;
+}
+
+static BG_ERR ensure_fat32(void)
+{
+    if (FAT32_IsCardReady()) {
+        return SUCCESS;
+    }
+    return FAT32_Init();
+}
+
+int bg_sf2_sd_scan(void)
+{
+    s_catalog_count = 0;
+    memset(s_catalog, 0, sizeof(s_catalog));
+    if (ensure_fat32() != SUCCESS) {
+        DBG_SYNTH_STORAGE("scan: FAT32 not ready\n");
+        return 0;
+    }
+    (void)FAT32_ListDir("/", catalog_cb, NULL);
+    DBG_SYNTH_STORAGE("scan: %d .sf2 file(s)\n", s_catalog_count);
+    return s_catalog_count;
+}
+
+int bg_sf2_sd_count(void)
+{
+    return s_catalog_count;
+}
+
+const char *bg_sf2_sd_name(int index)
+{
+    if (index < 0 || index >= s_catalog_count) {
+        return NULL;
+    }
+    return s_catalog[index].name;
+}
+
+uint32_t bg_sf2_sd_size(int index)
+{
+    if (index < 0 || index >= s_catalog_count) {
+        return 0;
+    }
+    return s_catalog[index].size;
+}
+
+const char *bg_sf2_sd_current(void)
+{
+    return s_sf2_filename;
+}
+
+int bg_sf2_sd_is_loaded(void)
+{
+    return s_sf2_loaded ? 1 : 0;
+}
+
 static BG_ERR find_sf2_file(char *filename, uint32_t max_len)
 {
-    FAT32_FileInfo_t info;
-    FAT32_FileHandle_t handle;
-    BG_ERR ret;
-    
-    if (!FAT32_IsCardReady()) {
-        DBG_SYNTH_STORAGE("SD card not ready\n");
-        return ENABLE_DEVICE_NOT_READY;
+    if (bg_sf2_sd_scan() <= 0) {
+        DBG_SYNTH_STORAGE("No SF2 file found on SD card\n");
+        return ENABLE_NOT_FOUND;
     }
-    
-    /* 尝试直接打开 drumset.sf2 */
-    ret = FAT32_OpenFile("drumset.sf2", &handle);
-    if (ret == SUCCESS) {
-        strncpy(filename, "drumset.sf2", max_len);
-        FAT32_CloseFile(&handle);
-        DBG_SYNTH_STORAGE("Found: drumset.sf2\n");
-        return SUCCESS;
-    }
-    
-    /* 尝试 4OPFM.sf2 */
-    ret = FAT32_OpenFile("4OPFM.sf2", &handle);
-    if (ret == SUCCESS) {
-        strncpy(filename, "4OPFM.sf2", max_len);
-        FAT32_CloseFile(&handle);
-        DBG_SYNTH_STORAGE("Found: 4OPFM.sf2\n");
-        return SUCCESS;
-    }
-    
-    /* 在根目录搜索所有 .sf2 文件 */
-    /* 简单方案: 遍历根目录找第一个 .sf2 */
-    ret = FAT32_ListDir("/", NULL, NULL) /* 简化: 直接尝试常见文件名 */;
-    
-    DBG_SYNTH_STORAGE("No SF2 file found on SD card\n");
-    return ENABLE_NOT_FOUND;
+    strncpy(filename, s_catalog[0].name, max_len - 1);
+    filename[max_len - 1] = '\0';
+    DBG_SYNTH_STORAGE("Found: %s\n", filename);
+    return SUCCESS;
 }
 
 /* ============================================
@@ -172,6 +235,11 @@ static BG_ERR load_sf2_to_psram(const char *filename)
     
     file_size = handle.info.size;
     DBG_SYNTH_STORAGE("SF2 file: %s, size=%lu bytes\n", filename, (unsigned long)file_size);
+    if (file_size == 0 || file_size > SYNTH_PSRAM_SAMPLE_SIZE) {
+        DBG_SYNTH_STORAGE("SF2 size invalid (max %lu)\n", (unsigned long)SYNTH_PSRAM_SAMPLE_SIZE);
+        FAT32_CloseFile(&handle);
+        return ENABLE_INVALID_INPUT;
+    }
     
     /* 逐块读取 SF2 文件并写入 PSRAM */
     while (total_read < file_size) {
@@ -220,6 +288,41 @@ static BG_ERR load_sf2_to_psram(const char *filename)
     return SUCCESS;
 }
 
+BG_ERR bg_sf2_sd_load_psram(const char *filename)
+{
+    BG_ERR ret;
+    char pick[SYNTH_SF2_FILENAME_MAX];
+
+    if (!s_psram_dev) {
+        s_psram_dev = FlashDevices_GetPsramFlash();
+    }
+    if (!s_psram_dev || !s_psram_dev->initialized) {
+        return ENABLE_DEVICE_NOT_READY;
+    }
+    if (ensure_fat32() != SUCCESS) {
+        return ENABLE_DEVICE_NOT_READY;
+    }
+
+    if (filename && filename[0]) {
+        strncpy(pick, filename, sizeof(pick) - 1);
+        pick[sizeof(pick) - 1] = '\0';
+    } else {
+        ret = find_sf2_file(pick, sizeof(pick));
+        if (ret != SUCCESS) {
+            return ret;
+        }
+    }
+
+    ret = load_sf2_to_psram(pick);
+    if (ret != SUCCESS) {
+        return ret;
+    }
+    strncpy(s_sf2_filename, pick, sizeof(s_sf2_filename) - 1);
+    s_sf2_filename[sizeof(s_sf2_filename) - 1] = '\0';
+    s_initialized = true;
+    return SUCCESS;
+}
+
 /* ============================================
  * BG_Storage 驱动接口实现
  * ============================================ */
@@ -227,68 +330,38 @@ static BG_ERR load_sf2_to_psram(const char *filename)
 static BG_ERR bandatahub_storage_init(const char *path, BG_Storage_Mode_t mode)
 {
     BG_ERR ret;
-    char sf2_file[SYNTH_SF2_FILENAME_MAX] = {0};
-    
-    if (s_initialized) {
-        return SUCCESS;  /* 已初始化 */
-    }
-    
-    (void)path;   /* path 参数: 可选 SF2 文件名 */
-    (void)mode;   /* 当前仅支持只读 */
-    
+
+    (void)mode;
+
     DBG_SYNTH_STORAGE("Initializing BanDataHub SD+PSRAM storage driver...\n");
-    
-    /* 1. 获取 PSRAM 设备 */
+
     s_psram_dev = FlashDevices_GetPsramFlash();
     if (!s_psram_dev || !s_psram_dev->initialized) {
         DBG_SYNTH_STORAGE("PSRAM device not available\n");
         return ENABLE_DEVICE_NOT_READY;
     }
-    DBG_SYNTH_STORAGE("PSRAM device OK, size=%lu\n", 
-                      (unsigned long)s_psram_dev->info.total_size);
-    
-    /* 2. 初始化 FAT32 (如果未初始化) */
-    if (!FAT32_IsCardReady()) {
-        ret = FAT32_Init();
-        if (ret != SUCCESS) {
-            DBG_SYNTH_STORAGE("FAT32 init failed: %d\n", ret);
-            return ENABLE_DEVICE_NOT_READY;
-        }
-        DBG_SYNTH_STORAGE("FAT32 initialized\n");
+
+    if (s_initialized && s_sf2_loaded && (!path || !path[0])) {
+        return SUCCESS;
     }
-    
-    /* 3. 查找 SF2 文件 */
-    ret = find_sf2_file(sf2_file, sizeof(sf2_file));
+
+    ret = bg_sf2_sd_load_psram(path);
     if (ret != SUCCESS) {
-        DBG_SYNTH_STORAGE("No SF2 file found\n");
-        /* 不致命: 允许稍后通过下载加载音源 */
+        DBG_SYNTH_STORAGE("No SF2 loaded (err=%d), driver still usable\n", ret);
         s_initialized = true;
         return SUCCESS;
     }
-    
-    /* 4. 加载 SF2 到 PSRAM */
-    ret = load_sf2_to_psram(sf2_file);
-    if (ret != SUCCESS) {
-        DBG_SYNTH_STORAGE("SF2 load failed\n");
-        return ret;
-    }
-    
-    strncpy(s_sf2_filename, sf2_file, sizeof(s_sf2_filename) - 1);
-    s_initialized = true;
-    
+
     DBG_SYNTH_STORAGE("BanDataHub storage driver initialized OK\n");
     return SUCCESS;
 }
 
 static BG_ERR bandatahub_storage_deinit(void)
 {
-    if (!s_initialized) return SUCCESS;
-    
-    FAT32_DeInit();
+    /* 不卸载 FAT32，避免打断 USB MSC 与再次选库 */
     s_initialized = false;
     s_sf2_loaded = false;
     memset(s_sf2_filename, 0, sizeof(s_sf2_filename));
-    
     DBG_SYNTH_STORAGE("Storage driver deinitialized\n");
     return SUCCESS;
 }
@@ -334,7 +407,7 @@ static BG_ERR bandatahub_storage_get_info(uint32_t *total_size, uint32_t *free_s
  * 导出驱动实例
  * ============================================ */
 
-const BG_Storage_Driver_t bg_storage_driver_bandatahub = {
+const BG_Storage_Driver_t bg_storage_driver_port = {
     .init     = bandatahub_storage_init,
     .deinit   = bandatahub_storage_deinit,
     .read     = bandatahub_storage_read,

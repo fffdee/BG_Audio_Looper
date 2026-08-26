@@ -292,6 +292,21 @@ uint16_t OTG_DeviceCDC_GetRxCount(void)
 }
 
 /**
+ * @brief  Peek at the next byte in CDC RX buffer without consuming it.
+ * @param  byte: pointer to receive the peeked byte
+ * @return 1 if a byte was peeked, 0 if buffer empty
+ */
+uint16_t OTG_DeviceCDC_PeekByte(uint8_t *byte)
+{
+    if(!UsbCDC.InitOk || byte == NULL || UsbCDC.RxCount == 0)
+    {
+        return 0;
+    }
+    *byte = UsbCDC.RxBuffer[UsbCDC.RxTail];
+    return 1;
+}
+
+/**
  * @brief  Get available space in CDC TX buffer
  * @return number of available bytes
  */

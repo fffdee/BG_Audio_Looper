@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file bg_storage_bp10.c
  * @brief BG_Storage 驱动 — BP10 平台实现
@@ -186,3 +189,5 @@ const BG_Storage_Driver_t bg_storage_driver_bp10 = {
 #endif /* BG_TARGET_PLATFORM == BG_PLATFORM_BP10 */
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

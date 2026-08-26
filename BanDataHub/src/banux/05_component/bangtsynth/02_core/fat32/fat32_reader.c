@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file fat32_reader.c
  * @brief FAT32 文件系统最小读取器实现
@@ -8,7 +11,7 @@
 
 #include "product_def.h"
 
-#if FAT32_EN
+#if FAT32_EN && !defined(BANDATAHUB)
 
 #include "fat32_reader.h"
 #include "fat32_diskio.h"
@@ -1724,3 +1727,4 @@ static void fat32_lfn_to_utf8(uint16_t *lfn_unicode, uint8_t length, char *utf8_
 }
 
 #endif /* FAT32_EN */
+#endif /* BANGTSYNTH_LEGACY */

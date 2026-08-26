@@ -2,12 +2,11 @@
  * BG_Storage - 音源存储抽象层实现
  */
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
 #include "bg_storage.h"
-#include "bg_config.h"
 #include "bg_log.h"
 #include <string.h>
 
@@ -42,11 +41,11 @@ static const BG_Storage_Driver_t* select_default_driver(void)
 #elif (BG_TARGET_PLATFORM == BG_PLATFORM_ESP32)
     return &bg_storage_driver_esp32;
 #elif (BG_TARGET_PLATFORM == BG_PLATFORM_BP10)
-    #ifdef BANDATAHUB
-        return &bg_storage_driver_bandatahub;
-    #else
+#if BG_CFG_USE_PORT_STORAGE
+        return &bg_storage_driver_port;
+#else
         return &bg_storage_driver_bp10;
-    #endif
+#endif
 #else
     #error "Unsupported platform for BG_Storage"
     return NULL;

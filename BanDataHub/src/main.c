@@ -100,16 +100,17 @@ extern uint8_t BleConnectFlag;
 #include "banux/05_component/firmware_upgrade/fw_upgrade.h"
 
 #if BANGTSYNTH_EN
-#include "bangtsynth_node.h"
-#include "bg_storage.h"
+#include "bg_synth.h"
+#include "sf2_browser.h"
 #endif
 
-
+#include "sadc_interface.h"
 
 extern void SysTickInit(void);
 extern void UsbAudioMicDacInit(void);
 extern void OTG_DeviceAudioInit();
 extern void UsbAudioTimer1msProcess(void);
+extern void Reset_McuSystem(void);
 
 uint8_t record_flag = 0;
 uint16_t read_write = 0;
@@ -272,53 +273,46 @@ void power_on()
 		}
 	}
 
-#if BANGTSYNTH_EN
-	DBG("[Task] Initializing BanGTsynth...\n");
-	{
-		extern int osPortRemainMem(void);
-		DBG("[Task] Heap before BanGTsynth: %d bytes\n", osPortRemainMem());
-	}
-	if (BanGTsynth_Node_Init() == 0) {
-		DBG("[Task] BanGTsynth initialized OK\n");
-	} else {
-		DBG("[Task] BanGTsynth init FAILED\n");
-	}
+	/* 先起 OLED + USB，再加载音源，避免 SD/SF2 卡住时屏不亮、电脑看不到设备 */
+#if HW_DRV_SSD1306_EN
+	SSD1306_Init();
+	SSD1306_Clear();
+	SSD1306_DrawString(0, 0, "BanDataHub", 2, 1);
+	SSD1306_DrawString(0, 20, "USB boot...", 1, 1);
+	SSD1306_Update();
+	DBG("[Task] SSD1306 OLED initialized\n");
 #endif
 
-	/* 初始化 Flash 设备（含 PSRAM + SD 卡），必须在 RTOS 调度器启动后调用
-	   且必须在 BanGTsynth 存储初始化之前 (PSRAM设备需要就绪) */
+#if HW_DRV_ENCODER_EN
+	RotaryEncoder_Init();
+	DBG("[Task] Rotary Encoder initialized\n");
+#endif
+
+	/* USB 先于 SD/PSRAM，避免卡初始化卡住时电脑完全看不到设备 */
+	BG_AudioManager.Audio_Init(44100);
+
 	DBG("[Task] Initializing Flash devices (PSRAM, SD card)...\n");
 	BG_FlashMgr.Init();
 	DBG("[Task] Flash devices initialized\n");
 
 #if BANGTSYNTH_EN
-#if SYNTH_SD_NAND_PSRAM_EN
-	/* SD+PSRAM 方案: SYNTH_StartupSequence 内部处理所有存储初始化
-	 * 注意: 必须在 BG_FlashMgr.Init() 之后, PSRAM设备已就绪 */
-	DBG("[Task] Starting SYNTH startup sequence...\n");
-	if (SYNTH_StartupSequence()) {
-		DBG("[Task] SD+PSRAM soundbank loaded OK\n");
-	} else {
-		DBG("[Task] SD+PSRAM init FAILED, trying embedded fallback\n");
-		BG_Storage.SetDriver(&bg_storage_driver_embedded);
-		if (soundbank_manager.Init(0) == SUCCESS) {
-			DBG("[Task] Embedded SF2 soundbank loaded OK (fallback)\n");
-		} else {
-			DBG("[Task] Embedded SF2 soundbank load FAILED\n");
-		}
+	DBG("[Task] Initializing BanGTsynth...\n");
+#if HW_DRV_SSD1306_EN
+	SSD1306_Clear();
+	SSD1306_DrawString(0, 0, "BanDataHub", 2, 1);
+	SSD1306_DrawString(0, 20, "Load SF2...", 1, 1);
+	SSD1306_Update();
+#endif
+	{
+		extern int osPortRemainMem(void);
+		DBG("[Task] Heap before BanGTsynth: %d bytes\n", osPortRemainMem());
 	}
-#else
-	/* 传统方案: 内嵌音源 */
-	BG_Storage.SetDriver(&bg_storage_driver_embedded);
-	if (soundbank_manager.Init(0) == SUCCESS) {
-		DBG("[Task] Embedded SF2 soundbank loaded OK\n");
+	if (bg_synth_init() == 0) {
+		DBG("[Task] BanGTsynth initialized OK\n");
 	} else {
-		DBG("[Task] Embedded SF2 soundbank load FAILED\n");
+		DBG("[Task] BanGTsynth init FAILED (put .sf2 on SD if using SD load)\n");
 	}
 #endif
-#endif
-
-	BG_AudioManager.Audio_Init(44100);
 
 #if HW_DRV_BT_EN
 	{
@@ -338,18 +332,9 @@ void power_on()
 	SysState_Init();
 	DBG("[Task] SysState initialized\n");
 
-#if HW_DRV_SSD1306_EN
-	SSD1306_Init();
-	SSD1306_Clear();
-	SSD1306_DrawString(0, 0, "BanDataHub", 2, 1);
-	SSD1306_DrawString(0, 20, "Init OK", 1, 1);
-	SSD1306_Update();
-	DBG("[Task] SSD1306 OLED initialized\n");
-#endif
-
-#if HW_DRV_ENCODER_EN
-	RotaryEncoder_Init();
-	DBG("[Task] Rotary Encoder initialized\n");
+#if BANGTSYNTH_EN && HW_DRV_SSD1306_EN
+	Sf2Browser_Init();
+	DBG("[Task] SF2 browser UI ready\n");
 #endif
 
 #ifdef UI_EN
@@ -634,7 +619,8 @@ int main(void) {
 	DMA_ChannelAllocTableSet(DmaChannelMap);
 	diag_putc('R');  /* Remap/SPI/DMA re-init done */
 
-	DBG("[APP] main() entered (from bootloader)\n");
+	DBG("[APP] BanDataHub entered (from bootloader)\n");
+	diag_putc('3');
 #else
 	Chip_Init(1);
 	WDG_Disable();
@@ -673,18 +659,23 @@ int main(void) {
 	/* Boot partition detection — detect which partition we're running on.
 	 * With bootloader, the jump decision is already made by bootloader.
 	 * This just sets the internal tracking flag. */
+	diag_putc('4');
 	FwUpgrade_BootInit();
+	diag_putc('5');
 
 	GIE_ENABLE();
+	diag_putc('6');
 	Timer_Config(TIMER2, 1000, 0);
 	Timer_Start(TIMER2);
 	NVIC_EnableIRQ(Timer2_IRQn);
+	diag_putc('7');
 
 	DBG("****************************************************************\n");
 	DBG("                     BanDataHub SDK                             \n");
 	DBG("****************************************************************\n");
 
 	prvInitialiseHeap();
+	diag_putc('8');
 
 	NVIC_EnableIRQ(SWI_IRQn);
 

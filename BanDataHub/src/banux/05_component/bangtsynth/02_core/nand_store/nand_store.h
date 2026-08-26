@@ -9,7 +9,7 @@
 #ifndef __NAND_STORE_H__
 #define __NAND_STORE_H__
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if SYNTH_SD_NAND_PSRAM_EN
 
@@ -24,7 +24,7 @@
 #define NAND_STORE_USE_PSRAM_INDEX
 
 #ifdef NAND_STORE_USE_PSRAM_INDEX
-#include "psram_heap.h"
+#include "../fat32/psram_heap.h"
 #endif
 
 #ifdef __cplusplus

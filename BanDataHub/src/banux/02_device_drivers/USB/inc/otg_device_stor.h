@@ -22,6 +22,8 @@ extern "C" {
 
 void OTG_DeviceStorInit(void);
 void OTG_DeviceStorProcess(void);
+/** PC 正在通过 U 盘读写 TF（期间不要再用 FAT32 加载音源） */
+int OTG_DeviceStorIsBusy(void);
 
 #ifdef  __cplusplus
 }

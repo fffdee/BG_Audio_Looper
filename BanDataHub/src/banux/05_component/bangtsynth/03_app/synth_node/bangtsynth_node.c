@@ -19,14 +19,14 @@
  * ���?? BANGTSYNTH_EN
  */
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
 #include "bangtsynth_node.h"
-#include "drum_machine.h"
+#include "../drum_machine/drum_machine.h"
 #include "midi_controller.h"
-#include "soundbank_manager.h"
+#include "../../02_core/soundbank/soundbank_manager.h"
 #include "bg_config.h"
 #include "debug.h"
 #include "bg_osal.h"
@@ -312,136 +312,84 @@ static void scheduled_noteoff_tick(void)
     }
 }
 
-uint16_t BanGTsynth_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
+uint32_t BanGTsynth_RenderS16(int16_t *out, uint32_t frames)
 {
-    uint16_t i;
-    uint16_t chunk_len;
-    uint16_t offset;
+    uint32_t i;
+    uint32_t chunk_len;
+    uint32_t offset;
     uint8_t active;
-    uint16_t sample_u16;
-    static uint32_t call_count = 0;
-    static uint32_t active_cb_count = 0;  /* �л�Ծ��Ƶ�Ļص����� */
 
-    (void)node;
+    if (!out || frames == 0) {
+        return 0;
+    }
 
-    /* ������� */
-    memset(out_buf, 0, max_len * sizeof(uint32_t));
+    memset(out, 0, frames * sizeof(int16_t));
 
     if (!g_synth_initialized) {
-        return max_len;
+        return frames;
     }
 
-    call_count++;
-
-    /* ??������ģ?? ���� 500Hz ������������֤Ч��ͼ·�� */
     if (g_test_tone_remaining > 0) {
         g_test_tone_remaining--;
-        for (i = 0; i < max_len; i++) {
-            /* 500Hz ���� @ 48kHz = 96 samples per cycle */
-            int16_t tone = (g_test_tone_phase < 48) ? 16000 : -16000;
+        for (i = 0; i < frames; i++) {
+            out[i] = (g_test_tone_phase < 48) ? 16000 : -16000;
             g_test_tone_phase = (g_test_tone_phase + 1) % 96;
-            sample_u16 = (uint16_t)tone;
-            out_buf[i] = ((uint32_t)sample_u16 << 16) | (uint32_t)sample_u16;
         }
-        if (call_count % 500 == 0) {
-            SYNTH_DBG("[Synth] TEST_TONE: remaining=%u out[0]=0x%08X\n",
-                g_test_tone_remaining, out_buf[0]);
-        }
-        return max_len;
+        return frames;
     }
 
-    /* ??ֱ�� DAC ģʽ: sb -t / sb -p ���� Shell ������ֱ�Ӳ�??g_voices[],
-     *   ��ʱ SourceCallback �������� ReadActiveSamples �Ա��Ⲣ����??*/
     if (g_direct_mode) {
-        /* ������ʾ (??5000 ?? */
-        if (call_count % 5000 == 0) {
-            SYNTH_DBG("[Synth] CB#%u DIRECT_MODE active, skipping ReadActiveSamples\n", call_count);
-        }
-        return max_len;
+        return frames;
     }
 
-    /* ??�ؼ�: �ȴ���������??NoteOn/Off ��Ϣ (��������ִ��!) */
     synth_process_queue();
-
-    /* �� �Ļ�ģ�� tick (DrumMachine) */
     DrumMachine_Tick();
-    /* �� ��ʱ NoteOff tick: sb -m ���ȵ��ӳٹر� */
     scheduled_noteoff_tick();
 
-    /* ??���: NoteOn ��������??g_voices ״??*/
-    if (g_diag_trigger) {
-        SYNTH_DBG("[Synth] POST_QUEUE: diag_trigger set, checking ReadActiveSamples...\n");
-    }
-
-    /* �ֿ鴦��: ÿ�� SYNTH_FRAME_SIZE ���� */
-    for (offset = 0; offset < max_len; offset += chunk_len) {
-        chunk_len = max_len - offset;
+    for (offset = 0; offset < frames; offset += chunk_len) {
+        chunk_len = frames - offset;
         if (chunk_len > SYNTH_FRAME_SIZE) {
             chunk_len = SYNTH_FRAME_SIZE;
         }
 
         active = soundbank_manager.ReadActiveSamples(g_synth_mix_buf, chunk_len);
+        if (active == 0) {
+            continue;
+        }
 
-        if (active > 0) {
-            active_cb_count++;
-
-            /* һ������?? TriggerNoteOn ���״μ�⵽��Ծ��Ƶ */
-            if (g_diag_trigger) {
-                int16_t max_abs = 0;
-                for (i = 0; i < chunk_len && i < 8; i++) {
-                    int16_t v = g_synth_mix_buf[i];
-                    if (v < 0) v = -v;
-                    if (v > max_abs) max_abs = v;
-                }
-                SYNTH_DBG("[Synth] DIAG_ACTIVE: CB#%u active=%u chunk=%u max_len=%u max_abs=%d\n",
-                    call_count, active, chunk_len, max_len, (int)max_abs);
-                SYNTH_DBG("[Synth]   mix[0..7]: %d %d %d %d %d %d %d %d\n",
-                    (int)g_synth_mix_buf[0], (int)g_synth_mix_buf[1],
-                    (int)g_synth_mix_buf[2], (int)g_synth_mix_buf[3],
-                    (int)g_synth_mix_buf[4], (int)g_synth_mix_buf[5],
-                    (int)g_synth_mix_buf[6], (int)g_synth_mix_buf[7]);
-                g_diag_trigger = 0;
-            }
-
-            /* �����Ի�Ծ��??*/
-            if (active_cb_count % 200 == 0) {
-                SYNTH_DBG("[Synth] ACTIVE #%u: CB#%u mix[0]=%d\n",
-                    active_cb_count, call_count, (int)g_synth_mix_buf[0]);
-            }
-
-            /*
-             * ֱ�Ӵ��ԭʼ����??uint32_t ����??(�ƹ� BG_AudioProcessor)
-             * sb -t Ҳ��ʹ�� AudioProcessor, ֱ��??DAC ����
-             * �� Ӧ������: vol=0~100, ����ʱʹ�� int32 ��ֹ���
-             */
-            for (i = 0; i < chunk_len; i++) {
-                int32_t sample_vol = ((int32_t)g_synth_mix_buf[i] * g_synth_volume) / 100;
-                if (sample_vol > 32767) sample_vol = 32767;
-                if (sample_vol < -32768) sample_vol = -32768;
-                sample_u16 = (uint16_t)sample_vol;
-                out_buf[offset + i] = ((uint32_t)sample_u16 << 16) | (uint32_t)sample_u16;
-            }
-
-            /* һ��?? ��ӡ������ out_buf ??*/
-            if (active_cb_count == 1) {
-                SYNTH_DBG("[Synth]   out[0..3]: 0x%08X 0x%08X 0x%08X 0x%08X\n",
-                    out_buf[offset], out_buf[offset+1],
-                    out_buf[offset+2], out_buf[offset+3]);
-            }
+        for (i = 0; i < chunk_len; i++) {
+            int32_t sample_vol = ((int32_t)g_synth_mix_buf[i] * g_synth_volume) / 100;
+            if (sample_vol > 32767) sample_vol = 32767;
+            if (sample_vol < -32768) sample_vol = -32768;
+            out[offset + i] = (int16_t)sample_vol;
         }
     }
 
-    /* ??���: NoteOn �Ѵ����� ReadActiveSamples ʼ�շ��� 0 */
-    if (g_diag_trigger) {
-        SYNTH_DBG("[Synth] DIAG_FAIL: NoteOn queued OK but ReadActiveSamples returned 0!\n");
-        SYNTH_DBG("[Synth]   active_cbs=%u, max_len=%u\n", active_cb_count, max_len);
-        g_diag_trigger = 0;
-    }
+    return frames;
+}
 
-    /* ����������־ (������Ծͳ��) */
-    if (call_count % 10000 == 0) {
-        SYNTH_DBG("[Synth] CB#%u heartbeat (active_cbs=%u direct=%u)\n",
-            call_count, active_cb_count, g_direct_mode);
+uint16_t BanGTsynth_SourceCallback(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
+{
+    uint16_t i;
+    uint16_t sample_u16;
+    uint16_t offset;
+    uint16_t chunk;
+
+    (void)node;
+    memset(out_buf, 0, max_len * sizeof(uint32_t));
+
+    offset = 0;
+    while (offset < max_len) {
+        chunk = (uint16_t)(max_len - offset);
+        if (chunk > SYNTH_FRAME_SIZE) {
+            chunk = SYNTH_FRAME_SIZE;
+        }
+        BanGTsynth_RenderS16(g_synth_mix_buf, chunk);
+        for (i = 0; i < chunk; i++) {
+            sample_u16 = (uint16_t)g_synth_mix_buf[i];
+            out_buf[offset + i] = ((uint32_t)sample_u16 << 16) | (uint32_t)sample_u16;
+        }
+        offset = (uint16_t)(offset + chunk);
     }
 
     return max_len;

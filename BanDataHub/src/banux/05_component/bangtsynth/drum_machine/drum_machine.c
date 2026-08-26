@@ -1,3 +1,6 @@
+#include "bangtsynth_legacy.h"
+#if BANGTSYNTH_LEGACY
+
 /**
  * @file    drum_machine.c
  * @brief   独立鼓机模块 - 节拍编辑、非阻塞播放、Flash存储、BLE音源下载
@@ -538,3 +541,5 @@ int DrumMachine_DownloadSoundbank(uint32_t file_size)
 }
 
 #endif /* BANGTSYNTH_EN */
+
+#endif /* BANGTSYNTH_LEGACY */

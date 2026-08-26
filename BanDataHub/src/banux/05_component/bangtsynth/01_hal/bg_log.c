@@ -1,4 +1,4 @@
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
@@ -28,7 +28,11 @@ static const char *g_tag_names[] = {
     "Envelope",
     "DRC",
     "EQ",
-    "Play"
+    "Play",
+    "FAT32",
+    "NAND",
+    "PSRAM",
+    "SYNTH"
 };
 
 /* 日志级别名称表 */

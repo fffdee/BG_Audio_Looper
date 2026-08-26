@@ -8,7 +8,7 @@
 #ifndef _BG_CONFIG_H__
 #define _BG_CONFIG_H__
 
-#include "product_def.h"
+#include "bg_config_port.h"
 #if BANGTSYNTH_EN
 
 /* ============================================
@@ -44,20 +44,12 @@
 
 /** 键盘输入 (仅 Linux 调试用) */
 #ifndef ENABLE_KEYBOARD_INPUT
-#ifdef BANDATAHUB
-#define ENABLE_KEYBOARD_INPUT       0   /* 嵌入式无键盘 */
-#else
-#define ENABLE_KEYBOARD_INPUT       1
-#endif
+#define ENABLE_KEYBOARD_INPUT       0
 #endif
 
 /** 音源下载接口 */
 #ifndef ENABLE_SOUNDBANK_DOWNLOAD
-#ifdef BANDATAHUB
-#define ENABLE_SOUNDBANK_DOWNLOAD   0   /* SD卡直接加载, 无需下载 */
-#else
-#define ENABLE_SOUNDBANK_DOWNLOAD   1
-#endif
+#define ENABLE_SOUNDBANK_DOWNLOAD   0
 #endif
 
 /* ============================================

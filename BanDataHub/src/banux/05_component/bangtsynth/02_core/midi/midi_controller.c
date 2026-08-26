@@ -1,4 +1,4 @@
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
@@ -7,7 +7,7 @@
 #include "standard_request_processing.h"
 #include "midi_info.h"
 #include "soundbank_manager.h"
-#include "drum_machine.h"
+#include "../../03_app/drum_machine/drum_machine.h"
 #include "stdio.h"
 #include "string.h"
 

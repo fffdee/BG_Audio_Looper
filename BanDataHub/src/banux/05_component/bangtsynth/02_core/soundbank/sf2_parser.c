@@ -1,4 +1,4 @@
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
@@ -8,7 +8,8 @@
 #include "bg_log.h"              // 日志接口
 #include "bg_envelope.h"         // ADSR 包络
 #include "bg_osal.h"             // 内存屏障, 时间等
-#include "midi_info.h"           // BG_MIDI_data (pitch_bend / CC 状态)
+#include "bg_mem.h"
+#include "../midi/midi_info.h"  // BG_MIDI_data (pitch_bend / CC 状态)
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -645,31 +646,31 @@ static BG_ERR sf2_deinit(void)
 {
     /* 释放解析的数据结�?*/
     if (g_sf2_data.sample_headers) {
-        free(g_sf2_data.sample_headers);
+        bg_mem_free(g_sf2_data.sample_headers);
         g_sf2_data.sample_headers = NULL;
     }
     if (g_sf2_data.preset_headers) {
-        free(g_sf2_data.preset_headers);
+        bg_mem_free(g_sf2_data.preset_headers);
         g_sf2_data.preset_headers = NULL;
     }
     if (g_sf2_data.inst_headers) {
-        free(g_sf2_data.inst_headers);
+        bg_mem_free(g_sf2_data.inst_headers);
         g_sf2_data.inst_headers = NULL;
     }
     if (g_sf2_data.preset_bags) {
-        free(g_sf2_data.preset_bags);
+        bg_mem_free(g_sf2_data.preset_bags);
         g_sf2_data.preset_bags = NULL;
     }
     if (g_sf2_data.inst_bags) {
-        free(g_sf2_data.inst_bags);
+        bg_mem_free(g_sf2_data.inst_bags);
         g_sf2_data.inst_bags = NULL;
     }
     if (g_sf2_data.preset_gens) {
-        free(g_sf2_data.preset_gens);
+        bg_mem_free(g_sf2_data.preset_gens);
         g_sf2_data.preset_gens = NULL;
     }
     if (g_sf2_data.inst_gens) {
-        free(g_sf2_data.inst_gens);
+        bg_mem_free(g_sf2_data.inst_gens);
         g_sf2_data.inst_gens = NULL;
     }
     
@@ -678,7 +679,7 @@ static BG_ERR sf2_deinit(void)
     /* 释放程序采样数据 */
     for (i = 0; i < SYNTH_MAX_PROGRAMS; i++) {
         if (g_sf2_data.programs[i].samples) {
-            free(g_sf2_data.programs[i].samples);
+            bg_mem_free(g_sf2_data.programs[i].samples);
             g_sf2_data.programs[i].samples = NULL;
         }
     }
@@ -1193,7 +1194,7 @@ static BG_ERR parse_pdta_chunk(uint32_t size)
         if (chunk.chunk_id == SF2_SHDR_ID) {
             /* 样本头 */
             g_sf2_data.sample_count = chunk.chunk_size / sizeof(SF2_Sample_Header);
-            g_sf2_data.sample_headers = malloc(chunk.chunk_size);
+            g_sf2_data.sample_headers = bg_mem_alloc(chunk.chunk_size);
             if (g_sf2_data.sample_headers) {
                 storage_read(g_sf2_data.sample_headers, chunk.chunk_size);
                 BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "Loaded %d sample headers\n", g_sf2_data.sample_count);
@@ -1201,7 +1202,7 @@ static BG_ERR parse_pdta_chunk(uint32_t size)
         } else if (chunk.chunk_id == SF2_PHDR_ID) {
             /* 预置头 */
             g_sf2_data.preset_count = chunk.chunk_size / sizeof(SF2_Preset_Header);
-            g_sf2_data.preset_headers = malloc(chunk.chunk_size);
+            g_sf2_data.preset_headers = bg_mem_alloc(chunk.chunk_size);
             if (g_sf2_data.preset_headers) {
                 storage_read(g_sf2_data.preset_headers, chunk.chunk_size);
                 BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "Loaded %d preset headers\n", g_sf2_data.preset_count);
@@ -1209,7 +1210,7 @@ static BG_ERR parse_pdta_chunk(uint32_t size)
         } else if (chunk.chunk_id == SF2_INST_ID) {
             /* 乐器头 */
             g_sf2_data.inst_count = chunk.chunk_size / sizeof(SF2_Instrument_Header);
-            g_sf2_data.inst_headers = malloc(chunk.chunk_size);
+            g_sf2_data.inst_headers = bg_mem_alloc(chunk.chunk_size);
             if (g_sf2_data.inst_headers) {
                 storage_read(g_sf2_data.inst_headers, chunk.chunk_size);
                 BG_LOG_I(BG_LOG_TAG_SOUNDBANK, "Loaded %d instrument headers\n", g_sf2_data.inst_count);
@@ -1217,28 +1218,28 @@ static BG_ERR parse_pdta_chunk(uint32_t size)
         } else if (chunk.chunk_id == SF2_PBAG_ID) {
             /* 预置 Bags */
             g_sf2_data.pbag_count = chunk.chunk_size / sizeof(SF2_Bag);
-            g_sf2_data.preset_bags = malloc(chunk.chunk_size);
+            g_sf2_data.preset_bags = bg_mem_alloc(chunk.chunk_size);
             if (g_sf2_data.preset_bags) {
                 storage_read(g_sf2_data.preset_bags, chunk.chunk_size);
             }
         } else if (chunk.chunk_id == SF2_IBAG_ID) {
             /* 乐器 Bags */
             g_sf2_data.ibag_count = chunk.chunk_size / sizeof(SF2_Bag);
-            g_sf2_data.inst_bags = malloc(chunk.chunk_size);
+            g_sf2_data.inst_bags = bg_mem_alloc(chunk.chunk_size);
             if (g_sf2_data.inst_bags) {
                 storage_read(g_sf2_data.inst_bags, chunk.chunk_size);
             }
         } else if (chunk.chunk_id == SF2_PGEN_ID) {
             /* 预置 Generators */
             g_sf2_data.pgen_count = chunk.chunk_size / sizeof(SF2_Generator);
-            g_sf2_data.preset_gens = malloc(chunk.chunk_size);
+            g_sf2_data.preset_gens = bg_mem_alloc(chunk.chunk_size);
             if (g_sf2_data.preset_gens) {
                 storage_read(g_sf2_data.preset_gens, chunk.chunk_size);
             }
         } else if (chunk.chunk_id == SF2_IGEN_ID) {
             /* 乐器 Generators */
             g_sf2_data.igen_count = chunk.chunk_size / sizeof(SF2_Generator);
-            g_sf2_data.inst_gens = malloc(chunk.chunk_size);
+            g_sf2_data.inst_gens = bg_mem_alloc(chunk.chunk_size);
             if (g_sf2_data.inst_gens) {
                 storage_read(g_sf2_data.inst_gens, chunk.chunk_size);
             }
@@ -1295,7 +1296,7 @@ static void build_sample_map(void)
         uint16_t bag_end = g_sf2_data.preset_headers[p + 1].bag_index;
         
         /* 为简化实现，预分配最大采样数 */
-        g_sf2_data.programs[program].samples = malloc(sizeof(SF2_Sample_Info) * MAX_SAMPLES);
+        g_sf2_data.programs[program].samples = bg_mem_alloc(sizeof(SF2_Sample_Info) * MAX_SAMPLES);
         if (!g_sf2_data.programs[program].samples) {
             continue;
         }

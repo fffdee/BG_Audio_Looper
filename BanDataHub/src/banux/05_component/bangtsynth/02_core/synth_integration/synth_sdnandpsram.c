@@ -4,35 +4,37 @@
  *
  * BanDataHub 适配: 无 NAND Flash，采用 SD→PSRAM 二级直读架构
  *   - SYNTH_SDNANDPSRAM_Init() 跳过 NAND 初始化和 SF2 拷贝
- *   - 使用 bg_storage_driver_bandatahub (PSRAM 直接读取)
+ *   - 使用 bg_storage_driver_port (PSRAM 直接读取)
  *   - psram_load_data_chunk() 从 PSRAM 样本区读取 (非 NAND)
  */
 
-#include "product_def.h"
+#include "bg_config.h"
 
 #if SYNTH_SD_NAND_PSRAM_EN
 
 #include "synth_sdnandpsram.h"
-#include "fat32_reader.h"
-#include "fat32_diskio.h"
-#ifndef BANDATAHUB
-#include "nand_store.h"
+#if BG_CFG_USE_HOST_FAT32
+#include "fat32.h"
+#else
+#include "../fat32/fat32_reader.h"
+#include "../fat32/fat32_diskio.h"
 #endif
-#include "psram_buffer.h"
-#include "soundbank_manager.h"
+#if BG_CFG_HAS_NAND
+#include "../nand_store/nand_store.h"
 #include "flash_devices.h"
+#endif
+#include "../psram_buffer/psram_buffer.h"
+#include "soundbank_manager.h"
 #include "bg_storage.h"
 #include "bg_log.h"
-#include "bg_config.h"
 #include "bg_osal.h"
+#include "bg_mem.h"
 #include <string.h>
 #include <stdlib.h>
 
-/* BanDataHub PSRAM 样本区基地址 */
-#ifdef BANDATAHUB
+#if !BG_CFG_HAS_NAND
 #define BDH_SF2_SAMPLE_BASE     0x000000u
-/* BanDataHub: 使用 PSRAM 直接存储驱动 (跳过 NAND) */
-extern const BG_Storage_Driver_t bg_storage_driver_bandatahub;
+extern const BG_Storage_Driver_t bg_storage_driver_port;
 #endif
 
 /* ============================================
@@ -67,8 +69,8 @@ static uint8_t  g_prefetch_program  = 0;  /* 待预热的 program 号 */
 static uint8_t  g_prefetch_note     = SYNTH_PREFETCH_NOTE_MIN;  /* 当前预热进度 */
 static uint32_t g_prefetch_last_ms  = 0;  /* 上次预热的时间戳 */
 
-#ifndef BANDATAHUB
-/* NAND 存储驱动函数声明 (BanDataHub 不使用) */
+#if BG_CFG_HAS_NAND
+/* NAND 存储驱动函数声明 */
 static BG_ERR synth_nand_init(const char *path, BG_Storage_Mode_t mode);
 static BG_ERR synth_nand_deinit(void);
 static int synth_nand_read(uint32_t offset, void *buffer, size_t size);
@@ -90,7 +92,7 @@ const BG_Storage_Driver_t synth_nand_storage_driver = {
 #endif /* !BANDATAHUB */
 
 /* 内部函数声明 */
-#ifndef BANDATAHUB
+#if BG_CFG_HAS_NAND
 static BG_ERR synth_copy_sf2_to_nand(const char *filename);
 static BG_ERR synth_verify_sf2_in_nand(void);
 #endif
@@ -99,7 +101,7 @@ static BG_ERR synth_verify_sf2_in_nand(void);
  * NAND 存储驱动实现 (仅 BanBox 等有 NAND 的平台)
  * ============================================ */
 
-#ifndef BANDATAHUB
+#if BG_CFG_HAS_NAND
 
 static BG_ERR synth_nand_init(const char *path, BG_Storage_Mode_t mode)
 {
@@ -234,7 +236,7 @@ static BG_ERR synth_locate_note_data(uint8_t note, uint8_t program,
     uint32_t program_offset = program * 128 * 65536; /* 128 notes * 64KB each */
     uint32_t note_offset = note * 65536; /* 64KB per note */
 
-#ifdef BANDATAHUB
+#if !BG_CFG_HAS_NAND
     /* BanDataHub: SF2 存储在 PSRAM 样本区起始 (0x000000)
      * 直接返回 SF2 文件内偏移 (不使用 NAND 绝对地址) */
     *nand_offset = program_offset + note_offset;
@@ -288,7 +290,7 @@ static uint32_t synth_find_buffer_by_note(uint8_t note, uint8_t program)
     return UINT32_MAX; /* 未找到 */
 }
 
-#ifndef BANDATAHUB
+#if BG_CFG_HAS_NAND
 static BG_ERR synth_copy_sf2_to_nand(const char *filename)
 {
     BG_ERR ret;
@@ -324,7 +326,7 @@ static BG_ERR synth_copy_sf2_to_nand(const char *filename)
     }
 
     /* 分配临时缓冲区 */
-    chunk_buffer = (uint8_t *)malloc(SYNTH_SF2_COPY_CHUNK_SIZE);
+    chunk_buffer = (uint8_t *)bg_mem_alloc(SYNTH_SF2_COPY_CHUNK_SIZE);
     if (!chunk_buffer) {
         FAT32_CloseFile(&file_handle);
         return ENABLE_OUT_OF_MEMORY;
@@ -350,7 +352,7 @@ static BG_ERR synth_copy_sf2_to_nand(const char *filename)
                      SYNTH_SF2_COPY_CHUNK_SIZE : remaining;
         read_bytes = FAT32_ReadFile(&checksum_handle, chunk_buffer, chunk_size);
         if (read_bytes < 0) {
-            free(chunk_buffer);
+            bg_mem_free(chunk_buffer);
             FAT32_CloseFile(&file_handle);
             return ENABLE_IO_ERROR;
         }
@@ -366,7 +368,7 @@ static BG_ERR synth_copy_sf2_to_nand(const char *filename)
     /* 写入 NAND 头部 */
     nand_dev = FlashDevices_GetNandFlash();
     if (!nand_dev) {
-        free(chunk_buffer);
+        bg_mem_free(chunk_buffer);
         FAT32_CloseFile(&file_handle);
         return ENABLE_DEVICE_NOT_READY;
     }
@@ -374,7 +376,7 @@ static BG_ERR synth_copy_sf2_to_nand(const char *filename)
     ret = nand_dev->ops->write(nand_dev, SYNTH_SF2_NAND_BLOB_OFFSET,
                               (uint8_t *)&header, sizeof(header));
     if (ret != SUCCESS) {
-        free(chunk_buffer);
+        bg_mem_free(chunk_buffer);
         FAT32_CloseFile(&file_handle);
         BG_LOG_E(BG_LOG_TAG_SYNTH, "Failed to write NAND header");
         return ret;
@@ -394,7 +396,7 @@ static BG_ERR synth_copy_sf2_to_nand(const char *filename)
         /* 从 SD 读取 */
         read_bytes = FAT32_ReadFile(&file_handle, chunk_buffer, chunk_size);
         if (read_bytes < 0) {
-            free(chunk_buffer);
+            bg_mem_free(chunk_buffer);
             FAT32_CloseFile(&file_handle);
             BG_LOG_E(BG_LOG_TAG_SYNTH, "Failed to read from SD card");
             return ENABLE_IO_ERROR;
@@ -403,7 +405,7 @@ static BG_ERR synth_copy_sf2_to_nand(const char *filename)
         /* 写入 NAND */
         ret = nand_dev->ops->write(nand_dev, nand_offset, chunk_buffer, (uint32_t)read_bytes);
         if (ret != SUCCESS) {
-            free(chunk_buffer);
+            bg_mem_free(chunk_buffer);
             FAT32_CloseFile(&file_handle);
             BG_LOG_E(BG_LOG_TAG_SYNTH, "Failed to write to NAND");
             return ret;
@@ -417,7 +419,7 @@ static BG_ERR synth_copy_sf2_to_nand(const char *filename)
         synth_update_copy_progress(bytes_copied, total_size);
     }
 
-    free(chunk_buffer);
+    bg_mem_free(chunk_buffer);
     FAT32_CloseFile(&file_handle);
 
     /* 更新状态 */
@@ -526,16 +528,16 @@ void SYNTH_LoadTick(void)
 BG_ERR SYNTH_SDNANDPSRAM_Init(void)
 {
     BG_ERR ret;
-#ifndef BANDATAHUB
+#if BG_CFG_HAS_NAND
     FAT32_FileInfo_t sf2_info;
 #endif
 
-#ifdef BANDATAHUB
+#if !BG_CFG_HAS_NAND
     /* ============================================
      * BanDataHub: SD→PSRAM 二级直读架构 (无 NAND)
      *
      * FAT32_Init() 内部已注册 SD卡 diskio (BanDataHub特有)
-     * bg_storage_driver_bandatahub.Init() 处理 SF2 查找+加载
+     * bg_storage_driver_port.Init() 处理 SF2 查找+加载
      * ============================================ */
     BG_LOG_I(BG_LOG_TAG_SYNTH, "Initializing SD+PSRAM synthesizer integration (BanDataHub)");
 
@@ -549,7 +551,7 @@ BG_ERR SYNTH_SDNANDPSRAM_Init(void)
     /* 2. 使用 BanDataHub PSRAM 存储驱动加载 SF2 到 PSRAM
      *    内部流程: 获取PSRAM设备 → 查找SD卡上SF2文件 → 分块加载到PSRAM
      */
-    BG_Storage.SetDriver(&bg_storage_driver_bandatahub);
+    BG_Storage.SetDriver(&bg_storage_driver_port);
     ret = BG_Storage.Init(NULL, BG_STORAGE_MODE_READ_ONLY);
     if (ret != SUCCESS) {
         BG_LOG_E(BG_LOG_TAG_SYNTH, "BG_Storage (bandatahub) init failed: %d", ret);
@@ -652,7 +654,7 @@ BG_ERR SYNTH_SDNANDPSRAM_Init(void)
 
     BG_LOG_I(BG_LOG_TAG_SYNTH, "SD+NAND+PSRAM synthesizer integration initialized");
     return SUCCESS;
-#endif /* BANDATAHUB */
+#endif /* BG_CFG_HAS_NAND */
 }
 
 void SYNTH_SDNANDPSRAM_DeInit(void)
@@ -675,13 +677,13 @@ void SYNTH_SDNANDPSRAM_DeInit(void)
         g_synth_status.psram_ready = false;
     }
 
-#ifndef BANDATAHUB
+#if BG_CFG_HAS_NAND
     NAND_StoreDeInit();
 #endif
     FAT32_DeInit();
 
     memset(&g_synth_status, 0, sizeof(g_synth_status));
-#ifndef BANDATAHUB
+#if BG_CFG_HAS_NAND
     memset(&g_nand_driver_state, 0, sizeof(g_nand_driver_state));
 #endif
 
@@ -691,19 +693,12 @@ void SYNTH_SDNANDPSRAM_DeInit(void)
 BG_ERR SYNTH_SDNANDPSRAM_ReloadFromSD(void)
 {
     BG_ERR ret;
-    FAT32_FileInfo_t sf2_info;
 
     BG_LOG_I(BG_LOG_TAG_SYNTH, "Reloading SF2 from SD card");
 
-    /* 查找 SF2 文件 */
-    ret = FAT32_FindFile("*.sf2", &sf2_info);
-    if (ret != SUCCESS) {
-        return ret;
-    }
-
-#ifdef BANDATAHUB
-    /* BanDataHub: 直接重载到 PSRAM */
-    BG_Storage.SetDriver(&bg_storage_driver_bandatahub);
+#if !BG_CFG_HAS_NAND
+    /* BanDataHub: 直接重载到 PSRAM（驱动内部查找 .sf2） */
+    BG_Storage.SetDriver(&bg_storage_driver_port);
     ret = BG_Storage.Init(NULL, BG_STORAGE_MODE_READ_ONLY);
     if (ret == SUCCESS) {
         g_synth_status.storage_ready = true;
@@ -712,8 +707,16 @@ BG_ERR SYNTH_SDNANDPSRAM_ReloadFromSD(void)
     }
     return ret;
 #else
-    /* 拷贝到 NAND */
-    return synth_copy_sf2_to_nand(sf2_info.name);
+    {
+        FAT32_FileInfo_t sf2_info;
+
+        ret = FAT32_FindFile("*.sf2", &sf2_info);
+        if (ret != SUCCESS) {
+            return ret;
+        }
+        /* 拷贝到 NAND */
+        return synth_copy_sf2_to_nand(sf2_info.name);
+    }
 #endif
 }
 

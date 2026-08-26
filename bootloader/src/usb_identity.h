@@ -7,8 +7,10 @@
  *   VID = 产品编号：
  *         0x0001 BanBox
  *         0x0002 BanAirBundy
+ *         0x0003 BanDataHub
  *
- * 本仓库产品为 BanBox → VID=0x0001 / PID=0x4247
+ * 本仓库默认 BanBox → VID=0x0001 / PID=0x4247
+ * 烧 BanDataHub 板时把 BOOTLOADER_USB_VID 改成 BG_USB_VID_BANDATAHUB
  */
 
 #ifndef USB_IDENTITY_H
@@ -17,9 +19,11 @@
 #define BG_USB_PID              0x4247u
 #define BG_USB_VID_BANBOX       0x0001u
 #define BG_USB_VID_BANAIRBUNDY  0x0002u
+#define BG_USB_VID_BANDATAHUB   0x0003u
 
-/* BanBox Bootloader 枚举身份 */
+#ifndef BOOTLOADER_USB_VID
 #define BOOTLOADER_USB_VID      BG_USB_VID_BANBOX
+#endif
 #define BOOTLOADER_USB_PID      BG_USB_PID
 
 #endif /* USB_IDENTITY_H */

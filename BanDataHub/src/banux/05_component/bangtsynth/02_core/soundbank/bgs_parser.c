@@ -1,4 +1,4 @@
-#include "product_def.h"
+#include "bg_config.h"
 
 #if BANGTSYNTH_EN
 
@@ -8,9 +8,9 @@
 #include <string.h>
 #include <math.h>
 #include "bgs_parser.h"
-#include "bgs_types.h"           /* BGS 类型定义 (替代已废弃的 hardware_interfance.h) */
 #include "soundbank_manager.h"  // 使用存储层接口
 #include "bg_log.h"
+#include "bg_mem.h"
 
 /* v2.0: 使用存储层接口，不再使用FILE指针 */
 
@@ -72,7 +72,7 @@ void get_bgs_head_info()
     BG_reader.Data.name_len = info[0];
     file_haeder+=FILE_AUTHOR_BYTE;
 
-    name_info  =(uint8_t *)malloc(BG_reader.Data.name_len * sizeof(uint8_t)) ;
+    name_info  =(uint8_t *)bg_mem_alloc(BG_reader.Data.name_len * sizeof(uint8_t)) ;
     seek_and_read(file_haeder,BG_reader.Data.name_len , name_info);
     BG_reader.Data.author_name = name_info;
     file_haeder+=BG_reader.Data.name_len;
@@ -82,15 +82,15 @@ void get_bgs_head_info()
     BG_reader.Data.email_len = info[0];
     file_haeder+=FILE_EMAIL_BYTE;
 
-    email_info  =(uint8_t *)malloc(BG_reader.Data.email_len * sizeof(uint8_t)) ;
+    email_info  =(uint8_t *)bg_mem_alloc(BG_reader.Data.email_len * sizeof(uint8_t)) ;
     seek_and_read(file_haeder,BG_reader.Data.email_len , email_info);
     BG_reader.Data.author_name = email_info;
     file_haeder+=BG_reader.Data.email_len;
     
 
-    BG_reader.Data.ProgramData = (BG_ProgramData *)malloc(BG_reader.Data.program_count * sizeof(BG_ProgramData));
-    //BG_reader.Data.ProgramData = (BG_ProgramData *)malloc(BG_reader.Data.program_count * sizeof(BG_ProgramData));;
-    base_address = (uint32_t *)malloc(BG_reader.Data.program_count * sizeof(uint32_t));
+    BG_reader.Data.ProgramData = (BG_ProgramData *)bg_mem_alloc(BG_reader.Data.program_count * sizeof(BG_ProgramData));
+    //BG_reader.Data.ProgramData = (BG_ProgramData *)bg_mem_alloc(BG_reader.Data.program_count * sizeof(BG_ProgramData));;
+    base_address = (uint32_t *)bg_mem_alloc(BG_reader.Data.program_count * sizeof(uint32_t));
     if (base_address) memset(base_address, 0, BG_reader.Data.program_count * sizeof(uint32_t));
     
    BG_LOG_D(BG_LOG_TAG_SOUNDBANK, "program count is %d\n",BG_reader.Data.program_count);
@@ -121,7 +121,7 @@ void get_bgs_head_info()
         BG_reader.Data.ProgramData[count].name_len = info[0];
         temp_address += PROGRAM_NAME_BYTE;
 
-        pgm_name  =(uint8_t *)malloc(BG_reader.Data.ProgramData[count].name_len  * sizeof(uint8_t)) ;
+        pgm_name  =(uint8_t *)bg_mem_alloc(BG_reader.Data.ProgramData[count].name_len  * sizeof(uint8_t)) ;
         seek_and_read(temp_address, BG_reader.Data.ProgramData[count].name_len, pgm_name);
         BG_reader.Data.ProgramData[count].name = pgm_name;
         temp_address += BG_reader.Data.ProgramData[count].name_len;
@@ -132,7 +132,7 @@ void get_bgs_head_info()
         temp_address += PROGRAM_DESCRIPT_BYTE;
         
 
-        decript  =(uint8_t *)malloc(BG_reader.Data.ProgramData[count].descript_len * sizeof(uint8_t)) ;
+        decript  =(uint8_t *)bg_mem_alloc(BG_reader.Data.ProgramData[count].descript_len * sizeof(uint8_t)) ;
         seek_and_read(temp_address, BG_reader.Data.ProgramData[count].descript_len, decript );
         BG_reader.Data.ProgramData[count].descript = decript;
         temp_address += BG_reader.Data.ProgramData[count].descript_len;
@@ -202,12 +202,12 @@ void get_bgs_head_info()
         BG_reader.Data.ProgramData[count].note_info_count = info[0];
         program_bia_address +=NOTE_HEADER_BYTE;
     
-        BG_reader.Data.ProgramData[count].Note_Info = (Read_Note_Info *)malloc(BG_reader.Data.ProgramData[count].file_count * sizeof(Read_Note_Info));
+        BG_reader.Data.ProgramData[count].Note_Info = (Read_Note_Info *)bg_mem_alloc(BG_reader.Data.ProgramData[count].file_count * sizeof(Read_Note_Info));
 
-        BG_reader.Data.ProgramData[count].bytecount = (uint32_t *)malloc(BG_reader.Data.ProgramData[count].file_count * sizeof(uint32_t));
+        BG_reader.Data.ProgramData[count].bytecount = (uint32_t *)bg_mem_alloc(BG_reader.Data.ProgramData[count].file_count * sizeof(uint32_t));
 
 
-        BG_reader.Data.ProgramData[count].address_index = (uint32_t *)malloc(BG_reader.Data.ProgramData[count].file_count * sizeof(uint32_t));;
+        BG_reader.Data.ProgramData[count].address_index = (uint32_t *)bg_mem_alloc(BG_reader.Data.ProgramData[count].file_count * sizeof(uint32_t));;
 
         BG_LOG_D(BG_LOG_TAG_SOUNDBANK, "size of address_index %ld\n",sizeof(BG_reader.Data.ProgramData[count].address_index));
 #ifdef READ_LINUX_DEBUG
@@ -357,23 +357,23 @@ BG_ERR bgs_deinit()
     if (BG_reader.Data.ProgramData) {
         for (i = 0; i < BG_reader.Data.program_count; i++) {
             if (BG_reader.Data.ProgramData[i].Note_Info) {
-                free(BG_reader.Data.ProgramData[i].Note_Info);
+                bg_mem_free(BG_reader.Data.ProgramData[i].Note_Info);
             }
             if (BG_reader.Data.ProgramData[i].address_index) {
-                free(BG_reader.Data.ProgramData[i].address_index);
+                bg_mem_free(BG_reader.Data.ProgramData[i].address_index);
             }
         }
-        free(BG_reader.Data.ProgramData);
+        bg_mem_free(BG_reader.Data.ProgramData);
         BG_reader.Data.ProgramData = NULL;
     }
     
     if (BG_reader.Data.author_name) {
-        free(BG_reader.Data.author_name);
+        bg_mem_free(BG_reader.Data.author_name);
         BG_reader.Data.author_name = NULL;
     }
     
     if (BG_reader.Data.author_email) {
-        free(BG_reader.Data.author_email);
+        bg_mem_free(BG_reader.Data.author_email);
         BG_reader.Data.author_email = NULL;
     }
     
