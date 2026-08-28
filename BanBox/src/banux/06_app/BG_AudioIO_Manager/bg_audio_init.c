@@ -70,7 +70,7 @@ static void InitDAC(uint16_t SampleRate)
 	AudioDAC_DoutModeSet(DAC0, MODE2, WIDTH_16_BIT);
 	AudioDAC_DoutModeSet(DAC1, MODE2, WIDTH_16_BIT);
 	AudioDAC_VolSet(DAC0, 0x3FFF, 0x3FFF);
-	AudioDAC_VolSet(DAC1, 0x3FFF, 0x3FFF);
+	AudioDAC_VolSet(DAC1, 0x3FFF, 0);
 }
 
 // 初始化ADC0（LineIn5）

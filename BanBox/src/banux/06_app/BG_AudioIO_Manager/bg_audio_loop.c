@@ -46,7 +46,7 @@ void SetVolume(void)
 	DC_Data = 0x3FFF;
 #endif
 	AudioDAC_VolSet(DAC0, DC_Data, DC_Data);
-	AudioDAC_VolSet(DAC1, DC_Data, DC_Data);
+	AudioDAC_VolSet(DAC1, DC_Data, 0);
 
 	/* 计算BT/USB增益映射 */
 	wheel_pct = DC_Data;  /* 0~16383 */

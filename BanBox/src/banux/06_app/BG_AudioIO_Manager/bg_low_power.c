@@ -151,12 +151,6 @@ void LowPower_Tick(void)
                 LowPower_CheckADCSignal(s_peek_buf, avail);
             }
 
-            avail = AudioADC_DataLenGet(ADC1_MODULE);
-            if (avail > LP_ADC_PEEK_SIZE) avail = LP_ADC_PEEK_SIZE;
-            if (avail > 0) {
-                AudioADC_DataGet(ADC1_MODULE, s_peek_buf, avail);
-                LowPower_CheckADCSignal(s_peek_buf, avail);
-            }
         }
     }
 
