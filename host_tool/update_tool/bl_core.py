@@ -19,6 +19,7 @@ SOF        = 0xAA
 CHUNK_SIZE = 256    # 每个 DATA 包携带的固件字节数
 TIMEOUT_S  = 5.0   # 等待响应的超时秒数
 MAX_RETRY  = 3      # NACK / 超时后的最大重试次数
+DATA_DELAY_S = 0.003  # DATA ACK 后短暂停顿，避免 flash 写入时挤爆设备 CDC RX 缓冲
 
 
 class Cmd:
@@ -46,6 +47,7 @@ class ErrCode:
         0x03: "SIZE_OVERFLOW",
         0x04: "STATE_INVALID",
         0x05: "BAD_PARAM",
+        0x06: "CAPS_OR_WRONG_PART",
     }
 
     @classmethod
@@ -223,7 +225,8 @@ class Bootloader:
 
         for attempt in range(1, MAX_RETRY + 1):
             if attempt > 1:
-                self._log(f"  [重试 {attempt}/{MAX_RETRY}]")
+                tag = f" {label}" if label else ""
+                self._log(f"  [重试 {attempt}/{MAX_RETRY}]{tag}")
                 try:
                     self._comm.flush_rx()
                 except Exception as exc:
@@ -342,7 +345,7 @@ class Bootloader:
             )
 
         self._transact(Cmd.START, struct.pack(">I", total),
-                       timeout=30.0, label="START")
+                       timeout=60.0, label="START")
         self._log("Flash 已擦除，开始传输 …")
 
         offset = 0
@@ -353,6 +356,8 @@ class Bootloader:
                 self._transact(Cmd.DATA, payload, label=f"DATA@0x{offset:X}")
                 offset += len(chunk)
                 self._progress(offset, total)
+                if DATA_DELAY_S > 0 and offset < total:
+                    time.sleep(DATA_DELAY_S)
 
             self._transact(Cmd.FINISH, struct.pack(">I", total), label="FINISH")
         except (TimeoutError, serial.SerialException, OSError, PermissionError) as exc:

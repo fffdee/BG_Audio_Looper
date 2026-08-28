@@ -53,7 +53,10 @@ extern "C" {
 #define CDC_CMD_PACKET_SIZE                 8
 #define CDC_DATA_FS_IN_PACKET_SIZE          64
 #define CDC_DATA_FS_OUT_PACKET_SIZE         64
-#define CDC_RX_BUFFER_SIZE                  512
+/* Bootloader DATA frame is 268 bytes (256-byte chunk + offset/header/CRC).
+ * Keep room for several frames while flash write/erase temporarily delays the
+ * protocol parser, otherwise CDC RX overflow appears as CRC retries. */
+#define CDC_RX_BUFFER_SIZE                  2048
 #define CDC_TX_BUFFER_SIZE                  512
 
 // CDC Line Coding Structure (紧凑打包，避免对齐问题)

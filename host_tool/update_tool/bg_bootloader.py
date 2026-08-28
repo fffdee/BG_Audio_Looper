@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-bg_bootloader.py — BG Bootloader Host Tool v2.1  (PyQt5 GUI)
+bg_bootloader.py — BG Bootloader Host Tool v2.2  (PyQt5 GUI)
 USB CDC 固件升级 & 跳转上位机
 
 功能:
@@ -323,7 +323,7 @@ def make_info_pair(key: str, value: str = "—") -> tuple:
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("BG Bootloader — USB CDC 升级工具 v2.1")
+        self.setWindowTitle("BG Bootloader — USB CDC 升级工具 v2.2")
         self.setMinimumSize(820, 640)
 
         self._fw_path: str = ""
