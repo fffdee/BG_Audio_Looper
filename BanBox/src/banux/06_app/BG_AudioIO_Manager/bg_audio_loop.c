@@ -33,6 +33,11 @@
 #include "dac.h"
 #include "bt_stack_service.h"
 
+/* BT 驱动模式忙等循环的超时计数上限。
+ * 正常时 DAC/ADC FIFO 会很快满足条件；若数据流被异常打断（如拔插 line in），
+ * 超过此次数即放弃本帧返回，避免主循环死锁导致看门狗复位。 */
+#define BT_DRIVE_WAIT_TIMEOUT  100000UL
+
 void SetVolume(void)
 {
 	uint16_t DC_Data;
@@ -104,10 +109,20 @@ void AudioLoopWithGraph(void)
 		/* ========== 蓝牙驱动模式 ========== */
 		frame_size = BT_GetAvailableData(NULL);
 		if (frame_size > 0) {
+			/* 忙等加超时保护：拔插 line in 等异常可能打断 ADC/DAC 数据流，
+			 * 若无限等待会卡死主循环导致看门狗复位。超时后放弃本帧。 */
+			uint32_t wait_cnt = BT_DRIVE_WAIT_TIMEOUT;
 			while (AudioDAC_DataSpaceLenGet(DAC0) < frame_size) {
+				if (--wait_cnt == 0) {
+					return;
+				}
 			}
+			wait_cnt = BT_DRIVE_WAIT_TIMEOUT;
 			while (AudioADC_DataLenGet(ADC0_MODULE) < frame_size ||
 			       AudioADC_DataLenGet(ADC1_MODULE) < frame_size) {
+				if (--wait_cnt == 0) {
+					return;
+				}
 			}
 			graph->drive_mode = DRIVE_MODE_BT;
 		} else {
@@ -249,6 +264,9 @@ void Audio_loop(void)
 		}
 		if (ShellIOManager_HasIncomingData()) {
 			lp_activity |= LP_ACT_BLE_COMM;
+		}
+		if (AudioLooper.IsPlaying() || AudioLooper.IsRecording()) {
+			lp_activity |= LP_ACT_LOOPER;
 		}
 		if (lp_activity) {
 			LowPower_FeedActivity(lp_activity);

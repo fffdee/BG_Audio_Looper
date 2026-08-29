@@ -69,6 +69,7 @@
 #endif
 
 #include "bg_audio_io_manager.h"
+#include "bg_audio_detection.h"
 
 #include "battery_drv.h"
 #include "battery_calib.h"
@@ -462,17 +463,14 @@ uint8_t time_count = 0;
 void hardware_check()
 {
 	time_count++;
-	if(time_count>=100){
-		if(ADC_SingleModeDataGet(ADC_CHANNEL_POWERKEY)>4000){
-			 AudioSetting_SetGuitar2VolumePercent(AudioSetting_GetGuitar2VolumePercent()) ;
-		}else{
-			 AudioSetting_SetGuitar2VolumePercent(0) ;
-		}
+	if(time_count>=20){   /* 每 1 秒检测一次 (50ms tick × 20) */
 		time_count = 0;
+
+		/* Line2（Line In 右声道）插入检测：POWERKEY ADC 独立采样，状态变化时发布事件 */
+		BG_AudioDetection_Line2Poll();
 	}
 	/* Battery calibration voltage tick (每次 hardware_check 调用约 50ms) */
 	BattCalib_Tick();
-
 	/* 系统状态机更新（检测空闲/传输状态，发布事件到订阅者） */
 	SysState_Update();
 

@@ -256,7 +256,7 @@ void AudioLoopWithBT(uint32_t *bt_audio_buffer)
 			if (++s_gpio_div_bt >= 50)
 			{
 				s_gpio_div_bt = 0;
-				ProcessGuitarOutput();
+				//ocessGuitarOutput();
 				ProcessMicOutput();
 				ProcessSpeakerSwitch();
 			}

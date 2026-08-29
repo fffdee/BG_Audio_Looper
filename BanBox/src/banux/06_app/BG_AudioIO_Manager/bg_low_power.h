@@ -12,6 +12,7 @@
  *   LP_ACT_ADC_SIGNAL — ADC 输入信号电平超过噪声门限
  *   LP_ACT_CDC_COMM   — CDC 串口有数据到达
  *   LP_ACT_BLE_COMM   — BLE Shell 有数据到达
+ *   LP_ACT_LOOPER     — Looper 正在播放/录制
  */
 
 #ifndef _BG_LOW_POWER_H__
@@ -26,10 +27,11 @@
 #define LP_ACT_CDC_COMM     0x08U
 #define LP_ACT_BLE_COMM     0x10U
 #define LP_ACT_BATT_CALIB   0x20U  /* Battery calibration in progress */
+#define LP_ACT_LOOPER       0x40U  /* Looper playing / recording */
 
 /* ====================== 超时阈值 ====================== */
 /* 5 分钟不活跃后进入低功耗，单位 ms */
-#define LP_IDLE_TIMEOUT_MS  (1UL * 60UL * 1000UL)
+#define LP_IDLE_TIMEOUT_MS  (5UL * 60UL * 1000UL)
 
 /* ADC 信号检测门限（int16_t 绝对值，0-32767）
  * 200 ≈ -44 dBFS，足以区分底噪与真实信号 */

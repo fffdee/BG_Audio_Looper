@@ -51,7 +51,7 @@
 
 /* ADC1 is used by the mic/line3 front-end. Keep the analog gain below
  * unity so the following mixer/effects have headroom before clipping. */
-#define ADC1_MIC_PGA_GAIN       20  /* mic_db_table: about -4.46 dB */
+#define ADC1_MIC_PGA_GAIN       32/* mic_db_table: about -4.46 dB */
 #define ADC1_MIC_BOOST_BYPASS   4
 
 static void InitUSBDevice(void)
@@ -107,7 +107,7 @@ static void ConfigADC1MicFrontend(void)
 
 static void InitADC1Mic(uint16_t SampleRate)
 {
-	AudioADC_DynamicElementMatch(ADC1_MODULE, TRUE, TRUE);
+	AudioADC_DynamicElementMatch(ADC1_MODULE, FALSE,FALSE);
 	ConfigADC1MicFrontend();
 	AudioADC_DigitalInit(ADC1_MODULE, SampleRate, (void *)AudioADC2Buf, sizeof(AudioADC2Buf));
 

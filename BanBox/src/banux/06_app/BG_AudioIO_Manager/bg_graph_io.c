@@ -9,6 +9,7 @@
 #include "bg_audio_io_internal.h"
 #include "product_def.h"
 #include "debug.h"
+#include "bg_audio_detection.h"
 
 #include "audio_adc.h"
 #include "dac_interface.h"
@@ -163,6 +164,21 @@ uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint16_t max
 	/* 读取ADC数据（32位=L/R两个16位声道打包） */
 	if (samples_to_read > 0) {
 		AudioADC_DataGet(ADC0_MODULE, out_buf, samples_to_read);
+
+		/* 【按声道插入检测】每个声道管自己的检测：
+		 * 未插入的声道数据置 0，防止串音/浮空噪声污染 DSP 链路与 loop 录音。
+		 * 样本格式: bit31..16 = R(右声道/Line2), bit15..0 = L(左声道/Line1) */
+		{
+			uint32_t ch_mask = (BG_AudioDetection_Line1IsPlugged() ? 0x0000FFFFu : 0u)
+			                 | (BG_AudioDetection_Line2IsPlugged() ? 0xFFFF0000u : 0u);
+			if (ch_mask != 0xFFFFFFFFu) {
+				uint16_t i;
+				for (i = 0; i < samples_to_read; i++) {
+					out_buf[i] &= ch_mask;
+				}
+			}
+		}
+
 		/* 同步到共享缓冲区供 Looper 按源选择时直接访问 */
 		memcpy(BG_AudioManager.Audio_data.guitar_buf_in, out_buf, samples_to_read * sizeof(uint32_t));
 		/* 低功耗：检测吉他输入信号是否超过门限 */
