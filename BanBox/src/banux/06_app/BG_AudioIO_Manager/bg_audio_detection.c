@@ -15,6 +15,9 @@
 #include "bg_event.h"
 #include "adc.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 void ProcessGuitarOutput()
 {
 #ifdef BANBOX_II
@@ -148,5 +151,63 @@ void BG_AudioDetection_Line2Poll(void)
 	// 	}
 #else
 	line2_plugged = 1;
+#endif
+}
+
+/* ==================== MIC 插入检测（A30 下拉，低电平=已插入） ==================== */
+
+/* MIC 数据放行稳定时间：检测到插入后延迟多久才放行数据（消除插入瞬态 pop） */
+#define MIC_INSERT_STABLE_MS  1000U
+
+/* MIC 数据放行状态机：由 ADC1_ReadMicData 每帧调用推进 */
+static uint8_t  mic_stable = 0U;       /* 1 = 已插入且稳定期已过 */
+static uint32_t mic_insert_tick = 0U;  /* 首次检测到插入的系统 tick（ms） */
+
+/**
+ * MIC 插入状态：A30 下拉，低电平 = 已插入。
+ * 检测宏关闭时恒视为已插入。
+ */
+uint8_t BG_AudioDetection_MicIsPlugged(void)
+{
+#if MIC_INPUT_DETECT_EN
+	return (GPIO_RegOneBitGet(GPIO_A_IN, GPIO_INDEX30) == 0) ? 1U : 0U;
+#else
+	return 1U;
+#endif
+}
+
+/**
+ * MIC 数据就绪：检测到插入后延迟 MIC_INSERT_STABLE_MS 毫秒才返回 1。
+ * 未插入或稳定期内返回 0。需被周期调用以推进内部状态机。
+ */
+uint8_t BG_AudioDetection_MicReady(void)
+{
+#if MIC_INPUT_DETECT_EN
+	uint32_t now_ms = (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
+
+	if (!BG_AudioDetection_MicIsPlugged()) {
+		/* 未插入：复位状态，下次插入重新计时 */
+		mic_stable = 0U;
+		mic_insert_tick = 0U;
+		return 0U;
+	}
+
+	if (mic_stable) {
+		return 1U;
+	}
+
+	/* 已插入但尚未稳定：记录首次插入时刻，等待稳定期结束 */
+	if (mic_insert_tick == 0U) {
+		mic_insert_tick = now_ms;
+		return 0U;
+	}
+
+	if ((now_ms - mic_insert_tick) >= MIC_INSERT_STABLE_MS) {
+		mic_stable = 1U;
+		return 1U;
+	}
+	return 0U;
+#else
+	return 1U;
 #endif
 }

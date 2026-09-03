@@ -82,10 +82,8 @@ static void InitADC0LineIn(uint16_t SampleRate)
 	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN_NONE);
 	AudioADC_PGASel(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT);
 	AudioADC_PGASel(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT);
-	/* 对齐 SDK audioadc_example.c 的 LineIn 配置：Gain=12（约 -6.7dB）。
-	 * 旧值 32 超出 LineIn 增益表范围（0~31，最小 -16.3dB），PGA 行为未定义。 */
-	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT, 12, 4);
-	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT, 12, 4);
+	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_RIGHT, LINEIN5_RIGHT, 32, 3);
+	AudioADC_PGAGainSet(ADC0_MODULE, CHANNEL_LEFT, LINEIN5_LEFT, 32, 3);
 	AudioADC_VcomConfig(1);
 	AudioADC_DigitalInit(ADC0_MODULE, SampleRate, (void *)AudioADC1Buf, sizeof(AudioADC1Buf));
 }

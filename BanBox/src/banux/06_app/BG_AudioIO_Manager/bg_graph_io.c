@@ -217,6 +217,13 @@ uint16_t ADC1_ReadMicData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_le
 		memcpy(BG_AudioManager.Audio_data.mic_buf_in, out_buf, samples_to_read * sizeof(uint32_t));
 		/* 低功耗：检测麦克风输入信号是否超过门限 */
 		LowPower_CheckADCSignal(out_buf, samples_to_read);
+		/* MIC 插入检测 + 稳定期：未插入或插入未满 1 秒时静音，
+		 * 防止插入瞬态 pop / 直流漂移进入 DSP 与 Looper 录音。
+		 * （仍读取以消耗 FIFO，仅不向下游放行） */
+		if (!BG_AudioDetection_MicReady()) {
+			memset(out_buf, 0, samples_to_read * sizeof(uint32_t));
+			memset(BG_AudioManager.Audio_data.mic_buf_in, 0, samples_to_read * sizeof(uint32_t));
+		}
 		/* 提示音播放期间，ADC数据不输出给DAC（仍读取以消耗FIFO） */
 		if (RemindSound_IsPlaying()) {
 			memset(out_buf, 0, samples_to_read * sizeof(uint32_t));
