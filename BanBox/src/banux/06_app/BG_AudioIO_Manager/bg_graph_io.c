@@ -44,6 +44,10 @@ uint16_t USB_GetAvailableData(EffectNode_t *node)
 	if (!usb_speaker_enable) {
 		return 0;
 	}
+	/* 【模式互斥】Loop 模式下不取 USB 音频（USB 等时传输与 Looper 争抢带宽） */
+	if (!BG_AudioUSBAllowed()) {
+		return 0;
+	}
 	return UsbAudioSpeakerDataLenGet();
 }
 
@@ -275,9 +279,9 @@ uint16_t USB_ReadAudioData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_l
 	
 	(void)node;
 	
-	/* 检查 USB 音频是否启用 */
-	if (!usb_speaker_enable) {
-		/* USB 未启用，填零 */
+	/* 检查 USB 音频是否启用（含模式互斥：Loop 模式下不取 USB 音频） */
+	if (!usb_speaker_enable || !BG_AudioUSBAllowed()) {
+		/* USB 未启用 / Loop 模式，填零 */
 		for (i = 0; i < max_len && i < 640; i++) {
 			out_buf[i] = 0;
 		}
@@ -338,8 +342,8 @@ void USB_WriteAudioData(EffectNode_t *node, uint32_t *in_buf, uint16_t len)
 	
 	(void)node;
 	
-	// 检查 USB 麦克风是否启用
-	if (!usb_mic_enable) {
+	// 检查 USB 麦克风是否启用（含模式互斥：Loop 模式下不上行 USB 音频）
+	if (!usb_mic_enable || !BG_AudioUSBAllowed()) {
 		return;
 	}
 	

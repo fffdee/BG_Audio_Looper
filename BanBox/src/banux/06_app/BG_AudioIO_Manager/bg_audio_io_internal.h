@@ -64,6 +64,32 @@ extern bool     s_usb_connected;
 void BG_audio_Init(uint16_t SampleRate);
 void Audio_loop(void);
 
+/* ==================== 工作模式互斥（Loop 模式 / 自由模式） ====================
+ *
+ * Loop 模式：Looper 正在录音或播放。此时禁止 BT Audio / USB Audio 参与音频运行。
+ * 原因：Looper 工作时主循环被压到 48 采样小帧(1ms)，而 BT(44.1k 大帧 + SBC 解码)
+ *      与 USB(等时传输) 会与之争抢 CPU / 总线带宽，导致 Loop 播放卡顿。
+ * 自由模式：Looper 空闲，BT / USB / ADC 均可用。
+ *
+ * 进入 Loop 模式：立即（Looper 一启动就关 BT/USB，保证 Loop 流畅）
+ * 退出 Loop 模式：延迟确认（避免抖动导致 BT/USB 反复开关，比卡顿更糟）
+ * ============================================================================ */
+typedef enum {
+	AUDIO_WORK_MODE_FREE = 0,   /* 自由模式：BT/USB/ADC 均可用 */
+	AUDIO_WORK_MODE_LOOP = 1,   /* Loop 模式：Looper 工作中，禁用 BT/USB 音频 */
+} AudioWorkMode_t;
+
+/* Looper 是否正在工作（录音或播放中）：1=工作中 */
+uint8_t BG_AudioLooperIsActive(void);
+/* 更新工作模式状态机（主循环每轮调用一次） */
+void BG_AudioWorkModeUpdate(void);
+/* 获取当前生效的工作模式 */
+AudioWorkMode_t BG_AudioGetWorkMode(void);
+/* 模式互斥：1=允许 BT 音频, 0=禁止（Loop 模式） */
+uint8_t BG_AudioBTAllowed(void);
+/* 模式互斥：1=允许 USB 音频, 0=禁止（Loop 模式） */
+uint8_t BG_AudioUSBAllowed(void);
+
 void A2dp_DecoderInit(void);
 void SaveDataToSbcBuffer(uint8_t *data, uint16_t dataLen);
 
