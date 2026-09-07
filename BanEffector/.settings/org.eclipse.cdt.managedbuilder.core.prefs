@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+environment/buildEnvironmentInclude/config.nds32le-elf-mculib-v3s.exe.debug.825604417/CPATH/delimiter=;
+environment/buildEnvironmentInclude/config.nds32le-elf-mculib-v3s.exe.debug.825604417/CPATH/operation=remove
+environment/buildEnvironmentInclude/config.nds32le-elf-mculib-v3s.exe.debug.825604417/C_INCLUDE_PATH/delimiter=;
+environment/buildEnvironmentInclude/config.nds32le-elf-mculib-v3s.exe.debug.825604417/C_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/config.nds32le-elf-mculib-v3s.exe.debug.825604417/append=true
+environment/buildEnvironmentInclude/config.nds32le-elf-mculib-v3s.exe.debug.825604417/appendContributed=true
+environment/buildEnvironmentLibrary/config.nds32le-elf-mculib-v3s.exe.debug.825604417/LIBRARY_PATH/delimiter=;
+environment/buildEnvironmentLibrary/config.nds32le-elf-mculib-v3s.exe.debug.825604417/LIBRARY_PATH/operation=remove
+environment/buildEnvironmentLibrary/config.nds32le-elf-mculib-v3s.exe.debug.825604417/append=true
+environment/buildEnvironmentLibrary/config.nds32le-elf-mculib-v3s.exe.debug.825604417/appendContributed=true

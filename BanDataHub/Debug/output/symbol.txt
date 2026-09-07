@@ -22,8 +22,8 @@
 00040000 A __executable_start
 00040000 T _start	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/crt0.S:37
 00040000 t exception_vector	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/crt0.S:37
-000400a4 t exception_vector_end	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:368
-000400a4 T stub	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:367
+000400a4 t exception_vector_end	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:450
+000400a4 T stub	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:449
 00040120 t flash_udelay
 0004019c t flash_delayms
 000401b6 t FshcGpioSet
@@ -1089,1127 +1089,1126 @@
 0005c2ac t do_load	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:85
 0005c374 t draw_clipped_name	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:43
 0005c3e2 t draw_home	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:125
-0005c4a2 t draw_list	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:147
-0005c56a T Sf2Browser_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:188
-0005c580 T Sf2Browser_Tick	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:196
-0005c652 T GlobalSampeRateSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:636
-0005c6d6 T GlobalMclkSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:737
-0005c75a T PrivateMclkSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:795
-0005c796 T Line3MicPinSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:1056
-0005c7aa T DefaultParamgsInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:822
-0005ca80 T CtrlVarsInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:299
-0005d0a0 T Timer2Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:138
-0005d12a T power_on	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:252
-0005d290 T hardware_check	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:461
-0005d2d6 T MainTask	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:497
-0005d334 T BLE_GetTick	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:579
-0005d33a T main	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:601
-0005d50c t notify_app	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:24
-0005d546 t set_state	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:36
-0005d578 T SysState_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:48
-0005d59e T SysState_Update	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:55
-0005d5ca t Default_Handler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:47
-0005d5ca W FFTInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W GpioInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W I2C_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W I2sInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W IRInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W RtcInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W SDIO0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W SPIM_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W SPIS_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W SWInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W SpdifInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W Timer3Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W Timer4Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W Timer5Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W Timer6Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W UART0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5ca W WakeupInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:49
-0005d5cc T ExceptionCommHandler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:53
-0005d898 T __c_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:186
-0005d8ea T __cpu_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:225
-0005d994 T HardwareStackProtectEnable	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:333
-0005d9ba T __init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:353
-0005d9d4 T GIE_ENABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:16
-0005d9de T GIE_DISABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:21
-0005d9ec T GIE_STATE_GET	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:27
-0005d9f4 T NVIC_EnableIRQ	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:70
-0005da0c T NVIC_SetPriority	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:94
-0005da56 t GetPswINTL	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:30
-0005da64 W SwUartSend	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:25
-0005da66 T putchar	/cygdrive/c/Andestech/AndeSight300RDS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
-0005daf6 T nds_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:85
-0005db16 T DbgUartInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:94
-0005db3a T ADC_Enable
-0005db4c T ADC_PowerkeyChannelEnable
-0005db74 T ADC_ClockDivSet
-0005db8e T ADC_VrefSet
-0005dc12 T ADC_ModeSet
-0005dc34 T ADC_Calibration
-0005dc80 T ADC_SingleModeDataGet
-0005dcb8 T AudioADC_VolSetChannel
-0005dd2e T BACKUP_WriteEnable
-0005dd44 T BACKUP_WriteDisable
-0005dd50 T BACKUP_VBK22KMode
-0005dd76 T Chip_IDGet
-0005de48 T Clock_RcFreqGet
-0005deee T Clock_Module1Enable
-0005defe T Clock_AudioPllClockSet
-0005e062 T Clock_AudioMclkSel
-0005e13a T DataCacheInvalidAll
-0005e144 T DataCacheRangeInvalid
-0005e1aa t AudioDAC0_ChannelEnable
-0005e212 t AudioDAC1_ChannelEnable
-0005e256 T AudioDAC_Enable
-0005e274 T AudioDAC_DitherDisable
-0005e292 T AudioDAC_ScrambleDisable
-0005e2b0 T AudioDAC_Pause
-0005e2ce T AudioDAC_Run
-0005e2ec T AudioDAC_DoutModeSet
-0005e32c T AudioDAC_EdgeSet
-0005e372 T AudioDAC_DsmOutdisModeSet
-0005e3a0 T AudioDAC_ZeroNumSet
-0005e3b4 T AudioDAC_SampleRateGet
-0005e438 T AudioDAC_SampleRateSet
-0005e57e T AudioDAC_Reset
-0005e5a0 T AudioDAC_FadeTimeSet
-0005e608 T AudioDAC_FadeEnable
-0005e63a T AudioDAC_DigitalMute
-0005e67a T AudioDAC_VolSet
-0005e6c0 T AudioDAC_VmidChargeOp
-0005e6f6 t AudioDAC0_PowerOn
-0005e7f6 t AudioDAC1_PowerOn
-0005e8ae T AudioDAC_ClkEnable
-0005e8dc T AudioDAC_FuncReset
-0005e90a T AudioDAC_VIMDControl
-0005e91c T AudioDAC_SCFMute
-0005e962 T AudioDAC_IBSelect
-0005e9ac T AudioDAC_AllPowerOn
-0005ead4 T AudioDAC_AllChannelEnable
-0005eb60 T AudioDAC_PowerOn
-0005eb82 T AudioDAC_ChannelEnable
-0005eba0 T DMA_ChannelAllocTableSet
-0005ebb2 T DMA_ChannelEnable
-0005ebde T DMA_ChannelDisable
-0005ec0c T DMA_InterruptFlagGet
-0005ec60 T DMA_InterruptFlagClear
-0005ed06 T DMA_BlockConfig
-0005eea4 T DMA_BlockBufSet
-0005ef86 T DMA_CircularConfig
-0005f16a T DMA_CircularDataLenGet
-0005f1dc T DMA_CircularSpaceLenGet
-0005f2bc T DMA_CircularWritePtrSet
-0005f2f0 T DMA_CircularDataPut
-0005f45a T DMA_CircularReadPtrSet
-0005f48c T DMA_CircularDataGet
-0005f632 T Efuse_ReadData
-0005f698 T GPIO_RegOneBitGet
-0005f6ac T GPIO_PortAModeSet
-00060336 T OTG_PortGetDP
-00060344 T OTG_PortGetDM
-00060352 T OTG_PortEnableDPPullUp
-00060378 T OTG_PortDisableDPPullUp
-0006039e T OTG_PortIsEnableDPPullUp
-000603ae T OTG_PortEnablePullDown
-000603d4 T OTG_PortDisablePullDown
-000603fa T OTG_PortIsEnablePullDown
-00060406 T OTG_PortEnablePullUp500K
-0006042c T OTG_PortDisablePullUp500K
-00060452 T OTG_PortSetSpeed
-00060478 T OTG_PortLinkCheck
-0006069c T OTG_PortDeviceIsLink
-0006071e t OTG_DeviceWaitEnd
-00060794 T OTG_DeviceStallSend
-000607f2 T OTG_DeviceEndpointReset
-000608a6 T OTG_DeviceAddressSet
-000608e0 T OTG_DeviceInit
-00060962 T OTG_DeviceBusEventGet
-0006096c T OTG_DeviceControlSend
-000609c6 T OTG_DeviceControlReceive
-00060a3e T OTG_DeviceSetupReceive
-00060a94 T OTG_DeviceBulkSend
-00060af8 T OTG_DeviceBulkReceive
-00060ba2 T OTG_DeviceISOSend
-00060bda T OTG_DeviceISOReceive
-00060c24 T UsbInterrupt
-00060c80 T OTG_EndpointInterruptEnable
-00060cb4 T LoadFIFOData
-00060d16 T UnloadFIFOData
-00060d78 T Remap_AddrRemapSet
-00060e12 T Remap_InitTcm
-00060e42 T Reset_McuSystem
-00060e4c T Reset_FunctionReset
-00060e60 T SDIO_AutoKillTXClkEnable
-00060e72 T SDIO_AutoKillRXClkEnable
-00060e84 T SDIO_ByteModeEnable
-00060e96 T SDIO_MultiBlockDisable
-00060ea8 T SDIO_SysToSdioDivSet
-00060eca T SDIO_ClkSet
-00060ee4 T SDIO_ClkEnable
-00060f0e T SDIO_ClkDisable
-00060f38 T SDIO_Init
-00060f74 T SDIO_CmdStart
-0006103a T SDIO_CmdIsDone
-00061046 T SDIO_CmdStop
-00061058 T SDIO_CmdRespGet
-000610f2 T SDIO_CmdDoneCheckBusy
-0006110c T SDIO_ClearClkHalt
-0006112a T SDIO_SingleBlockConfig
-0006119a T SDIO_MultiBlockConfig
-00061212 T SDIO_DataTransfer
-0006122e T SDIO_DataIsDone
-0006123c T SDIO_MultiBlockTransferDone
-0006124a T SDIO_IsDataLineBusy
-0006125c T SPIM_DMAStart
-00061296 T SPIM_GetIntFlag
-000612a2 T SPIM_ClrIntFlag
-000612b4 T SPIM_SetDmaEn
-000612cc T SysTickInit
-000612f6 T SysTimerIntFlagClear
-00061304 T ClockFreqGet
-00061330 T Timer_Config
-000614c8 T Timer_Start
-00061540 T Timer_InterruptFlagClear
-000615f4 t UART_BaudClkGet
-0006164a T UART0_Init
-0006180a T UART1_Init
-000619ca T UART0_SendByte
-00061a0a T UART1_SendByte
-00061a4a T WDG_Disable
-00061a70 T buffer_context_init
-00061b9c T buffer_overflow
-00061bb8 T clear_buffer
-00061ce4 T get_num_bits_left
-00061cfc T fill_buffer
-00061ed4 T skip_bits
-00061edc T skip_buffer
-00062110 T align_byte
-0006211c T get_uint8
-00062130 T show_uint8
-0006213c T get_uint16_le
-00062150 T get_uint32_le
-00062164 T show_uint32_be
-00062178 T get_bits1
-00062198 T get_bits25
-000621c0 T show_bits25
-000621e8 T get_bits32
-0006226c T mp3_decoder_initialize
-00062960 T mp3_decoder_decode
-00062d60 T mp3_decoder_can_continue
-00062d70 T mp3_decoder_seek
-00062e38 T mp3_id3_v1_parse
-00062f58 T mp3_id3_v2_parse
-000635f8 T sbc_decoder_initialize
-000638d0 T sbc_decoder_decode
-00063cec T sbc_decoder_can_continue
-00063cfc T sbc_decoder_seek
-00063d58 T InitPLC
-00063dd0 T PLC_bad_frame
-00064774 T PLC_good_frame
-00064af4 T sbc_subband_synthesis_filter
-00064f9c T wav_decoder_initialize
-000650c8 T wav_decoder_decode
-000655c0 T wav_decoder_can_continue
-000655d0 T wav_decoder_seek
-00065634 T wma_decoder_initialize
-00065710 T wma_decoder_decode
-00065b10 T wma_decoder_can_continue
-00065b20 T wma_decoder_seek
-00065c60 T mpx_skip_buffer_to
-00065c68 T mpx_find_sync_word
-00065cf8 T mpx_fill_buffer
-00065e24 T mpx_header_check
-00065e9c T mpx_header_parse
-00065fc4 T mp2_audio_data_parse
-0006740c T mp3_scale_factors_parse
-000683f0 T mp3_audio_data_parse
-000688e8 T mp3_decoder_windowing
-00069040 T mp3_decoder_imdct_windowing
-0006c474 T mpx_decoder_dctii
-0006d308 T mpx_decoder_calc
-0006f3c8 T mp3_huffman_decode
-0006fc34 T sbc_frame_header
-0006fe4c T sbc_bit_allocation
-000709ac T sbc_decode_frame
-00070f50 T sbc_find_synword
-00070f90 T alaw2pcm
-00070fd4 T ulaw2pcm
-00071004 T wav_header_parse
-00071ed0 T wav_adpcm_decode
-0007211c t wmaFindNextPayload.part.0
-00074098 T get_bits_pointer
-0007409c T get_buffer_len_in_bit
-000740a4 T skip_bits_to
-000740a8 T wmaDecoderContextInit
-00074c90 T wmaAsfHeaderParse
-00076a30 T wmaFillBuffer
-00076a70 T wmaSkipBuffer
-00076afc T wmaFindNextPayload
-000771f0 T wmaStartWithNextPayload
-00077320 T wmaSubframeHeaderParse
-0007904c T wmaSubframeParse
-0007a504 T wmaSubframeCalc
-0007e820 T wmaReadHuff4MaskNoise
-0007e8c8 T wmaReadHuff4RunLevel
-0007e9d8 T wmaPseudoFloatPow10
-0007ea4c T wmaPseudoFloatInt2Pf
-0007eab8 T wmaPseudoFloatPowMinusQuater
-0007eb2c T wmaPseudoFloatDiv
-0007eb84 T sra_init
-0007eb90 T sra_apply
-0007f114 T resampler_init
-0007f60c T resampler_apply
-00082510 T roundf
-0008256e T fmod
-00082622 T pow
-0008293a T sqrt
-000829e4 T powf
-000831e4 T __ieee754_fmod
-0008342e T __ieee754_pow
-00083ef2 T __ieee754_sqrt
-00084060 T __mathlib_flt_infnan2
-00084068 T __mathlib_flt_underflow
-00084078 T __mathlib_flt_overflow
-0008408c T __mathlib_flt_invalid
-000840a0 T __mathlib_flt_divzero
-000840c0 T __ieee_status
-000840c4 T fabs
-000840d4 T finite
-000840e6 T __fpclassifyd
-0008413a T matherr
-0008413e T nan
-0008414c T rint
-00084288 T scalbn
-0008436a T copysignf
-00084382 T fabsf
-00084390 T __fpclassifyf
-000843d2 T copysign
-000843ee T platform_reset
-00084420 T ld_channel_assess
-0008446e T ld_read_clock
-00084492 t ld_acl_rx_no_sync
-00084538 t ld_acl_rsw_rx
-0008459c t ld_acl_rsw_evt_start_cbk
-00084602 t ld_acl_tx_packet_type_select
-000846ca t ld_acl_rsw_fhs_rx
-0008474e t ld_acl_rx_sync2
-00084872 t ld_acl_rsw_end
-00084a44 t ld_acl_automatic_data_flush
-00084c98 t ld_acl_end
-00084db8 t ld_acl_sched
-00084ed0 t ld_acl_rsw_start
-00085190 t ld_acl_rsw_evt_canceled_cbk
-000851cc t ld_acl_rsw_frm_isr
-000855b4 t ld_acl_rsw_frm_cbk
-000855e2 t ld_acl_sniff_sched
-00085878 t ld_acl_sniff_evt_canceled_cbk
-000858a2 t ld_acl_sniff_trans_sched
-00085998 t ld_acl_sniff_enter
-00085a68 t ld_acl_resched
-00085acc t ld_acl_evt_stop_cbk
-00085afe t ld_acl_sket_isr
-00085b3c t ld_acl_sniff_evt_start_cbk
-00085d72 t ld_acl_rx_sync
-00085f2a t ld_acl_sniff_exit
-00085fc8 t ld_acl_sniff_frm_isr
-00086094 t ld_acl_tx_prog
-0008632c t ld_acl_tx
-000864cc t ld_acl_rx_isr
-000864f6 t ld_acl_sniff_frm_cbk
-00086538 t ld_acl_evt_start_cbk
-0008673c t ld_acl_test_mode_update
-00086c0c t ld_acl_frm_isr
-00086e28 t ld_acl_frm_cbk
-00086e60 t ld_acl_evt_canceled_cbk
-00086f40 T ld_sco_audio_isr
-0008707c T ld_fm_clk_isr
-000870b6 T ld_fm_rx_isr
-000870dc T ld_fm_frame_isr
-0008712a T ld_fm_sket_isr
-0008718e T ld_fm_prog_enable
-000871ae T ld_fm_prog_disable
-000871c8 T ld_fm_prog_push
-0008727a T ld_sched_compute
-0008738a T ld_sched_acl_remove
-000873aa T ld_sched_sniff_add
-000873de T ld_sched_sniff_remove
-0008740e T ld_util_fhs_unpk
-00087502 t ea_conflict_check
-00087666 t ea_offset_update
-00087688 T ea_elt_cancel
-000877be T ea_elt_create
-000877e2 T ea_finetimer_isr
-0008793c T ea_sw_isr
-00087968 T ea_offset_req
-00087afe T ea_time_get_halfslot_rounded
-00087b22 T ea_time_get_slot_rounded
-00087b62 t ea_prog_timer
-00087ca4 T ea_elt_insert
-00087f1c T ea_elt_remove
-00087f8c T ea_interval_duration_req
-00088028 T ea_alarm_clear
-0008806e t hci_evt_mask_check
-000880e4 t hci_evt_filter_inq_check
-000881a6 t hci_evt_filter_con_check
-000883ec t hci_evt_filter_check
-00088554 T hci_send_2_host
-00088580 T hci_fc_acl_packet_sent
-00088592 T hci_fc_sync_packet_sent
-000885a4 T hci_fc_check_host_available_nb_acl_packets
-000885c6 T hci_fc_check_host_available_nb_sync_packets
-000885e8 t hci_build_cc_evt
-0008867a t hci_build_cs_evt
-000886c0 t hci_build_evt
-0008871e t hci_build_le_evt
-00088786 t hci_build_acl_rx_data
-000887c2 t hci_build_bt_acl_rx_data
-00088810 t hci_build_bt_sync_rx_data
-00088860 t hci_tx_start
-00088988 t hci_tx_trigger
-000889a2 t hci_tx_done
-00088a6a T hci_tl_send
-00088ae8 t hci_util_read_array_size
-00088b22 T hci_util_pack
-00088c24 T co_htobs
-00088c26 T co_btohs
-00088c28 T co_list_init
-00088c30 T co_list_push_front
-00088c3c T co_list_extract
-00088c82 T co_list_extract_after
-00088c98 T co_list_find
-00088caa T co_list_insert_after
-00088cee T co_rand_byte
-00088d02 T co_min
-00088d0a T co_max
-00088d12 T co_abs
-00088d18 T co_read16p
-00088d24 T co_read32p
-00088d42 T co_write32p
-00088d56 T co_write16p
-00088d5e t h4tl_tx_done
-00088d78 T h4tl_write
-00088db6 T h4tl_start
-00088db8 T ke_event_set
-00088de2 t ke_mem_is_in_heap
-00088e0a T ke_malloc
-00088ed2 T ke_free
-00088fa8 T ke_param2msg
-00088fac T ke_msg2param
-00088fb0 T ke_msg_alloc
-00088fea T ke_msg_send
-00089010 T ke_msg_send_basic
-00089028 T ke_msg_free
-0008903a T ke_queue_push
-0008904e T ke_queue_pop
-0008905e T ke_queue_extract
-000890a0 T ke_queue_insert
-000890d4 t cmp_dest_id
-000890de t ke_task_saved_update
-0008911a T ke_state_set
-00089154 T ke_state_get
-0008917e t ke_time_cmp
-00089190 t cmp_abs_time
-000891aa t cmp_timer_id
-000891c4 t ke_timer_hw_set
-000891f6 t ke_time
-0008920c t ke_time_past
-00089222 T ke_timer_set
-000892da T ke_timer_clear
-0008933a T rwip_wakeup_end
-00089360 T rwip_prevent_sleep_set
-00089380 T rwip_wakeup
-0008939c T rwip_prevent_sleep_clear
-000893bc T rwip_sleep_lpcycles_2_us
-000893c6 T ble_rxwinszdef_getf
-000893d6 T ble_intstat_get
-000893e0 T ble_intack_clear
-000893ea T ble_basetimecnt_get
-000893f4 T ble_samp_getf
-00089400 T ble_samp_setf
-0008940e T bt_intcntl_set
-00089416 T bt_intcntl_grosstgtintmsk_getf
-00089422 T bt_intcntl_grosstgtintmsk_setf
-00089436 T bt_intcntl_finetgtintmsk_getf
-00089442 T bt_intcntl_finetgtintmsk_setf
-00089456 T bt_intack_clear
-0008945e T bt_intack_errorintack_clearf
-0008946a T bt_intack_audioint1ack_clearf
-00089474 T bt_intack_audioint0ack_clearf
-0008947e T bt_finetimecnt_get
-00089488 T bt_deepslcntl_extwkupdsb_setf
-000894a0 T bt_deepslcntl_deep_sleep_corr_en_setf
-000894b6 T bt_deepslstat_get
-000894c0 T bt_finecntcorr_setf
-000894ca T bt_clkncntcorr_pack
-000894da T bt_rftestcntl_sserrren_setf
-000894f2 T bt_rftestcntl_herrren_setf
-0008950a T bt_rftestfreq_directloopbacken_setf
-00089522 T bt_rftestfreq_testmodeen_setf
-0008953a T bt_rftestfreq_rxfreq_setf
-00089552 T bt_rftestfreq_txfreq_setf
-00089566 T bt_grosstimtgt_grosstarget_setf
-00089570 T bt_finetimtgt_get
-0008957a T bt_finetimtgt_finetarget_setf
-00089584 T bt_sketclkn_getf
-0008958e T bt_e_scochancntl_pack
-000895b6 T bt_e_scochancntl_tog_getf
-000895c8 T bt_e_scomutecntl_pack
-000895f0 T bt_e_scomutecntl_invl_1_getf
-00089604 T bt_e_scomutecntl_invl_0_getf
-00089618 T bt_e_scocurrenttxptr_pack
-0008962e T bt_e_scocurrenttxptr_e_scoptrtx_1_getf
-00089640 T bt_e_scocurrenttxptr_e_scoptrtx_1_setf
-0008965c T bt_e_scocurrenttxptr_e_scoptrtx_0_getf
-0008966e T bt_e_scocurrenttxptr_e_scoptrtx_0_setf
-0008968a T bt_e_scocurrentrxptr_pack
-000896a0 T bt_e_scocurrentrxptr_e_scoptrrx_1_getf
-000896b2 T bt_e_scocurrentrxptr_e_scoptrrx_1_setf
-000896ce T bt_e_scocurrentrxptr_e_scoptrrx_0_getf
-000896e0 T bt_e_scocurrentrxptr_e_scoptrrx_0_setf
-000896fc T bt_e_scoltcntl_pack
-0008971e T bt_e_scotrcntl_pack
-00089744 T em_bt_frcntl_format_setf
-00089764 T em_bt_bitoff_getf
-00089778 T em_bt_clkoff0_getf
-0008978c T em_bt_clkoff1_getf
-000897a0 T em_bt_linkcntl_afhena_setf
-000897c6 T em_bt_linkcntl_laap_setf
-000897ec T em_bt_linkcntl_whdsb_setf
-00089812 T em_bt_linkcntl_acledr_setf
-00089838 T em_bt_linkcntl_aclltaddr_getf
-00089852 T em_bt_linkcntl_aclltaddr_setf
-00089876 T em_bt_bdaddr_setf
-0008988e T em_bt_bch0_setf
-000898a2 T em_bt_bch1_setf
-000898b6 T em_bt_rxmaxbuf_bch2_pack
-000898d0 T em_bt_pwrcntl_fh_en_setf
-000898f4 T em_bt_pwrcntl_freq_setf
-00089918 T em_bt_txrxcntl_rxthr_setf
-0008993c T em_bt_txrxcntl_rxbcry_setf
-00089962 T em_bt_txrxcntl_rxcrypt_setf
-00089986 T em_bt_txrxcntl_txbcry_setf
-000899a8 T em_bt_txrxcntl_txcrypt_setf
-000899c8 T em_bt_txdescptr_get
-000899dc T em_bt_txdescptr_setf
-000899f0 T em_bt_loopcntl_to_nb_setf
-00089a10 T em_bt_loopcntl_att_nb_setf
-00089a30 T em_bt_maxfrmtime_setf
-00089a44 T em_bt_rxclkn0_getf
-00089a58 T em_bt_rxclkn1_getf
-00089a6c T em_bt_rxbit_rxbit_getf
-00089a84 T em_bt_acltxstat_fcrc_setf
-00089aaa T em_bt_acltxstat_fnak_setf
-00089ad0 T em_bt_acltxstat_rswitch_setf
-00089af6 T em_bt_aclrxstat_rxid_getf
-00089b0e T em_bt_acldmpriocntl_pack
-00089b34 T em_bt_txptr_pack
-00089b4e T em_bt_txheader_txltaddr_setf
-00089b6c T em_bt_txpheader_pack
-00089b8e T GattServerNotify
-00089ba0 t prepare_handle_value
-00089bdc T att_prepare_handle_value_notification
-00089bf2 T att_server_can_send
-00089c08 T att_server_notify
-00089c5e t hci_connection_timestamp
-00089c72 T hci_connection_for_handle
-00089ca2 T hci_number_free_acl_slots_for_handle
-00089cf0 T hci_can_send_prepared_acl_packet_now
-00089d18 T hci_can_send_acl_packet_now
-00089d3a T hci_is_packet_buffer_reserved
-00089d44 T hci_reserve_packet_buffer
-00089d80 T hci_release_packet_buffer
-00089d8c T hci_transport_synchronous
-00089d9a t hci_send_acl_packet_fragments
-00089e74 T hci_send_acl_packet_buffer
-00089f1c T hci_get_outgoing_packet_buffer
-00089f24 t printf_packet
-00089f96 T hci_dump_packet
-00089fb0 T l2cap_can_send_fixed_channel_packet_now
-00089fc2 T l2cap_get_outgoing_buffer
-00089fd6 T l2cap_reserve_packet_buffer
-00089fe8 T l2cap_send_prepared_connectionless
-0008a09c T linked_list_iterator_init
-0008a0aa T linked_list_iterator_has_next
-0008a0d2 T linked_list_iterator_next
-0008a0f2 T embedded_get_ticks
-0008a104 T bt_store_16
-0008a114 T printf_hexdump
-0008a158 T BtStackRcvData
-0008a1d4 T RXBUFF_Alloc
-0008a2ae T LEtoHost16
-0008a2ba T _InsertTailList
-0008a2c8 T _RemoveHeadList
-0008a2d6 T HciBufferInd
-0008a306 T em_rd
-0008a31e T em_wr
-0008a33a T em_set
-0008a356 T em_rd32p
-0008a36e T em_wr16p
-0008a386 T em_rd8p
-0008a390 T em_wr8p
-0008a39a T em_buf_rx_free
-0008a3ae T em_buf_rx_buff_addr_get
-0008a3c6 T em_buf_rx_current_get
-0008a3cc T em_buf_rx_current_set
-0008a3d2 T em_buf_rx_next
-0008a3d8 T em_read_8
-0008a3f6 T em_read_16
-0008a418 T bt_util_buf_lmp_tx_free
-0008a468 T bt_util_buf_acl_rx_alloc
-0008a47c T bt_util_buf_acl_rx_free
-0008a4da T bt_util_buf_acl_tx_alloc
-0008a4ee T bt_util_buf_acl_tx_free
-0008a54c T bt_util_buf_sync_tx_free
-0008a5a6 T bt_util_buf_sync_rx_alloc
-0008a5d4 T bt_util_buf_sync_rx_free
-0008a63a T rwbt_sleep_wakeup
-0008a6be T rwbt_sleep_wakeup_end
-0008a6de t hci_pack_bytes
-0008a726 t hci_wr_curr_iac_lap_cmd_upk
-0008a7ae t hci_wr_stored_lk_cmd_upk
-0008a858 t hci_set_evt_filter_cmd_upk
-0008a9aa t hci_host_nb_cmp_pkts_cmd_pkupk
-0008aa36 t hci_le_dir_adv_report_evt_pkupk
-0008ab44 t hci_le_adv_report_evt_pkupk
-0008ac82 T hci_look_for_cmd_desc
-0008acd6 T hci_look_for_evt_desc
-0008ad04 T hci_look_for_le_evt_desc
-0008ad30 T ble_rxdone_setf
-0008ad52 T ble_rxstat_get
-0008ad64 T ble_rxphce_get
-0008ad76 T ble_rxmd_getf
-0008ad8c T ble_rxchass_unpack
-0008adb0 T ble_rxdataptr_get
-0008adc2 T llc_con_update_complete_send
-0008ae4a T llc_feats_rd_event_send
-0008ae8a T llc_version_rd_event_send
-0008aedc T llc_common_enc_key_ref_comp_evt_send
-0008af00 T llc_common_enc_change_evt_send
-0008af88 T llc_lsto_con_update
-0008afce T llc_map_update_ind
-0008b034 t llc_elt_in_process
-0008b054 T llc_util_dicon_procedure
-0008b08e T llc_util_clear_operation_ptr
-0008b0b8 T llc_start_enc_tx
-0008b11e T llc_start_enc_rx
-0008b186 T llc_util_ivs_set
-0008b1c0 T llc_util_set_operation_ptr
-0008b1ce T llc_util_get_operation_ptr
-0008b1dc T llc_state_chk
-0008b1e6 T llc_state_update
-0008b20a T lld_con_param_rsp
-0008b32a T lld_con_stop
-0008b340 T lld_get_mode
-0008b366 T lld_ch_map_ind
-0008b3b6 T lld_con_update_ind
-0008b3ce T lld_crypt_isr
-0008b3e2 t lld_evt_slave_wakeup
-0008b404 t lld_evt_priority_reset
-0008b40e t lld_evt_deferred_elt_push
-0008b44c t lld_evt_slave_instant_evt
-0008b4a0 t lld_evt_elt_wait_insert
-0008b4d0 t lld_evt_elt_wait_get
-0008b512 t lld_evt_winsize_change
-0008b5a4 t lld_evt_slave_time_compute
-0008b678 t lld_evt_check_md_bit
-0008b6a4 t lld_evt_get_next_free_slot
-0008b6ec t lld_evt_continue
-0008b744 T lld_evt_sca_get
-0008b74a T lld_evt_delete_elt_push
-0008b7aa t lld_evt_slave_param_update_perform
-0008b984 t lld_evt_slave_instant
-0008b9c6 T lld_evt_channel_next
-0008ba16 T lld_evt_init_evt
-0008ba5c T lld_evt_drift_compute
-0008ba7c t lld_evt_rxwin_update
-0008baca t lld_evt_rxwin_compute
-0008bb12 T lld_evt_restart
-0008be26 T lld_evt_elt_insert
-0008be82 T lld_evt_schedule_next
-0008c044 T lld_evt_slave_update
-0008c1cc T lld_evt_end
-0008c2fa T lld_evt_rx
-0008c334 T lld_evt_end_isr
-0008c38a T lld_evt_rx_isr
-0008c3a2 t lld_pdu_llcp_length_rsp_unpk
-0008c3d4 t lld_pdu_llcp_length_req_unpk
-0008c406 t lld_pdu_llcp_con_param_rsp_unpk
-0008c49c t lld_pdu_llcp_con_param_req_unpk
-0008c532 t lld_pdu_cntl_aligned_unpk
-0008c54e t lld_pdu_llcp_unpack
-0008c5bc t lld_pdu_llcp_rx_handler
-0008c606 T lld_pdu_rx_handler
-0008c79c T lld_util_get_local_offset
-0008c7ac T lld_util_get_peer_offset
-0008c7be T lld_util_instant_ongoing
-0008c7ca T lld_util_compute_ce_max
-0008c890 T lld_util_priority_set
-0008c978 T lld_util_get_tx_pkt_cnt
-0008c97e T lld_util_eff_tx_time_set
-0008c988 T lld_util_max_lat_compute
-0008c9ea T llm_util_check_map_validity
-0008ca3c T llm_util_get_adv_type
-0008ca4e T llm_util_check_evt_mask
-0008ca6a T llm_util_get_supp_features
-0008ca7c T ble_fcntoffset_set
-0008ca90 T ble_link_get
-0008caa4 T ble_link_set
-0008cab8 T ble_rxthr_getf
-0008cace T ble_hopcntl_get
-0008cae2 T ble_ch_idx_setf
-0008cb02 T ble_rxwincntl_get
-0008cb16 T ble_rxwincntl_set
-0008cb2a T ble_minevtime_get
-0008cb3e T ble_minevtime_set
-0008cb52 T ble_maxevtime_set
-0008cb66 T ble_chmap0_set
-0008cb7a T ble_chmap1_set
-0008cb8e T ble_chmap2_set
-0008cba2 T ble_iv_setf
-0008cbba T ble_txccmpktcnt0_set
-0008cbce T ble_txccmpktcnt1_set
-0008cbe2 T ble_txccmpktcnt2_set
-0008cbf6 T ble_rxccmpktcnt0_set
-0008cc0a T ble_rxccmpktcnt1_set
-0008cc1e T ble_rxccmpktcnt2_set
-0008cc32 T ble_btcntsync0_get
-0008cc46 T ble_btcntsync1_get
-0008cc5a T ble_evtrxok_getf
-0008cc70 T ble_fcntrxsync_getf
-0008cc88 T ble_aclrxdesccnt_getf
-0008cc9e T ble_acltxdesccnt_getf
-0008ccb4 T ble_isorxpktcntl_getf
-0008ccca T ble_conflict_getf
-0008cce2 t llc_llcp_send
-0008cd64 t llcp_ping_rsp_handler
-0008cdd4 t llc_llcp_reject_ind
-0008d01c t llcp_reject_ind_ext_handler
-0008d034 t llcp_reject_ind_handler
-0008d04c t llcp_enc_rsp_handler
-0008d112 t llcp_pause_enc_req_handler
-0008d1ea t llcp_start_enc_req_handler
-0008d264 t llcp_unknown_rsp_handler
-0008d4a0 t llcp_enc_req_handler
-0008d588 t llcp_terminate_ind_handler
-0008d5d6 T llc_llcp_version_ind_pdu_send
-0008d616 t llcp_vers_ind_handler
-0008d6b6 T llc_llcp_pause_enc_rsp_pdu_send
-0008d6fc t llcp_pause_enc_rsp_handler
-0008d7f6 T llc_llcp_start_enc_rsp_pdu_send
-0008d82e t llcp_start_enc_rsp_handler
-0008d968 T llc_llcp_reject_ind_pdu_send
-0008d9d0 t llcp_length_rsp_handler
-0008db54 t llcp_con_param_rsp_handler
-0008dca8 t llcp_feats_rsp_handler
-0008dd64 t llcp_channel_map_ind_handler
-0008debc t llcp_con_upd_ind_handler
-0008e050 T llc_llcp_con_param_rsp_pdu_send
-0008e0fa t llcp_con_param_req_handler
-0008e3f4 T llc_llcp_feats_rsp_pdu_send
-0008e41e t llcp_feats_req_handler
-0008e478 t llcp_slave_feature_req_handler
-0008e48a T llc_llcp_unknown_rsp_send_pdu
-0008e4ac t llc_llcp_unknown_ind_handler
-0008e4de T llc_llcp_ping_rsp_pdu_send
-0008e4fc t llcp_ping_req_handler
-0008e52c T llc_llcp_length_rsp_pdu_send
-0008e586 t llcp_length_req_handler
-0008e6ae T llc_llcp_recv_handler
-0008e750 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
-0008e790 T __udivdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:818
-0008e794 t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
-0008e7ec T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
-0008e944 T __fixsfdi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3723
-0008e9bc T __fixdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3666
-0008ea10 T __fixunsdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3929
-0008ea60 T __popcountsi2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:840
-0008ea9c T __floatdisf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatdisf.c:35
-0008eb6c T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
-0008f0fc T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
-0008f5b0 T __eqdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/eqdf2.c:35
-0008f5b0 T __nedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/eqdf2.c:36
-0008f61a T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
-0008f61a T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
-0008f6be T __ledf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:35
-0008f6be T __ltdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:36
-0008f764 T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
-0008fb54 T __subdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/subdf3.c:35
-00090104 T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
-0009016e T __floatunsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatunsidf.c:36
-000901c8 T __extendsfdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/extendsfdf2.c:36
-0009026e T __truncdfsf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/truncdfsf2.c:36
-00090380 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
-000903a8 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
-000903d0 T atoi
-000903d8 T __errno
-000903de T _fclose_r
-00090464 T __sflush_r
-0009058a T _fflush_r
-000905ae T fflush
-000905ce T _cleanup_r
-000905de T __sinit
-000906cc T __sfp_lock_acquire
-000906ce T __sfp_lock_release
-000906d0 T _fread_r
-000907c4 T fread
-000907de T fseek
-000907f4 T _fseeko_r
-00090a74 T _fstat_r
-00090a94 T ftell
-00090aa2 T _ftello_r
-00090b1a T _fwalk
-00090b56 T _fwalk_reent
-00090b96 T __smakebuf_r
-00090c7e T malloc
-00090c8c T free
-00090c9c T memcmp
-00090cd4 T memcpy
-00090d00 T memmove
-00090db0 T memset
-00090de0 T _free_r
-00090e54 T _malloc_r
-00090efa T printf
-00090f04 T puts
-00090f54 T rand
-00090f8e t lflush
-00090fa4 T __srefill_r
-00091096 T _sbrk_r
-000910b4 T snprintf
-000910be T sprintf
-000910c8 T __sread
-000910ec T __swrite
-00091122 T __sseek
-00091148 T __sclose
-00091154 T strcat
-0009116c T strchr
-0009117c T strcmp
-00091198 T strcpy
-000911ac T strlen
-000911b8 T strncat
-000911d8 T strncmp
-000911f0 T strncpy
-0009120c T strstr
-00091240 T strtol
-0009124a T strtol_common
-0009136e T strtoul
-00091378 t vprintf_help
-000913ac T vprintf
-000913fc t vsnprintf_help
-0009142a T vsnprintf
-00091458 t vsprintf_help
-00091464 T vsprintf
-00091482 T _write_r
-000914a4 T _close_r
-000914c4 T do_printf
-00091970 T _isatty_r
-0009198e T _lseek_r
-000919b0 T nds_isalpha
-000919be T nds_isdigit
-000919c8 T nds_isspace
-000919d8 T nds_isupper
-000919e2 t sep_frac
-00091a14 T _printf_float
-000920f6 T _read_r
-00092118 T abs
-00092120 T _close
-00092138 T _read
-00092150 T _write
-00092168 T _lseek
-00092180 T _fstat
-00092198 T _isatty
-000921ac T _sbrk
-0009281c R DeviceString_LangID	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:53
-00092820 R DeviceQualifier	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:46
-0009282c R InterFaceNum_CDC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:553
-00092834 R ConfigDescriptor_CDC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:532
-00092898 R InterFaceNum_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:528
-000928a0 R ConfigDescriptor_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:477
-000929bc R InterFaceNum_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:473
-000929c4 R ConfigDescriptor_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:440
-00092a70 R InterFaceNum_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:436
-00092a78 R ConfigDescriptor_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:411
-00092abc R InterFaceNum_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:407
-00092ac4 R ConfigDescriptor_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:399
-00092ad8 R InterFaceNum_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:395
-00092ae0 R ConfigDescriptor_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:346
-00092bf4 R InterFaceNum_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:342
-00092bfc R ConfigDescriptor_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:303
-00092cb8 R InterFaceNum_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:300
-00092cc0 R ConfigDescriptor_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:259
-00092d74 R InterFaceNum_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:256
-00092d7c R ConfigDescriptor_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:246
-00092d9c R InterFaceNum_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:243
-00092da4 R ConfigDescriptor_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:199
-00092ea0 R InterFaceNum_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:197
-00092ea8 R ConfigDescriptor_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:153
-00092fa4 R InterFaceNum_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:151
-00092fac R ConfigDescriptor_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:116
-00093050 R InterFaceNum_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:112
-00093058 R ConfigDescriptor_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:78
-000930f4 R HidDataReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:48
-00093118 R AudioCtrlReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:25
-00093188 R gRequestSenseReady	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_stor.c:149
-0009319c R gRequestSenseNotReady	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_stor.c:142
-000931b0 R gModeSenseProtectPage	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_stor.c:120
-000931bc r g_CDC_IO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/shell_io_cdc.c:36
-000931cc r crc16_table	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/bluetooth/src/ble_protocol.c:41
-00094770 r g_psram64h_ops	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/flash/psram_esp64h.c:56
-000947b4 r font_6x8	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/lcd/ssd1306.c:25
-00094bd8 r c_def_dur_s	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/power_mgr/battery_calib.c:27
-00094c20 R g_remind_off_size	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_off.c:5052
-00094c24 R g_remind_off	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_off.c:7
-000a8740 R g_remind_on_size	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_on.c:8997
-000a8744 R g_remind_on	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_on.c:7
-000afe18 A EILM_SIZE
-000cbc74 r s_remind_table	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/remind_sound.c:56
-000cbf38 r s_sdcard_ops	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/sdcard/sd_card_driver.c:31
-000cc66c r encoder_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_encoder.c:94
-000cc7f4 r psram_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_psram.c:154
-000cc924 r sdcard_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_sdcard.c:171
-000ccb18 r usb_cdc_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_usb_cdc.c:219
-000cd39c r g_HelpModule	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell.c:161
-000cd3b0 r g_HelpOpts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell.c:149
-000cd450 r g_CatNames	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell.c:85
-000d0a40 r _mod_remind	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:3158
-000d0a54 r remind_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:3150
-000d0ab8 r _mod_boot	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:3002
-000d0acc r boot_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2996
-000d0b08 r _mod_upg	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2960
-000d0b1c r upg_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2954
-000d0b58 r _mod_ble_send	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2910
-000d0b6c r ble_send_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2905
-000d0b94 r _mod_drivers	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2873
-000d0ba8 r drivers_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2868
-000d0bd0 r _mod_tree	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2829
-000d0be4 r tree_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2824
-000d0c0c r _mod_echo	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2786
-000d0c20 r echo_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2781
-000d0c48 r _mod_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2712
-000d0c5c r write_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2707
-000d0c84 r _mod_cat	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2669
-000d0c98 r cat_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2664
-000d0cc0 r _mod_cd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2615
-000d0cd4 r cd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2610
-000d0cfc r _mod_pwd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2579
-000d0d10 r pwd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2574
-000d0d38 r _mod_ls	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2549
-000d0d4c r ls_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2544
-000d0d74 r _mod_ble	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2275
-000d0d88 r ble_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2270
-000d0db0 r _mod_bt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2256
-000d0dc4 r bt_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2248
-000d0e28 r _mod_battery	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2199
-000d0e3c r battery_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2194
-000d0e78 r _mod_sd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2170
-000d0e8c r sd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2161
-000d0f04 r _mod_flash	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1767
-000d0f18 r flash_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1757
-000d0fa4 r _mod_dbg	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1440
-000d0fb8 r dbg_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1432
-000d101c r _mod_led	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1356
-000d1030 r led_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1349
-000d1080 r _mod_lcd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1321
-000d1094 r lcd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1312
-000d110c r _mod_gpio	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1257
-000d1120 r gpio_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1250
-000d1170 r _mod_chain	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1207
-000d1184 r chain_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1184
-000d1288 r output_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:557
-000d1294 r effect_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:553
-000d12c0 r source_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:552
-000d12d4 r node_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:551
-000d12e4 r _mod_audio	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:545
-000d12f8 r audio_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:534
-000d1398 r _mod_sys	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:420
-000d13ac r sys_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:405
-000d1ae0 r _mod_calib	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_battery_calib.c:139
-000d1af4 r calib_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_battery_calib.c:130
-000d1c0c r _mod_hwtest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_hwtest.c:43
-000d1c20 r hwtest_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_hwtest.c:38
-000d1db8 r g_LpModule	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_lp.c:95
-000d1dcc r g_LpOpts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_lp.c:89
-000d23ac r _mod_param	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_param.c:285
-000d23c0 r param_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_param.c:273
-000d25d0 r _mod_psram	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_psram.c:40
-000d25e4 r psram_options	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_psram.c:31
-000d3640 r sb_module.5285
-000d3654 r sb_options	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_soundbank.c:823
-000d376c r note_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_soundbank.c:447
-000d3c00 r _mod_speedtest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_speedtest.c:78
-000d3c14 r speedtest_options	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_speedtest.c:67
-000d4190 r g_SysmonModule	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_sysmon.c:47
-000d41a4 r g_SysmonOpts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_sysmon.c:35
-000d4720 r g_BLE_IO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_io_ble.c:240
-000d4814 r g_level_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/01_hal/bg_log.c:39
-000d4824 r g_tag_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/01_hal/bg_log.c:20
-000d4e4c R bg_storage_driver_port	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/01_hal/port/bandatahub/bg_storage_bandatahub.c:410
-000d5648 r semitone_ratio_table	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/02_core/sampler/sampler.c:33
-000d6860 r g_preset_patterns	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/03_app/drum_machine/drum_machine.c:86
-000d6960 r g_track_info	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/03_app/drum_machine/drum_machine.c:74
-000d69c0 R fat32_diskio_sdcard	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/fat32/fat32_diskio.c:94
-000d7a5c R gain_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:287
-000d7a9c R eq_param_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:284
-000d7ab0 R expander_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:281
-000d7ab8 R drc_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:280
-000d7ac4 R eq_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:273
-000d7ad8 R GAIN_CONTROL_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:215
-000d7bd8 R EXPANDER_DEFAULT_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:206
-000d7c00 R DRC_DEFAULT_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:183
-000d7ce4 R EQ_DEFAULT_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:159
-000d7f44 R SupportSampleRateList	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:83
-000d8920 R CmdRespType
-000d89a0 r SBC_SAMPLING_RATE
-000d89a8 r rwin
-000d8a20 r rcos
-000d8b98 r synmatrix8
-000d8d98 r synmatrix4
-000d8e18 r sbc_proto_8_80m1
-000d8eb8 r sbc_proto_8_80m0
-000d8f58 r sbc_proto_4_40m1
-000d8fa8 r sbc_proto_4_40m0
-000d8ff8 r SF_TABLE
-000d90f8 r QC_TABLE
-000d91c4 r OFFSET_TABLE
-000d9220 r BITALLOC_TABLE
-000d9230 r SBQUANT_TABLE
-000d9258 r SBQUANT_OFFSETS_4
-000d9278 r SBQUANT_OFFSETS_3
-000d9284 r SBQUANT_OFFSETS_2
-000d928c r SBQUANT_OFFSETS_1
-000d92ac r SBQUANT_OFFSETS_0
-000d92c8 r NSFB
-000d9310 r SFLEN_TABLE
-000d9330 R SAMPLERATE_TABLE
-000d9344 r BITRATE_TABLE
-000d938c r SCALE_FACTOR_LONG_1.2964
-000d93b0 r ca.2923
-000d93c0 r cs.2922
-000d93d0 r MP3_JOINT_STEREO_IS_TABLE_Q15.2766
-000d93e0 r MP3_JOINT_STEREO_IS_LSF_TABLE_Q15.2767
-000d9420 r ROOT_TABLE_Q14.2718
-000d9428 r PRETAB.2717
-000d9440 r T_POW_3_Q14.2712
-000d9448 r SUBBAND_SYNTHESIS_WINDOW_COEFS
-000d9848 r REQUANT_POW43_EXPONENT_LUT
-000d9948 r REQUANT_POW43_MANTISSA_LUT
-000d9d48 r mad_huff_pair_table_linbits
-000d9d68 r mad_huff_quad_table_linbits
-000d9d6c r mad_huff_pair_table_startbits
-000d9d8c r mad_huff_quad_table_startbits
-000d9d90 r mad_huff_pair_table
-000d9e10 r mad_huff_quad_table
-000d9e18 r hufftab24
-000da11c r hufftab16
-000da440 r hufftab15
-000da738 r hufftab13
-000daa54 r hufftab12
-000dab14 r hufftab11
-000dabe4 r hufftab10
-000dacb0 r hufftab9
-000dad1c r hufftab8
-000dada0 r hufftab7
-000dae20 r hufftab6
-000dae58 r hufftab5
-000dae8c r hufftab3
-000daeac r hufftab2
-000daecc r hufftab1
-000daedc r hufftab0
-000daee0 r hufftabB
-000daf00 r hufftabA
-000daf38 R sfbwidth_table
-000dafa4 r sfb_8000_mixed
-000dafcc r sfb_8000_short
-000daff4 r sfb_8000_long
-000db00c r sfb_16000_mixed
-000db030 r sfb_22050_mixed
-000db054 r sfb_24000_mixed
-000db078 r sfb_16000_short
-000db0a0 r sfb_22050_short
-000db0c8 r sfb_24000_short
-000db0f0 r sfb_22050_long
-000db108 r sfb_24000_long
-000db120 r sfb_32000_mixed
-000db148 r sfb_44100_mixed
-000db170 r sfb_48000_mixed
-000db198 r sfb_32000_short
-000db1c0 r sfb_44100_short
-000db1e8 r sfb_48000_short
-000db210 r sfb_32000_long
-000db228 r sfb_44100_long
-000db240 r sfb_48000_long
-000db258 r SBC_OFFSET8
-000db278 r SBC_OFFSET4
-000db288 r ExtendedDescriptor.3158
-000db308 r BARK_IDX_TAB_F44100_S512
-000db32c r BARK_IDX_TAB_F44100_S256
-000db34c r BARK_IDX_TAB_F44100_S128
-000db364 r BARK_IDX_TAB_F32000_S512
-000db384 r BARK_IDX_TAB_F32000_S256
-000db3a4 r BARK_IDX_TAB_F32000_S128
-000db3bc r BARK_IDX_TAB_F22050_S256
-000db3d8 r BARK_IDX_TAB_F22050_S128
-000db3ec r BARK_FREQS
-000db420 R COS8192_Q15
-000dd424 r WMA_LSP_CODEBOOK_Q14
-000dd564 r ASF_SUB_HEADER_OBJECTS_GUID
-000dd5c4 r ASF_STREAM_TYPE_AUDIO_MEDIA_GUID
-000dd5d4 r ASF_TOP_DATA_OBJECT_GUID
-000dd5e4 r ASF_TOP_HEADER_OBJECT_GUID
-000dd618 r wmaHuffTab4RunLevelRunBits
-000dd630 r wmaHuffTab4RunLevelStartBits
-000dd638 r wmaHuffTab4RunLevel
-000dd650 r wmaHuffTab4RunLevel6
-000ddbf8 r wmaHuffTab4RunLevel5
-000de23c r wmaHuffTab4RunLevel4
-000defc8 r wmaHuffTab4RunLevel3
-000e0084 r wmaHuffTab4RunLevel2
-000e07b4 r wmaHuffTab4RunLevel1
-000e1064 r wmaHuffTab4MaskNoise
-000e106c r wmaHuffTab4NoisePower
-000e1154 r wmaHuffTab4Mask
-000e13dc r POW2_4_Q15
-000e13e4 r POW10_20_FRAC
-000e1434 r POW10_16_FRAC
-000e1474 r POW10_INT
-000e14ac R IMA_ADPCM_INDEX_TABLE_4BITS
-000e14b4 R IMA_ADPCM_STEP_TABLE
-000e1568 r SRA_NI
-000e1dc8 r LARGE_FILTER_IMPD
-000e5dc8 r LARGE_FILTER_IMP
-000e9dc8 r SMALL_FILTER_IMPD
-000eb5c8 r SMALL_FILTER_IMP
-000ec26c r powersof2to1over16all.2165
-000ec2ac r powersof2to1over16bot.2164
-000ec2ec r table.2150
-000ec36c r powersof2to1over16top.2163
-000ec3b0 r Zero
-000ec4a0 r dp_l
-000ec4b0 r dp_h
-000ec4c0 r bp
-000ec4f0 r TWO52
-000ec510 R ld_acl_edr_sizes
-000ec520 R ld_acl_edr_types
-000ec528 R ld_acl_br_sizes
-000ec534 R ld_acl_br_types
-000ec53c r prbs_64bytes
-000ec57c R co_sca2ppm
-000ec58c R rwip_priority
-000ed80c R hci_evt_le_desc_tab
-000ed864 R hci_evt_desc_tab
-000ed9e4 R hci_cmd_desc_root_tab
-000eda24 R hci_cmd_desc_tab_vs
-000eda48 R hci_cmd_desc_tab_le
-000edc70 R hci_cmd_desc_tab_testing
-000edcac R hci_cmd_desc_tab_stat_par
-000edd00 R hci_cmd_desc_tab_info_par
-000edd60 R hci_cmd_desc_tab_ctrl_bb
-000ee0f0 R hci_cmd_desc_tab_lk_pol
-000ee174 R hci_cmd_desc_tab_lk_ctrl
-000ee38c R lld_pdu_llcp_pk_desc_tab
-000ee494 R llm_local_le_feats
-000ee49c r llcp_pdu_handler
-000ee560 A __data_lmastart
+0005c4a0 t draw_list	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:147
+0005c568 T Sf2Browser_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:188
+0005c57e T Sf2Browser_Tick	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/BG_AudioIO_Manager/sf2_browser.c:196
+0005c650 T GlobalSampeRateSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:636
+0005c6d4 T GlobalMclkSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:737
+0005c758 T PrivateMclkSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:795
+0005c794 T Line3MicPinSet	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:1056
+0005c7a8 T DefaultParamgsInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:822
+0005ca7e T CtrlVarsInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:299
+0005d09e T Timer2Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:138
+0005d128 T power_on	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:252
+0005d28e T hardware_check	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:461
+0005d2d4 T MainTask	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:497
+0005d332 T BLE_GetTick	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:579
+0005d338 T main	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/main.c:601
+0005d50a t notify_app	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:24
+0005d544 t set_state	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:36
+0005d576 T SysState_Init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:48
+0005d59c T SysState_Update	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/sys_state.c:55
+0005d5c8 t app_diag_puthex
+0005d600 t Default_Handler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:67
+0005d600 W FFTInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W GpioInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W I2C_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W I2sInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W IRInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W RtcInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W SDIO0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W SPIM_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W SPIS_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W SWInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W SpdifInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W Timer3Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W Timer4Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W Timer5Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W Timer6Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W UART0_Interrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d600 W WakeupInterrupt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:69
+0005d602 T ExceptionCommHandler	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:73
+0005d958 T __cpu_init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:260
+0005da02 T __init	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/init-default.c:392
+0005db5c T GIE_ENABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:16
+0005db66 T GIE_DISABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:21
+0005db74 T GIE_STATE_GET	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:27
+0005db7c T NVIC_EnableIRQ	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:70
+0005db94 T NVIC_SetPriority	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/interrupt.c:94
+0005dbde t GetPswINTL	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:30
+0005dbec W SwUartSend	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:25
+0005dbee T putchar	/cygdrive/c/Andestech/AndeSight300RDS/toolchains/nds32le-elf-mculib-v3s/nds32le-elf/include/stdio.h:212
+0005dc7e T nds_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:85
+0005dc9e T DbgUartInit	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../startup/retarget.c:94
+0005dcc2 T ADC_Enable
+0005dcd4 T ADC_PowerkeyChannelEnable
+0005dcfc T ADC_ClockDivSet
+0005dd16 T ADC_VrefSet
+0005dd9a T ADC_ModeSet
+0005ddbc T ADC_Calibration
+0005de08 T ADC_SingleModeDataGet
+0005de40 T AudioADC_VolSetChannel
+0005deb6 T BACKUP_WriteEnable
+0005decc T BACKUP_WriteDisable
+0005ded8 T BACKUP_VBK22KMode
+0005defe T Chip_IDGet
+0005dfd0 T Clock_RcFreqGet
+0005e076 T Clock_Module1Enable
+0005e086 T Clock_AudioPllClockSet
+0005e1ea T Clock_AudioMclkSel
+0005e2c2 T DataCacheInvalidAll
+0005e2cc T DataCacheRangeInvalid
+0005e332 t AudioDAC0_ChannelEnable
+0005e39a t AudioDAC1_ChannelEnable
+0005e3de T AudioDAC_Enable
+0005e3fc T AudioDAC_DitherDisable
+0005e41a T AudioDAC_ScrambleDisable
+0005e438 T AudioDAC_Pause
+0005e456 T AudioDAC_Run
+0005e474 T AudioDAC_DoutModeSet
+0005e4b4 T AudioDAC_EdgeSet
+0005e4fa T AudioDAC_DsmOutdisModeSet
+0005e528 T AudioDAC_ZeroNumSet
+0005e53c T AudioDAC_SampleRateGet
+0005e5c0 T AudioDAC_SampleRateSet
+0005e706 T AudioDAC_Reset
+0005e728 T AudioDAC_FadeTimeSet
+0005e790 T AudioDAC_FadeEnable
+0005e7c2 T AudioDAC_DigitalMute
+0005e802 T AudioDAC_VolSet
+0005e848 T AudioDAC_VmidChargeOp
+0005e87e t AudioDAC0_PowerOn
+0005e97e t AudioDAC1_PowerOn
+0005ea36 T AudioDAC_ClkEnable
+0005ea64 T AudioDAC_FuncReset
+0005ea92 T AudioDAC_VIMDControl
+0005eaa4 T AudioDAC_SCFMute
+0005eaea T AudioDAC_IBSelect
+0005eb34 T AudioDAC_AllPowerOn
+0005ec5c T AudioDAC_AllChannelEnable
+0005ece8 T AudioDAC_PowerOn
+0005ed0a T AudioDAC_ChannelEnable
+0005ed28 T DMA_ChannelAllocTableSet
+0005ed3a T DMA_ChannelEnable
+0005ed66 T DMA_ChannelDisable
+0005ed94 T DMA_InterruptFlagGet
+0005ede8 T DMA_InterruptFlagClear
+0005ee8e T DMA_BlockConfig
+0005f02c T DMA_BlockBufSet
+0005f10e T DMA_CircularConfig
+0005f2f2 T DMA_CircularDataLenGet
+0005f364 T DMA_CircularSpaceLenGet
+0005f444 T DMA_CircularWritePtrSet
+0005f478 T DMA_CircularDataPut
+0005f5e2 T DMA_CircularReadPtrSet
+0005f614 T DMA_CircularDataGet
+0005f7ba T Efuse_ReadData
+0005f820 T GPIO_RegOneBitGet
+0005f834 T GPIO_PortAModeSet
+000604be T OTG_PortGetDP
+000604cc T OTG_PortGetDM
+000604da T OTG_PortEnableDPPullUp
+00060500 T OTG_PortDisableDPPullUp
+00060526 T OTG_PortIsEnableDPPullUp
+00060536 T OTG_PortEnablePullDown
+0006055c T OTG_PortDisablePullDown
+00060582 T OTG_PortIsEnablePullDown
+0006058e T OTG_PortEnablePullUp500K
+000605b4 T OTG_PortDisablePullUp500K
+000605da T OTG_PortSetSpeed
+00060600 T OTG_PortLinkCheck
+00060824 T OTG_PortDeviceIsLink
+000608a6 t OTG_DeviceWaitEnd
+0006091c T OTG_DeviceStallSend
+0006097a T OTG_DeviceEndpointReset
+00060a2e T OTG_DeviceAddressSet
+00060a68 T OTG_DeviceInit
+00060aea T OTG_DeviceBusEventGet
+00060af4 T OTG_DeviceControlSend
+00060b4e T OTG_DeviceControlReceive
+00060bc6 T OTG_DeviceSetupReceive
+00060c1c T OTG_DeviceBulkSend
+00060c80 T OTG_DeviceBulkReceive
+00060d2a T OTG_DeviceISOSend
+00060d62 T OTG_DeviceISOReceive
+00060dac T UsbInterrupt
+00060e08 T OTG_EndpointInterruptEnable
+00060e3c T LoadFIFOData
+00060e9e T UnloadFIFOData
+00060f00 T Remap_AddrRemapSet
+00060f9a T Remap_InitTcm
+00060fca T Reset_McuSystem
+00060fd4 T Reset_FunctionReset
+00060fe8 T SDIO_AutoKillTXClkEnable
+00060ffa T SDIO_AutoKillRXClkEnable
+0006100c T SDIO_ByteModeEnable
+0006101e T SDIO_MultiBlockDisable
+00061030 T SDIO_SysToSdioDivSet
+00061052 T SDIO_ClkSet
+0006106c T SDIO_ClkEnable
+00061096 T SDIO_ClkDisable
+000610c0 T SDIO_Init
+000610fc T SDIO_CmdStart
+000611c2 T SDIO_CmdIsDone
+000611ce T SDIO_CmdStop
+000611e0 T SDIO_CmdRespGet
+0006127a T SDIO_CmdDoneCheckBusy
+00061294 T SDIO_ClearClkHalt
+000612b2 T SDIO_SingleBlockConfig
+00061322 T SDIO_MultiBlockConfig
+0006139a T SDIO_DataTransfer
+000613b6 T SDIO_DataIsDone
+000613c4 T SDIO_MultiBlockTransferDone
+000613d2 T SDIO_IsDataLineBusy
+000613e4 T SPIM_DMAStart
+0006141e T SPIM_GetIntFlag
+0006142a T SPIM_ClrIntFlag
+0006143c T SPIM_SetDmaEn
+00061454 T SysTickInit
+0006147e T SysTimerIntFlagClear
+0006148c T ClockFreqGet
+000614b8 T Timer_Config
+00061650 T Timer_Start
+000616c8 T Timer_InterruptFlagClear
+0006177c t UART_BaudClkGet
+000617d2 T UART0_Init
+00061992 T UART1_Init
+00061b52 T UART0_SendByte
+00061b92 T UART1_SendByte
+00061bd2 T WDG_Disable
+00061bf8 T buffer_context_init
+00061d24 T buffer_overflow
+00061d40 T clear_buffer
+00061e6c T get_num_bits_left
+00061e84 T fill_buffer
+0006205c T skip_bits
+00062064 T skip_buffer
+00062298 T align_byte
+000622a4 T get_uint8
+000622b8 T show_uint8
+000622c4 T get_uint16_le
+000622d8 T get_uint32_le
+000622ec T show_uint32_be
+00062300 T get_bits1
+00062320 T get_bits25
+00062348 T show_bits25
+00062370 T get_bits32
+000623f4 T mp3_decoder_initialize
+00062ae8 T mp3_decoder_decode
+00062ee8 T mp3_decoder_can_continue
+00062ef8 T mp3_decoder_seek
+00062fc0 T mp3_id3_v1_parse
+000630e0 T mp3_id3_v2_parse
+00063780 T sbc_decoder_initialize
+00063a58 T sbc_decoder_decode
+00063e74 T sbc_decoder_can_continue
+00063e84 T sbc_decoder_seek
+00063ee0 T InitPLC
+00063f58 T PLC_bad_frame
+000648fc T PLC_good_frame
+00064c7c T sbc_subband_synthesis_filter
+00065124 T wav_decoder_initialize
+00065250 T wav_decoder_decode
+00065748 T wav_decoder_can_continue
+00065758 T wav_decoder_seek
+000657bc T wma_decoder_initialize
+00065898 T wma_decoder_decode
+00065c98 T wma_decoder_can_continue
+00065ca8 T wma_decoder_seek
+00065de8 T mpx_skip_buffer_to
+00065df0 T mpx_find_sync_word
+00065e80 T mpx_fill_buffer
+00065fac T mpx_header_check
+00066024 T mpx_header_parse
+0006614c T mp2_audio_data_parse
+00067594 T mp3_scale_factors_parse
+00068578 T mp3_audio_data_parse
+00068a70 T mp3_decoder_windowing
+000691c8 T mp3_decoder_imdct_windowing
+0006c5fc T mpx_decoder_dctii
+0006d490 T mpx_decoder_calc
+0006f550 T mp3_huffman_decode
+0006fdbc T sbc_frame_header
+0006ffd4 T sbc_bit_allocation
+00070b34 T sbc_decode_frame
+000710d8 T sbc_find_synword
+00071118 T alaw2pcm
+0007115c T ulaw2pcm
+0007118c T wav_header_parse
+00072058 T wav_adpcm_decode
+000722a4 t wmaFindNextPayload.part.0
+00074220 T get_bits_pointer
+00074224 T get_buffer_len_in_bit
+0007422c T skip_bits_to
+00074230 T wmaDecoderContextInit
+00074e18 T wmaAsfHeaderParse
+00076bb8 T wmaFillBuffer
+00076bf8 T wmaSkipBuffer
+00076c84 T wmaFindNextPayload
+00077378 T wmaStartWithNextPayload
+000774a8 T wmaSubframeHeaderParse
+000791d4 T wmaSubframeParse
+0007a68c T wmaSubframeCalc
+0007e9a8 T wmaReadHuff4MaskNoise
+0007ea50 T wmaReadHuff4RunLevel
+0007eb60 T wmaPseudoFloatPow10
+0007ebd4 T wmaPseudoFloatInt2Pf
+0007ec40 T wmaPseudoFloatPowMinusQuater
+0007ecb4 T wmaPseudoFloatDiv
+0007ed0c T sra_init
+0007ed18 T sra_apply
+0007f29c T resampler_init
+0007f794 T resampler_apply
+00082698 T roundf
+000826f6 T fmod
+000827aa T pow
+00082ac2 T sqrt
+00082b6c T powf
+0008336c T __ieee754_fmod
+000835b6 T __ieee754_pow
+0008407a T __ieee754_sqrt
+000841e8 T __mathlib_flt_infnan2
+000841f0 T __mathlib_flt_underflow
+00084200 T __mathlib_flt_overflow
+00084214 T __mathlib_flt_invalid
+00084228 T __mathlib_flt_divzero
+00084248 T __ieee_status
+0008424c T fabs
+0008425c T finite
+0008426e T __fpclassifyd
+000842c2 T matherr
+000842c6 T nan
+000842d4 T rint
+00084410 T scalbn
+000844f2 T copysignf
+0008450a T fabsf
+00084518 T __fpclassifyf
+0008455a T copysign
+00084576 T platform_reset
+000845a8 T ld_channel_assess
+000845f6 T ld_read_clock
+0008461a t ld_acl_rx_no_sync
+000846c0 t ld_acl_rsw_rx
+00084724 t ld_acl_rsw_evt_start_cbk
+0008478a t ld_acl_tx_packet_type_select
+00084852 t ld_acl_rsw_fhs_rx
+000848d6 t ld_acl_rx_sync2
+000849fa t ld_acl_rsw_end
+00084bcc t ld_acl_automatic_data_flush
+00084e20 t ld_acl_end
+00084f40 t ld_acl_sched
+00085058 t ld_acl_rsw_start
+00085318 t ld_acl_rsw_evt_canceled_cbk
+00085354 t ld_acl_rsw_frm_isr
+0008573c t ld_acl_rsw_frm_cbk
+0008576a t ld_acl_sniff_sched
+00085a00 t ld_acl_sniff_evt_canceled_cbk
+00085a2a t ld_acl_sniff_trans_sched
+00085b20 t ld_acl_sniff_enter
+00085bf0 t ld_acl_resched
+00085c54 t ld_acl_evt_stop_cbk
+00085c86 t ld_acl_sket_isr
+00085cc4 t ld_acl_sniff_evt_start_cbk
+00085efa t ld_acl_rx_sync
+000860b2 t ld_acl_sniff_exit
+00086150 t ld_acl_sniff_frm_isr
+0008621c t ld_acl_tx_prog
+000864b4 t ld_acl_tx
+00086654 t ld_acl_rx_isr
+0008667e t ld_acl_sniff_frm_cbk
+000866c0 t ld_acl_evt_start_cbk
+000868c4 t ld_acl_test_mode_update
+00086d94 t ld_acl_frm_isr
+00086fb0 t ld_acl_frm_cbk
+00086fe8 t ld_acl_evt_canceled_cbk
+000870c8 T ld_sco_audio_isr
+00087204 T ld_fm_clk_isr
+0008723e T ld_fm_rx_isr
+00087264 T ld_fm_frame_isr
+000872b2 T ld_fm_sket_isr
+00087316 T ld_fm_prog_enable
+00087336 T ld_fm_prog_disable
+00087350 T ld_fm_prog_push
+00087402 T ld_sched_compute
+00087512 T ld_sched_acl_remove
+00087532 T ld_sched_sniff_add
+00087566 T ld_sched_sniff_remove
+00087596 T ld_util_fhs_unpk
+0008768a t ea_conflict_check
+000877ee t ea_offset_update
+00087810 T ea_elt_cancel
+00087946 T ea_elt_create
+0008796a T ea_finetimer_isr
+00087ac4 T ea_sw_isr
+00087af0 T ea_offset_req
+00087c86 T ea_time_get_halfslot_rounded
+00087caa T ea_time_get_slot_rounded
+00087cea t ea_prog_timer
+00087e2c T ea_elt_insert
+000880a4 T ea_elt_remove
+00088114 T ea_interval_duration_req
+000881b0 T ea_alarm_clear
+000881f6 t hci_evt_mask_check
+0008826c t hci_evt_filter_inq_check
+0008832e t hci_evt_filter_con_check
+00088574 t hci_evt_filter_check
+000886dc T hci_send_2_host
+00088708 T hci_fc_acl_packet_sent
+0008871a T hci_fc_sync_packet_sent
+0008872c T hci_fc_check_host_available_nb_acl_packets
+0008874e T hci_fc_check_host_available_nb_sync_packets
+00088770 t hci_build_cc_evt
+00088802 t hci_build_cs_evt
+00088848 t hci_build_evt
+000888a6 t hci_build_le_evt
+0008890e t hci_build_acl_rx_data
+0008894a t hci_build_bt_acl_rx_data
+00088998 t hci_build_bt_sync_rx_data
+000889e8 t hci_tx_start
+00088b10 t hci_tx_trigger
+00088b2a t hci_tx_done
+00088bf2 T hci_tl_send
+00088c70 t hci_util_read_array_size
+00088caa T hci_util_pack
+00088dac T co_htobs
+00088dae T co_btohs
+00088db0 T co_list_init
+00088db8 T co_list_push_front
+00088dc4 T co_list_extract
+00088e0a T co_list_extract_after
+00088e20 T co_list_find
+00088e32 T co_list_insert_after
+00088e76 T co_rand_byte
+00088e8a T co_min
+00088e92 T co_max
+00088e9a T co_abs
+00088ea0 T co_read16p
+00088eac T co_read32p
+00088eca T co_write32p
+00088ede T co_write16p
+00088ee6 t h4tl_tx_done
+00088f00 T h4tl_write
+00088f3e T h4tl_start
+00088f40 T ke_event_set
+00088f6a t ke_mem_is_in_heap
+00088f92 T ke_malloc
+0008905a T ke_free
+00089130 T ke_param2msg
+00089134 T ke_msg2param
+00089138 T ke_msg_alloc
+00089172 T ke_msg_send
+00089198 T ke_msg_send_basic
+000891b0 T ke_msg_free
+000891c2 T ke_queue_push
+000891d6 T ke_queue_pop
+000891e6 T ke_queue_extract
+00089228 T ke_queue_insert
+0008925c t cmp_dest_id
+00089266 t ke_task_saved_update
+000892a2 T ke_state_set
+000892dc T ke_state_get
+00089306 t ke_time_cmp
+00089318 t cmp_abs_time
+00089332 t cmp_timer_id
+0008934c t ke_timer_hw_set
+0008937e t ke_time
+00089394 t ke_time_past
+000893aa T ke_timer_set
+00089462 T ke_timer_clear
+000894c2 T rwip_wakeup_end
+000894e8 T rwip_prevent_sleep_set
+00089508 T rwip_wakeup
+00089524 T rwip_prevent_sleep_clear
+00089544 T rwip_sleep_lpcycles_2_us
+0008954e T ble_rxwinszdef_getf
+0008955e T ble_intstat_get
+00089568 T ble_intack_clear
+00089572 T ble_basetimecnt_get
+0008957c T ble_samp_getf
+00089588 T ble_samp_setf
+00089596 T bt_intcntl_set
+0008959e T bt_intcntl_grosstgtintmsk_getf
+000895aa T bt_intcntl_grosstgtintmsk_setf
+000895be T bt_intcntl_finetgtintmsk_getf
+000895ca T bt_intcntl_finetgtintmsk_setf
+000895de T bt_intack_clear
+000895e6 T bt_intack_errorintack_clearf
+000895f2 T bt_intack_audioint1ack_clearf
+000895fc T bt_intack_audioint0ack_clearf
+00089606 T bt_finetimecnt_get
+00089610 T bt_deepslcntl_extwkupdsb_setf
+00089628 T bt_deepslcntl_deep_sleep_corr_en_setf
+0008963e T bt_deepslstat_get
+00089648 T bt_finecntcorr_setf
+00089652 T bt_clkncntcorr_pack
+00089662 T bt_rftestcntl_sserrren_setf
+0008967a T bt_rftestcntl_herrren_setf
+00089692 T bt_rftestfreq_directloopbacken_setf
+000896aa T bt_rftestfreq_testmodeen_setf
+000896c2 T bt_rftestfreq_rxfreq_setf
+000896da T bt_rftestfreq_txfreq_setf
+000896ee T bt_grosstimtgt_grosstarget_setf
+000896f8 T bt_finetimtgt_get
+00089702 T bt_finetimtgt_finetarget_setf
+0008970c T bt_sketclkn_getf
+00089716 T bt_e_scochancntl_pack
+0008973e T bt_e_scochancntl_tog_getf
+00089750 T bt_e_scomutecntl_pack
+00089778 T bt_e_scomutecntl_invl_1_getf
+0008978c T bt_e_scomutecntl_invl_0_getf
+000897a0 T bt_e_scocurrenttxptr_pack
+000897b6 T bt_e_scocurrenttxptr_e_scoptrtx_1_getf
+000897c8 T bt_e_scocurrenttxptr_e_scoptrtx_1_setf
+000897e4 T bt_e_scocurrenttxptr_e_scoptrtx_0_getf
+000897f6 T bt_e_scocurrenttxptr_e_scoptrtx_0_setf
+00089812 T bt_e_scocurrentrxptr_pack
+00089828 T bt_e_scocurrentrxptr_e_scoptrrx_1_getf
+0008983a T bt_e_scocurrentrxptr_e_scoptrrx_1_setf
+00089856 T bt_e_scocurrentrxptr_e_scoptrrx_0_getf
+00089868 T bt_e_scocurrentrxptr_e_scoptrrx_0_setf
+00089884 T bt_e_scoltcntl_pack
+000898a6 T bt_e_scotrcntl_pack
+000898cc T em_bt_frcntl_format_setf
+000898ec T em_bt_bitoff_getf
+00089900 T em_bt_clkoff0_getf
+00089914 T em_bt_clkoff1_getf
+00089928 T em_bt_linkcntl_afhena_setf
+0008994e T em_bt_linkcntl_laap_setf
+00089974 T em_bt_linkcntl_whdsb_setf
+0008999a T em_bt_linkcntl_acledr_setf
+000899c0 T em_bt_linkcntl_aclltaddr_getf
+000899da T em_bt_linkcntl_aclltaddr_setf
+000899fe T em_bt_bdaddr_setf
+00089a16 T em_bt_bch0_setf
+00089a2a T em_bt_bch1_setf
+00089a3e T em_bt_rxmaxbuf_bch2_pack
+00089a58 T em_bt_pwrcntl_fh_en_setf
+00089a7c T em_bt_pwrcntl_freq_setf
+00089aa0 T em_bt_txrxcntl_rxthr_setf
+00089ac4 T em_bt_txrxcntl_rxbcry_setf
+00089aea T em_bt_txrxcntl_rxcrypt_setf
+00089b0e T em_bt_txrxcntl_txbcry_setf
+00089b30 T em_bt_txrxcntl_txcrypt_setf
+00089b50 T em_bt_txdescptr_get
+00089b64 T em_bt_txdescptr_setf
+00089b78 T em_bt_loopcntl_to_nb_setf
+00089b98 T em_bt_loopcntl_att_nb_setf
+00089bb8 T em_bt_maxfrmtime_setf
+00089bcc T em_bt_rxclkn0_getf
+00089be0 T em_bt_rxclkn1_getf
+00089bf4 T em_bt_rxbit_rxbit_getf
+00089c0c T em_bt_acltxstat_fcrc_setf
+00089c32 T em_bt_acltxstat_fnak_setf
+00089c58 T em_bt_acltxstat_rswitch_setf
+00089c7e T em_bt_aclrxstat_rxid_getf
+00089c96 T em_bt_acldmpriocntl_pack
+00089cbc T em_bt_txptr_pack
+00089cd6 T em_bt_txheader_txltaddr_setf
+00089cf4 T em_bt_txpheader_pack
+00089d16 T GattServerNotify
+00089d28 t prepare_handle_value
+00089d64 T att_prepare_handle_value_notification
+00089d7a T att_server_can_send
+00089d90 T att_server_notify
+00089de6 t hci_connection_timestamp
+00089dfa T hci_connection_for_handle
+00089e2a T hci_number_free_acl_slots_for_handle
+00089e78 T hci_can_send_prepared_acl_packet_now
+00089ea0 T hci_can_send_acl_packet_now
+00089ec2 T hci_is_packet_buffer_reserved
+00089ecc T hci_reserve_packet_buffer
+00089f08 T hci_release_packet_buffer
+00089f14 T hci_transport_synchronous
+00089f22 t hci_send_acl_packet_fragments
+00089ffc T hci_send_acl_packet_buffer
+0008a0a4 T hci_get_outgoing_packet_buffer
+0008a0ac t printf_packet
+0008a11e T hci_dump_packet
+0008a138 T l2cap_can_send_fixed_channel_packet_now
+0008a14a T l2cap_get_outgoing_buffer
+0008a15e T l2cap_reserve_packet_buffer
+0008a170 T l2cap_send_prepared_connectionless
+0008a224 T linked_list_iterator_init
+0008a232 T linked_list_iterator_has_next
+0008a25a T linked_list_iterator_next
+0008a27a T embedded_get_ticks
+0008a28c T bt_store_16
+0008a29c T printf_hexdump
+0008a2e0 T BtStackRcvData
+0008a35c T RXBUFF_Alloc
+0008a436 T LEtoHost16
+0008a442 T _InsertTailList
+0008a450 T _RemoveHeadList
+0008a45e T HciBufferInd
+0008a48e T em_rd
+0008a4a6 T em_wr
+0008a4c2 T em_set
+0008a4de T em_rd32p
+0008a4f6 T em_wr16p
+0008a50e T em_rd8p
+0008a518 T em_wr8p
+0008a522 T em_buf_rx_free
+0008a536 T em_buf_rx_buff_addr_get
+0008a54e T em_buf_rx_current_get
+0008a554 T em_buf_rx_current_set
+0008a55a T em_buf_rx_next
+0008a560 T em_read_8
+0008a57e T em_read_16
+0008a5a0 T bt_util_buf_lmp_tx_free
+0008a5f0 T bt_util_buf_acl_rx_alloc
+0008a604 T bt_util_buf_acl_rx_free
+0008a662 T bt_util_buf_acl_tx_alloc
+0008a676 T bt_util_buf_acl_tx_free
+0008a6d4 T bt_util_buf_sync_tx_free
+0008a72e T bt_util_buf_sync_rx_alloc
+0008a75c T bt_util_buf_sync_rx_free
+0008a7c2 T rwbt_sleep_wakeup
+0008a846 T rwbt_sleep_wakeup_end
+0008a866 t hci_pack_bytes
+0008a8ae t hci_wr_curr_iac_lap_cmd_upk
+0008a936 t hci_wr_stored_lk_cmd_upk
+0008a9e0 t hci_set_evt_filter_cmd_upk
+0008ab32 t hci_host_nb_cmp_pkts_cmd_pkupk
+0008abbe t hci_le_dir_adv_report_evt_pkupk
+0008accc t hci_le_adv_report_evt_pkupk
+0008ae0a T hci_look_for_cmd_desc
+0008ae5e T hci_look_for_evt_desc
+0008ae8c T hci_look_for_le_evt_desc
+0008aeb8 T ble_rxdone_setf
+0008aeda T ble_rxstat_get
+0008aeec T ble_rxphce_get
+0008aefe T ble_rxmd_getf
+0008af14 T ble_rxchass_unpack
+0008af38 T ble_rxdataptr_get
+0008af4a T llc_con_update_complete_send
+0008afd2 T llc_feats_rd_event_send
+0008b012 T llc_version_rd_event_send
+0008b064 T llc_common_enc_key_ref_comp_evt_send
+0008b088 T llc_common_enc_change_evt_send
+0008b110 T llc_lsto_con_update
+0008b156 T llc_map_update_ind
+0008b1bc t llc_elt_in_process
+0008b1dc T llc_util_dicon_procedure
+0008b216 T llc_util_clear_operation_ptr
+0008b240 T llc_start_enc_tx
+0008b2a6 T llc_start_enc_rx
+0008b30e T llc_util_ivs_set
+0008b348 T llc_util_set_operation_ptr
+0008b356 T llc_util_get_operation_ptr
+0008b364 T llc_state_chk
+0008b36e T llc_state_update
+0008b392 T lld_con_param_rsp
+0008b4b2 T lld_con_stop
+0008b4c8 T lld_get_mode
+0008b4ee T lld_ch_map_ind
+0008b53e T lld_con_update_ind
+0008b556 T lld_crypt_isr
+0008b56a t lld_evt_slave_wakeup
+0008b58c t lld_evt_priority_reset
+0008b596 t lld_evt_deferred_elt_push
+0008b5d4 t lld_evt_slave_instant_evt
+0008b628 t lld_evt_elt_wait_insert
+0008b658 t lld_evt_elt_wait_get
+0008b69a t lld_evt_winsize_change
+0008b72c t lld_evt_slave_time_compute
+0008b800 t lld_evt_check_md_bit
+0008b82c t lld_evt_get_next_free_slot
+0008b874 t lld_evt_continue
+0008b8cc T lld_evt_sca_get
+0008b8d2 T lld_evt_delete_elt_push
+0008b932 t lld_evt_slave_param_update_perform
+0008bb0c t lld_evt_slave_instant
+0008bb4e T lld_evt_channel_next
+0008bb9e T lld_evt_init_evt
+0008bbe4 T lld_evt_drift_compute
+0008bc04 t lld_evt_rxwin_update
+0008bc52 t lld_evt_rxwin_compute
+0008bc9a T lld_evt_restart
+0008bfae T lld_evt_elt_insert
+0008c00a T lld_evt_schedule_next
+0008c1cc T lld_evt_slave_update
+0008c354 T lld_evt_end
+0008c482 T lld_evt_rx
+0008c4bc T lld_evt_end_isr
+0008c512 T lld_evt_rx_isr
+0008c52a t lld_pdu_llcp_length_rsp_unpk
+0008c55c t lld_pdu_llcp_length_req_unpk
+0008c58e t lld_pdu_llcp_con_param_rsp_unpk
+0008c624 t lld_pdu_llcp_con_param_req_unpk
+0008c6ba t lld_pdu_cntl_aligned_unpk
+0008c6d6 t lld_pdu_llcp_unpack
+0008c744 t lld_pdu_llcp_rx_handler
+0008c78e T lld_pdu_rx_handler
+0008c924 T lld_util_get_local_offset
+0008c934 T lld_util_get_peer_offset
+0008c946 T lld_util_instant_ongoing
+0008c952 T lld_util_compute_ce_max
+0008ca18 T lld_util_priority_set
+0008cb00 T lld_util_get_tx_pkt_cnt
+0008cb06 T lld_util_eff_tx_time_set
+0008cb10 T lld_util_max_lat_compute
+0008cb72 T llm_util_check_map_validity
+0008cbc4 T llm_util_get_adv_type
+0008cbd6 T llm_util_check_evt_mask
+0008cbf2 T llm_util_get_supp_features
+0008cc04 T ble_fcntoffset_set
+0008cc18 T ble_link_get
+0008cc2c T ble_link_set
+0008cc40 T ble_rxthr_getf
+0008cc56 T ble_hopcntl_get
+0008cc6a T ble_ch_idx_setf
+0008cc8a T ble_rxwincntl_get
+0008cc9e T ble_rxwincntl_set
+0008ccb2 T ble_minevtime_get
+0008ccc6 T ble_minevtime_set
+0008ccda T ble_maxevtime_set
+0008ccee T ble_chmap0_set
+0008cd02 T ble_chmap1_set
+0008cd16 T ble_chmap2_set
+0008cd2a T ble_iv_setf
+0008cd42 T ble_txccmpktcnt0_set
+0008cd56 T ble_txccmpktcnt1_set
+0008cd6a T ble_txccmpktcnt2_set
+0008cd7e T ble_rxccmpktcnt0_set
+0008cd92 T ble_rxccmpktcnt1_set
+0008cda6 T ble_rxccmpktcnt2_set
+0008cdba T ble_btcntsync0_get
+0008cdce T ble_btcntsync1_get
+0008cde2 T ble_evtrxok_getf
+0008cdf8 T ble_fcntrxsync_getf
+0008ce10 T ble_aclrxdesccnt_getf
+0008ce26 T ble_acltxdesccnt_getf
+0008ce3c T ble_isorxpktcntl_getf
+0008ce52 T ble_conflict_getf
+0008ce6a t llc_llcp_send
+0008ceec t llcp_ping_rsp_handler
+0008cf5c t llc_llcp_reject_ind
+0008d1a4 t llcp_reject_ind_ext_handler
+0008d1bc t llcp_reject_ind_handler
+0008d1d4 t llcp_enc_rsp_handler
+0008d29a t llcp_pause_enc_req_handler
+0008d372 t llcp_start_enc_req_handler
+0008d3ec t llcp_unknown_rsp_handler
+0008d628 t llcp_enc_req_handler
+0008d710 t llcp_terminate_ind_handler
+0008d75e T llc_llcp_version_ind_pdu_send
+0008d79e t llcp_vers_ind_handler
+0008d83e T llc_llcp_pause_enc_rsp_pdu_send
+0008d884 t llcp_pause_enc_rsp_handler
+0008d97e T llc_llcp_start_enc_rsp_pdu_send
+0008d9b6 t llcp_start_enc_rsp_handler
+0008daf0 T llc_llcp_reject_ind_pdu_send
+0008db58 t llcp_length_rsp_handler
+0008dcdc t llcp_con_param_rsp_handler
+0008de30 t llcp_feats_rsp_handler
+0008deec t llcp_channel_map_ind_handler
+0008e044 t llcp_con_upd_ind_handler
+0008e1d8 T llc_llcp_con_param_rsp_pdu_send
+0008e282 t llcp_con_param_req_handler
+0008e57c T llc_llcp_feats_rsp_pdu_send
+0008e5a6 t llcp_feats_req_handler
+0008e600 t llcp_slave_feature_req_handler
+0008e612 T llc_llcp_unknown_rsp_send_pdu
+0008e634 t llc_llcp_unknown_ind_handler
+0008e666 T llc_llcp_ping_rsp_pdu_send
+0008e684 t llcp_ping_req_handler
+0008e6b4 T llc_llcp_length_rsp_pdu_send
+0008e70e t llcp_length_req_handler
+0008e836 T llc_llcp_recv_handler
+0008e8d8 T __divdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:451
+0008e918 T __udivdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:818
+0008e91c t fudiv_qrnnd	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:961
+0008e974 T __udivmoddi4	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:1152
+0008eacc T __fixsfdi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3723
+0008eb44 T __fixdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3666
+0008eb98 T __fixunsdfsi	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/config/nds32/lib1asmsrc-mculib.S:3929
+0008ebe8 T __popcountsi2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:840
+0008ec24 T __floatdisf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatdisf.c:35
+0008ecf4 T __adddf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/adddf3.c:35
+0008f284 T __divdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/divdf3.c:35
+0008f738 T __eqdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/eqdf2.c:35
+0008f738 T __nedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/eqdf2.c:36
+0008f7a2 T __gedf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:35
+0008f7a2 T __gtdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/gedf2.c:36
+0008f846 T __ledf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:35
+0008f846 T __ltdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/ledf2.c:36
+0008f8ec T __muldf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/muldf3.c:35
+0008fcdc T __subdf3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/subdf3.c:35
+0009028c T __floatsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatsidf.c:36
+000902f6 T __floatunsidf	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/floatunsidf.c:36
+00090350 T __extendsfdf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/extendsfdf2.c:36
+000903f6 T __truncdfsf2	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/soft-fp/truncdfsf2.c:36
+00090508 T __lshrdi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:403
+00090530 T __ashldi3	/home/sqa/build-ast300/build-toolchain/build-2017-03-15/source-packages/gcc-4.9.3-bsp-v4_1_0-branch/libgcc/libgcc2.c:431
+00090558 T atoi
+00090560 T __errno
+00090566 T _fclose_r
+000905ec T __sflush_r
+00090712 T _fflush_r
+00090736 T fflush
+00090756 T _cleanup_r
+00090766 T __sinit
+00090854 T __sfp_lock_acquire
+00090856 T __sfp_lock_release
+00090858 T _fread_r
+0009094c T fread
+00090966 T fseek
+0009097c T _fseeko_r
+00090bfc T _fstat_r
+00090c1c T ftell
+00090c2a T _ftello_r
+00090ca2 T _fwalk
+00090cde T _fwalk_reent
+00090d1e T __smakebuf_r
+00090e06 T malloc
+00090e14 T free
+00090e24 T memcmp
+00090e5c T memcpy
+00090e88 T memmove
+00090f38 T memset
+00090f68 T _free_r
+00090fdc T _malloc_r
+00091082 T printf
+0009108c T puts
+000910dc T rand
+00091116 t lflush
+0009112c T __srefill_r
+0009121e T _sbrk_r
+0009123c T snprintf
+00091246 T sprintf
+00091250 T __sread
+00091274 T __swrite
+000912aa T __sseek
+000912d0 T __sclose
+000912dc T strcat
+000912f4 T strchr
+00091304 T strcmp
+00091320 T strcpy
+00091334 T strlen
+00091340 T strncat
+00091360 T strncmp
+00091378 T strncpy
+00091394 T strstr
+000913c8 T strtol
+000913d2 T strtol_common
+000914f6 T strtoul
+00091500 t vprintf_help
+00091534 T vprintf
+00091584 t vsnprintf_help
+000915b2 T vsnprintf
+000915e0 t vsprintf_help
+000915ec T vsprintf
+0009160a T _write_r
+0009162c T _close_r
+0009164c T do_printf
+00091af8 T _isatty_r
+00091b16 T _lseek_r
+00091b38 T nds_isalpha
+00091b46 T nds_isdigit
+00091b50 T nds_isspace
+00091b60 T nds_isupper
+00091b6a t sep_frac
+00091b9c T _printf_float
+0009227e T _read_r
+000922a0 T abs
+000922a8 T _close
+000922c0 T _read
+000922d8 T _write
+000922f0 T _lseek
+00092308 T _fstat
+00092320 T _isatty
+00092334 T _sbrk
+000929a4 R DeviceString_LangID	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:53
+000929a8 R DeviceQualifier	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_standard_request.c:46
+000929b4 R InterFaceNum_CDC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:553
+000929bc R ConfigDescriptor_CDC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:532
+00092a20 R InterFaceNum_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:528
+00092a28 R ConfigDescriptor_AUDIO_MIC_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:477
+00092b44 R InterFaceNum_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:473
+00092b4c R ConfigDescriptor_AUDIO_CDC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:440
+00092bf8 R InterFaceNum_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:436
+00092c00 R ConfigDescriptor_CDC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:411
+00092c44 R InterFaceNum_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:407
+00092c4c R ConfigDescriptor_HID	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:399
+00092c60 R InterFaceNum_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:395
+00092c68 R ConfigDescriptor_AUDIO_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:346
+00092d7c R InterFaceNum_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:342
+00092d84 R ConfigDescriptor_MIC_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:303
+00092e40 R InterFaceNum_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:300
+00092e48 R ConfigDescriptor_AUDIO_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:259
+00092efc R InterFaceNum_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:256
+00092f04 R ConfigDescriptor_READER	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:246
+00092f24 R InterFaceNum_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:243
+00092f2c R ConfigDescriptor_AUDIO_MIC_PHONE	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:199
+00093028 R InterFaceNum_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:197
+00093030 R ConfigDescriptor_AUDIO_MIC	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:153
+0009312c R InterFaceNum_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:151
+00093134 R ConfigDescriptor_MIC_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:116
+000931d8 R InterFaceNum_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:112
+000931e0 R ConfigDescriptor_AUDIO_ONLY	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:78
+0009327c R HidDataReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:48
+000932a0 R AudioCtrlReportDescriptor	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/BanDataHub/src/banux/02_device_drivers/USB/inc/otg_device_descriptor.h:25
+00093310 R gRequestSenseReady	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_stor.c:149
+00093324 R gRequestSenseNotReady	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_stor.c:142
+00093338 R gModeSenseProtectPage	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/otg_device_stor.c:120
+00093344 r g_CDC_IO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/USB/src/shell_io_cdc.c:36
+00093354 r crc16_table	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/bluetooth/src/ble_protocol.c:41
+000948f8 r g_psram64h_ops	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/flash/psram_esp64h.c:56
+0009493c r font_6x8	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/lcd/ssd1306.c:25
+00094d60 r c_def_dur_s	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/power_mgr/battery_calib.c:27
+00094da8 R g_remind_off_size	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_off.c:5052
+00094dac R g_remind_off	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_off.c:7
+000a88c8 R g_remind_on_size	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_on.c:8997
+000a88cc R g_remind_on	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/g_remind_on.c:7
+000affb8 A EILM_SIZE
+000cbdfc r s_remind_table	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/remind_sound/remind_sound.c:56
+000cc0c0 r s_sdcard_ops	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/02_device_drivers/sdcard/sd_card_driver.c:31
+000cc7f4 r encoder_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_encoder.c:94
+000cc97c r psram_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_psram.c:154
+000ccaac r sdcard_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_sdcard.c:171
+000ccca0 r usb_cdc_params	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/03_driver_framework/drivers/drv_usb_cdc.c:219
+000cd524 r g_HelpModule	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell.c:161
+000cd538 r g_HelpOpts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell.c:149
+000cd5d8 r g_CatNames	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell.c:85
+000d0bc8 r _mod_remind	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:3158
+000d0bdc r remind_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:3150
+000d0c40 r _mod_boot	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:3002
+000d0c54 r boot_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2996
+000d0c90 r _mod_upg	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2960
+000d0ca4 r upg_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2954
+000d0ce0 r _mod_ble_send	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2910
+000d0cf4 r ble_send_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2905
+000d0d1c r _mod_drivers	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2873
+000d0d30 r drivers_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2868
+000d0d58 r _mod_tree	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2829
+000d0d6c r tree_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2824
+000d0d94 r _mod_echo	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2786
+000d0da8 r echo_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2781
+000d0dd0 r _mod_write	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2712
+000d0de4 r write_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2707
+000d0e0c r _mod_cat	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2669
+000d0e20 r cat_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2664
+000d0e48 r _mod_cd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2615
+000d0e5c r cd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2610
+000d0e84 r _mod_pwd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2579
+000d0e98 r pwd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2574
+000d0ec0 r _mod_ls	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2549
+000d0ed4 r ls_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2544
+000d0efc r _mod_ble	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2275
+000d0f10 r ble_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2270
+000d0f38 r _mod_bt	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2256
+000d0f4c r bt_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2248
+000d0fb0 r _mod_battery	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2199
+000d0fc4 r battery_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2194
+000d1000 r _mod_sd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2170
+000d1014 r sd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:2161
+000d108c r _mod_flash	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1767
+000d10a0 r flash_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1757
+000d112c r _mod_dbg	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1440
+000d1140 r dbg_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1432
+000d11a4 r _mod_led	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1356
+000d11b8 r led_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1349
+000d1208 r _mod_lcd	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1321
+000d121c r lcd_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1312
+000d1294 r _mod_gpio	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1257
+000d12a8 r gpio_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1250
+000d12f8 r _mod_chain	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1207
+000d130c r chain_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:1184
+000d1410 r output_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:557
+000d141c r effect_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:553
+000d1448 r source_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:552
+000d145c r node_type_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:551
+000d146c r _mod_audio	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:545
+000d1480 r audio_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:534
+000d1520 r _mod_sys	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:420
+000d1534 r sys_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/bg_shell_commands.c:405
+000d1c68 r _mod_calib	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_battery_calib.c:139
+000d1c7c r calib_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_battery_calib.c:130
+000d1d94 r _mod_hwtest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_hwtest.c:43
+000d1da8 r hwtest_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_hwtest.c:38
+000d1f40 r g_LpModule	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_lp.c:95
+000d1f54 r g_LpOpts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_lp.c:89
+000d2534 r _mod_param	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_param.c:285
+000d2548 r param_opts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_param.c:273
+000d2758 r _mod_psram	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_psram.c:40
+000d276c r psram_options	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_psram.c:31
+000d37c8 r sb_module.5285
+000d37dc r sb_options	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_soundbank.c:823
+000d38f4 r note_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_soundbank.c:447
+000d3d88 r _mod_speedtest	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_speedtest.c:78
+000d3d9c r speedtest_options	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_speedtest.c:67
+000d4318 r g_SysmonModule	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_sysmon.c:47
+000d432c r g_SysmonOpts	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_cmd_sysmon.c:35
+000d48a8 r g_BLE_IO	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/04_shell_commands/shell_io_ble.c:240
+000d499c r g_level_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/01_hal/bg_log.c:39
+000d49ac r g_tag_names	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/01_hal/bg_log.c:20
+000d4fd4 R bg_storage_driver_port	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/01_hal/port/bandatahub/bg_storage_bandatahub.c:410
+000d57d0 r semitone_ratio_table	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/02_core/sampler/sampler.c:33
+000d69e8 r g_preset_patterns	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/03_app/drum_machine/drum_machine.c:86
+000d6ae8 r g_track_info	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/bangtsynth/03_app/drum_machine/drum_machine.c:74
+000d6b48 R fat32_diskio_sdcard	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/05_component/fat32/fat32_diskio.c:94
+000d7be4 R gain_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:287
+000d7c24 R eq_param_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:284
+000d7c38 R expander_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:281
+000d7c40 R drc_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:280
+000d7c4c R eq_unit_aggregate	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:273
+000d7c60 R GAIN_CONTROL_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:215
+000d7d60 R EXPANDER_DEFAULT_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:206
+000d7d88 R DRC_DEFAULT_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:183
+000d7e6c R EQ_DEFAULT_TABLE	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:159
+000d80cc R SupportSampleRateList	/cygdrive/e/project_and_dataset/project/BG_Audio_Looper/BanDataHub/Debug/../src/banux/06_app/audio/ctrlvars.c:83
+000d8abc R CmdRespType
+000d8b3c r SBC_SAMPLING_RATE
+000d8b44 r rwin
+000d8bbc r rcos
+000d8d34 r synmatrix8
+000d8f34 r synmatrix4
+000d8fb4 r sbc_proto_8_80m1
+000d9054 r sbc_proto_8_80m0
+000d90f4 r sbc_proto_4_40m1
+000d9144 r sbc_proto_4_40m0
+000d9194 r SF_TABLE
+000d9294 r QC_TABLE
+000d9360 r OFFSET_TABLE
+000d93bc r BITALLOC_TABLE
+000d93cc r SBQUANT_TABLE
+000d93f4 r SBQUANT_OFFSETS_4
+000d9414 r SBQUANT_OFFSETS_3
+000d9420 r SBQUANT_OFFSETS_2
+000d9428 r SBQUANT_OFFSETS_1
+000d9448 r SBQUANT_OFFSETS_0
+000d9464 r NSFB
+000d94ac r SFLEN_TABLE
+000d94cc R SAMPLERATE_TABLE
+000d94e0 r BITRATE_TABLE
+000d9528 r SCALE_FACTOR_LONG_1.2964
+000d954c r ca.2923
+000d955c r cs.2922
+000d956c r MP3_JOINT_STEREO_IS_TABLE_Q15.2766
+000d957c r MP3_JOINT_STEREO_IS_LSF_TABLE_Q15.2767
+000d95bc r ROOT_TABLE_Q14.2718
+000d95c4 r PRETAB.2717
+000d95dc r T_POW_3_Q14.2712
+000d95e4 r SUBBAND_SYNTHESIS_WINDOW_COEFS
+000d99e4 r REQUANT_POW43_EXPONENT_LUT
+000d9ae4 r REQUANT_POW43_MANTISSA_LUT
+000d9ee4 r mad_huff_pair_table_linbits
+000d9f04 r mad_huff_quad_table_linbits
+000d9f08 r mad_huff_pair_table_startbits
+000d9f28 r mad_huff_quad_table_startbits
+000d9f2c r mad_huff_pair_table
+000d9fac r mad_huff_quad_table
+000d9fb4 r hufftab24
+000da2b8 r hufftab16
+000da5dc r hufftab15
+000da8d4 r hufftab13
+000dabf0 r hufftab12
+000dacb0 r hufftab11
+000dad80 r hufftab10
+000dae4c r hufftab9
+000daeb8 r hufftab8
+000daf3c r hufftab7
+000dafbc r hufftab6
+000daff4 r hufftab5
+000db028 r hufftab3
+000db048 r hufftab2
+000db068 r hufftab1
+000db078 r hufftab0
+000db07c r hufftabB
+000db09c r hufftabA
+000db0d4 R sfbwidth_table
+000db140 r sfb_8000_mixed
+000db168 r sfb_8000_short
+000db190 r sfb_8000_long
+000db1a8 r sfb_16000_mixed
+000db1cc r sfb_22050_mixed
+000db1f0 r sfb_24000_mixed
+000db214 r sfb_16000_short
+000db23c r sfb_22050_short
+000db264 r sfb_24000_short
+000db28c r sfb_22050_long
+000db2a4 r sfb_24000_long
+000db2bc r sfb_32000_mixed
+000db2e4 r sfb_44100_mixed
+000db30c r sfb_48000_mixed
+000db334 r sfb_32000_short
+000db35c r sfb_44100_short
+000db384 r sfb_48000_short
+000db3ac r sfb_32000_long
+000db3c4 r sfb_44100_long
+000db3dc r sfb_48000_long
+000db3f4 r SBC_OFFSET8
+000db414 r SBC_OFFSET4
+000db424 r ExtendedDescriptor.3158
+000db4a4 r BARK_IDX_TAB_F44100_S512
+000db4c8 r BARK_IDX_TAB_F44100_S256
+000db4e8 r BARK_IDX_TAB_F44100_S128
+000db500 r BARK_IDX_TAB_F32000_S512
+000db520 r BARK_IDX_TAB_F32000_S256
+000db540 r BARK_IDX_TAB_F32000_S128
+000db558 r BARK_IDX_TAB_F22050_S256
+000db574 r BARK_IDX_TAB_F22050_S128
+000db588 r BARK_FREQS
+000db5bc R COS8192_Q15
+000dd5c0 r WMA_LSP_CODEBOOK_Q14
+000dd700 r ASF_SUB_HEADER_OBJECTS_GUID
+000dd760 r ASF_STREAM_TYPE_AUDIO_MEDIA_GUID
+000dd770 r ASF_TOP_DATA_OBJECT_GUID
+000dd780 r ASF_TOP_HEADER_OBJECT_GUID
+000dd7b0 r wmaHuffTab4RunLevelRunBits
+000dd7c8 r wmaHuffTab4RunLevelStartBits
+000dd7d0 r wmaHuffTab4RunLevel
+000dd7e8 r wmaHuffTab4RunLevel6
+000ddd90 r wmaHuffTab4RunLevel5
+000de3d4 r wmaHuffTab4RunLevel4
+000df160 r wmaHuffTab4RunLevel3
+000e021c r wmaHuffTab4RunLevel2
+000e094c r wmaHuffTab4RunLevel1
+000e11fc r wmaHuffTab4MaskNoise
+000e1204 r wmaHuffTab4NoisePower
+000e12ec r wmaHuffTab4Mask
+000e1574 r POW2_4_Q15
+000e157c r POW10_20_FRAC
+000e15cc r POW10_16_FRAC
+000e160c r POW10_INT
+000e1644 R IMA_ADPCM_INDEX_TABLE_4BITS
+000e164c R IMA_ADPCM_STEP_TABLE
+000e1700 r SRA_NI
+000e1f60 r LARGE_FILTER_IMPD
+000e5f60 r LARGE_FILTER_IMP
+000e9f60 r SMALL_FILTER_IMPD
+000eb760 r SMALL_FILTER_IMP
+000ec404 r powersof2to1over16all.2165
+000ec444 r powersof2to1over16bot.2164
+000ec484 r table.2150
+000ec504 r powersof2to1over16top.2163
+000ec548 r Zero
+000ec638 r dp_l
+000ec648 r dp_h
+000ec658 r bp
+000ec688 r TWO52
+000ec6a8 R ld_acl_edr_sizes
+000ec6b8 R ld_acl_edr_types
+000ec6c0 R ld_acl_br_sizes
+000ec6cc R ld_acl_br_types
+000ec6d4 r prbs_64bytes
+000ec714 R co_sca2ppm
+000ec724 R rwip_priority
+000ed9a4 R hci_evt_le_desc_tab
+000ed9fc R hci_evt_desc_tab
+000edb7c R hci_cmd_desc_root_tab
+000edbbc R hci_cmd_desc_tab_vs
+000edbe0 R hci_cmd_desc_tab_le
+000ede08 R hci_cmd_desc_tab_testing
+000ede44 R hci_cmd_desc_tab_stat_par
+000ede98 R hci_cmd_desc_tab_info_par
+000edef8 R hci_cmd_desc_tab_ctrl_bb
+000ee288 R hci_cmd_desc_tab_lk_pol
+000ee30c R hci_cmd_desc_tab_lk_ctrl
+000ee524 R lld_pdu_llcp_pk_desc_tab
+000ee62c R llm_local_le_feats
+000ee634 r llcp_pdu_handler
+000ee700 A __data_lmastart
 20004000 D UARTS_SendByte_MAP	/cygdrive/E/project_and_dataset/project/BG_Audio_Looper/MVsB1_Base_SDK/driver/driver_api/inc/uarts_interface.h:267
 20004000 D __data_start
 20004000 A _stack

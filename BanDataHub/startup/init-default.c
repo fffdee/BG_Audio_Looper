@@ -44,6 +44,25 @@
 #pragma weak IRInterrupt      =  Default_Handler
 #pragma weak OS_Trap_Interrupt_SWI =  Default_Handler
 
+/* ★裸 MMIO UART 诊断输出：不依赖 DBG 驱动，冷/热态都能工作。
+ * 上移到文件前部，让 ExceptionCommHandler 也能用它打印可读故障码。★ */
+#define APP_DIAG_UART1_STATUS  (*(volatile uint32_t *)0x40006014)
+#define APP_DIAG_UART1_TX      (*(volatile uint32_t *)0x40006018)
+static inline void app_diag_putc(char c)
+{
+	while (!(APP_DIAG_UART1_STATUS & (1u << 9)))
+		;
+	APP_DIAG_UART1_TX = (uint32_t)(unsigned char)c;
+}
+static inline void app_diag_puthex(uint32_t v)
+{
+	int i;
+	for (i = 28; i >= 0; i -= 4) {
+		unsigned n = (v >> i) & 0xFu;
+		app_diag_putc((char)(n < 10u ? ('0' + n) : ('A' + n - 10)));
+	}
+}
+
 __attribute__((unused))
 static void Default_Handler()
 {
@@ -63,6 +82,20 @@ void ExceptionCommHandler(unsigned stack, unsigned exception_num)
 	  mask_itype = __nds32__mfsr(NDS32_SR_ITYPE);
 	  mask_ipc = __nds32__mfsr(NDS32_SR_IPC);
 	  mask_itype &= 0x0F;
+
+	  /* ★用裸 MMIO UART 打印可读故障码（DBG 此刻未初始化=乱码）：
+	   *   格式 E<trap号>.<itype>@<出错PC 8位hex>
+	   *   trap号: 1=TLB_Fill 2=PTE_Not_Present 3=TLB_Misc 4=TLB_VLPT_Miss
+	   *           5=Machine_Error 6=Debug 7=General_Exception 8=Syscall
+	   *   itype(trap7 才有意义): 0=对齐 1=保留指令 4=精确总线错
+	   *           5=非精确总线错 9=不存在内存地址 11=栈溢出
+	   *   例 E7.5@00041234 = General_Exception/非精确总线错, PC=0x00041234 ★ */
+	  app_diag_putc('E');
+	  app_diag_putc("0123456789ABCDEF"[exception_num & 0xFu]);
+	  app_diag_putc('.');
+	  app_diag_putc("0123456789ABCDEF"[mask_itype & 0xFu]);
+	  app_diag_putc('@');
+	  app_diag_puthex(mask_ipc);
 
 	  if(exception_num == 7)
 	  {
@@ -191,28 +224,27 @@ void __c_init()
 #define MEMCPY(des, src, n) __builtin_memcpy ((des), (src), (n))
 #define MEMSET(s, c, n) __builtin_memset ((s), (c), (n))
 
+#if HAS_BOOTLOADER
+	/* 由 bootloader 跳转启动：Boot_JumpTo() Phase 3 已按 BootInfo 完成 .data
+	 * 拷贝(日志 'd') 与 .bss 清零(日志 'z')，且刻意不写 0x20000000 handoff
+	 * 魔数(见 upgrade.c 第 337 行注释)。因此 APP 必须整体跳过拷贝：
+	 *   1) 旧的运行期魔数检查已失效——bootloader 根本不写魔数，
+	 *      "if(*0x20000000==0xDEADBEEF) return" 永远落空，会继续往下拷贝；
+	 *   2) __c_init 的拷贝循环是冷代码(不在 I-Cache)，从 Flash 取指(IBus)
+	 *      同时读 .data LMA(SBus) 会在单口 XIP Flash 上互斥死锁，
+	 *      日志停在 'B' 之后再无输出。
+	 * .data/.bss 已由 bootloader 备好，这里直接返回。 */
+	return;
+#else
+	/* 独立启动(无 bootloader)：自行拷贝 .data、清零 .bss。
+	 * 此路径下 __init 会先调用 EnableIDCache() 开启 I-Cache，
+	 * 拷贝循环取指走 Cache、读 .data 走 SBus，不会死锁。 */
 	extern char _end;
 	extern char __bss_start;
-	int size;
-
-	/* data section will be copied before we remap.
-	 * We don't need to copy data section here. */
 	extern char __data_lmastart;
 	extern char __data_start;
 	extern char _edata;
-
-	/* Bootloader 已拷贝 .data / 清 .bss。不要再从 Flash 拷（IBus/SBus 会死锁），
-	 * 也不要读 0x20000000（HSP 会异常）。 */
-#if HAS_BOOTLOADER
-	return;
-#else
-	{
-		volatile uint32_t *handoff = (volatile uint32_t *)0x20000000UL;
-		if (*handoff == 0xDEADBEEFUL) {
-			*handoff = 0;
-			return;
-		}
-	}
+	int size;
 
 	/* Copy data section to RAM */
 	size = &_edata - &__data_start;
@@ -354,14 +386,8 @@ void HardwareStackProtectEnable(void)
 void EnableIDCache(void);
 void Chip_MemInit(void);
 
-#define APP_DIAG_UART1_STATUS  (*(volatile uint32_t *)0x40006014)
-#define APP_DIAG_UART1_TX      (*(volatile uint32_t *)0x40006018)
-static inline void app_diag_putc(char c)
-{
-	while (!(APP_DIAG_UART1_STATUS & (1u << 9)))
-		;
-	APP_DIAG_UART1_TX = (uint32_t)(unsigned char)c;
-}
+/* app_diag_putc / app_diag_puthex 已上移到文件前部（ExceptionCommHandler 之前），
+ * 以便异常处理器也能用裸 MMIO UART 打印故障码。 */
 
 void __init()
 {
@@ -369,13 +395,54 @@ void __init()
    !!  Users should NOT add any code before this comment  !!
 ------------------------------------------------------------*/
 	app_diag_putc('A');
-	__cpu_init();
-	app_diag_putc('B');
-	__c_init();
-	app_diag_putc('C');
+	app_diag_putc('k');         /* ★固件版本标记：APP 入口第二个字符。看到 'k'=烧的是最新编译；旧固件是 'Ap' 没有 'k'★ */
+	__cpu_init();               /* 重定向 IVB→APP 向量表(0x040000)、配置 PSW/FPU */
+	app_diag_putc('p');         /* __cpu_init 完成 */
+
+	/* ★临时诊断：定位 "p 之后无 B" 的卡死点（定位后可删除）★
+	 * 预期正常字符流：p 1 <IVB> <MMU_CTL> <PSW> 2 B C
+	 * 判读：
+	 *   停在 p（无 1）     → app_diag_putc 自身卡死（UART 状态位 bit9 不成立）
+	 *   IVB != 00040000    → 中断向量未指向 APP，p 之后任何中断都会跳飞
+	 *   有 1 无 2          → 卡在寄存器打印（mfsr 取指或 UART 输出）
+	 *   有 2 无 B          → p 与 B 之间存在未预期的代码路径 */
+	app_diag_putc('1');
+	app_diag_puthex(__nds32__mfsr(NDS32_SR_IVB));       /* 期望 00040000 */
+	app_diag_puthex(__nds32__mfsr(NDS32_SR_MMU_CTL));
+	app_diag_puthex(__nds32__mfsr(NDS32_SR_PSW));
+	app_diag_putc('2');
+
 #if !HAS_BOOTLOADER
-	HardwareStackProtectEnable();
+	/* 仅独立启动（无 bootloader）才自己开 Cache：复位后 Cache 全关，
+	 * 且 __c_init 的 .data 拷贝依赖 I-Cache 已开（取指走 Cache、读数据走 SBus
+	 * 才不会在单口 XIP Flash 上死锁）。跳转启动时 bootloader 已开好 Cache，
+	 * 这里绝不能重复调用（会在冷 XIP 代码里重新编 Cache/TLB 而挂死，见 doc §5）。 */
+	EnableIDCache();
 #endif
+	/* 跳转启动（HAS_BOOTLOADER=1）不调用 EnableIDCache()：
+	 * bootloader 的 Boot_JumpTo() Phase 2 已 DataCacheInvalidAll() 并保留
+	 * I-Cache 使能，跳转进来时 I/D-Cache 均已开启、SRAM 为 write-through。
+	 * 在 APP 冷代码里再次 invalidate+enable Cache/TLB，会在单口 XIP Flash 上
+	 * 触发 TLB/Cache 重编程挂死(日志停在 'A' 之后)——这正是 SDK
+	 * init-default.c 刻意跳过 EnableIDCache 的原因。 */
+#if !HAS_BOOTLOADER
+	/* 冷启动(无 bootloader)：CPU 复位后自己建立栈溢出保护。 */
+	HardwareStackProtectEnable();
+#else
+	/* 跳转启动(HAS_BOOTLOADER=1)：跳过 HSP 使能。
+	 * 诊断日志 'phS123' 已证明——HSP 的三条 SR 写(清 HSP_CTL、写 SP_BOUND、
+	 * 使能 HSP)全部执行完毕('3' 已打出)，但在“使能 HSP”这一步硬件把栈溢出
+	 * 检查 arm 起来后，紧接着('B' 之前)就触发一个延迟异常 → 进异常向量
+	 * while(1) 挂死(串口表现为 '3' 之后一串乱码再无输出)。
+	 * HSP 与 EnableIDCache / Chip_MemInit 同属“冷启动专属的硬件初始化”：
+	 * bootloader 自身早已配好并运行过 HSP，且在 Boot_JumpTo Phase 1 主动关掉了它；
+	 * APP 在继承来的暖态下重新 arm HSP 会触发上述延迟异常。故跳转路径一律跳过。 */
+#endif
+	app_diag_putc('B');         /* HSP 处理完成（跳转路径为跳过）*/
+	/* Chip_MemInit() 刻意不调用：MPU 已由 bootloader 的 Chip_MemInit() 配好并
+	 * 跨跳转保留，SRAM/Flash/外设映射均有效；main() 再按需重配。 */
+	__c_init();                 /* HAS_BOOTLOADER 下直接 return，.data/.bss 已备好 */
+	app_diag_putc('C');         /* __init 完成，即将进入 main() */
 }
 
 __attribute__ ((section(".stub_section"),used)) __attribute__((naked))
