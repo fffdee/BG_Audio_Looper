@@ -23,17 +23,33 @@ void BG_AudioIO_SetUsbOutVolume(uint8_t vol, uint8_t mute)
 }
 
 /**
- * @brief 关机前释放大内存效果器（混响）堆空间
- * @note  指针清零并关闭 enable，ISR 中的 ReverbApply 会安全跳过。
+ * @brief 关机前释放大内存效果器（Delay/Chorus）堆空间
+ * @note  指针清零并关闭 enable，ISR 中的 Apply 会安全跳过。
  */
 void BG_AudioIO_PrepareForShutdown(void)
 {
-    if (gCtrlVars.reverb_unit.ct != NULL) {
-        gCtrlVars.reverb_unit.enable = 0;
-        osPortFree(gCtrlVars.reverb_unit.ct);
-        gCtrlVars.reverb_unit.ct = NULL;
-        DBG("[Audio] Reverb freed for shutdown\n");
+#if CFG_AUDIO_EFFECT_MUSIC_DELAY_EN
+    if (gCtrlVars.music_delay_unit.ct != NULL) {
+        gCtrlVars.music_delay_unit.enable = 0;
+        osPortFree(gCtrlVars.music_delay_unit.ct);
+        gCtrlVars.music_delay_unit.ct = NULL;
+        DBG("[Audio] Delay freed for shutdown\n");
     }
+#endif
+#if CFG_AUDIO_EFFECT_CHORUS_EN
+    if (gCtrlVars.chorus_unit.ct != NULL) {
+        gCtrlVars.chorus_unit.enable = 0;
+        osPortFree(gCtrlVars.chorus_unit.ct);
+        gCtrlVars.chorus_unit.ct = NULL;
+        DBG("[Audio] Chorus(L) freed for shutdown\n");
+    }
+    if (gCtrlVars.chorus_unit_r.ct != NULL) {
+        gCtrlVars.chorus_unit_r.enable = 0;
+        osPortFree(gCtrlVars.chorus_unit_r.ct);
+        gCtrlVars.chorus_unit_r.ct = NULL;
+        DBG("[Audio] Chorus(R) freed for shutdown\n");
+    }
+#endif
 }
 
 void BG_AudioIO_SetupEffectGraphCallbacks(void)
@@ -124,12 +140,31 @@ void BG_AudioIO_SetupEffectGraphCallbacks(void)
 		case EFFECT_NODE_TYPE_EFFECT_HOWLING:
 		case EFFECT_NODE_TYPE_EFFECT_NOISE_GATE:
 		case EFFECT_NODE_TYPE_EFFECT_GAIN:
-		case EFFECT_NODE_TYPE_EFFECT_DELAY:
-		case EFFECT_NODE_TYPE_EFFECT_CHORUS:
 			node->func.process = Passthrough_Process;
 			DBG("[Audio] [%d] %s -> Passthrough\n", i, node->name);
 			break;
-			
+
+		/* ===== 综合效果器核心效果 ===== */
+		case EFFECT_NODE_TYPE_EFFECT_DELAY:
+			node->func.process = Delay_Process;
+			DBG("[Audio] [%d] %s -> Delay\n", i, node->name);
+			break;
+
+		case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+			node->func.process = Chorus_Process;
+			DBG("[Audio] [%d] %s -> Chorus\n", i, node->name);
+			break;
+
+		case EFFECT_NODE_TYPE_EFFECT_DISTORTION:
+			node->func.process = Distortion_Process;
+			DBG("[Audio] [%d] %s -> Distortion\n", i, node->name);
+			break;
+
+		case EFFECT_NODE_TYPE_EFFECT_SUSTAIN:
+			node->func.process = Sustain_Process;
+			DBG("[Audio] [%d] %s -> Sustain (Infinite Sustain)\n", i, node->name);
+			break;
+
 		default:
 			DBG("[Audio] [%d] %s -> Unknown type %d\n", i, node->name, node->type);
 			break;

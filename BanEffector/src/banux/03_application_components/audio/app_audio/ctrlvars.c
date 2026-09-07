@@ -468,12 +468,23 @@ void CtrlVarsInit(void)
 	#endif
 	
 	gCtrlVars.chorus_unit.enable                 = CFG_AUDIO_EFFECT_CHORUS_EN;
+	gCtrlVars.chorus_unit.ct                     = NULL;
 	gCtrlVars.chorus_unit.delay_length           = CFG_CHORUS_DELAY_LENGTH;
 	gCtrlVars.chorus_unit.mod_depth              = CFG_CHORUS_MODULATION_DEPTH;
 	gCtrlVars.chorus_unit.mod_rate               = CFG_CHORUS_MODULATION_RATE;
 	gCtrlVars.chorus_unit.feedback               = CFG_CHORUS_FEEDBACK;
 	gCtrlVars.chorus_unit.dry                    = CFG_CHORUS_DRY;
 	gCtrlVars.chorus_unit.wet                    = CFG_CHORUS_WET;
+
+	/* 合唱右声道实例默认参数 (与左声道一致) */
+	gCtrlVars.chorus_unit_r.enable               = CFG_AUDIO_EFFECT_CHORUS_EN;
+	gCtrlVars.chorus_unit_r.ct                   = NULL;
+	gCtrlVars.chorus_unit_r.delay_length         = CFG_CHORUS_DELAY_LENGTH;
+	gCtrlVars.chorus_unit_r.mod_depth            = CFG_CHORUS_MODULATION_DEPTH;
+	gCtrlVars.chorus_unit_r.mod_rate             = CFG_CHORUS_MODULATION_RATE;
+	gCtrlVars.chorus_unit_r.feedback             = CFG_CHORUS_FEEDBACK;
+	gCtrlVars.chorus_unit_r.dry                  = CFG_CHORUS_DRY;
+	gCtrlVars.chorus_unit_r.wet                  = CFG_CHORUS_WET;
 
 	#if CFG_AUDIO_EFFECT_PINGPONG_EN
 	gCtrlVars.ping_pong_unit.enable	  		    =  0;

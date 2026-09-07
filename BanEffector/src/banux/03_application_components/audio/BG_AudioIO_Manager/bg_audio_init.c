@@ -112,110 +112,61 @@ static void InitADC1Mic(uint16_t SampleRate)
 
 
 
-// 初始化音频效果（混响等）
+// 初始化音频效果（综合效果器：Delay + Chorus）
 static void InitAudioEffects(uint16_t SampleRate)
 {
 	extern int osPortRemainMem(void);  /* 获取剩余内存 */
 	int mem_before, mem_after;
-	
+
 	gCtrlVars.audio_effect_init_flag = 1;
-	
+
 	APP_DBG("[AudioInit] Memory available at start: %d bytes\n", osPortRemainMem());
-	
-	// 混响效果（Reverb）
-	mem_before = osPortRemainMem();
-	gCtrlVars.reverb_unit.enable = 1;
-	gCtrlVars.plate_reverb_unit.enable = 0;
-	AudioEffectReverbInit(&gCtrlVars.reverb_unit, 2, SampleRate);
-	mem_after = osPortRemainMem();
-	APP_DBG("[AudioInit] Reverb allocated: %d bytes (remain: %d)\n", mem_before - mem_after, mem_after);
 
-	// 动态范围压缩（DRC）- ADC输入通道
+	/* ============ Delay (系统自带 PCM Delay) ============ */
+#if CFG_AUDIO_EFFECT_MUSIC_DELAY_EN
 	mem_before = osPortRemainMem();
-	gCtrlVars.mic_drc_unit.enable = 1;
-	AudioEffectDRCInit(&gCtrlVars.mic_drc_unit, 2, SampleRate);
+	gCtrlVars.music_delay_unit.enable          = 1;
+	gCtrlVars.music_delay_unit.channel         = 2;    /* 立体声 */
+	gCtrlVars.music_delay_unit.high_quality    = 0;    /* 压缩存储，省内存 */
+	gCtrlVars.music_delay_unit.max_delay       = FX_DELAY_MAX_MS;
+	gCtrlVars.music_delay_unit.max_delay_samples = (int32_t)((uint32_t)FX_DELAY_MAX_MS * SampleRate / 1000);
+	gCtrlVars.music_delay_unit.delay           = DEFAULT_DELAY_MS;
+	gCtrlVars.music_delay_unit.delay_samples   = (int32_t)((uint32_t)DEFAULT_DELAY_MS * SampleRate / 1000);
+	AudioEffectPcmDelayInit(&gCtrlVars.music_delay_unit, 2, SampleRate);
 	mem_after = osPortRemainMem();
-	APP_DBG("[AudioInit] DRC allocated: %d bytes (remain: %d)\n", mem_before - mem_after, mem_after);
+	APP_DBG("[AudioInit] Delay: en=%d ct=%p allocated=%d (remain: %d)\n",
+		gCtrlVars.music_delay_unit.enable, gCtrlVars.music_delay_unit.ct,
+		mem_before - mem_after, mem_after);
+#else
+	(void)SampleRate;
+#endif
 
-	/* ========== 仅初始化效果图实际使用的5个EQ单元 ========== */
-	/* 节点4-7: ADC通道独立EQ (单声道, 10段) */
-	APP_DBG("[AudioInit] Initializing 4x ADC EQ (mono, 10-band)...\n");
+	/* ============ Chorus (系统自带 Chorus, 单声道算法, L/R 各一路) ============ */
+#if CFG_AUDIO_EFFECT_CHORUS_EN
+	/* 左声道 */
 	mem_before = osPortRemainMem();
-	
-	gCtrlVars.eq_guitar_l_unit.enable = 1;
-	gCtrlVars.eq_guitar_l_unit.channel = 1;
-	AudioEffectEQInit(&gCtrlVars.eq_guitar_l_unit, 1, SampleRate);
+	gCtrlVars.chorus_unit.enable = 1;
+	gCtrlVars.chorus_unit.channel = 1;   /* mono */
+	AudioEffectChorusInit(&gCtrlVars.chorus_unit, 1, SampleRate);
 	mem_after = osPortRemainMem();
-	APP_DBG("[AudioInit] EQ_guitar_l: en=%d ct=%p allocated=%d (remain: %d)\n", 
-		gCtrlVars.eq_guitar_l_unit.enable, gCtrlVars.eq_guitar_l_unit.ct, mem_before - mem_after, mem_after);
-	
-	mem_before = osPortRemainMem();
-	gCtrlVars.eq_guitar_r_unit.enable = 1;
-	gCtrlVars.eq_guitar_r_unit.channel = 1;
-	AudioEffectEQInit(&gCtrlVars.eq_guitar_r_unit, 1, SampleRate);
-	mem_after = osPortRemainMem();
-	APP_DBG("[AudioInit] EQ_guitar_r: en=%d ct=%p allocated=%d (remain: %d)\n", 
-		gCtrlVars.eq_guitar_r_unit.enable, gCtrlVars.eq_guitar_r_unit.ct, mem_before - mem_after, mem_after);
-	
-	mem_before = osPortRemainMem();
-	gCtrlVars.eq_mic_l_unit.enable = 1;
-	gCtrlVars.eq_mic_l_unit.channel = 1;
-	AudioEffectEQInit(&gCtrlVars.eq_mic_l_unit, 1, SampleRate);
-	mem_after = osPortRemainMem();
-	APP_DBG("[AudioInit] EQ_mic_l: en=%d ct=%p allocated=%d (remain: %d)\n", 
-		gCtrlVars.eq_mic_l_unit.enable, gCtrlVars.eq_mic_l_unit.ct, mem_before - mem_after, mem_after);
-	
-	mem_before = osPortRemainMem();
-	gCtrlVars.eq_mic_r_unit.enable = 1;
-	gCtrlVars.eq_mic_r_unit.channel = 1;
-	AudioEffectEQInit(&gCtrlVars.eq_mic_r_unit, 1, SampleRate);
-	mem_after = osPortRemainMem();
-	APP_DBG("[AudioInit] EQ_mic_r: en=%d ct=%p allocated=%d (remain: %d)\n", 
-		gCtrlVars.eq_mic_r_unit.enable, gCtrlVars.eq_mic_r_unit.ct, mem_before - mem_after, mem_after);
+	APP_DBG("[AudioInit] Chorus(L): en=%d ct=%p allocated=%d (remain: %d)\n",
+		gCtrlVars.chorus_unit.enable, gCtrlVars.chorus_unit.ct,
+		mem_before - mem_after, mem_after);
 
-	/* 节点14: USB/BT路径EQ (双声道) */
-	APP_DBG("[AudioInit] Initializing USB/BT EQ (stereo)...\n");
+	/* 右声道 */
 	mem_before = osPortRemainMem();
-	gCtrlVars.music_out_eq_unit.enable = 1;
-	gCtrlVars.music_out_eq_unit.channel = 2;
-	/* 修正类型：BAND_PASS会导致音量衰减严重 */
-	{
-		int i;
-		for (i = 0; i < 10; i++) {
-			if (gCtrlVars.music_out_eq_unit.eq_params[i].type == 5) {
-				gCtrlVars.music_out_eq_unit.eq_params[i].type = 0;  /* PEAKING */
-			}
-			if (gCtrlVars.music_out_eq_unit.filter_params && i < gCtrlVars.music_out_eq_unit.filter_count) {
-				if (gCtrlVars.music_out_eq_unit.filter_params[i].type == 5) {
-					gCtrlVars.music_out_eq_unit.filter_params[i].type = 0;
-				}
-			}
-		}
-	}
-	AudioEffectEQInit(&gCtrlVars.music_out_eq_unit, 2, SampleRate);
+	gCtrlVars.chorus_unit_r.enable = 1;
+	gCtrlVars.chorus_unit_r.channel = 1; /* mono */
+	AudioEffectChorusInit(&gCtrlVars.chorus_unit_r, 1, SampleRate);
 	mem_after = osPortRemainMem();
-	APP_DBG("[AudioInit] USB/BT_EQ: en=%d ct=%p allocated=%d (remain: %d)\n", 
-		gCtrlVars.music_out_eq_unit.enable, gCtrlVars.music_out_eq_unit.ct, mem_before - mem_after, mem_after);
-	
-	APP_DBG("[AudioInit] All EQ initialization completed, final memory: %d bytes\n", osPortRemainMem());
+	APP_DBG("[AudioInit] Chorus(R): en=%d ct=%p allocated=%d (remain: %d)\n",
+		gCtrlVars.chorus_unit_r.enable, gCtrlVars.chorus_unit_r.ct,
+		mem_before - mem_after, mem_after);
+#else
+	(void)SampleRate;
+#endif
 
-	// 啸叫抑制（Howling Detector）
-	#if CFG_AUDIO_EFFECT_MIC_HOWLING_DECTOR_EN
-	gCtrlVars.howling_dector_unit.enable = 0;
-	AudioEffectHowlingSuppressorInit(&gCtrlVars.howling_dector_unit);
-	#endif
-
-	// 噪声抑制（Noise Suppressor）
-	#if CFG_AUDIO_EFFECT_MIC_NOISE_SUPPRESSOR_EN
-	gCtrlVars.MicAudioSdct_unit.enable = 1;
-	AudioEffectSilenceDectorInit(&gCtrlVars.MicAudioSdct_unit, 2, SampleRate);
-	#endif
-
-	// 扩展器（Expander）- 麦克风通道噪声门
-	/* 默认关闭：阈值过高会把弱麦克风信号整段压掉，表现为“只有 LineIn 有声”。
-	 * 需要降噪时再通过效果图/上位机打开。 */
-	gCtrlVars.mic_expander_unit.enable = 0;
-	AudioEffectExpanderInit(&gCtrlVars.mic_expander_unit, 2, SampleRate);
+	APP_DBG("[AudioInit] Effects init done, final memory: %d bytes\n", osPortRemainMem());
 }
 
 // 初始化控制GPIO输出

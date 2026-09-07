@@ -811,6 +811,7 @@ typedef struct _ControlVariablesContext
 	VocalCutUnit        vocal_cut_unit;
 	VocalRemoveUnit     vocal_remove_unit;
 	ChorusUnit          chorus_unit;
+	ChorusUnit          chorus_unit_r;   /* 合唱右声道实例 (SDK Chorus 为单声道算法) */
     EQUnit	   			music_pre_eq_unit;
 	EQUnit	   			music_out_eq_unit;
     EQUnit	   			mic_pre_eq_unit;

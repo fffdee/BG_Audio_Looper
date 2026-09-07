@@ -45,6 +45,16 @@ static const NodeConfig_t g_SimpleNodes[] = SIMPLE_NODES_CONFIG;
 /* 简单配置边 */
 static const EdgeConfig_t g_SimpleEdges[] = SIMPLE_EDGES_CONFIG;
 
+/* 综合效果器配置节点 (直进直出 + Delay + Chorus) */
+static const NodeConfig_t g_FxChainNodes[] = FX_CHAIN_NODES_CONFIG;
+
+/* 综合效果器配置边 */
+static const EdgeConfig_t g_FxChainEdges[] = FX_CHAIN_EDGES_CONFIG;
+
+/* 编译时断言：确保综合效果器数组大小与宏定义一致 */
+COMPILE_TIME_ASSERT(sizeof(g_FxChainNodes)/sizeof(g_FxChainNodes[0]) == FX_CHAIN_NODE_COUNT);
+COMPILE_TIME_ASSERT(sizeof(g_FxChainEdges)/sizeof(g_FxChainEdges[0]) == FX_CHAIN_EDGE_COUNT);
+
 /* 蓝牙音箱配置节点 */
 static const NodeConfig_t g_BtSpeakerNodes[] = BT_SPEAKER_NODES_CONFIG;
 
@@ -122,7 +132,40 @@ static void SetDefaultEffectParams(EffectNode_t *node)
             node->params.delay.feedback = DEFAULT_DELAY_FEEDBACK;
             node->params.delay.wet_dry = DEFAULT_DELAY_WET_DRY;
             break;
-            
+
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            node->params.chorus.delay_length = DEFAULT_CHORUS_DELAY_LENGTH;
+            node->params.chorus.mod_depth    = DEFAULT_CHORUS_MOD_DEPTH;
+            node->params.chorus.mod_rate     = DEFAULT_CHORUS_MOD_RATE;
+            node->params.chorus.feedback     = DEFAULT_CHORUS_FEEDBACK;
+            node->params.chorus.dry          = DEFAULT_CHORUS_DRY;
+            node->params.chorus.wet          = DEFAULT_CHORUS_WET;
+            break;
+
+        case EFFECT_NODE_TYPE_EFFECT_DISTORTION:
+            node->params.distortion.type  = DEFAULT_DISTORTION_TYPE;
+            node->params.distortion.drive = DEFAULT_DISTORTION_DRIVE;
+            node->params.distortion.asym  = DEFAULT_DISTORTION_ASYM;
+            node->params.distortion.level = DEFAULT_DISTORTION_LEVEL;
+            node->params.distortion.tone  = DEFAULT_DISTORTION_TONE;
+            node->params.distortion.feedback = DEFAULT_DISTORTION_FEEDBACK;
+            break;
+
+        case EFFECT_NODE_TYPE_EFFECT_SUSTAIN:
+            node->params.sustain.enable       = DEFAULT_SUSTAIN_ENABLE;
+            node->params.sustain.mode         = DEFAULT_SUSTAIN_MODE;
+            node->params.sustain.sensitivity  = DEFAULT_SUSTAIN_SENSITIVITY;
+            node->params.sustain.threshold    = DEFAULT_SUSTAIN_THRESHOLD;
+            node->params.sustain.attack_wait  = DEFAULT_SUSTAIN_ATTACK_WAIT;
+            node->params.sustain.retrigger    = DEFAULT_SUSTAIN_RETRIGGER;
+            node->params.sustain.layer        = DEFAULT_SUSTAIN_LAYER;
+            node->params.sustain.tremolo      = DEFAULT_SUSTAIN_TREMOLO;
+            node->params.sustain.tremolo_rate = DEFAULT_SUSTAIN_TREMOLO_RATE;
+            node->params.sustain.filter       = DEFAULT_SUSTAIN_FILTER;
+            node->params.sustain.level        = DEFAULT_SUSTAIN_LEVEL;
+            node->params.sustain.mix          = DEFAULT_SUSTAIN_MIX;
+            break;
+
         case EFFECT_NODE_TYPE_MIXER:
             {
                 int i;
@@ -156,14 +199,15 @@ GraphError_t EffectGraphConfig_GetPreset(GraphPreset_t preset, GraphConfig_t *co
     
     switch (preset) {
         case GRAPH_PRESET_DEFAULT:
-            /* BanEffector 默认预设 = 直进直出 (与 SIMPLE 同拓扑)
-             * ADC0(guitar) + ADC1(mic) + USB_IN -> Mixer -> DAC0(speaker) + USB_OUT */
-            config->nodes = (NodeConfig_t*)g_SimpleNodes;
-            config->node_count = SIMPLE_NODE_COUNT;
-            config->edges = (EdgeConfig_t*)g_SimpleEdges;
-            config->edge_count = SIMPLE_EDGE_COUNT;
-            DBG("[GraphConfig] DEFAULT preset (passthrough): node_count=%d, edge_count=%d\n",
-                SIMPLE_NODE_COUNT, SIMPLE_EDGE_COUNT);
+            /* BanEffector 默认预设 = 直进直出 + Delay + Chorus (综合效果器)
+             * ADC0(guitar) + ADC1(mic) + USB_IN -> Mixer -> Delay -> Chorus
+             *     -> DAC0(speaker) + USB_Out */
+            config->nodes = (NodeConfig_t*)g_FxChainNodes;
+            config->node_count = FX_CHAIN_NODE_COUNT;
+            config->edges = (EdgeConfig_t*)g_FxChainEdges;
+            config->edge_count = FX_CHAIN_EDGE_COUNT;
+            DBG("[GraphConfig] DEFAULT preset (fx chain): node_count=%d, edge_count=%d\n",
+                FX_CHAIN_NODE_COUNT, FX_CHAIN_EDGE_COUNT);
             break;
             
         case GRAPH_PRESET_SIMPLE:
@@ -267,6 +311,8 @@ GraphError_t EffectGraphConfig_LoadPreset(GraphPreset_t preset)
         actual_edges_array_size = g_DefaultEdgesArraySize;
     } else if (config.edges == g_SimpleEdges) {
         actual_edges_array_size = sizeof(g_SimpleEdges)/sizeof(g_SimpleEdges[0]);
+    } else if (config.edges == g_FxChainEdges) {
+        actual_edges_array_size = sizeof(g_FxChainEdges)/sizeof(g_FxChainEdges[0]);
     } else if (config.edges == g_BtSpeakerEdges) {
         actual_edges_array_size = sizeof(g_BtSpeakerEdges)/sizeof(g_BtSpeakerEdges[0]);
     } else if (config.edges == g_SecondaryEdges) {

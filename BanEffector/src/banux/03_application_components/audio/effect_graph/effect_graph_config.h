@@ -200,12 +200,12 @@ typedef enum {
     { NODE_ID_FINAL_MIXER, NODE_ID_DRC, 0, 0 }, \
     { NODE_ID_DRC, NODE_ID_DAC0_OUT, 0, 0 }, \
     { NODE_ID_DRC, NODE_ID_USB_OUT,  0, 0 }, \
-    \
+    
     /* Expander输出 → Looper录制
      * 录制 Expander 处理后、未混入 Looper_Play 之前的纯吉他+麦克风信号。
      * 这与 Pre_Reverb_Mixer 收到的 ADC 链信号完全一致，
      * 避免录制时引入已有 Looper 层（防止叠录反馈循环）。
-     * 原来连 ADC_Mixer 跳过了 Expander 增益，现已修正。 */ \
+     * 原来连 ADC_Mixer 跳过了 Expander 增益，现已修正。 */ 
     { NODE_ID_EXPANDER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
 }
 
@@ -241,6 +241,40 @@ typedef enum {
 #define DEFAULT_DELAY_MS            250     /* 延迟时间 ms */
 #define DEFAULT_DELAY_FEEDBACK      30      /* 反馈量 0-100 */
 #define DEFAULT_DELAY_WET_DRY       30      /* 干湿比 0-100 */
+
+/* Delay 节点最大可配置延迟 (SDK PcmDelay 的环形缓冲大小上限) */
+#define FX_DELAY_MAX_MS             500
+
+/* 合唱默认参数 */
+#define DEFAULT_CHORUS_DELAY_LENGTH 13      /* 基准延迟长度 ms (1-25) */
+#define DEFAULT_CHORUS_MOD_DEPTH    3       /* 调制深度 ms (< delay_length) */
+#define DEFAULT_CHORUS_MOD_RATE     10      /* 调制速率 (0.1Hz 单位, 10 = 1.0Hz) */
+#define DEFAULT_CHORUS_FEEDBACK     30      /* 反馈量 0-50 */
+#define DEFAULT_CHORUS_DRY          90      /* 干声 0-100 */
+#define DEFAULT_CHORUS_WET          60      /* 湿声 0-100 */
+
+/* 失真默认参数 (可切换类型: SOFT=软削波/蓝调, HARD=硬限幅/摇滚, FUZZ=法兹) */
+#define DEFAULT_DISTORTION_TYPE    1       /* 默认 HARD(摇滚金属) */
+#define DEFAULT_DISTORTION_DRIVE   55      /* 失真强度 0-100 */
+#define DEFAULT_DISTORTION_ASYM    50      /* 非对称量 0-100 (50=对称) */
+#define DEFAULT_DISTORTION_LEVEL   90      /* 输出电平 0-100 */
+#define DEFAULT_DISTORTION_TONE    80      /* 亮度/低通 0-100 (100=直通) */
+#define DEFAULT_DISTORTION_FEEDBACK 0      /* 反馈量 0-100 (0=关闭, 高=高增益金属) */
+
+/* 无限延音(Infinite Sustain)默认参数
+ * 默认关闭(enable=0)，开启后才会抓取并循环当前音符，避免默认改变声音 */
+#define DEFAULT_SUSTAIN_ENABLE       0      /* 延音引擎总开关 0/1 */
+#define DEFAULT_SUSTAIN_MODE         0      /* 0=瞬态 1=慢速(Slow) */
+#define DEFAULT_SUSTAIN_SENSITIVITY 70     /* 起音检测灵敏度 0-100 */
+#define DEFAULT_SUSTAIN_THRESHOLD    8      /* 触发门限 0-100 */
+#define DEFAULT_SUSTAIN_ATTACK_WAIT  4      /* 攻击平息等待(帧) 0-20 */
+#define DEFAULT_SUSTAIN_RETRIGGER    0      /* 新音符重抓 0/1 (默认锁存) */
+#define DEFAULT_SUSTAIN_LAYER        0      /* 分层叠加 0/1 */
+#define DEFAULT_SUSTAIN_TREMOLO      0      /* 颤音深度 0-100 (0=关) */
+#define DEFAULT_SUSTAIN_TREMOLO_RATE 10     /* 颤音速率 0.1Hz (10=1Hz) */
+#define DEFAULT_SUSTAIN_FILTER       0      /* 自然衰减低通 0-100 (0=直通) */
+#define DEFAULT_SUSTAIN_LEVEL        90     /* 输出电平 0-100 */
+#define DEFAULT_SUSTAIN_MIX          100    /* 干湿比(湿声) 0-100 */
 
 /*******************************************************************************
  * 预设配置 - 可以定义多套配置方便切换
@@ -283,6 +317,58 @@ typedef enum {
 }
 
 #define SIMPLE_EDGE_COUNT   5
+
+/*******************************************************************************
+ * 综合效果器配置 (BanEffector 实际使用的默认拓扑)
+ *   在直进直出链路的基础上串入系统自带的 Delay(PCM Delay) 与 Chorus(合唱):
+ *
+ *   ADC0(guitar) ─┐
+ *   ADC1(mic)    ─┼─> Mixer ─> Delay ─> Chorus ─┬─> DAC0(speaker)
+ *   USB_In       ─┘                             └─> USB_Out
+ *
+ *   8 节点 7 边。Chorus 算法为单声道，处理回调内部按 L/R 各跑一路实例。
+ ******************************************************************************/
+typedef enum {
+    FX_NODE_ADC0 = 0,      /* 乐器/线路输入 */
+    FX_NODE_ADC1,          /* 麦克风输入 */
+    FX_NODE_USB_IN,        /* USB 音频输入 */
+    FX_NODE_MIXER,         /* 输入混音 */
+    FX_NODE_DISTORTION,    /* 失真 */
+    FX_NODE_DELAY,         /* 延迟 */
+    FX_NODE_CHORUS,        /* 合唱 */
+    FX_NODE_SUSTAIN,       /* 无限延音 */
+    FX_NODE_DAC0,          /* 扬声器输出 */
+    FX_NODE_USB_OUT,       /* USB 录音输出 */
+
+    FX_CHAIN_NODE_COUNT
+} FxChainNodeId_t;
+
+#define FX_CHAIN_NODES_CONFIG { \
+    { FX_NODE_ADC0,    EFFECT_NODE_TYPE_SOURCE_ADC0,   "adc0",    true, {{0}} }, \
+    { FX_NODE_ADC1,    EFFECT_NODE_TYPE_SOURCE_ADC1,   "adc1",    true, {{0}} }, \
+    { FX_NODE_USB_IN,  EFFECT_NODE_TYPE_SOURCE_USB_IN, "usb_in",  true, {{0}} }, \
+    { FX_NODE_MIXER,   EFFECT_NODE_TYPE_MIXER,         "mixer",   true, {{0}} }, \
+    { FX_NODE_DISTORTION, EFFECT_NODE_TYPE_EFFECT_DISTORTION, "distortion", true, {{0}} }, \
+    { FX_NODE_DELAY,   EFFECT_NODE_TYPE_EFFECT_DELAY,  "delay",   true, {{0}} }, \
+    { FX_NODE_CHORUS,  EFFECT_NODE_TYPE_EFFECT_CHORUS, "chorus",  true, {{0}} }, \
+    { FX_NODE_SUSTAIN, EFFECT_NODE_TYPE_EFFECT_SUSTAIN, "sustain", true, {{0}} }, \
+    { FX_NODE_DAC0,    EFFECT_NODE_TYPE_SINK_DAC0,     "dac0",    true, {{0}} }, \
+    { FX_NODE_USB_OUT, EFFECT_NODE_TYPE_SINK_USB_OUT,  "usb_out", true, {{0}} }, \
+}
+
+#define FX_CHAIN_EDGES_CONFIG { \
+    { FX_NODE_ADC0,   FX_NODE_MIXER, 0, 0 }, \
+    { FX_NODE_ADC1,   FX_NODE_MIXER, 0, 1 }, \
+    { FX_NODE_USB_IN, FX_NODE_MIXER, 0, 2 }, \
+    { FX_NODE_MIXER,  FX_NODE_DISTORTION, 0, 0 }, \
+    { FX_NODE_DISTORTION, FX_NODE_DELAY, 0, 0 }, \
+    { FX_NODE_DELAY,  FX_NODE_CHORUS, 0, 0 }, \
+    { FX_NODE_CHORUS, FX_NODE_SUSTAIN, 0, 0 }, \
+    { FX_NODE_SUSTAIN, FX_NODE_DAC0,    0, 0 }, \
+    { FX_NODE_SUSTAIN, FX_NODE_USB_OUT, 0, 0 }, \
+}
+
+#define FX_CHAIN_EDGE_COUNT   9
 
 /*******************************************************************************
  * 蓝牙音箱配置

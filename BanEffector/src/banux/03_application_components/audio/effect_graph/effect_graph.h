@@ -100,6 +100,8 @@ typedef enum {
     EFFECT_NODE_TYPE_EFFECT_GAIN,          /* 增益控制 */
     EFFECT_NODE_TYPE_EFFECT_DELAY,         /* 延迟效果 */
     EFFECT_NODE_TYPE_EFFECT_CHORUS,        /* 合唱效果 */
+    EFFECT_NODE_TYPE_EFFECT_DISTORTION,    /* 失真效果 (多项式软削波) */
+    EFFECT_NODE_TYPE_EFFECT_SUSTAIN,       /* 无限延音效果 (Onset检测+AMDF周期提取+相位对齐循环) */
     EFFECT_NODE_TYPE_LOOPER,               /* 循环录音器(旧版兼容) */
     
     EFFECT_NODE_TYPE_MAX
@@ -204,10 +206,55 @@ typedef union {
     /* 延迟参数 */
     struct {
         uint16_t delay_ms;          /* 延迟时间 ms */
-        uint8_t feedback;           /* 反馈量 0-100 */
+        uint8_t feedback;           /* 反馈量 0-100 (SDK PcmDelay 为单抽头延迟，不支持内部反馈，保留扩展) */
         uint8_t wet_dry;            /* 干湿比 0-100 */
     } delay;
-    
+
+    /* 合唱参数 */
+    struct {
+        uint8_t delay_length;       /* 基准延迟长度 ms (1-25) */
+        uint8_t mod_depth;          /* 调制深度 ms (< delay_length) */
+        uint8_t mod_rate;           /* 调制速率 0.1Hz 单位 (10 = 1.0Hz) */
+        uint8_t feedback;           /* 反馈量 0-50 */
+        uint8_t dry;                /* 干声比例 0-100 */
+        uint8_t wet;                /* 湿声比例 0-100 */
+    } chorus;
+
+    /* 失真类型 (可切换音色) */
+    #define DIST_TYPE_SOFT  0   /* 软削波 / 蓝调过载 */
+    #define DIST_TYPE_HARD  1   /* 硬限幅 / 摇滚金属 */
+    #define DIST_TYPE_FUZZ  2   /* 法兹 / 管味 */
+    #define DIST_TYPE_MAX   3
+
+    /* 失真参数 (可切换类型, 定点 DSP, 无状态核心) */
+    struct {
+        uint8_t type;      /* 失真类型 0=SOFT 1=HARD 2=FUZZ */
+        uint8_t drive;     /* 失真强度 0-100 */
+        uint8_t asym;      /* 非对称量 0-100 (50=对称) */
+        uint8_t level;     /* 输出电平 0-100 */
+        uint8_t tone;      /* 亮度/低通 0-100 (100=直通) */
+        uint8_t feedback;  /* 反馈量 0-100 (自我削波, 高增益金属) */
+    } distortion;
+
+    /* 无限延音参数 (Onset检测 + AMDF周期提取 + 相位对齐循环)
+     * 算法: 持续监听->检测音符起音(能量突增)->等待攻击平息->提取一个完整周期
+     *       ->以相位对齐方式无缝循环该周期, 形成无限延音
+     * 进阶: 包络淡入(Slow模式) / 缓慢颤音(Tremolo) / 自然衰减低通 / 分层叠加 */
+    struct {
+        uint8_t enable;       /* 延音引擎总开关 0/1 (默认关, 开启后才抓取并循环) */
+        uint8_t mode;         /* 0=瞬态 1=慢速(Slow, 缓慢淡入淡出) */
+        uint8_t sensitivity;  /* 起音检测灵敏度 0-100 (越大越易触发) */
+        uint8_t threshold;    /* 触发门限 0-100 (绝对能量阈值) */
+        uint8_t attack_wait;  /* 攻击平息等待(帧) 0-20 (跳过音头瞬态) */
+        uint8_t retrigger;    /* 新音符重抓 0/1 (1=锁定后遇新音符重采样) */
+        uint8_t layer;        /* 分层叠加 0/1 (1=新音符叠加为第二层) */
+        uint8_t tremolo;      /* 颤音深度 0-100 (0=关闭) */
+        uint8_t tremolo_rate; /* 颤音速率 0.1Hz 单位 (1-50) */
+        uint8_t filter;       /* 自然衰减低通 0-100 (0=直通) */
+        uint8_t level;        /* 输出电平 0-100 */
+        uint8_t mix;          /* 干湿比(湿声) 0-100 (100=纯延音) */
+    } sustain;
+
     /* 通用参数 */
     uint8_t raw[88];
 } EffectParams_t;

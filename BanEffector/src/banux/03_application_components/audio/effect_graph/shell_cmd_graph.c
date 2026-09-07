@@ -118,6 +118,32 @@ static const ParamRange_t g_DelayParamRange[] = {
     { NULL, 0, 0, NULL }
 };
 
+static const ParamRange_t g_DistortionParamRange[] = {
+    { "drive", 0, 100, "%" },
+    { "asym",  0, 100, "%" },
+    { "level", 0, 100, "%" },
+    { "tone",  0, 100, "%" },
+    { "type",  0, 2,   "" },
+    { "feedback", 0, 90, "%" },
+    { NULL, 0, 0, NULL }
+};
+
+static const ParamRange_t g_SustainParamRange[] = {
+    { "enable",  0, 1,   "bool" },
+    { "mode",    0, 1,   "" },
+    { "sens",    0, 100, "%" },
+    { "thresh",  0, 100, "%" },
+    { "attack",  0, 20,  "frames" },
+    { "retrig",  0, 1,   "bool" },
+    { "layer",   0, 1,   "bool" },
+    { "trem",    0, 100, "%" },
+    { "trate",   1, 50,  "0.1Hz" },
+    { "filt",    0, 100, "%" },
+    { "level",   0, 100, "%" },
+    { "mix",     0, 100, "%" },
+    { NULL, 0, 0, NULL }
+};
+
 static const ParamRange_t g_ExpanderParamRange[] = {
     { "threshold", -80, 0, "dB" },
     { "ratio",     1, 10, "" },
@@ -169,6 +195,8 @@ static const ParamRange_t* GetParamRangeTable(EffectNodeType_t type)
         case EFFECT_NODE_TYPE_EFFECT_EQ:       return g_EqParamRange;
         case EFFECT_NODE_TYPE_EFFECT_GAIN:     return g_GainParamRange;
         case EFFECT_NODE_TYPE_EFFECT_DELAY:    return g_DelayParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_DISTORTION: return g_DistortionParamRange;
+        case EFFECT_NODE_TYPE_EFFECT_SUSTAIN: return g_SustainParamRange;
         case EFFECT_NODE_TYPE_EFFECT_EXPANDER: return g_ExpanderParamRange;
         case EFFECT_NODE_TYPE_MIXER:           return g_MixerParamRange;
         default:                        return NULL;
@@ -377,6 +405,49 @@ static void PrintNodeParams(EffectNode_t *node)
             Shell_Printf("  ratio     = %d\n", node->params.expander.ratio);
             break;
             
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            Shell_Printf("Type: CHORUS\n");
+            Shell_Printf("  delay     = %d ms (1-25)\n", node->params.chorus.delay_length);
+            Shell_Printf("  depth     = %d ms\n", node->params.chorus.mod_depth);
+            Shell_Printf("  rate      = %d (0.1Hz, 10=1Hz)\n", node->params.chorus.mod_rate);
+            Shell_Printf("  feedback  = %d (0-50)\n", node->params.chorus.feedback);
+            Shell_Printf("  dry       = %d (0-100)\n", node->params.chorus.dry);
+            Shell_Printf("  wet       = %d (0-100)\n", node->params.chorus.wet);
+            break;
+
+        case EFFECT_NODE_TYPE_EFFECT_DISTORTION: {
+            const char *tname = "?";
+            switch (node->params.distortion.type) {
+                case DIST_TYPE_SOFT: tname = "SOFT(软削波/蓝调)"; break;
+                case DIST_TYPE_HARD: tname = "HARD(硬限幅/摇滚)"; break;
+                case DIST_TYPE_FUZZ: tname = "FUZZ(法兹/管味)";  break;
+                default: break;
+            }
+            Shell_Printf("Type: DISTORTION\n");
+            Shell_Printf("  type  = %d (%s)\n", node->params.distortion.type, tname);
+            Shell_Printf("  drive = %d (0-100)\n", node->params.distortion.drive);
+            Shell_Printf("  asym  = %d (0-100)\n", node->params.distortion.asym);
+            Shell_Printf("  level = %d (0-100)\n", node->params.distortion.level);
+            Shell_Printf("  tone  = %d (0-100)\n", node->params.distortion.tone);
+            Shell_Printf("  feedback = %d (0-100)\n", node->params.distortion.feedback);
+        } break;
+
+        case EFFECT_NODE_TYPE_EFFECT_SUSTAIN:
+            Shell_Printf("Type: SUSTAIN (无限延音)\n");
+            Shell_Printf("  enable = %d (0/1, 总开关)\n", node->params.sustain.enable);
+            Shell_Printf("  mode   = %d (0=瞬态 1=慢速Slow)\n", node->params.sustain.mode);
+            Shell_Printf("  sens   = %d (起音灵敏度 0-100)\n", node->params.sustain.sensitivity);
+            Shell_Printf("  thresh = %d (触发门限 0-100)\n", node->params.sustain.threshold);
+            Shell_Printf("  attack = %d (攻击平息等待 帧)\n", node->params.sustain.attack_wait);
+            Shell_Printf("  retrig = %d (新音符重抓 0/1)\n", node->params.sustain.retrigger);
+            Shell_Printf("  layer  = %d (分层叠加 0/1)\n", node->params.sustain.layer);
+            Shell_Printf("  trem   = %d (颤音深度 0-100)\n", node->params.sustain.tremolo);
+            Shell_Printf("  trate  = %d (颤音速率 0.1Hz)\n", node->params.sustain.tremolo_rate);
+            Shell_Printf("  filt   = %d (自然衰减低通 0-100)\n", node->params.sustain.filter);
+            Shell_Printf("  level  = %d (输出电平 0-100)\n", node->params.sustain.level);
+            Shell_Printf("  mix    = %d (干湿比 0-100)\n", node->params.sustain.mix);
+            break;
+
         case EFFECT_NODE_TYPE_MIXER:
             Shell_Printf("Type: MIXER (%d inputs)\n", node->params.mixer.input_count);
             {
@@ -766,6 +837,73 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
             }
             break;
             
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            if (strcmp(param_name, "delay") == 0) {
+                node->params.chorus.delay_length = (uint8_t)value;
+            } else if (strcmp(param_name, "depth") == 0) {
+                node->params.chorus.mod_depth = (uint8_t)value;
+            } else if (strcmp(param_name, "rate") == 0) {
+                node->params.chorus.mod_rate = (uint8_t)value;
+            } else if (strcmp(param_name, "feedback") == 0) {
+                node->params.chorus.feedback = (uint8_t)value;
+            } else if (strcmp(param_name, "dry") == 0) {
+                node->params.chorus.dry = (uint8_t)value;
+            } else if (strcmp(param_name, "wet") == 0) {
+                node->params.chorus.wet = (uint8_t)value;
+            } else {
+                return -1;
+            }
+            break;
+
+        case EFFECT_NODE_TYPE_EFFECT_DISTORTION:
+            if (strcmp(param_name, "drive") == 0) {
+                node->params.distortion.drive = (uint8_t)value;
+            } else if (strcmp(param_name, "asym") == 0) {
+                node->params.distortion.asym = (uint8_t)value;
+            } else if (strcmp(param_name, "level") == 0) {
+                node->params.distortion.level = (uint8_t)value;
+            } else if (strcmp(param_name, "tone") == 0) {
+                node->params.distortion.tone = (uint8_t)value;
+            } else if (strcmp(param_name, "feedback") == 0) {
+                node->params.distortion.feedback = (uint8_t)value;
+            } else if (strcmp(param_name, "type") == 0) {
+                if (value < DIST_TYPE_SOFT || value >= DIST_TYPE_MAX) return -1;
+                node->params.distortion.type = (uint8_t)value;
+            } else {
+                return -1;
+            }
+            break;
+
+        case EFFECT_NODE_TYPE_EFFECT_SUSTAIN:
+            if (strcmp(param_name, "enable") == 0) {
+                node->params.sustain.enable = (uint8_t)(value ? 1 : 0);
+            } else if (strcmp(param_name, "mode") == 0) {
+                node->params.sustain.mode = (uint8_t)(value ? 1 : 0);
+            } else if (strcmp(param_name, "sens") == 0) {
+                node->params.sustain.sensitivity = (uint8_t)value;
+            } else if (strcmp(param_name, "thresh") == 0) {
+                node->params.sustain.threshold = (uint8_t)value;
+            } else if (strcmp(param_name, "attack") == 0) {
+                node->params.sustain.attack_wait = (uint8_t)value;
+            } else if (strcmp(param_name, "retrig") == 0) {
+                node->params.sustain.retrigger = (uint8_t)(value ? 1 : 0);
+            } else if (strcmp(param_name, "layer") == 0) {
+                node->params.sustain.layer = (uint8_t)(value ? 1 : 0);
+            } else if (strcmp(param_name, "trem") == 0) {
+                node->params.sustain.tremolo = (uint8_t)value;
+            } else if (strcmp(param_name, "trate") == 0) {
+                node->params.sustain.tremolo_rate = (uint8_t)value;
+            } else if (strcmp(param_name, "filt") == 0) {
+                node->params.sustain.filter = (uint8_t)value;
+            } else if (strcmp(param_name, "level") == 0) {
+                node->params.sustain.level = (uint8_t)value;
+            } else if (strcmp(param_name, "mix") == 0) {
+                node->params.sustain.mix = (uint8_t)value;
+            } else {
+                return -1;
+            }
+            break;
+
         case EFFECT_NODE_TYPE_MIXER:
             /* 支持 in0_gain, in1_gain, ... */
             if (strncmp(param_name, "in", 2) == 0 && param_name[2] >= '0' && param_name[2] <= '3') {
@@ -881,6 +1019,72 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
             }
             break;
             
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            if (strcmp(param_name, "delay") == 0) {
+                *value = node->params.chorus.delay_length;
+            } else if (strcmp(param_name, "depth") == 0) {
+                *value = node->params.chorus.mod_depth;
+            } else if (strcmp(param_name, "rate") == 0) {
+                *value = node->params.chorus.mod_rate;
+            } else if (strcmp(param_name, "feedback") == 0) {
+                *value = node->params.chorus.feedback;
+            } else if (strcmp(param_name, "dry") == 0) {
+                *value = node->params.chorus.dry;
+            } else if (strcmp(param_name, "wet") == 0) {
+                *value = node->params.chorus.wet;
+            } else {
+                return -1;
+            }
+            break;
+
+        case EFFECT_NODE_TYPE_EFFECT_DISTORTION:
+            if (strcmp(param_name, "drive") == 0) {
+                *value = node->params.distortion.drive;
+            } else if (strcmp(param_name, "asym") == 0) {
+                *value = node->params.distortion.asym;
+            } else if (strcmp(param_name, "level") == 0) {
+                *value = node->params.distortion.level;
+            } else if (strcmp(param_name, "tone") == 0) {
+                *value = node->params.distortion.tone;
+            } else if (strcmp(param_name, "feedback") == 0) {
+                *value = node->params.distortion.feedback;
+            } else if (strcmp(param_name, "type") == 0) {
+                *value = node->params.distortion.type;
+            } else {
+                return -1;
+            }
+            break;
+
+        case EFFECT_NODE_TYPE_EFFECT_SUSTAIN:
+            if (strcmp(param_name, "enable") == 0) {
+                *value = node->params.sustain.enable;
+            } else if (strcmp(param_name, "mode") == 0) {
+                *value = node->params.sustain.mode;
+            } else if (strcmp(param_name, "sens") == 0) {
+                *value = node->params.sustain.sensitivity;
+            } else if (strcmp(param_name, "thresh") == 0) {
+                *value = node->params.sustain.threshold;
+            } else if (strcmp(param_name, "attack") == 0) {
+                *value = node->params.sustain.attack_wait;
+            } else if (strcmp(param_name, "retrig") == 0) {
+                *value = node->params.sustain.retrigger;
+            } else if (strcmp(param_name, "layer") == 0) {
+                *value = node->params.sustain.layer;
+            } else if (strcmp(param_name, "trem") == 0) {
+                *value = node->params.sustain.tremolo;
+            } else if (strcmp(param_name, "trate") == 0) {
+                *value = node->params.sustain.tremolo_rate;
+            } else if (strcmp(param_name, "filt") == 0) {
+                *value = node->params.sustain.filter;
+            } else if (strcmp(param_name, "level") == 0) {
+                *value = node->params.sustain.level;
+            } else if (strcmp(param_name, "mix") == 0) {
+                *value = node->params.sustain.mix;
+            } else {
+                return -1;
+            }
+            break;
+
         case EFFECT_NODE_TYPE_MIXER:
             if (strncmp(param_name, "in", 2) == 0 && param_name[2] >= '0' && param_name[2] <= '3') {
                 uint8_t ch = param_name[2] - '0';
@@ -973,6 +1177,8 @@ static int CmdList(void)
             case EFFECT_NODE_TYPE_EFFECT_GAIN: type_str = "GAIN"; break;
             case EFFECT_NODE_TYPE_EFFECT_DELAY: type_str = "DELAY"; break;
             case EFFECT_NODE_TYPE_EFFECT_CHORUS: type_str = "CHORUS"; break;
+            case EFFECT_NODE_TYPE_EFFECT_DISTORTION: type_str = "DISTORTION"; break;
+            case EFFECT_NODE_TYPE_EFFECT_SUSTAIN: type_str = "SUSTAIN"; break;
             case EFFECT_NODE_TYPE_LOOPER: type_str = "LOOPER"; break;
             default: break;
         }
