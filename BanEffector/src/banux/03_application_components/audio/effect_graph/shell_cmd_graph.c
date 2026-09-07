@@ -120,7 +120,7 @@ static const ParamRange_t g_DelayParamRange[] = {
 
 static const ParamRange_t g_DistortionParamRange[] = {
     { "drive", 0, 100, "%" },
-    { "asym",  0, 100, "%" },
+    { "asym",  0, 80,  "%" },
     { "level", 0, 100, "%" },
     { "tone",  0, 100, "%" },
     { "type",  0, 2,   "" },

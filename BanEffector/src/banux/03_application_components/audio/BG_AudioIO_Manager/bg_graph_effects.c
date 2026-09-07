@@ -535,10 +535,17 @@ void Distortion_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 	int32_t fb    = node->params.distortion.feedback;
 	if (type  < 0) type  = 0; else if (type  > 2) type  = 2;
 	if (drive < 0) drive = 0; else if (drive > 100) drive = 100;
-	if (asym  < 0) asym  = 0; else if (asym  > 100) asym  = 100;
+	if (asym  < 0) asym  = 0; else if (asym  > 80) asym  = 80;   /* 限制非对称, 避免 SOFT 模式偶次谐波过强 */
 	if (level < 0) level = 0; else if (level > 100) level = 100;
 	if (tone  < 0) tone  = 0; else if (tone  > 100) tone  = 100;
 	if (fb    < 0) fb    = 0; else if (fb    > 100) fb    = 100;
+
+	/* Tone 一阶低通系数: 原 a=tone/100 的截止频率与采样率成正比(fc ∝ a·fs)。
+	 * 以 48k 为参考, 按 (REF_SR / fs) 线性缩放, 使任意采样率下音色一致。 */
+	int32_t sr   = gCtrlVars.sample_rate; if (sr < 1) sr = DEFAULT_SAMPLE_RATE;
+	int32_t coef = (tone * DEFAULT_SAMPLE_RATE) / sr;   /* 0..100 (tone=full 且 sr=REF 时为 100) */
+	if (coef > 100) coef = 100;
+	if (coef < 0)   coef = 0;
 
 	/* 输出电平 (Q10 缩放): 0..32767 */
 	int32_t lvl = (level * 32767) / 100;
@@ -571,7 +578,10 @@ void Distortion_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 
 	for (i = 0; i < n; i++) {
 		/* ---- 左声道 ---- */
-		int32_t x   = in16[2 * i] + (fb * s_dist.fb_l) / 100;   /* +反馈(自我削波) */
+		/* 反馈防溢出: 略降反馈增益(<1.0)避免 fb/drive 双高时累积饱和, 并对合成信号限幅 */
+		int32_t x = in16[2 * i] + (fb * s_dist.fb_l * 98) / 10000;   /* +反馈(自我削波) */
+		if (x >  32767) x =  32767;
+		if (x < -32767) x = -32767;
 		int32_t x10 = x >> 5;                         /* Q10 归一化 ±1024 */
 		int32_t y10;
 		if (type == DIST_TYPE_SOFT) {
@@ -590,12 +600,14 @@ void Distortion_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 		int32_t y   = (y10 * lvl) >> 10;             /* 输出电平 */
 		if (y >  32767) y =  32767;
 		if (y < -32768) y = -32768;
-		s_dist.y_prev_l += ((y - s_dist.y_prev_l) * tone) / 100;   /* tone 一阶低通 */
+		s_dist.y_prev_l += ((y - s_dist.y_prev_l) * coef) / 100;   /* tone 一阶低通(采样率无关) */
 		out16[2 * i] = (int16_t)s_dist.y_prev_l;
 		s_dist.fb_l = y;   /* 更新反馈状态 */
 
 		/* ---- 右声道 ---- */
-		x   = in16[2 * i + 1] + (fb * s_dist.fb_r) / 100;   /* +反馈 */
+		x   = in16[2 * i + 1] + (fb * s_dist.fb_r * 98) / 10000;   /* +反馈 */
+		if (x >  32767) x =  32767;
+		if (x < -32767) x = -32767;
 		x10 = x >> 5;
 		if (type == DIST_TYPE_SOFT) {
 			int32_t x3 = (x10 * x10) >> 10;
@@ -613,7 +625,7 @@ void Distortion_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 		y   = (y10 * lvl) >> 10;
 		if (y >  32767) y =  32767;
 		if (y < -32768) y = -32768;
-		s_dist.y_prev_r += ((y - s_dist.y_prev_r) * tone) / 100;
+		s_dist.y_prev_r += ((y - s_dist.y_prev_r) * coef) / 100;
 		out16[2 * i + 1] = (int16_t)s_dist.y_prev_r;
 		s_dist.fb_r = y;   /* 更新反馈状态 */
 	}
