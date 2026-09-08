@@ -1,166 +1,147 @@
 package com.example.myapplication;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
+
 import androidx.core.content.ContextCompat;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.LinkedList;
+
+/**
+ * 音效控制界面。
+ *
+ * 每个效果一张卡片：标题 + bypass 开关 + 该效果的参数滑条。
+ * 效果开关用固件的 bypass 语义（graph bypass <name> on|off）：
+ *   - 开关"启用"  → graph bypass <name> off（关闭旁路，效果生效）
+ *   - 开关"关闭"  → graph bypass <name> on （旁路直通，原声）
+ * 注意不能用 graph node on|off：节点 disabled 时执行器会跳过该节点，
+ * 输出缓冲不更新 → ADC 链路断音。
+ *
+ * 参数用 fx <id> <param> <value>；进入界面时用 graph query all 一次性
+ * 取回全部节点的 bypass 与参数值回填 UI。
+ */
 public class FxControlActivity extends BaseActivity {
-    // DRC 参数配置
-    private static final String[] DRC_PARAMS = {"Threshold", "Ratio", "Attack", "Release"};
-    private static final int[] DRC_RANGES = {-60, 0, 1, 20, 1, 500, 10, 2000};
-    private static final int[] DRC_DEFAULTS = {-30, 10, 100, 200};
-    
-    // 混响参数配置
-    private static final String[] REVERB_PARAMS = {"Room", "Damp", "Wet"};
-    private static final int[] REVERB_RANGES = {0, 100, 0, 100, 0, 100};
-    private static final int[] REVERB_DEFAULTS = {50, 50, 30};
+    private static final String TAG = "FxControl";
+
+    /** 单个效果的定义 */
+    private static class FxDef {
+        final String   title;      // 卡片标题
+        final String   nodeName;   // 固件节点名（graph bypass / query 用）
+        final int      nodeId;     // 固件节点 ID（fx 命令用）
+        final String[] labels;     // 参数显示名
+        final String[] keys;       // 固件参数名
+        final int[]    ranges;     // {min,max} 成对
+        final int[]    defaults;
+
+        FxDef(String title, String nodeName, int nodeId,
+              String[] labels, String[] keys, int[] ranges, int[] defaults) {
+            this.title = title; this.nodeName = nodeName; this.nodeId = nodeId;
+            this.labels = labels; this.keys = keys;
+            this.ranges = ranges; this.defaults = defaults;
+        }
+    }
+
+    /** 可调效果清单（节点名/ID 需与固件 effect_graph_config.h 的默认图一致） */
+    private static final FxDef[] FX_DEFS = {
+        new FxDef("🎚️ DRC 动态压缩", "drc", 10,
+                new String[]{"Threshold", "Ratio", "Attack", "Release"},
+                new String[]{"threshold", "ratio", "attack", "release"},
+                new int[]{-60, 0, 1, 20, 1, 500, 10, 2000},
+                new int[]{-30, 10, 100, 200}),
+
+        new FxDef("🎵 混响 Reverb", "reverb", 12,
+                new String[]{"Room", "Damp", "Wet"},
+                new String[]{"room", "damp", "wet"},
+                new int[]{0, 100, 0, 100, 0, 100},
+                new int[]{50, 50, 30}),
+
+        new FxDef("⏱️ 延迟 Delay（吉他）", "delay_guitar_l", 22,
+                new String[]{"Time", "F.Back", "Wet"},
+                new String[]{"time", "feedback", "wet"},
+                new int[]{10, 120, 0, 100, 0, 100},
+                new int[]{120, 30, 30}),
+
+        new FxDef("🎶 合唱 Chorus（吉他）", "chorus_guitar_l", 23,
+                new String[]{"Depth", "Rate", "Wet", "F.Back"},
+                new String[]{"depth", "rate", "wet", "feedback"},
+                new int[]{0, 100, 0, 100, 0, 100, 0, 50},
+                new int[]{30, 10, 60, 30}),
+
+        new FxDef("🎤 合唱 Chorus（麦克风）", "chorus_mic_l", 24,
+                new String[]{"Depth", "Rate", "Wet", "F.Back"},
+                new String[]{"depth", "rate", "wet", "feedback"},
+                new int[]{0, 100, 0, 100, 0, 100, 0, 50},
+                new int[]{30, 10, 60, 30}),
+
+        new FxDef("🔊 扩展器 Expander", "expander", 9,
+                new String[]{"Threshold", "Ratio"},
+                new String[]{"threshold", "ratio"},
+                new int[]{-80, 0, 1, 10},
+                new int[]{-40, 2}),
+    };
 
     private BluetoothHelper bluetoothHelper;
-    
-    // 效果器滑条和数值显示的引用
-    private java.util.Map<Integer, java.util.Map<String, VerticalSeekBar>> effectSeekBars = new java.util.HashMap<>();
-    private java.util.Map<Integer, java.util.Map<String, TextView>> effectValueTexts = new java.util.HashMap<>();
-    
-    // 命令队列和 Handler
+
+    /** UI 引用：节点名 → 组件 */
+    private final Map<String, Switch>                          fxSwitches      = new LinkedHashMap<>();
+    private final Map<String, Map<String, VerticalSeekBar>>    effectSeekBars  = new LinkedHashMap<>();
+    private final Map<String, Map<String, TextView>>           effectValueTexts= new LinkedHashMap<>();
+
+    /** 程序回填状态时置位，避免触发 Switch 回调把状态又发回设备 */
+    private boolean applyingState = false;
+
+    /* 命令队列：BLE 写入必须串行 */
     private android.os.Handler commandHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    private java.util.Queue<Runnable> commandQueue = new java.util.LinkedList<>();
+    private final Queue<Runnable> commandQueue = new LinkedList<>();
     private boolean isSendingCommand = false;
+
+    /** 等待 graph query all 的 JSON（BLE 会分片，需要拼接） */
+    private boolean awaitingGraphJson = false;
+    private final StringBuilder rxBuffer = new StringBuilder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        bluetoothHelper = com.example.myapplication.BluetoothManager.getInstance().getBluetoothHelper();
-        
-        // 检查蓝牙连接状态
+
+        bluetoothHelper = BluetoothManager.getInstance().getBluetoothHelper();
         if (bluetoothHelper == null || !bluetoothHelper.isConnected()) {
             Toast.makeText(this, "请先连接蓝牙设备", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
-        
+
         setContentView(R.layout.activity_fx_control);
         setupBaseToolbar(true);
 
-        // 初始化保存按钮
         ImageButton btnSave = findViewById(R.id.btn_save_fx);
         btnSave.setOnClickListener(v -> saveFxSettings());
 
-        // 创建 DRC 滑条
-        LinearLayout drcContainer = findViewById(R.id.drc_sliders_container);
-        createVerticalSliders(drcContainer, 10, DRC_PARAMS, DRC_RANGES, DRC_DEFAULTS, R.color.text_success);
+        Switch swAll = findViewById(R.id.sw_all_fx);
+        swAll.setOnCheckedChangeListener((btn, on) -> {
+            if (applyingState) return;
+            setAllEffectsEnabled(on);
+        });
 
-        // 创建混响滑条
-        LinearLayout reverbContainer = findViewById(R.id.reverb_sliders_container);
-        createVerticalSliders(reverbContainer, 12, REVERB_PARAMS, REVERB_RANGES, REVERB_DEFAULTS, R.color.text_accent);
-        
+        buildCards();
         setupBleNotificationListener();
-        
-        BleParamCache paramCache = BleParamCache.getInstance();
-        if (paramCache.isSyncComplete()) {
-            applyCachedParams();
-        } else {
-            queryEffectParams();
-        }
+        queryAllFx();
     }
-    
+
     @Override
     protected String getToolbarTitle() {
         return "音效控制";
-    }
-
-    /**
-     * 查询效果器参数
-     */
-    private void queryEffectParams() {
-        sendQueryCommand("param -q effect 10\r\nparam -q effect 12");
-    }
-
-    /**
-     * Apply cached parameters from BleParamCache (no BLE query needed)
-     */
-    private void applyCachedParams() {
-        BleParamCache cache = BleParamCache.getInstance();
-
-        int[] drcParams = cache.getDrcParams();
-        if (drcParams != null) {
-            java.util.Map<String, VerticalSeekBar> drcSeekBars = effectSeekBars.get(10);
-            java.util.Map<String, TextView> drcTexts = effectValueTexts.get(10);
-            if (drcSeekBars != null && drcTexts != null) {
-                int[] drcValues = {
-                    drcParams[0] / 100,  // threshold: raw/100 -> dB
-                    drcParams[1] / 10,   // ratio: raw/10
-                    drcParams[2],        // attack: direct ms
-                    drcParams[3]         // release: direct ms
-                };
-                String[] drcKeys = {"threshold", "ratio", "attack", "release"};
-                for (int i = 0; i < drcKeys.length; i++) {
-                    VerticalSeekBar bar = drcSeekBars.get(drcKeys[i]);
-                    TextView txt = drcTexts.get(drcKeys[i]);
-                    if (bar != null && txt != null) {
-                        int progress = Math.max(DRC_RANGES[i * 2], Math.min(DRC_RANGES[i * 2 + 1], drcValues[i]));
-                        bar.setProgress(progress - DRC_RANGES[i * 2]);
-                        txt.setText(String.valueOf(progress));
-                    }
-                }
-            }
-        }
-
-        int[] reverbParams = cache.getReverbParams();
-        if (reverbParams != null) {
-            java.util.Map<String, VerticalSeekBar> reverbSeekBars = effectSeekBars.get(12);
-            java.util.Map<String, TextView> reverbTexts = effectValueTexts.get(12);
-            if (reverbSeekBars != null && reverbTexts != null) {
-                String[] reverbKeys = {"room", "damp", "wet"};
-                for (int i = 0; i < reverbKeys.length; i++) {
-                    VerticalSeekBar bar = reverbSeekBars.get(reverbKeys[i]);
-                    TextView txt = reverbTexts.get(reverbKeys[i]);
-                    if (bar != null && txt != null) {
-                        bar.setProgress(reverbParams[i]);
-                        txt.setText(String.valueOf(reverbParams[i]));
-                    }
-                }
-            }
-        }
-
-        android.util.Log.d("FxControl", "Applied cached params (no BLE query needed)");
-    }
-    
-    /**
-     * 发送查询命令
-     */
-    private void sendQueryCommand(String cmd) {
-        queueCommand(() -> {
-            if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
-                String fullCmd = cmd + "\r\n";
-                bluetoothHelper.writeCharacteristic("0000ab01-0000-1000-8000-00805f9b34fb", 
-                    fullCmd.getBytes(), success -> {
-                        if (success) {
-                            Log.d("FxControl", "Query sent: " + cmd);
-                        } else {
-                            runOnUiThread(() -> Toast.makeText(this, "查询失败", Toast.LENGTH_SHORT).show());
-                        }
-                        // 触发下一个命令
-                        commandHandler.postDelayed(() -> {
-                            isSendingCommand = false;
-                            processNextCommand();
-                        }, 200);
-                    });
-            } else {
-                isSendingCommand = false;
-                processNextCommand();
-            }
-        });
     }
 
     @Override
@@ -168,521 +149,392 @@ public class FxControlActivity extends BaseActivity {
         super.onDestroy();
         commandHandler.removeCallbacksAndMessages(null);
         commandQueue.clear();
-    }
-
-    /**
-    /**
-     * 设置BLE通知监听器
-     */
-    private void setupBleNotificationListener() {
         if (bluetoothHelper != null) {
-            bluetoothHelper.setBleNotifyListener(data -> {
-                android.util.Log.d("FxControl", "BLE notify received: " + data);
-                // 处理效果器查询响应 - 现在使用二进制格式而不是JSON
-                try {
-                    // 尝试解析二进制数据，可能包含多个数据包
-                    if (parseBinaryFxData(data)) {
-                        android.util.Log.d("FxControl", "Successfully parsed binary effect data");
-                    } else {
-                        android.util.Log.w("FxControl", "Failed to parse binary effect data, trying JSON fallback");
-                        // 回退到JSON解析（用于兼容性）
-                        parseJsonFxData(data);
-                    }
-                } catch (Exception e) {
-                    android.util.Log.e("FxControl", "Failed to parse effect data: " + data, e);
-                }
-            });
+            bluetoothHelper.setBleNotifyListener(null);
         }
     }
 
-    /**
-     * 创建竖向滑条组
-     */
-    private void createVerticalSliders(LinearLayout container, int nodeId, String[] params, 
-                                      int[] ranges, int[] defaults, int accentColorResId) {
-        java.util.Map<String, VerticalSeekBar> seekBars = new java.util.HashMap<>();
-        java.util.Map<String, TextView> valueTexts = new java.util.HashMap<>();
-        
-        for (int i = 0; i < params.length; i++) {
-            String param = params[i];
-            int min = ranges[i * 2];
-            int max = ranges[i * 2 + 1];
-            int defaultValue = defaults[i];
+    /* ==================== UI 构建 ==================== */
 
-            // 创建单个滑条容器
-            LinearLayout sliderLayout = new LinearLayout(this);
-            sliderLayout.setOrientation(LinearLayout.VERTICAL);
-            sliderLayout.setGravity(Gravity.CENTER);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-            layoutParams.setMargins(8, 0, 8, 0);
-            sliderLayout.setLayoutParams(layoutParams);
+    private void buildCards() {
+        LinearLayout container = findViewById(R.id.fx_cards_container);
+        container.removeAllViews();
+        for (FxDef def : FX_DEFS) {
+            container.addView(createCard(def));
+        }
+    }
 
-            // 参数值显示
+    private View createCard(FxDef def) {
+        int pad = getResources().getDimensionPixelSize(R.dimen.toolbar_padding);
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundColor(ContextCompat.getColor(this, R.color.bg_card));
+        card.setPadding(pad, pad, pad, pad);
+        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        cp.bottomMargin = getResources().getDimensionPixelSize(R.dimen.spacing_medium);
+        card.setLayoutParams(cp);
+
+        /* 标题 + 启用开关 */
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView title = new TextView(this);
+        title.setText(def.title);
+        title.setTextSize(16);
+        title.setTextColor(ContextCompat.getColor(this, R.color.primary_accent_glow));
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        header.addView(title);
+
+        Switch sw = new Switch(this);
+        sw.setText("启用");
+        sw.setTextSize(12);
+        sw.setChecked(false);   // 固件默认 bypass，等 query 回来再回填
+        sw.setOnCheckedChangeListener((btn, isChecked) -> {
+            if (applyingState) return;
+            sendBypass(def.nodeName, !isChecked);   // 启用 = 关闭旁路
+        });
+        header.addView(sw);
+        card.addView(header);
+        fxSwitches.put(def.nodeName, sw);
+
+        /* 参数滑条组 */
+        LinearLayout sliders = new LinearLayout(this);
+        sliders.setOrientation(LinearLayout.HORIZONTAL);
+        sliders.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(220));
+        sp.topMargin = pad;
+        sliders.setLayoutParams(sp);
+        createSliders(sliders, def);
+        card.addView(sliders);
+
+        return card;
+    }
+
+    private void createSliders(LinearLayout container, FxDef def) {
+        Map<String, VerticalSeekBar> bars  = new HashMap<>();
+        Map<String, TextView>        texts = new HashMap<>();
+
+        for (int i = 0; i < def.labels.length; i++) {
+            final String key = def.keys[i];
+            final int min = def.ranges[i * 2];
+            final int max = def.ranges[i * 2 + 1];
+            final int defVal = def.defaults[i];
+
+            LinearLayout col = new LinearLayout(this);
+            col.setOrientation(LinearLayout.VERTICAL);
+            col.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+            lp.setMargins(8, 0, 8, 0);
+            col.setLayoutParams(lp);
+
             TextView valueText = new TextView(this);
-            valueText.setText(String.valueOf(defaultValue));
-            valueText.setTextSize(18);
-            valueText.setTextColor(ContextCompat.getColor(this, accentColorResId));
+            valueText.setText(String.valueOf(defVal));
+            valueText.setTextSize(16);
+            valueText.setTextColor(ContextCompat.getColor(this, R.color.text_accent));
             valueText.setGravity(Gravity.CENTER);
             valueText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             valueText.setPadding(0, 0, 0, 12);
-            sliderLayout.addView(valueText);
+            col.addView(valueText);
 
-            // 竖向 SeekBar
-            VerticalSeekBar seekBar = new VerticalSeekBar(this);
-            seekBar.setMax(max - min);
-            seekBar.setProgress(defaultValue - min);
-            LinearLayout.LayoutParams seekBarParams = new LinearLayout.LayoutParams(
-                80, 0, 1f);
-            seekBar.setLayoutParams(seekBarParams);
-            
-            // 参数名称标签
-            TextView labelText = new TextView(this);
-            labelText.setText(param);
-            labelText.setTextSize(14);
-            labelText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
-            labelText.setGravity(Gravity.CENTER);
-            labelText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            labelText.setPadding(0, 12, 0, 0);
-
-            // 设置监听器
-            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    int value = min + progress;
-                    valueText.setText(String.valueOf(value));
+            VerticalSeekBar bar = new VerticalSeekBar(this);
+            bar.setMax(max - min);
+            bar.setProgress(defVal - min);
+            bar.setLayoutParams(new LinearLayout.LayoutParams(80, 0, 1f));
+            bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
+                    valueText.setText(String.valueOf(min + progress));
                 }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                    int value = min + seekBar.getProgress();
-                    sendFxCommand(nodeId, param.toLowerCase(), value);
+                @Override public void onStartTrackingTouch(SeekBar sb) { }
+                @Override public void onStopTrackingTouch(SeekBar sb) {
+                    sendFxCommand(def.nodeId, key, min + sb.getProgress());
                 }
             });
+            col.addView(bar);
 
-            sliderLayout.addView(seekBar);
-            sliderLayout.addView(labelText);
-            container.addView(sliderLayout);
-            
-            // 存储引用
-            seekBars.put(param.toLowerCase(), seekBar);
-            valueTexts.put(param.toLowerCase(), valueText);
+            TextView label = new TextView(this);
+            label.setText(def.labels[i]);
+            label.setTextSize(13);
+            label.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            label.setGravity(Gravity.CENTER);
+            label.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            label.setPadding(0, 12, 0, 0);
+            col.addView(label);
+
+            container.addView(col);
+            bars.put(key, bar);
+            texts.put(key, valueText);
         }
-        
-        effectSeekBars.put(nodeId, seekBars);
-        effectValueTexts.put(nodeId, valueTexts);
+
+        effectSeekBars.put(def.nodeName, bars);
+        effectValueTexts.put(def.nodeName, texts);
     }
 
-    private void sendFxCommand(int nodeId, String param, int value) {
-        queueCommand(() -> {
-            if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
-                String cmd = "fx " + nodeId + " " + param + " " + value + "\r\n";
-                bluetoothHelper.writeCharacteristic("0000ab01-0000-1000-8000-00805f9b34fb", 
-                    cmd.getBytes(), success -> {
-                        commandHandler.postDelayed(() -> {
-                            isSendingCommand = false;
-                            processNextCommand();
-                        }, 200);
-                    });
-            } else {
-                isSendingCommand = false;
-                processNextCommand();
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    /* ==================== 查询与回填 ==================== */
+
+    private void queryAllFx() {
+        rxBuffer.setLength(0);
+        awaitingGraphJson = true;
+        queueCommand(() -> writeRaw("graph query all"));
+        // 超时保护：分片未收全也尝试解析
+        commandHandler.postDelayed(() -> {
+            if (awaitingGraphJson) {
+                awaitingGraphJson = false;
+                tryParseGraphJson();
+            }
+        }, 2500);
+    }
+
+    private void setupBleNotificationListener() {
+        if (bluetoothHelper == null) return;
+        bluetoothHelper.setBleNotifyListener(data -> {
+            if (data == null) return;
+
+            if (awaitingGraphJson) {
+                rxBuffer.append(data);
+                String s = rxBuffer.toString();
+                if (s.contains("\"nodes\"") && s.indexOf("]}") > 0) {
+                    awaitingGraphJson = false;
+                    tryParseGraphJson();
+                }
+                return;
+            }
+            // 兼容旧的二进制同步包（DRC/Reverb）
+            if (looksLikeHex(data)) {
+                parseBinaryFxData(data);
             }
         });
     }
-    
-    /**
-     * 将命令加入队列
-     */
+
+    private void tryParseGraphJson() {
+        String s = rxBuffer.toString();
+        rxBuffer.setLength(0);
+
+        int start = s.indexOf('{');
+        int end = s.lastIndexOf("]}");
+        if (start < 0 || end < 0 || end <= start) return;
+
+        String json = s.substring(start, end + 2);
+        try {
+            org.json.JSONObject root = new org.json.JSONObject(json);
+            org.json.JSONArray nodes = root.optJSONArray("nodes");
+            if (nodes == null) return;
+
+            final Map<String, Boolean> enabledMap = new HashMap<>();
+            final Map<String, org.json.JSONObject> paramMap = new HashMap<>();
+            for (int i = 0; i < nodes.length(); i++) {
+                org.json.JSONObject n = nodes.getJSONObject(i);
+                String name = n.optString("name", "");
+                if (name.isEmpty()) continue;
+                // 缺省按旁路处理（固件默认 bypass=true 保持原音色）
+                boolean on = (n.optInt("bypass", 1) == 0);
+                enabledMap.put(name, on);
+                FxState.put(name, on);
+                org.json.JSONObject p = n.optJSONObject("params");
+                if (p != null) paramMap.put(name, p);
+            }
+            FxState.setLoaded(true);
+            runOnUiThread(() -> applyQueriedState(enabledMap, paramMap));
+        } catch (Exception e) {
+            Log.e(TAG, "graph query parse failed: " + json, e);
+        }
+    }
+
+    private void applyQueriedState(Map<String, Boolean> enabledMap,
+                                   Map<String, org.json.JSONObject> paramMap) {
+        applyingState = true;
+        try {
+            for (FxDef def : FX_DEFS) {
+                Boolean en = enabledMap.get(def.nodeName);
+                Switch sw = fxSwitches.get(def.nodeName);
+                if (en != null && sw != null) sw.setChecked(en);
+
+                org.json.JSONObject p = paramMap.get(def.nodeName);
+                if (p == null) continue;
+                Map<String, VerticalSeekBar> bars  = effectSeekBars.get(def.nodeName);
+                Map<String, TextView>        texts = effectValueTexts.get(def.nodeName);
+                if (bars == null || texts == null) continue;
+
+                for (int i = 0; i < def.keys.length; i++) {
+                    if (!p.has(def.keys[i])) continue;
+                    int v = p.optInt(def.keys[i]);
+                    int min = def.ranges[i * 2];
+                    int max = def.ranges[i * 2 + 1];
+                    v = Math.max(min, Math.min(max, v));
+                    VerticalSeekBar bar = bars.get(def.keys[i]);
+                    TextView tv = texts.get(def.keys[i]);
+                    if (bar != null) bar.setProgress(v - min);
+                    if (tv != null) tv.setText(String.valueOf(v));
+                }
+            }
+            updateAllSwitch();
+        } finally {
+            applyingState = false;
+        }
+    }
+
+    /** 总开关：所有效果都启用时才点亮 */
+    private void updateAllSwitch() {
+        Switch swAll = findViewById(R.id.sw_all_fx);
+        if (swAll == null) return;
+        boolean allOn = true, anyFound = false;
+        for (FxDef def : FX_DEFS) {
+            Switch sw = fxSwitches.get(def.nodeName);
+            if (sw != null) {
+                anyFound = true;
+                if (!sw.isChecked()) allOn = false;
+            }
+        }
+        swAll.setChecked(anyFound && allOn);
+    }
+
+    /* ==================== 命令发送 ==================== */
+
+    /** 启用/关闭单个效果（on=启用→关闭旁路） */
+    private void sendBypass(String nodeName, boolean bypass) {
+        FxState.put(nodeName, !bypass);
+        queueCommand(() -> writeRaw("graph bypass " + nodeName + " " + (bypass ? "on" : "off")));
+    }
+
+    private void setAllEffectsEnabled(boolean on) {
+        for (FxDef def : FX_DEFS) {
+            sendBypass(def.nodeName, !on);
+        }
+        applyingState = true;
+        try {
+            for (FxDef def : FX_DEFS) {
+                Switch sw = fxSwitches.get(def.nodeName);
+                if (sw != null) sw.setChecked(on);
+            }
+        } finally {
+            applyingState = false;
+        }
+    }
+
+    private void sendFxCommand(int nodeId, String param, int value) {
+        queueCommand(() -> writeRaw("fx " + nodeId + " " + param + " " + value));
+    }
+
+    private void saveFxSettings() {
+        queueCommand(() -> writeRaw("chain -S"));
+        runOnUiThread(() -> Toast.makeText(this, "效果参数已保存", Toast.LENGTH_SHORT).show());
+    }
+
+    private void writeRaw(String cmd) {
+        if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
+            bluetoothHelper.writeCharacteristic("0000ab01-0000-1000-8000-00805f9b34fb",
+                    (cmd + "\r\n").getBytes(), success -> {
+                        if (!success) {
+                            Log.w(TAG, "send failed: " + cmd);
+                        }
+                        commandHandler.postDelayed(() -> {
+                            isSendingCommand = false;
+                            processNextCommand();
+                        }, 150);
+                    });
+        } else {
+            isSendingCommand = false;
+            processNextCommand();
+        }
+    }
+
     private void queueCommand(Runnable command) {
         commandQueue.offer(command);
         processNextCommand();
     }
-    
-    /**
-     * 处理下一个命令
-     */
-    private void processNextCommand() {
-        if (isSendingCommand || commandQueue.isEmpty()) {
-            return;
-        }
 
+    private void processNextCommand() {
+        if (isSendingCommand || commandQueue.isEmpty()) return;
         isSendingCommand = true;
-        Runnable command = commandQueue.poll();
-        if (command != null) {
-            command.run();
+        Runnable cmd = commandQueue.poll();
+        if (cmd != null) {
+            cmd.run();
         } else {
             isSendingCommand = false;
         }
     }
 
-    /**
-     * 更新效果器UI
-     */
-    private void updateFxUI(org.json.JSONObject effectObj) {
-        android.util.Log.d("FxControl", "updateFxUI called with: " + effectObj.toString());
-        runOnUiThread(() -> {
-            try {
-                android.util.Log.d("FxControl", "Running on UI thread");
-                
-                // 检查是否有params字段
-                if (effectObj.has("params")) {
-                    org.json.JSONObject paramsObj = effectObj.getJSONObject("params");
-                    android.util.Log.d("FxControl", "Parsed params object: " + paramsObj.toString());
-                    
-                    // 处理DRC参数 (nodeId = 10)
-                    if (paramsObj.has("drc")) {
-                        org.json.JSONObject drcObj = paramsObj.getJSONObject("drc");
-                        updateEffectParams(10, drcObj, new String[]{"threshold", "ratio", "attack", "release"}, new String[]{"threshold", "ratio", "attack", "release"}, DRC_RANGES);
-                    }
-                    
-                    // 处理混响参数 (nodeId = 12)
-                    if (paramsObj.has("reverb")) {
-                        org.json.JSONObject reverbObj = paramsObj.getJSONObject("reverb");
-                        updateEffectParams(12, reverbObj, new String[]{"room_size", "damping", "wet_dry"}, new String[]{"room", "damp", "wet"}, REVERB_RANGES);
-                    }
-                    
-                    Toast.makeText(this, "效果参数已同步", Toast.LENGTH_SHORT).show();
-                    android.util.Log.d("FxControl", "UI update completed");
-                } else {
-                    android.util.Log.w("FxControl", "No params field in effect object");
-                }
-            } catch (org.json.JSONException e) {
-                android.util.Log.e("FxControl", "Failed to update effect UI", e);
-                Toast.makeText(this, "解析效果数据失败", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-    
-    /**
-     * 更新特定效果的参数 (带映射)
-     */
-    private void updateEffectParams(int nodeId, org.json.JSONObject paramsObj, String[] jsonKeys, String[] uiKeys, int[] ranges) {
-        java.util.Map<String, VerticalSeekBar> seekBars = effectSeekBars.get(nodeId);
-        java.util.Map<String, TextView> valueTexts = effectValueTexts.get(nodeId);
-        
-        if (seekBars == null || valueTexts == null) {
-            android.util.Log.w("FxControl", "No UI references found for nodeId: " + nodeId);
-            return;
-        }
-        
-        for (int i = 0; i < jsonKeys.length && i < uiKeys.length; i++) {
-            String jsonKey = jsonKeys[i];
-            String uiKey = uiKeys[i];
-            
-            try {
-                if (paramsObj.has(jsonKey)) {
-                    int value = paramsObj.getInt(jsonKey);
-                    android.util.Log.d("FxControl", "Updating " + jsonKey + " to " + value);
-                    
-                    // 找到对应的UI组件
-                    VerticalSeekBar seekBar = seekBars.get(uiKey);
-                    TextView valueText = valueTexts.get(uiKey);
-                    
-                    if (seekBar != null && valueText != null) {
-                        // 计算滑条位置 (value - min)
-                        int min = ranges[i * 2];
-                        
-                        seekBar.setProgress(value - min);
-                        valueText.setText(String.valueOf(value));
-                        android.util.Log.d("FxControl", "Updated " + uiKey + " UI to " + value);
-                    } else {
-                        android.util.Log.w("FxControl", "UI component not found for " + uiKey);
-                    }
-                } else {
-                    android.util.Log.w("FxControl", "Param " + jsonKey + " not found in JSON");
-                }
-            } catch (org.json.JSONException e) {
-                android.util.Log.e("FxControl", "Failed to parse param " + jsonKey, e);
-            }
-        }
-    }
+    /* ==================== 旧二进制同步包兼容 ==================== */
 
-    /**
-     * 保存效果参数
-     */
-    private void saveFxSettings() {
-        if (bluetoothHelper != null && bluetoothHelper.isConnected()) {
-            queueCommand(() -> {
-                bluetoothHelper.writeCharacteristic("0000ab01-0000-1000-8000-00805f9b34fb", 
-                    "chain -S\r\n".getBytes(), success -> {
-                    runOnUiThread(() -> {
-                        if (success) {
-                            Toast.makeText(this, "效果参数已保存", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(this, "保存失败", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    // 触发下一个命令
-                    commandHandler.postDelayed(() -> {
-                        isSendingCommand = false;
-                        processNextCommand();
-                    }, 200);
-                });
-            });
-        } else {
-            Toast.makeText(this, "设备未连接", Toast.LENGTH_SHORT).show();
-        }
+    private boolean looksLikeHex(String data) {
+        String t = data.replace("0x", "").replaceAll("\\s+", "");
+        return !t.isEmpty() && t.matches("[0-9A-Fa-f]+") && t.length() >= 8;
     }
-
-    /**
-     * 解析二进制格式的效果器数据
-     * DRC: [type(1)=0x10][length(1)=6][threshold(2)][ratio(2)][attack(2)][release(2)]
-     * Reverb: [type(1)=0x11][length(1)=3][room_size(1)][damping(1)][wet_dry(1)]
-     */
 
     private boolean parseBinaryFxData(String data) {
         try {
-            // 将十六进制字符串转换为字节数组
-            if (data.startsWith("0x") || data.contains(" ")) {
-                // 如果是空格分隔的十六进制字符串
-                String[] hexParts = data.replace("0x", "").split("\\s+");
-                byte[] bytes = new byte[hexParts.length];
-                for (int i = 0; i < hexParts.length; i++) {
-                    bytes[i] = (byte) Integer.parseInt(hexParts[i], 16);
-                }
-                return parseBinaryFxData(bytes);
-            } else if (data.matches("[0-9A-Fa-f]+")) {
-                // 如果是连续的十六进制字符串（没有空格）
-                int len = data.length();
-                if (len % 2 != 0) {
-                    android.util.Log.w("FxControl", "Invalid hex string length: " + len);
-                    return false;
-                }
-                byte[] bytes = new byte[len / 2];
-                for (int i = 0; i < len; i += 2) {
-                    bytes[i / 2] = (byte) Integer.parseInt(data.substring(i, i + 2), 16);
-                }
-                return parseBinaryFxData(bytes);
-            } else {
-                // 如果是原始字符串，假设是字节数据
-                byte[] bytes = data.getBytes();
-                return parseBinaryFxData(bytes);
+            String[] parts = data.replace("0x", "").split("\\s+");
+            byte[] bytes = new byte[parts.length];
+            for (int i = 0; i < parts.length; i++) {
+                bytes[i] = (byte) Integer.parseInt(parts[i], 16);
+            }
+            // AA 55 <type> <len> ...
+            if (bytes.length < 6) return false;
+            if (bytes[0] != (byte) 0xAA || bytes[1] != (byte) 0x55) return false;
+
+            byte type = bytes[2];
+            byte len = bytes[3];
+            if (bytes.length < 4 + (len & 0xFF)) return false;
+
+            if (type == 0x10 && (len & 0xFF) == 8) {          // DRC
+                int idx = 4;
+                final int threshold = (bytes[idx++] & 0xFF) | ((bytes[idx++] & 0xFF) << 8);
+                final int ratio     = (bytes[idx++] & 0xFF) | ((bytes[idx++] & 0xFF) << 8);
+                final int attack    = (bytes[idx++] & 0xFF) | ((bytes[idx++] & 0xFF) << 8);
+                final int release   = (bytes[idx++] & 0xFF) | ((bytes[idx++] & 0xFF) << 8);
+                runOnUiThread(() -> applyLegacyValues("drc",
+                        new String[]{"threshold", "ratio", "attack", "release"},
+                        new int[]{threshold / 100, ratio / 10, attack, release}));
+                return true;
+            } else if (type == 0x11 && (len & 0xFF) == 3) {     // Reverb
+                int idx = 4;
+                final int room  = bytes[idx++] & 0xFF;
+                final int damp  = bytes[idx++] & 0xFF;
+                final int wet   = bytes[idx++] & 0xFF;
+                runOnUiThread(() -> applyLegacyValues("reverb",
+                        new String[]{"room", "damp", "wet"},
+                        new int[]{room, damp, wet}));
+                return true;
             }
         } catch (Exception e) {
-            android.util.Log.e("FxControl", "Failed to convert data to bytes", e);
-            return false;
+            Log.w(TAG, "legacy binary parse failed", e);
         }
+        return false;
     }
 
-    /**
-     * 解析二进制字节数组格式的效果器数据
-     * 支持解析多个连续的数据包
-     */
-    private boolean parseBinaryFxData(byte[] data) {
-        if (data == null || data.length < 5) {
-            return false;
-        }
+    private void applyLegacyValues(String nodeName, String[] keys, int[] values) {
+        Map<String, VerticalSeekBar> bars  = effectSeekBars.get(nodeName);
+        Map<String, TextView>        texts = effectValueTexts.get(nodeName);
+        if (bars == null || texts == null) return;
 
-        int idx = 0;
-        boolean parsedAny = false;
-
-        // 循环解析所有数据包，直到数据处理完毕
-        while (idx < data.length) {
-            // 检查是否还有足够的数据用于一个完整的数据包
-            if (idx + 4 >= data.length) { // 需要至少header(2) + type(1) + length(1)
-                break;
-            }
-
-            // 检查header: 0xAA 0x55
-            if (data[idx] != (byte)0xAA || data[idx + 1] != (byte)0x55) {
-                android.util.Log.w("FxControl", "Invalid header at position " + idx + ": " +
-                    String.format("%02X %02X", data[idx], data[idx + 1]));
-                break; // 如果header不匹配，停止解析
-            }
-
-            byte type = data[idx + 2];
-            byte length = data[idx + 3];
-
-            // 检查是否有足够的数据
-            int packetLength = 4 + length; // header(2) + type(1) + length(1) + data(length)
-            if (idx + packetLength > data.length) {
-                android.util.Log.w("FxControl", "Incomplete packet at position " + idx +
-                    ", need " + packetLength + " bytes, have " + (data.length - idx));
-                break;
-            }
-
-            // 解析数据包
-            boolean parsed = false;
-            if (type == 0x10 && length == 8) { // DRC: threshold(2)+ratio(2)+attack(2)+release(2)=8 bytes
-                parsed = parseBinaryDrcData(data, idx + 4);
-                android.util.Log.d("FxControl", "Parsed DRC packet");
-            } else if (type == 0x11 && length == 3) { // Reverb: room(1)+damping(1)+wet-dry(1)=3 bytes
-                parsed = parseBinaryReverbData(data, idx + 4);
-                android.util.Log.d("FxControl", "Parsed Reverb packet");
-            } else {
-                android.util.Log.w("FxControl", "Unknown FX type: " + String.format("%02X", type) +
-                    " or invalid length: " + length + " at position " + idx);
-            }
-
-            if (parsed) {
-                parsedAny = true;
-            }
-
-            // 移动到下一个数据包
-            idx += packetLength;
-        }
-
-        return parsedAny;
-    }
-
-    private boolean parseBinaryDrcData(byte[] data, int startIdx) {
-        int idx = startIdx;
-        // threshold (2 bytes, little endian)
-        int threshold = (data[idx++] & 0xFF) | ((data[idx++] & 0xFF) << 8);
-        // ratio (2 bytes, little endian)
-        int ratio = (data[idx++] & 0xFF) | ((data[idx++] & 0xFF) << 8);
-        // attack (2 bytes, little endian)
-        int attack = (data[idx++] & 0xFF) | ((data[idx++] & 0xFF) << 8);
-        // release (2 bytes, little endian)
-        int release = (data[idx++] & 0xFF) | ((data[idx++] & 0xFF) << 8);
-
-        runOnUiThread(() -> {
-            try {
-                // 获取DRC节点的SeekBar Map
-                java.util.Map<String, VerticalSeekBar> drcSeekBars = effectSeekBars.get(10);
-                if (drcSeekBars != null) {
-                    android.util.Log.d("FxControl", "DRC SeekBars found, updating values");
-                    // 设置实际值
-                    VerticalSeekBar thresholdBar = drcSeekBars.get("threshold");
-                    if (thresholdBar != null) {
-                        int progress = Math.max(DRC_RANGES[0], Math.min(DRC_RANGES[1], threshold / 100)); // threshold范围-60到0
-                        thresholdBar.setProgress(progress - DRC_RANGES[0]);
-                        android.util.Log.d("FxControl", "DRC Threshold set to progress: " + (progress - DRC_RANGES[0]));
-                    } else {
-                        android.util.Log.w("FxControl", "DRC Threshold SeekBar not found");
-                    }
-                    
-                    VerticalSeekBar ratioBar = drcSeekBars.get("ratio");
-                    if (ratioBar != null) {
-                        int progress = Math.max(DRC_RANGES[2], Math.min(DRC_RANGES[3], ratio / 10)); // ratio范围1到20
-                        ratioBar.setProgress(progress - DRC_RANGES[2]);
-                        android.util.Log.d("FxControl", "DRC Ratio set to progress: " + (progress - DRC_RANGES[2]));
-                    } else {
-                        android.util.Log.w("FxControl", "DRC Ratio SeekBar not found");
-                    }
-                    
-                    VerticalSeekBar attackBar = drcSeekBars.get("attack");
-                    if (attackBar != null) {
-                        int progress = Math.max(DRC_RANGES[4], Math.min(DRC_RANGES[5], attack)); // attack范围1到500
-                        attackBar.setProgress(progress - DRC_RANGES[4]);
-                        android.util.Log.d("FxControl", "DRC Attack set to progress: " + (progress - DRC_RANGES[4]));
-                    } else {
-                        android.util.Log.w("FxControl", "DRC Attack SeekBar not found");
-                    }
-                    
-                    VerticalSeekBar releaseBar = drcSeekBars.get("release");
-                    if (releaseBar != null) {
-                        int progress = Math.max(DRC_RANGES[6], Math.min(DRC_RANGES[7], release)); // release范围10到2000
-                        releaseBar.setProgress(progress - DRC_RANGES[6]);
-                        android.util.Log.d("FxControl", "DRC Release set to progress: " + (progress - DRC_RANGES[6]));
-                    } else {
-                        android.util.Log.w("FxControl", "DRC Release SeekBar not found");
-                    }
-                }
-
-                Toast.makeText(this, "DRC参数已同步", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                android.util.Log.e("FxControl", "Error updating DRC UI with binary data", e);
-            }
-        });
-
-        return true;
-    }
-
-    private boolean parseBinaryReverbData(byte[] data, int startIdx) {
-        int idx = startIdx;
-        byte roomSize = data[idx++];
-        byte damping = data[idx++];
-        byte wetDry = data[idx++];
-
-        runOnUiThread(() -> {
-            try {
-                // 获取Reverb节点的SeekBar Map
-                java.util.Map<String, VerticalSeekBar> reverbSeekBars = effectSeekBars.get(12);
-                if (reverbSeekBars != null) {
-                    android.util.Log.d("FxControl", "Reverb SeekBars found, updating values");
-                    // 设置实际值
-                    VerticalSeekBar roomBar = reverbSeekBars.get("room");
-                    if (roomBar != null) {
-                        roomBar.setProgress(roomSize & 0xFF);
-                        android.util.Log.d("FxControl", "Reverb Room set to progress: " + (roomSize & 0xFF));
-                    } else {
-                        android.util.Log.w("FxControl", "Reverb Room SeekBar not found");
-                    }
-                    
-                    VerticalSeekBar dampBar = reverbSeekBars.get("damp");
-                    if (dampBar != null) {
-                        dampBar.setProgress(damping & 0xFF);
-                        android.util.Log.d("FxControl", "Reverb Damp set to progress: " + (damping & 0xFF));
-                    } else {
-                        android.util.Log.w("FxControl", "Reverb Damp SeekBar not found");
-                    }
-                    
-                    VerticalSeekBar wetBar = reverbSeekBars.get("wet");
-                    if (wetBar != null) {
-                        wetBar.setProgress(wetDry & 0xFF);
-                        android.util.Log.d("FxControl", "Reverb Wet set to progress: " + (wetDry & 0xFF));
-                    } else {
-                        android.util.Log.w("FxControl", "Reverb Wet SeekBar not found");
-                    }
-                }
-
-                Toast.makeText(this, "混响参数已同步", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                android.util.Log.e("FxControl", "Error updating Reverb UI with binary data", e);
-            }
-        });
-
-        return true;
-    }
-
-    /**
-     * 解析二进制EQ数据（如果收到的话）
-     */
-    private boolean parseBinaryEqData(byte[] data, int startIdx, int length) {
-        // FxControlActivity主要处理DRC和Reverb，EQ数据由EqControlActivity处理
-        // 这里只是为了完整性，如果收到EQ数据则简单记录
-        android.util.Log.d("FxControl", "Received EQ data packet (length=" + length + "), forwarding not implemented");
-        return true; // 返回true以避免错误日志
-    }
-
-    /**
-     * 解析JSON格式的效果器数据（回退方法，用于兼容性）
-     */
-    private void parseJsonFxData(String data) {
+        applyingState = true;
         try {
-            org.json.JSONObject json = new org.json.JSONObject(data);
-
-            // 检查是否是完整的effect格式
-            if (json.has("effect")) {
-                org.json.JSONObject effectObj = json.getJSONObject("effect");
-                android.util.Log.d("FxControl", "Parsed effect object: " + effectObj.toString());
-                updateFxUI(effectObj);
+            for (FxDef def : FX_DEFS) {
+                if (!def.nodeName.equals(nodeName)) continue;
+                for (int i = 0; i < keys.length && i < values.length; i++) {
+                    int min = def.ranges[i * 2];
+                    int max = def.ranges[i * 2 + 1];
+                    int v = Math.max(min, Math.min(max, values[i]));
+                    VerticalSeekBar bar = bars.get(keys[i]);
+                    TextView tv = texts.get(keys[i]);
+                    if (bar != null) bar.setProgress(v - min);
+                    if (tv != null) tv.setText(String.valueOf(v));
+                }
             }
-            // 检查是否是直接的drc或reverb格式（下位机简化格式）
-            else if (json.has("drc")) {
-                android.util.Log.d("FxControl", "Received DRC data in simplified format");
-                updateEffectParams(10, json.getJSONObject("drc"),
-                    new String[]{"threshold", "ratio", "attack", "release"},
-                    new String[]{"threshold", "ratio", "attack", "release"}, DRC_RANGES);
-                Toast.makeText(this, "DRC参数已同步", Toast.LENGTH_SHORT).show();
-            }
-            else if (json.has("reverb")) {
-                android.util.Log.d("FxControl", "Received Reverb data in simplified format");
-                updateEffectParams(12, json.getJSONObject("reverb"),
-                    new String[]{"room_size", "damping", "wet_dry"},
-                    new String[]{"room", "damp", "wet"}, REVERB_RANGES);
-                Toast.makeText(this, "混响参数已同步", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                android.util.Log.d("FxControl", "No recognized effect field in JSON");
-            }
-        } catch (org.json.JSONException e) {
-            android.util.Log.e("FxControl", "Failed to parse JSON effect data: " + data, e);
+        } finally {
+            applyingState = false;
         }
     }
 }

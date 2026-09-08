@@ -51,11 +51,11 @@ src/banux/03_application_components/audio/app_audio \
 src/banux/03_application_components/audio/app_audio/effect_parameter \
 src/banux/03_application_components/audio/app_audio/music_parameter \
 src/banux/03_application_components/audio/effect_graph \
+src/banux/03_application_components/ble_app \
+src/banux/03_application_components/firmware_upgrade \
+src/banux/03_application_components/sys_led \
+src/banux/03_application_components/sys_param \
+src/banux/03_application_components/sys_state \
 src/banux/04_application \
-src/banux/05_component/ble_app \
-src/banux/05_component/firmware_upgrade \
-src/banux/05_component/sys_led \
-src/banux/05_component/sys_param \
-src/banux/05_component/sys_state \
 startup \
 

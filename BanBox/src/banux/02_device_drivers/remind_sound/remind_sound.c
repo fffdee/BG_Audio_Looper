@@ -35,8 +35,16 @@ extern uint8_t DecoderInitialized;
 /* ---- 音频数据头文件（mp3_to_c_array.py 生成）---- */
 #include "g_remind_power_on.h"
 
-/* ---- 解码器缓冲区大小 ---- */
-#define REMIND_DECODER_BUF_SIZE  (19 * 1024)
+/* ---- 解码器缓冲区大小 ----
+ * audio_decoder_initialize 的实际占用 =
+ *   sizeof(AudioDecoderContext) + INPUT_BUFFER_CAPACITY + SIZEOF_xxxContext
+ *   + sizeof(BufferContext) + sizeof(SongInfo)
+ * MP3: 2560 + 16132 → 约 19KB
+ * WAV: 2560 +  8224 → 约 11.5KB
+ * 本工程提示音源为 power_on.wav，按格式分配可省下约 7KB。
+ */
+#define REMIND_DECODER_BUF_SIZE      (19 * 1024)
+#define REMIND_DECODER_BUF_SIZE_WAV  (12 * 1024)
 
 /* ---- 淡入参数 ---- */
 #define REMIND_FADE_IN_MS        50    /* 淡入时长 50ms，消除爆破音 */
@@ -204,6 +212,7 @@ int RemindSound_Start(const char *name)
 int RemindSound_StartById(uint8_t id)
 {
     int i;
+    uint32_t decoder_buf_size;
     remind_table_init();
 
     if (s_state == REMIND_STATE_PLAYING) return -1;
@@ -230,38 +239,49 @@ int RemindSound_StartById(uint8_t id)
             s_error_cnt     = 0;
             s_fade_pos      = 0;
 
-            /* 动态分配解码器缓冲区 */
-            if (s_buf_in_use || s_decoder_buf != NULL) {
-                DBG("[Remind] decoder buffer busy\n");
-                return -1;
-            }
-            s_decoder_buf = (uint8_t *)osPortMalloc(REMIND_DECODER_BUF_SIZE);
-            if (s_decoder_buf == NULL) {
-                DBG("[Remind] decoder buffer malloc FAILED (%d bytes)\n", REMIND_DECODER_BUF_SIZE);
-                return -1;
-            }
-            s_buf_in_use = 1;
-            memset(s_decoder_buf, 0, REMIND_DECODER_BUF_SIZE);
-
-            /* 初始化 MemHandle */
-            mv_mopen(&s_mem_handle, NULL, size, RemindFillCallback);
-
-            /* 检测格式 */
+            /* 先检测格式（不依赖解码器缓冲），再按格式分配缓冲区：
+             * 原实现无论 WAV/MP3 都按 MP3 最坏情况分配 19KB，而本工程
+             * 提示音是 power_on.wav，WAV 解码器只需约 11.5KB */
             if (size >= 4 &&
                 data[0] == 'R' && data[1] == 'I' &&
                 data[2] == 'F' && data[3] == 'F') {
                 dec_type = WAV_DECODER;
                 DBG("[Remind] format=WAV\n");
             } else {
+                dec_type = MP3_DECODER;
                 DBG("[Remind] format=MP3\n");
             }
             s_decoder_type = dec_type;
+
+            /* 动态分配解码器缓冲区 */
+            if (s_buf_in_use || s_decoder_buf != NULL) {
+                DBG("[Remind] decoder buffer busy\n");
+                return -1;
+            }
+            decoder_buf_size = (dec_type == WAV_DECODER)
+                             ? REMIND_DECODER_BUF_SIZE_WAV
+                             : REMIND_DECODER_BUF_SIZE;
+            s_decoder_buf = (uint8_t *)osPortMalloc(decoder_buf_size);
+            if (s_decoder_buf == NULL) {
+                DBG("[Remind] decoder buffer malloc FAILED (%lu bytes)\n",
+                    (unsigned long)decoder_buf_size);
+                return -1;
+            }
+            s_buf_in_use = 1;
+            memset(s_decoder_buf, 0, decoder_buf_size);
+
+            /* 初始化 MemHandle */
+            mv_mopen(&s_mem_handle, NULL, size, RemindFillCallback);
 
             /* 初始化解码器 */
             if (audio_decoder_initialize(s_decoder_buf, &s_mem_handle,
                                          IO_TYPE_MEMORY, dec_type) != RT_SUCCESS)
             {
                 DBG("[Remind] audio_decoder_initialize FAILED\n");
+                /* 必须释放并置 NULL：否则这块内存永久泄漏，且下次播放会
+                 * 因 s_decoder_buf != NULL 一直报 busy */
+                osPortFree(s_decoder_buf);
+                s_decoder_buf = NULL;
                 s_buf_in_use = 0;
                 return -1;
             }

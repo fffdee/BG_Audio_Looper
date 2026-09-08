@@ -46,7 +46,16 @@ static FsNode_t* EnsureSubDir(FsNode_t **cache, const char *name)
 FsError_t DrvFs_Init(void)
 {
     if (g_DrvFsInitialized) return FS_OK;
-    
+
+#if !VFS_EN
+    /* VFS 已在 product_def.h 关闭 (VFS_EN=0)。此时 vfs.h 的 Vfs_GetRoot()
+     * 空操作宏恒返回 NULL，若在此判为失败会让 DrvFramework_Init() 返回 -2，
+     * 进而使 Banux_Init() 在 driverInit/Shell_Init 之前提前中止：
+     * g_started 保持 0 -> Banux_Process() 空转 -> Audio_Loop 永不运行。
+     * 无文件系统时驱动仅登记在 DrvDevice 列表，不挂载 /driver 目录树。 */
+    g_DrvFsInitialized = TRUE;
+    return FS_OK;
+#else
     FsNode_t *root = Vfs_GetRoot();
     if (!root) {
         DBG("[DrvFs] ERROR: VFS not initialized!\n");
@@ -65,6 +74,7 @@ FsError_t DrvFs_Init(void)
     DBG("[DrvFs] /driver created (bus subdirs created on demand)\n");
     g_DrvFsInitialized = TRUE;
     return FS_OK;
+#endif /* VFS_EN */
 }
 
 FsNode_t* DrvFs_GetDriverDir(void)

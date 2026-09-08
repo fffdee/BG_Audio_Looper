@@ -292,8 +292,10 @@ static DrvDevice_t w25qxx_driver = {
 int W25qxx_DrvRegister(void)
 {
     if (!w25qxx_find_present_device()) {
-        DBG("[DrvW25Qxx] W25Qxx not detected, skip VFS registration\n");
-        return -1;
+        /* 器件不在位是"跳过"而非"错误": 返回 0 避免被
+         * BanuxDriver_RegisterAll() 计入 failures。 */
+        DBG("[DrvW25Qxx] W25Qxx not detected, skip registration\n");
+        return 0;
     }
 
     return DrvDevice_Register(&w25qxx_driver);

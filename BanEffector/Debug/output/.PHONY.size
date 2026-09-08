@@ -1,2 +1,2 @@
    text (code + rodata)	   data	    bss	    dec	    hex	filename
- 739104 (594864 + 144240)	   5360	 129508	 873972	  d55f4	BanEffector.adx
+ 755764 (607668 + 148096)	   5360	 136752	 897876	  db354	BanEffector.adx

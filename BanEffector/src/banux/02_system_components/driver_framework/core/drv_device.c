@@ -37,6 +37,7 @@ static const char *g_BusNames[] = {
  * 内部函数
  ******************************************************************************/
 
+#if VFS_EN
 /**
  * @brief  为设备创建参数节点
  */
@@ -86,6 +87,7 @@ static int CreateDeviceParams(DrvDevice_t *dev, FsNode_t *devNode)
     DBG("[CreateParams] All %d params created\n", count);
     return 0;
 }
+#endif /* VFS_EN */
 
 /*******************************************************************************
  * 公共API实现
@@ -113,8 +115,10 @@ int DrvDevice_Init(void)
 
 int DrvDevice_Register(DrvDevice_t *dev)
 {
+#if VFS_EN
     FsNode_t *busDir;
     FsNode_t *devNode;
+#endif
     
     DBG("[DrvDev] Register start: dev=%p\n", dev);
     
@@ -153,6 +157,7 @@ int DrvDevice_Register(DrvDevice_t *dev)
         DBG("[DrvDev] Device '%s' initialized successfully\n", dev->name);
     }
 
+#if VFS_EN
     DBG("[DrvDev] Getting bus directory (bus=%d)...\n", dev->bus);
     /* 获取对应总线目录 (总线目录懒创建, 首次访问时创建) */
     busDir = DrvDevice_GetBusDir(dev->bus);
@@ -187,6 +192,14 @@ int DrvDevice_Register(DrvDevice_t *dev)
         }
         DBG("[DrvDev] Params created\n");
     }
+#else
+    /* VFS 关闭 (VFS_EN=0): 不挂载 /driver/<bus>/<name> 节点树, 设备只登记到
+     * g_Devices 列表, 由 DrvDevice_Find(name) 检索。此处不能因为
+     * DrvFs_CreateDevice() 的空操作宏返回 NULL 就判定注册失败, 否则
+     * BanuxDriver_RegisterAll() 返回负值会使 Banux_Init() 以 -3 中止,
+     * g_started 保持 0 -> 主循环空转 -> Audio_Loop / USB CDC 均不被轮询。 */
+    dev->fsNode = NULL;
+#endif /* VFS_EN */
     
     /* 添加到设备列表 */
     g_Devices[g_DeviceCount++] = dev;

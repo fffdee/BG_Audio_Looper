@@ -237,11 +237,14 @@ static DrvDevice_t w25n02_driver = {
 
 int W25n02_DrvRegister(void)
 {
-    /* 只有硬件设备已被成功创建并注册到 FlashBus 才进行 VFS 驱动注册 */
+    /* 只有硬件设备已被成功创建并注册到 FlashBus 才进行驱动注册 */
     FlashDevice_t *dev = FlashBus_GetDeviceByName("nand0");
     if (!dev || !dev->initialized) {
-        DBG("[DrvW25N02] nand0 not detected, skip VFS registration\n");
-        return -1;
+        /* 设备不在位是"跳过"而非"错误": 返回 0 避免被
+         * BanuxDriver_RegisterAll() 计入 failures, 否则会使 Banux_Init()
+         * 拿到负的 driverInit 返回值。 */
+        DBG("[DrvW25N02] nand0 not detected, skip registration\n");
+        return 0;
     }
     return DrvDevice_Register(&w25n02_driver);
 }

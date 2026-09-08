@@ -133,6 +133,12 @@ void EQ_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32
 void Passthrough_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
 void Reverb_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
 
+/* ADC 单声道链效果：Delay / Chorus
+ * 与 EQ_Process 同构：输入为 uint32 打包立体声 [L|R]，
+ * 按节点所属声道提取单声道处理后，结果放在 out_buf 低16位。 */
+void Delay_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
+void Chorus_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len);
+
 #ifdef __cplusplus
 }
 #endif

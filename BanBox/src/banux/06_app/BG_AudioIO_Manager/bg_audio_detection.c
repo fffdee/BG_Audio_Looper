@@ -160,8 +160,9 @@ void BG_AudioDetection_Line2Poll(void)
 #define MIC_INSERT_STABLE_MS  1000U
 
 /* MIC 数据放行状态机：由 ADC1_ReadMicData 每帧调用推进 */
-static uint8_t  mic_stable = 0U;       /* 1 = 已插入且稳定期已过 */
-static uint32_t mic_insert_tick = 0U;  /* 首次检测到插入的系统 tick（ms） */
+static uint8_t  mic_plugged = 0xFFU;    /* 0xFF=未初始化 0=未插入 1=已插入 */
+static uint8_t  mic_stable = 0U;        /* 1 = 已插入且稳定期已过 */
+static uint32_t mic_stable_until = 0U;  /* 稳定期结束时刻（ms） */
 
 /**
  * MIC 插入状态：A30 下拉，低电平 = 已插入。
@@ -184,29 +185,36 @@ uint8_t BG_AudioDetection_MicReady(void)
 {
 #if MIC_INPUT_DETECT_EN
 	uint32_t now_ms = (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
+	uint8_t plugged = BG_AudioDetection_MicIsPlugged();
 
-	if (!BG_AudioDetection_MicIsPlugged()) {
-		/* 未插入：复位状态，下次插入重新计时 */
+	/* 首次调用：记录初始状态，避免开机误判成插拔事件 */
+	if (mic_plugged == 0xFFU) {
+		mic_plugged = plugged;
+		mic_stable_until = now_ms;
+	}
+
+	/* 插拔状态变化：进入静音过渡期（插入去 pop、拔出防悬空噪声） */
+	if (plugged != mic_plugged) {
+		mic_plugged = plugged;
 		mic_stable = 0U;
-		mic_insert_tick = 0U;
+		mic_stable_until = now_ms + MIC_INSERT_STABLE_MS;
 		return 0U;
 	}
 
-	if (mic_stable) {
-		return 1U;
-	}
-
-	/* 已插入但尚未稳定：记录首次插入时刻，等待稳定期结束 */
-	if (mic_insert_tick == 0U) {
-		mic_insert_tick = now_ms;
+	/* 未插入：持续静音（不放行悬空噪声/直流漂移） */
+	if (!plugged) {
 		return 0U;
 	}
 
-	if ((now_ms - mic_insert_tick) >= MIC_INSERT_STABLE_MS) {
-		mic_stable = 1U;
-		return 1U;
+	/* 已插入：过渡期内静音，过渡期结束后放行 */
+	if (!mic_stable) {
+		if (now_ms >= mic_stable_until) {
+			mic_stable = 1U;
+		} else {
+			return 0U;
+		}
 	}
-	return 0U;
+	return 1U;
 #else
 	return 1U;
 #endif

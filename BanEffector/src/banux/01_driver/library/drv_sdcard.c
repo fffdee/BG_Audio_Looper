@@ -202,11 +202,13 @@ static DrvDevice_t sdcard_driver = {
 
 int SDCard_DrvRegister(void)
 {
-    /* 只有硬件设备已被成功创建并注册到 FlashBus 才进行 VFS 驱动注册 */
+    /* 只有硬件设备已被成功创建并注册到 FlashBus 才进行驱动注册 */
     FlashDevice_t *dev = FlashBus_GetDeviceByName("sdcard0");
     if (!dev || !dev->initialized) {
-        DBG("[DrvSDCard] sdcard0 not detected, skip VFS registration\n");
-        return -1;
+        /* 设备不在位是"跳过"而非"错误": 返回 0 避免被
+         * BanuxDriver_RegisterAll() 计入 failures。 */
+        DBG("[DrvSDCard] sdcard0 not detected, skip registration\n");
+        return 0;
     }
     return DrvDevice_Register(&sdcard_driver);
 }

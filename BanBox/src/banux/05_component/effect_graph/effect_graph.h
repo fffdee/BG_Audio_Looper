@@ -57,8 +57,13 @@ extern "C" {
  *   - EFFECT_GRAPH_BUFFER_SIZE: 200 → 节省大量RAM (22*200*4=17600 bytes)
  *   - 如需更大帧长可改为 512 (SBC最大帧595，但实际处理帧256)
  ******************************************************************************/
-#define EFFECT_GRAPH_MAX_NODES      22   /* 精确节点数（含 REMIND 提示音源节点）*/
-#define EFFECT_GRAPH_MAX_EDGES      24   /* 精确边数（当前23条+1预留）节省 24*8=192 bytes */
+/* 22 原有节点 + 3 个 ADC 单声道链效果节点
+ *   = delay_guitar_l / chorus_guitar_l / chorus_mic_l
+ * （chorus 为单声道算法，每路需独立实例，故 L/R 各一个） */
+#define EFFECT_GRAPH_MAX_NODES      25
+/* 23 原有边 + 3 条（guitar L 拆成 ADC→Delay→Chorus→EQ 净增 2，
+ *                    mic L   拆成 ADC→Chorus→EQ       净增 1）+ 2 预留 */
+#define EFFECT_GRAPH_MAX_EDGES      28
 #define EFFECT_GRAPH_MAX_INPUTS     4    /* 最大输入端口数 */
 #define EFFECT_GRAPH_MAX_OUTPUTS    4    /* 最大输出端口数 */
 #define EFFECT_GRAPH_NAME_LEN       16   /* 节点名称长度 */
@@ -208,6 +213,17 @@ typedef union {
         uint8_t wet_dry;            /* 干湿比 0-100 */
     } delay;
     
+    /* 合唱参数（Chorus 为单声道算法，每路独立实例）
+     * depth/rate 对应 SDK chorus 的调制深度与调制速率，
+     * feedback/dry/wet 直接透传给 chorus_apply() */
+    struct {
+        uint8_t depth;              /* 调制深度 0-100（内部映射到 1~12ms） */
+        uint8_t rate;               /* 调制速率 0-100（=0.1~10.0Hz，0.1Hz 步进） */
+        uint8_t feedback;           /* 反馈量 0-50 */
+        uint8_t dry;                /* 干声比例 0-100 */
+        uint8_t wet;                /* 湿声比例 0-100 */
+    } chorus;
+    
     /* 通用参数 */
     uint8_t raw[88];
 } EffectParams_t;
@@ -273,6 +289,7 @@ typedef struct {
     const char         *name;
     bool                enabled;
     EffectParams_t      params;
+    bool                bypass;            /* 初始旁路状态(可选字段, 缺省 false) */
 } NodeConfig_t;
 
 typedef struct {

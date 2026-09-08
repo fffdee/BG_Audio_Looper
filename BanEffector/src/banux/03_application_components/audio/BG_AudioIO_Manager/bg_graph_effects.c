@@ -491,16 +491,39 @@ void Delay_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uin
 /**
  * 失真处理回调 - 可切换类型 (定点 DSP 终极优化)
  *   类型: 0=SOFT 软削波/蓝调过载, 1=HARD 硬限幅/摇滚金属, 2=FUZZ 法兹/管味
- *   流程: 按类型预增益 -> 软膝/硬限幅 -> tone 一阶低通
+ *   流程: 输入包络噪声门 -> 按类型预增益 -> 软膝/硬限幅 -> tone 一阶低通
  *   - drive 失真量, asym 非对称, tone 亮度, level 输出电平
  *   - 纯加减乘除 + 移位, 无浮点/无查表, BP1048 执行"如丝般顺滑"
  *   数据格式: 32位双声道包 [L|R], len = frames
+ *
+ *   【增益标定】削波发生的输入门槛 = 32768/预放大倍数, 与 th_pos/level 无关;
+ *   吉他经 unity PGA 后峰值只有几个百分点满幅, 所以预放大必须做到 40dB 量级
+ *   才能真正削波(否则只是一条直线放大, THD 不到 4%, 听感等于没开)。
+ *   高增益必然同比放大底噪, 故内置一个与增益联动的噪声门。
  */
+/* 噪声门(向下扩展)参数 —— 预放大拉到 40dB 量级后, 不演奏时被同比放大的 ADC
+ * 底噪会变成明显的"嘶声", 故按输入包络做快起音/慢释放的门控。门限与线性增益
+ * 联动(见 Distortion_Process 内 gth 的推导), 低 drive 时完全透明。 */
+#define DIST_GATE_TH    512   /* 全门限(输入 LSB, ≈-36dBFS): 包络低于此按线性律衰减 */
+#define DIST_GATE_ATK   1     /* 攻击: env += (a-env)>>1   (时间常数 ≈2 样本) */
+#define DIST_GATE_REL   12    /* 释放: env -= (env-a)>>12  (时间常数 ≈4096 样本 ≈85ms@48k) */
+
+/* 预放大的全精度定点乘法: 等价于 (x * g) >> 15, 但拆成高/低两段避开 int32 溢出。
+ * 原来的写法 ((x>>5) * g) >> 10 会把 x 的低 5 位直接丢掉, 在 g 拉到 100x 以上时
+ * 这个量化台阶被同比放大成 ≈3.7%FS 的输出跳变; 更严重的是 >>5 是 floor,
+ * [-32,-1] 全部映射到 -1 而 [0,31] 映射到 0, 正负不对称 -> 静音段被整流成
+ * 负直流, 经 tone 一阶低通积分后变成 -35dBFS 的低频轰鸣, 噪声门也压不住。
+ * 拆分后 x = 32*(x>>5) + (x&31)(x&31 ∈ [0,31], 对负数同样成立), 与 x*g>>15 一致。
+ * 溢出边界: |x|<=32767, g<=397312(FUZZ drive=100) -> 高位段 <=4.07e8, 安全。 */
+#define DIST_PREGAIN(x, g)  (((((x) >> 5) * (g)) + ((((x) & 31) * (g)) >> 5)) >> 10)
+
 typedef struct {
 	int32_t y_prev_l;   /* L 声道 tone 一阶低通上一输出 */
 	int32_t y_prev_r;   /* R 声道 tone 一阶低通上一输出 */
 	int32_t fb_l;       /* L 声道反馈状态(上一输出样本) */
 	int32_t fb_r;       /* R 声道反馈状态 */
+	int32_t env_l;      /* L 声道输入包络(|x| 跟随), 供噪声门用 */
+	int32_t env_r;      /* R 声道输入包络 */
 } DistortionState_t;
 
 void Distortion_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count, uint32_t *out_buf, uint16_t len)
@@ -552,52 +575,144 @@ void Distortion_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 
 	/* 按类型预计算常量 (循环外) */
 	int32_t gain   = 1024;     /* HARD/FUZZ 预放大 (Q10) */
-	int32_t th_pos = 1024;     /* 硬限幅阈值 (Q10) */
-	int32_t th_neg = 1024;
-	int32_t kp = 0;            /* SOFT 软削波正半周系数 (Q10) */
-	int32_t kn = 0;            /* SOFT 软削波负半周系数 (Q10) */
+	int32_t th_pos = 1024;     /* 正半周削波阈值 (Q10), 必须 > 0 */
+	int32_t th_neg = -1024;    /* 负半周削波阈值 (Q10), 必须 < 0 */
+	int32_t kp = 1024;         /* SOFT 正半周预放大 (Q10) */
+	int32_t kn = 1024;         /* SOFT 负半周预放大 (Q10) */
+	int32_t out_norm;          /* 输出级归一化基准 = 削波后 |y10| 的最大值 */
+	int32_t knee_k_p = 1;      /* 软膝跨度(正) = th_pos - 1024, 必 > 0 */
+	int32_t knee_k_n = 1;      /* 软膝跨度(负) = -1024 - th_neg, 必 > 0 */
+	int32_t knee_end_p = 1024; /* 软膝结束点(正), 超过则硬限幅 */
+	int32_t knee_end_n = -1024;
 	switch (type) {
 	case DIST_TYPE_SOFT:
-		/* 软削波系数 k (Q10): drive 0..100 -> 0..0.6 (避免高增益塌陷) */
-		kp = (drive * 614) / 100;
-		kn = (kp * (100 - asym)) / 100;   /* 非对称 */
+		/* 预放大 2x..32x, 随后在主循环做单调有界的有理软削波。
+		 * 原实现是 y10 = x10 - kp*x10^3 且 kp = drive*614/100, 有两个问题:
+		 *   ① 单调性要求 3*kp <= 1024 即 kp <= 341, 而 drive > 56 就越过上限,
+		 *      传输曲线在满幅附近反转 -> 波形折叠 -> 宽带噪声;
+		 *   ② 即使不越界, kp <= 341 时满幅也只能压到 683/1024(-3.5dB), 小信号
+		 *      完全是单位增益, 正常电位的琴声几乎不被整形 -> "开了和没开一样"。
+		 * 另外原 kn = kp*(100-asym)/100 在 asym=50(注释称"对称")时给出 kp/2,
+		 * 正负半周压缩量差一倍, 会引入直流偏移与偶次谐波; 现改为 asym=50 时
+		 * kn == kp, asym 偏离 50 才产生非对称。
+		 * 蓝调过载不需要金属那样的高增益, 2x..32x 已足够把正常演奏压进软削波区
+		 * (drive=55 -> 18.5x, 约 5%FS 输入即开始明显整形, THD ≈10%)。 */
+		kp = 2048 + (drive * 30 * 1024) / 100;      /* 2x..32x */
+		kn = (kp * (100 - asym)) / 50;             /* asym=50 -> kn==kp */
+		if (kn < 0) kn = 0;
 		break;
 	case DIST_TYPE_HARD:
-		gain   = 1024 + (drive * 7  * 1024) / 100;   /* 1..8x */
-		th_pos = 3072 + (asym - 50) * 40;
-		th_neg = 3072 - (asym - 50) * 40;
+		/* 预放大 4x..224x(12dB..47dB)。这是"开了失真却听不出失真"的真正根因:
+		 * 削波阈值的归一化域里, 软膝起点对应的输入幅度 = 32768/预放大倍数,
+		 * 与 th_pos/level 无关。吉他经 ADC0 PGA(CFG_LINE1_*_GAIN=18 -> 索引 13,
+		 * 近似 unity)后峰值通常只有 2%~12% 满幅, 而原来的 3x..24x 把软膝起点放在
+		 * 6.9% 满幅、硬削波点放在 34% 满幅 —— 实测 drive=55 时 2%~12%FS 输入的
+		 * THD 只有 2.7%~3.5%, 输出就是一条 +12.8dB 的直线, 听感与不开失真无异。
+		 * 真正的失真/过载踏板前置增益在 40dB 上下(DS-1≈40dB, RAT≈45dB), 故把
+		 * 默认 drive=55 定位在 125x(41.9dB): 软膝起点 0.8%FS、硬削波点 4.0%FS,
+		 * 轻弹已进软膝、正常扫弦直接削平(THD 20%~43%), drive=0 则退回 ≈unity
+		 * 的清音增强。 */
+		gain   = 4096 + (drive * 220 * 1024) / 100;  /* 4x..224x */
+		th_pos =  3072 + (asym - 50) * 40;
+		th_neg = -3072 + (asym - 50) * 40;
 		break;
 	case DIST_TYPE_FUZZ:
-		gain   = 1024 + (drive * 15 * 1024) / 100;   /* 1..16x 极强 */
-		th_pos = 4096 + (asym - 50) * 120;           /* 强非对称 -> 法兹偏移 */
-		th_neg = 4096 - (asym - 50) * 120;
+		/* 8x..388x(18dB..52dB)。法兹要比 HARD 更极端: drive=55 -> 217x,
+		 * 软膝起点 0.46%FS、硬削波点 3.2%FS, 几乎整周期削平。 */
+		gain   = 8192 + (drive * 380 * 1024) / 100;  /* 8x..388x */
+		th_pos =  4096 + (asym - 50) * 120;          /* 强非对称 -> 法兹偏移 */
+		th_neg = -4096 + (asym - 50) * 120;
 		break;
 	default:
 		break;
 	}
 
+	/* 【关键】负半周阈值必须是负数。原实现写成 th_neg = 3072 - (asym-50)*40,
+	 * asym=50 时 th_neg = +3072, 于是主循环的 else-if 链短路: 任何 xg < th_pos
+	 * 都命中 "xg <= th_neg" 而被赋成 +3072, y10 与输入完全无关, 输出恒为
+	 * +32767 满幅直流 -> 琴声被彻底抹掉, 只剩满幅直流经下游 Delay(fb=30)/
+	 * Chorus(fb=30) 反馈环激荡出的宽带噪声, 即"白噪声把琴声淹没"。HARD/FUZZ 同病。
+	 * 钳位到 ±2048 以外保证软膝跨度为正(FUZZ 在 asym < 16 或 > 75 时阈值会跨零点)。 */
+	if (type != DIST_TYPE_SOFT) {
+		if (th_pos <  2048) th_pos =  2048;
+		if (th_neg > -2048) th_neg = -2048;
+		knee_k_p = th_pos - 1024;
+		knee_k_n = -1024 - th_neg;
+		knee_end_p =  1024 + 2 * knee_k_p;
+		knee_end_n = -1024 - 2 * knee_k_n;
+		out_norm = (th_pos > -th_neg) ? th_pos : -th_neg;
+	} else {
+		out_norm = 1024;   /* SOFT 曲线渐近 ±1024 */
+	}
+
+	/* 小信号线性增益(Q10) = 预放大 × level / 归一化基准, 只用来推导噪声门门限。
+	 * SOFT 取 kp, HARD/FUZZ 取 gain; (pregain/32)*lvl 最大约 4.1e8, 不溢出 int32。 */
+	int32_t pregain = (type == DIST_TYPE_SOFT) ? kp : gain;
+	int32_t lg10    = (pregain / 32) * lvl / out_norm;
+	/* 门限与增益联动: <=2x 时 gth=0(门控完全透明, drive 很低的清音增强不做门控),
+	 * >=8x 时用全门限 DIST_GATE_TH, 中间线性过渡, 避免转动 drive 时门控深度突跳。 */
+	int32_t gth;
+	if (lg10 <= 2048)      gth = 0;
+	else if (lg10 >= 8192) gth = DIST_GATE_TH;
+	else                   gth = (DIST_GATE_TH * (lg10 - 2048)) / 6144;
+
 	for (i = 0; i < n; i++) {
+		int32_t raw, ae, gq, dg;
 		/* ---- 左声道 ---- */
+		/* 输入包络跟随(取自未加反馈的原始输入, 保证停止演奏后门一定会关):
+		 * 攻击 >>DIST_GATE_ATK 约 2 样本, 释放 >>DIST_GATE_REL 约 85ms@48k。 */
+		raw = in16[2 * i];
+		ae  = (raw < 0) ? -raw : raw;
+		if (ae > s_dist.env_l) {
+			s_dist.env_l += (ae - s_dist.env_l) >> DIST_GATE_ATK;
+		} else {
+			dg = (s_dist.env_l - ae) >> DIST_GATE_REL;
+			if (dg == 0 && s_dist.env_l > ae) dg = 1;   /* 小差值时保证仍能衰减到 0 */
+			s_dist.env_l -= dg;
+		}
+		/* 门控增益 Q10: 包络在门限以上为 1.0, 以下按 env/gth 线性衰减(无跳变) */
+		gq = (gth == 0 || s_dist.env_l >= gth) ? 1024
+		                                       : (s_dist.env_l * 1024) / gth;
 		/* 反馈防溢出: 略降反馈增益(<1.0)避免 fb/drive 双高时累积饱和, 并对合成信号限幅 */
-		int32_t x = in16[2 * i] + (fb * s_dist.fb_l * 98) / 10000;   /* +反馈(自我削波) */
+		int32_t x = raw + (fb * s_dist.fb_l * 98) / 10000;   /* +反馈(自我削波) */
 		if (x >  32767) x =  32767;
 		if (x < -32767) x = -32767;
-		int32_t x10 = x >> 5;                         /* Q10 归一化 ±1024 */
+		x = (x * gq + 512) >> 10;                  /* 门控; gq=1024 时逐位透明 */
 		int32_t y10;
 		if (type == DIST_TYPE_SOFT) {
-			int32_t x3 = (x10 * x10) >> 10;           /* Q10 平方 */
-			x3 = (x3 * x10) >> 10;                    /* Q10 立方 */
-			int32_t kk = (x >= 0) ? kp : kn;
-			y10 = x10 - ((kk * x3) >> 10);            /* 软削波 */
+			int32_t g  = (x >= 0) ? kp : kn;          /* 正/负半周预放大 */
+			int32_t xg = DIST_PREGAIN(x, g);
+			int32_t ax = (xg >= 0) ? xg : -xg;
+			/* 有理软削波 y = xg*1024/(1024+|xg|): 全域单调、渐近 ±1024,
+			 * 小信号近似线性(增益 g/1024), 大信号平滑压缩, 不会像三次方
+			 * 曲线那样在深度驱动下反转折叠出噪声。 */
+			y10 = (xg * 1024) / (1024 + ax);
 		} else {
-			int32_t xg = (x10 * gain) >> 10;          /* 预放大 */
-			if (xg >= th_pos)            y10 = th_pos;                 /* 硬限幅(正) */
-			else if (xg <= th_neg)       y10 = th_neg;                 /* 硬限幅(负) */
-			else if (xg > 1024)          y10 = 1024 + ((xg - 1024) * 3) / 4;  /* 软膝 */
-			else if (xg < -1024)         y10 = -1024 + ((xg + 1024) * 3) / 4;
-			else                         y10 = xg;
+			int32_t xg = DIST_PREGAIN(x, gain);      /* 预放大 */
+			/* 抛物线软膝: 在 |xg|=1024 处值与斜率(=1)都连续, 到 knee_end 处斜率
+			 * 降为 0 且恰好等于削波阈值, 因此与硬限幅段 C1 连续。
+			 * 原实现 "1024 + (xg-1024)*3/4" 在 xg=th_pos 处只到 1024+0.75*(th_pos-1024)
+			 * = 2560, 而硬限幅给 3072, 两者之间有 512(FUZZ 为 768) 的跳变 ->
+			 * 传输曲线不连续, 信号每次越过该点产生阶跃, 听感是咔哒声与额外谐波。
+			 * 以前这个缺陷被输出级饱和掩盖(y10 超 1138 就撞顶), 改成按 out_norm
+			 * 归一化后软膝真正参与映射, 跳变就会变成可听见的失真, 故一并修正。 */
+			if (xg >= knee_end_p)        y10 = th_pos;                 /* 硬限幅(正) */
+			else if (xg <= knee_end_n)   y10 = th_neg;                 /* 硬限幅(负) */
+			else if (xg > 1024) {
+				int32_t d = xg - 1024;
+				y10 = 1024 + d - (d * d) / (4 * knee_k_p);              /* 软膝(正) */
+			} else if (xg < -1024) {
+				int32_t d = -1024 - xg;
+				y10 = -1024 - d + (d * d) / (4 * knee_k_n);             /* 软膝(负) */
+			} else {
+				y10 = xg;
+			}
 		}
-		int32_t y   = (y10 * lvl) >> 10;             /* 输出电平 */
+		/* 输出电平: 按削波阈值归一化, 使 y10 达到削波上限时输出恰为 level%。
+		 * 原来的 >>10 以 Q10 满幅(1024) 为基准, 而 HARD/FUZZ 的 th_pos 是
+		 * 3072/4096, 导致 y10 才到 1138 输出就已饱和, 1138..3072 这段软膝
+		 * 全部作废、只剩满幅方波。SOFT 时 out_norm == 1024, 与原行为一致。 */
+		int32_t y   = (y10 * lvl) / out_norm;
 		if (y >  32767) y =  32767;
 		if (y < -32768) y = -32768;
 		s_dist.y_prev_l += ((y - s_dist.y_prev_l) * coef) / 100;   /* tone 一阶低通(采样率无关) */
@@ -605,24 +720,41 @@ void Distortion_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count
 		s_dist.fb_l = y;   /* 更新反馈状态 */
 
 		/* ---- 右声道 ---- */
-		x   = in16[2 * i + 1] + (fb * s_dist.fb_r * 98) / 10000;   /* +反馈 */
+		raw = in16[2 * i + 1];
+		ae  = (raw < 0) ? -raw : raw;
+		if (ae > s_dist.env_r) {
+			s_dist.env_r += (ae - s_dist.env_r) >> DIST_GATE_ATK;
+		} else {
+			dg = (s_dist.env_r - ae) >> DIST_GATE_REL;
+			if (dg == 0 && s_dist.env_r > ae) dg = 1;
+			s_dist.env_r -= dg;
+		}
+		gq = (gth == 0 || s_dist.env_r >= gth) ? 1024
+		                                       : (s_dist.env_r * 1024) / gth;
+		x   = raw + (fb * s_dist.fb_r * 98) / 10000;   /* +反馈 */
 		if (x >  32767) x =  32767;
 		if (x < -32767) x = -32767;
-		x10 = x >> 5;
+		x   = (x * gq + 512) >> 10;
 		if (type == DIST_TYPE_SOFT) {
-			int32_t x3 = (x10 * x10) >> 10;
-			x3 = (x3 * x10) >> 10;
-			int32_t kk = (x >= 0) ? kp : kn;
-			y10 = x10 - ((kk * x3) >> 10);
+			int32_t g  = (x >= 0) ? kp : kn;
+			int32_t xg = DIST_PREGAIN(x, g);
+			int32_t ax = (xg >= 0) ? xg : -xg;
+			y10 = (xg * 1024) / (1024 + ax);
 		} else {
-			int32_t xg = (x10 * gain) >> 10;
-			if (xg >= th_pos)            y10 = th_pos;
-			else if (xg <= th_neg)       y10 = th_neg;
-			else if (xg > 1024)          y10 = 1024 + ((xg - 1024) * 3) / 4;
-			else if (xg < -1024)         y10 = -1024 + ((xg + 1024) * 3) / 4;
-			else                         y10 = xg;
+			int32_t xg = DIST_PREGAIN(x, gain);
+			if (xg >= knee_end_p)        y10 = th_pos;
+			else if (xg <= knee_end_n)   y10 = th_neg;
+			else if (xg > 1024) {
+				int32_t d = xg - 1024;
+				y10 = 1024 + d - (d * d) / (4 * knee_k_p);
+			} else if (xg < -1024) {
+				int32_t d = -1024 - xg;
+				y10 = -1024 - d + (d * d) / (4 * knee_k_n);
+			} else {
+				y10 = xg;
+			}
 		}
-		y   = (y10 * lvl) >> 10;
+		y   = (y10 * lvl) / out_norm;
 		if (y >  32767) y =  32767;
 		if (y < -32768) y = -32768;
 		s_dist.y_prev_r += ((y - s_dist.y_prev_r) * coef) / 100;

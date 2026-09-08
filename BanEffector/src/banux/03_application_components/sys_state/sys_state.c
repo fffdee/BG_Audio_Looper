@@ -261,8 +261,18 @@ void SysState_Update(void)
             new_sub &= ~SYS_SUB_BATT_LOW;
         }
 
-        if ((new_sub & SYS_SUB_USB_CONNECTED) && soc < 100U) {
-            new_sub |= SYS_SUB_BATT_CHARGING;
+        if (new_sub & SYS_SUB_USB_CONNECTED) {
+            /* 充电判定加滞回死区。soc 在 100/99 边界抖动会使 CHARGING 位每
+             * 50ms 翻转一次(本函数由 hardware_check 以 50ms 周期调用), 进而
+             * 反复触发事件发布与 LED 策略重算。置位阈值 99、清除阈值 100,
+             * soc==99 时保持 new_sub 中该位原值(new_sub 已从 g_sub_state
+             * 复制)。上方 BATT_LOW 已改用 soc_volt 避开不可靠的校准曲线,
+             * 此处仍用 soc 是因为它才是真实充电进度依据。 */
+            if (soc < 99U) {
+                new_sub |= SYS_SUB_BATT_CHARGING;
+            } else if (soc >= 100U) {
+                new_sub &= ~SYS_SUB_BATT_CHARGING;
+            }
         } else {
             new_sub &= ~SYS_SUB_BATT_CHARGING;
         }
@@ -272,8 +282,14 @@ void SysState_Update(void)
     changed = old_sub ^ new_sub;
     if (changed) {
         g_sub_state = new_sub;
-        DBG("[SysState] SubState changed: 0x%04X -> 0x%04X (diff=0x%04X)\n",
-            (unsigned)old_sub, (unsigned)new_sub, (unsigned)changed);
+        /* 电池位可能因 ADC 噪声高频翻转, 每翻转一次就打印一行(~4.8ms 阻塞
+         * @115200) 会超过一个音频帧周期(2.67ms), 直接造成 DAC 缓冲欠载杂音,
+         * 因此这类位的变化只发事件不打印。连接类状态低频且有诊断价值, 保留。
+         * 完整状态可用 SysState_GetSubState() 或订阅 EVT_SYS_SUB_STATE 获取。 */
+        if (changed & (uint16_t)~(SYS_SUB_BATT_CHARGING | SYS_SUB_BATT_LOW)) {
+            DBG("[SysState] SubState changed: 0x%04X -> 0x%04X (diff=0x%04X)\n",
+                (unsigned)old_sub, (unsigned)new_sub, (unsigned)changed);
+        }
         publish_sub_state_change(changed, new_sub);
     }
 

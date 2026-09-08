@@ -76,7 +76,16 @@ typedef enum {
     NODE_ID_REMIND,          /* 提示音源节点 */
     NODE_ID_LOOPER_PLAY,     /* Looper播放源节点 */
     NODE_ID_LOOPER_RECORD,   /* Looper录制输出节点 */
-    
+
+    /* ADC 单声道链效果节点 ID: 22-24
+     * 串联在 ADC 源与对应声道 EQ 之间：
+     *   Guitar L: ADC0 -> Delay_Guitar_L -> Chorus_Guitar_L -> EQ_GUITAR_L
+     *   Mic    L: ADC1 -> Chorus_Mic_L                      -> EQ_MIC_L
+     * Chorus 为单声道算法（chorus.h: only mono accepted），故每路需独立实例。 */
+    NODE_ID_DELAY_GUITAR_L,     /* 乐器左声道 Delay */
+    NODE_ID_CHORUS_GUITAR_L,    /* 乐器左声道 Chorus */
+    NODE_ID_CHORUS_MIC_L,       /* 麦克风左声道 Chorus */
+
     /* 节点总数 */
     DEFAULT_NODE_COUNT
 } DefaultNodeId_t;
@@ -129,6 +138,24 @@ typedef enum {
     { NODE_ID_REMIND,        EFFECT_NODE_TYPE_SOURCE_REMIND,       "remind",        true,  {{0}} }, \
     { NODE_ID_LOOPER_PLAY,   EFFECT_NODE_TYPE_SOURCE_LOOPER_PLAY,  "looper_play",   true,  {{0}} }, \
     { NODE_ID_LOOPER_RECORD, EFFECT_NODE_TYPE_SINK_LOOPER_RECORD,  "looper_record", true,  {{0}} }, \
+    \
+    /* ===== ADC 单声道链效果节点（串在对应声道 EQ 之前） =====
+     * enabled 必须恒为 true：节点被禁用时执行器会整个跳过该节点，输出缓冲不更新，
+     *   链路断开 → ADC 无声。
+     * 效果开关用 bypass：bypass=true 时执行器直接 memcpy 输入到输出（旁路直通），
+     *   且不会调用处理回调，SDK 实例惰性分配 → 关闭时不占内存。
+     * 默认 bypass=true，保持原有音色；需要时单独把对应节点 bypass 设为 false 开启效果。
+     * 默认参数（打开效果开关后的初始音色）：
+     *   delay  = { delay_ms, feedback, wet_dry }
+     *   chorus = { depth, rate, feedback, dry, wet }
+     *   chorus 默认与 audio_effect.h 的 CFG_CHORUS_* 保持一致
+     *   (depth=30 → 约 4ms, rate=10 → 1.0Hz, feedback=30, dry=90, wet=60) */ \
+    { NODE_ID_DELAY_GUITAR_L,  EFFECT_NODE_TYPE_EFFECT_DELAY,  "delay_guitar_l",  true, \
+      { .delay  = { DEFAULT_DELAY_MS, DEFAULT_DELAY_FEEDBACK, DEFAULT_DELAY_WET_DRY } }, true }, \
+    { NODE_ID_CHORUS_GUITAR_L, EFFECT_NODE_TYPE_EFFECT_CHORUS, "chorus_guitar_l", true, \
+      { .chorus = { 30, 10, 30, 90, 60 } }, true }, \
+    { NODE_ID_CHORUS_MIC_L,    EFFECT_NODE_TYPE_EFFECT_CHORUS, "chorus_mic_l",    true, \
+      { .chorus = { 30, 10, 30, 90, 60 } }, true }, \
 }
 
 /* BanGTsynth合成器已移除 */
@@ -161,12 +188,17 @@ typedef enum {
  *
  ******************************************************************************/
 #define DEFAULT_EDGES_CONFIG { \
-    /* ADC0 (Guitar) 左右声道分别进入独立EQ */ \
-    { NODE_ID_ADC0_GUITAR, NODE_ID_EQ_GUITAR_L, 0, 0 }, /* ADC0 L -> EQ_GUITAR_L */ \
+    /* ADC0 (Guitar)
+     * L 声道: 串入 Delay -> Chorus 后再进 EQ；R 声道: 不串效果，直连 EQ */ \
+    { NODE_ID_ADC0_GUITAR,     NODE_ID_DELAY_GUITAR_L,  0, 0 }, \
+    { NODE_ID_DELAY_GUITAR_L,  NODE_ID_CHORUS_GUITAR_L, 0, 0 }, \
+    { NODE_ID_CHORUS_GUITAR_L, NODE_ID_EQ_GUITAR_L,     0, 0 }, \
     { NODE_ID_ADC0_GUITAR, NODE_ID_EQ_GUITAR_R, 1, 0 }, /* ADC0 R -> EQ_GUITAR_R */ \
     \
-    /* ADC1 (Mic) 左右声道分别进入独立EQ */ \
-    { NODE_ID_ADC1_MIC, NODE_ID_EQ_MIC_L, 0, 0 },       /* ADC1 L -> EQ_MIC_L */ \
+    /* ADC1 (Mic)
+     * L 声道: 仅串入 Chorus（不加 Delay）；R 声道: 不串效果，直连 EQ */ \
+    { NODE_ID_ADC1_MIC,     NODE_ID_CHORUS_MIC_L, 0, 0 }, \
+    { NODE_ID_CHORUS_MIC_L, NODE_ID_EQ_MIC_L,     0, 0 }, \
     { NODE_ID_ADC1_MIC, NODE_ID_EQ_MIC_R, 1, 0 },       /* ADC1 R -> EQ_MIC_R */ \
     \
     /* 4个EQ输出到ADC混音器 */ \
@@ -209,7 +241,7 @@ typedef enum {
     { NODE_ID_EXPANDER, NODE_ID_LOOPER_RECORD, 0, 0 }, \
 }
 
-#define DEFAULT_EDGE_COUNT  23
+#define DEFAULT_EDGE_COUNT  26
 
 /*******************************************************************************
  * 效果器默认参数配置
@@ -237,8 +269,13 @@ typedef enum {
 /* 增益默认参数 */
 #define DEFAULT_GAIN_DB             0       /* 增益 dB */
 
-/* 延迟默认参数 */
-#define DEFAULT_DELAY_MS            250     /* 延迟时间 ms */
+/* 延迟默认参数
+ * DEFAULT_DELAY_MS 同时决定 pcm_delay 延迟线容量：
+ *   buf = ceil(max_delay_samples/32)*19 + 64 字节（high_quality=0）
+ * 250ms@48k ≈ 7.5KB，120ms@48k ≈ 3.8KB。
+ * 当前堆余量紧张（开机提示音解码缓冲还需约 12KB），故取 120ms；
+ * 若需要更长延迟，需先从 Reverb（约 57.5KB）腾出堆空间。 */
+#define DEFAULT_DELAY_MS            120     /* 延迟时间 ms（上限，同时决定延迟线容量） */
 #define DEFAULT_DELAY_FEEDBACK      30      /* 反馈量 0-100 */
 #define DEFAULT_DELAY_WET_DRY       30      /* 干湿比 0-100 */
 

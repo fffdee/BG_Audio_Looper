@@ -199,9 +199,12 @@ GraphError_t EffectGraphConfig_GetPreset(GraphPreset_t preset, GraphConfig_t *co
     
     switch (preset) {
         case GRAPH_PRESET_DEFAULT:
-            /* BanEffector 默认预设 = 直进直出 + Delay + Chorus (综合效果器)
-             * ADC0(guitar) + ADC1(mic) + USB_IN -> Mixer -> Delay -> Chorus
-             *     -> DAC0(speaker) + USB_Out */
+            /* BanEffector 默认预设 = 综合效果器 (FX_CHAIN, 11 节点 10 边)
+             *   效果链  : ADC0(guitar) + ADC1(mic) -> Mixer -> Distortion(默认关)
+             *             -> Delay -> Chorus -> Sustain -> OutMix
+             *   USB 旁路: USB_IN(主机回放) 不过效果链，直接进 OutMix
+             *   输出    : OutMix -> DAC0(speaker) 与 OutMix -> USB_Out(内录)
+             * 拓扑细节与改动理由见 effect_graph_config.h 的 FX_CHAIN 注释块。 */
             config->nodes = (NodeConfig_t*)g_FxChainNodes;
             config->node_count = FX_CHAIN_NODE_COUNT;
             config->edges = (EdgeConfig_t*)g_FxChainEdges;

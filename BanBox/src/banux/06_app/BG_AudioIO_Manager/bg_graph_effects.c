@@ -11,6 +11,7 @@
 #include "debug.h"
 
 #include "audio_effect.h"
+#include "rtos_api.h"  /* osPortMallocFromEnd（宏→osPortMallocFromEnd_1）/ osPortRemainMem */
 #include "ctrlvars.h"
 #include "reverb.h"
 #include "effect_graph_config.h"
@@ -368,6 +369,293 @@ void Passthrough_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_coun
 	for (i = 0; i < len; i++) {
 		out_buf[i] = in_bufs[0][i];
 	}
+}
+
+/* ==================== ADC 单声道链效果：Chorus / Delay ====================
+ *
+ * 串联在 ADC 源与对应声道 EQ 之间（ADC → Delay → Chorus → EQ），数据格式
+ * 与 EQ_Process 完全同构：
+ *   输入  in_bufs[0]: uint32 打包立体声 [L|R]（或上一级的单声道输出）
+ *   → 提取单声道 int16（本工程这 3 个节点均属左声道链，src_port=0）
+ *   → SDK 单声道处理
+ *   → 结果写回 out_buf 低16位，供下游 EQ/Mixer 取用
+ *
+ * 两个关键约束（来自 SDK 头文件）：
+ *   1) Chorus 只支持单声道（chorus.h: "only mono signals are accepted"），
+ *      每路必须独立实例，否则两路共用延迟线会互相串扰。
+ *   2) Delay 的 pcm_delay_apply() 只输出纯延迟信号（不含干声），
+ *      干湿混合必须在此完成；且它单抽头、无内部反馈。
+ *
+ * 这里直接调用 SDK 库函数而非 AudioEffectChorusXxx 封装，绕开
+ * CFG_AUDIO_EFFECT_CHORUS_EN 在 audio_effect.h 中按分支取值(1 或 0)的不确定性。
+ */
+
+/* 分配方式/内存接口与 audio_effect.c 中其它效果器一致（osPortMallocFromEnd 为 rtos_api.h 宏） */
+
+/* 各路独立 SDK 实例（AudioInit 阶段统一分配，见 BG_GraphEffects_InitDelayChorus） */
+static ChorusContext *s_chorus_guitar_l_ct = NULL;
+static ChorusContext *s_chorus_mic_l_ct    = NULL;
+static PCMDelay      *s_delay_guitar_l_ct  = NULL;
+
+/* Delay/Chorus 处理时的实际采样率（AudioInit 阶段记录，用于延迟时间换算） */
+static uint32_t s_effects_sample_rate = 48000;
+
+/* Delay 湿声暂存：pcm_delay_apply 输出纯湿声，需与干声混合后再输出 */
+static int16_t s_delay_wet[EFFECT_GRAPH_BUFFER_SIZE];
+
+/* 单声道处理暂存（Chorus/Delay 共用） */
+static int16_t s_mono_tmp[EFFECT_GRAPH_BUFFER_SIZE];
+
+/* 各 Chorus 实例上一次的调制深度（ms）。
+ * depth 属于 chorus_init 的参数（不在 chorus_apply 里），改变它必须重新
+ * chorus_init，而 init 会清空延迟线；记录上次值可避免每帧重复初始化。 */
+static uint8_t s_chorus_last_depth[2] = {0xFF, 0xFF};
+
+/* 从 uint32 打包立体声 [低16位=L | 高16位=R] 提取单声道到 int16 数组
+ * src_port=0 → L，src_port=1 → R（与 EQ_Process 的解读一致） */
+static void graph_extract_mono(const uint32_t *src, int16_t *dst,
+                               uint16_t len, uint8_t src_port)
+{
+	uint16_t i;
+	const int16_t *s = (const int16_t *)src;
+
+	for (i = 0; i < len; i++) {
+		dst[i] = s[i * 2 + src_port];
+	}
+}
+
+/* 单声道结果打包回 uint32 立体声帧（L = R = mono）
+ *
+ * 这是本串联链的关键约定：ADC → Delay → Chorus → EQ 之间传递的必须是
+ * 完整的打包立体声帧，因为下游固定按 "取 L"（s[i*2+0]）解读输入。
+ * 若像 EQ 那样只把单声道写进 int16[0..len-1]（仅占缓冲前一半），下游再
+ * 按 s[i*2+0] 取 L 就会变成隔一个取一个，且后半帧读到从未写入的缓冲高
+ * 半部分 → 混叠 + 垃圾数据，表现为高频尖叫、响度下降。 */
+static void graph_pack_mono(const int16_t *mono, uint32_t *dst, uint16_t len)
+{
+	uint16_t i;
+
+	for (i = 0; i < len; i++) {
+		uint16_t m = (uint16_t)mono[i];
+		dst[i] = ((uint32_t)m << 16) | (uint32_t)m;
+	}
+}
+
+/**
+ * ADC 单声道链效果初始化（Delay/Chorus）
+ * 模仿 Reverb/EQ，在 BG_audio_Init 阶段统一分配 SDK 实例并打印剩余内存，
+ * 不在音频回调里惰性分配（避免每帧分配/刷屏，且此时内存余量最大）。
+ * 分配失败则实例保持 NULL，对应回调检测后直通降级。
+ */
+void BG_GraphEffects_InitDelayChorus(void)
+{
+	int mem_before, mem_after;
+	uint32_t sr;
+
+	/* 用系统实际采样率（本工程为 48kHz），否则延迟时间/modulation 会按
+	 * 44.1kHz 换算而偏长 */
+	sr = (gCtrlVars.sample_rate != 0) ? (uint32_t)gCtrlVars.sample_rate : 48000;
+	s_effects_sample_rate = sr;
+
+	DBG("[AudioInit] Initializing ADC mono-chain effects (Delay/Chorus)...\n");
+
+	/* ---- Chorus: Guitar L ---- */
+	mem_before = osPortRemainMem();
+	if (s_chorus_guitar_l_ct == NULL) {
+		s_chorus_guitar_l_ct = (ChorusContext *)osPortMallocFromEnd(CHORUS_SIZE);
+		if (s_chorus_guitar_l_ct != NULL) {
+			chorus_init(s_chorus_guitar_l_ct, (int32_t)sr,
+			            CFG_CHORUS_DELAY_LENGTH,
+			            CFG_CHORUS_MODULATION_DEPTH,
+			            CFG_CHORUS_MODULATION_RATE);
+		}
+	}
+	mem_after = osPortRemainMem();
+	DBG("[AudioInit] Chorus_Guitar_L: ct=%p allocated=%d (remain: %d)\n",
+	    s_chorus_guitar_l_ct, mem_before - mem_after, mem_after);
+
+	/* ---- Chorus: Mic L ---- */
+	mem_before = osPortRemainMem();
+	if (s_chorus_mic_l_ct == NULL) {
+		s_chorus_mic_l_ct = (ChorusContext *)osPortMallocFromEnd(CHORUS_SIZE);
+		if (s_chorus_mic_l_ct != NULL) {
+			chorus_init(s_chorus_mic_l_ct, (int32_t)sr,
+			            CFG_CHORUS_DELAY_LENGTH,
+			            CFG_CHORUS_MODULATION_DEPTH,
+			            CFG_CHORUS_MODULATION_RATE);
+		}
+	}
+	mem_after = osPortRemainMem();
+	DBG("[AudioInit] Chorus_Mic_L: ct=%p allocated=%d (remain: %d)\n",
+	    s_chorus_mic_l_ct, mem_before - mem_after, mem_after);
+
+	/* ---- Delay: Guitar L ---- */
+	mem_before = osPortRemainMem();
+	if (s_delay_guitar_l_ct == NULL) {
+		uint32_t max_delay_samples = (uint32_t)DEFAULT_DELAY_MS * sr / 1000;
+		uint32_t buf_size = ((max_delay_samples + 31) / 32) * 19 + 64;
+		s_delay_guitar_l_ct = (PCMDelay *)osPortMallocFromEnd(
+		                          PCM_DELAY_SIZE + buf_size);
+		if (s_delay_guitar_l_ct != NULL) {
+			pcm_delay_init(s_delay_guitar_l_ct, 1, (int32_t)max_delay_samples,
+			               0, (uint8_t *)s_delay_guitar_l_ct + PCM_DELAY_SIZE);
+		}
+	}
+	mem_after = osPortRemainMem();
+	DBG("[AudioInit] Delay_Guitar_L: ct=%p allocated=%d (remain: %d)\n",
+	    s_delay_guitar_l_ct, mem_before - mem_after, mem_after);
+}
+
+/**
+ * 合唱处理回调 - ADC 左声道链（Guitar L / Mic L）
+ * 干湿比与反馈由 SDK chorus_apply 内部完成
+ */
+void Chorus_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count,
+                    uint32_t *out_buf, uint16_t len)
+{
+	ChorusContext **pct;
+	uint16_t i;
+
+	if (in_count < 1 || !in_bufs[0] || !out_buf || len == 0) {
+		return;
+	}
+
+	/* 超长帧：静态暂存不够大，原样直通保持链路 */
+	if (len > EFFECT_GRAPH_BUFFER_SIZE) {
+		for (i = 0; i < len; i++) {
+			out_buf[i] = in_bufs[0][i];
+		}
+		return;
+	}
+
+	switch (node->id) {
+		case NODE_ID_CHORUS_GUITAR_L: pct = &s_chorus_guitar_l_ct; break;
+		case NODE_ID_CHORUS_MIC_L:    pct = &s_chorus_mic_l_ct;    break;
+		default:
+			/* 未知节点：原样直通，避免打断链路 */
+			for (i = 0; i < len; i++) {
+				out_buf[i] = in_bufs[0][i];
+			}
+			return;
+	}
+
+	/* 旁路 / 实例未分配（AudioInit 阶段分配失败）：原样直通。
+	 * 注意必须复制完整打包帧，不能退化成单声道，否则下游 EQ 取 L 会错位 */
+	if (!node->enabled || *pct == NULL) {
+		for (i = 0; i < len; i++) {
+			out_buf[i] = in_bufs[0][i];
+		}
+		return;
+	}
+
+	/* 取 L 声道 → 单声道合唱 → 还原为打包立体声帧 */
+	graph_extract_mono(in_bufs[0], s_mono_tmp, len, 0);
+
+	{
+		uint8_t idx = (node->id == NODE_ID_CHORUS_MIC_L) ? 1 : 0;
+		uint8_t depth_ms;
+		uint8_t dry = node->params.chorus.dry;
+		uint8_t wet = node->params.chorus.wet;
+
+		/* 参数未初始化（dry/wet 全 0）时回退到 SDK 默认，避免整链静音 */
+		if (dry == 0 && wet == 0) {
+			dry = CFG_CHORUS_DRY;
+			wet = CFG_CHORUS_WET;
+		}
+
+		/* depth 0-100 → 1~12ms，必须小于 chorus_init 的 delay_length(13ms) */
+		depth_ms = (uint8_t)(1u + (uint32_t)node->params.chorus.depth * 11u / 100u);
+		if (depth_ms != s_chorus_last_depth[idx]) {
+			chorus_init(*pct, (int32_t)s_effects_sample_rate,
+			            CFG_CHORUS_DELAY_LENGTH, (int32_t)depth_ms,
+			            (int32_t)node->params.chorus.rate);
+			s_chorus_last_depth[idx] = depth_ms;
+		}
+
+		chorus_apply(*pct, s_mono_tmp, s_mono_tmp, len,
+		             node->params.chorus.feedback, dry, wet,
+		             node->params.chorus.rate);
+	}
+
+	graph_pack_mono(s_mono_tmp, out_buf, len);
+}
+
+/**
+ * 延迟处理回调 - ADC 左声道链（Guitar L）
+ * SDK 输出纯湿声，干湿混合在此完成（wet_dry = 湿声占比 0~100）
+ * 实例在 AudioInit 阶段由 BG_GraphEffects_InitDelayChorus 分配，此处仅做 NULL 检测。
+ */
+void Delay_Process(EffectNode_t *node, uint32_t **in_bufs, uint8_t in_count,
+                   uint32_t *out_buf, uint16_t len)
+{
+	uint16_t i;
+	uint16_t want_ms;
+	uint8_t  wet;
+
+	if (in_count < 1 || !in_bufs[0] || !out_buf || len == 0) {
+		return;
+	}
+
+	/* 超长帧：静态暂存不够大，原样直通保持链路 */
+	if (len > EFFECT_GRAPH_BUFFER_SIZE) {
+		for (i = 0; i < len; i++) {
+			out_buf[i] = in_bufs[0][i];
+		}
+		return;
+	}
+
+	if (node->id != NODE_ID_DELAY_GUITAR_L) {
+		/* 其它节点误配：原样直通 */
+		for (i = 0; i < len; i++) {
+			out_buf[i] = in_bufs[0][i];
+		}
+		return;
+	}
+
+	/* 旁路 / 实例未分配（AudioInit 阶段分配失败）：原样直通。
+	 * 必须复制完整打包帧，否则下游 Chorus/EQ 取 L 会错位 */
+	if (!node->enabled || s_delay_guitar_l_ct == NULL) {
+		for (i = 0; i < len; i++) {
+			out_buf[i] = in_bufs[0][i];
+		}
+		return;
+	}
+
+	/* 延迟时间：来自节点参数，夹到 max 以内 */
+	want_ms = node->params.delay.delay_ms;
+	if (want_ms == 0) {
+		want_ms = DEFAULT_DELAY_MS;
+	}
+	if (want_ms > DEFAULT_DELAY_MS) {
+		want_ms = (uint16_t)DEFAULT_DELAY_MS;
+	}
+
+	/* 取 L 声道 → 纯湿声（pcm_delay_apply 只输出湿声，不含干声） */
+	graph_extract_mono(in_bufs[0], s_mono_tmp, len, 0);
+
+	pcm_delay_apply(s_delay_guitar_l_ct, s_mono_tmp, s_delay_wet, len,
+	                (int32_t)((uint32_t)want_ms * s_effects_sample_rate / 1000));
+
+	/* 干湿混合：干声不衰减，湿声按比例叠加（out = dry + wet_s*wet/100）
+	 * 若写成 dry*(100-wet)/100 + wet_s*wet/100，整体响度会随 wet 下降
+	 * （wet=30 时约 -3dB），表现就是"加了效果之后声音变小" */
+	wet = node->params.delay.wet_dry;
+	if (wet > 100) {
+		wet = 100;
+	}
+
+	for (i = 0; i < len; i++) {
+		int32_t mix = (int32_t)s_mono_tmp[i]
+		            + ((int32_t)s_delay_wet[i] * (int32_t)wet) / 100;
+		if (mix > 32767) {
+			mix = 32767;
+		} else if (mix < -32768) {
+			mix = -32768;
+		}
+		s_mono_tmp[i] = (int16_t)mix;
+	}
+
+	graph_pack_mono(s_mono_tmp, out_buf, len);
 }
 
 /**

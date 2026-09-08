@@ -119,6 +119,7 @@ static void InitADC1Mic(uint16_t SampleRate)
 static void InitAudioEffects(uint16_t SampleRate)
 {
 	extern int osPortRemainMem(void);  /* 获取剩余内存 */
+	extern void BG_GraphEffects_InitDelayChorus(void);  /* ADC 单声道链 Delay/Chorus 初始化 */
 	int mem_before, mem_after;
 	
 	gCtrlVars.audio_effect_init_flag = 1;
@@ -132,6 +133,9 @@ static void InitAudioEffects(uint16_t SampleRate)
 	AudioEffectReverbInit(&gCtrlVars.reverb_unit, 2, SampleRate);
 	mem_after = osPortRemainMem();
 	APP_DBG("[AudioInit] Reverb allocated: %d bytes (remain: %d)\n", mem_before - mem_after, mem_after);
+
+	// ADC 单声道链效果（Delay/Chorus）—— 与 Reverb/EQ 一同在 AudioInit 阶段分配
+	BG_GraphEffects_InitDelayChorus();
 
 	// 动态范围压缩（DRC）- ADC输入通道
 	mem_before = osPortRemainMem();

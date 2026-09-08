@@ -50,12 +50,12 @@ RM := rm -rf
 -include src/banux/03_application_components/audio/app_audio/effect_parameter/subdir.mk
 -include src/banux/03_application_components/audio/app_audio/music_parameter/subdir.mk
 -include src/banux/03_application_components/audio/effect_graph/subdir.mk
+-include src/banux/03_application_components/ble_app/subdir.mk
+-include src/banux/03_application_components/firmware_upgrade/subdir.mk
+-include src/banux/03_application_components/sys_led/subdir.mk
+-include src/banux/03_application_components/sys_param/subdir.mk
+-include src/banux/03_application_components/sys_state/subdir.mk
 -include src/banux/04_application/subdir.mk
--include src/banux/05_component/ble_app/subdir.mk
--include src/banux/05_component/firmware_upgrade/subdir.mk
--include src/banux/05_component/sys_led/subdir.mk
--include src/banux/05_component/sys_param/subdir.mk
--include src/banux/05_component/sys_state/subdir.mk
 -include startup/subdir.mk
 -include objects.mk
 

@@ -460,6 +460,22 @@ uint16_t EffectGraph_Process(uint16_t frame_size)
         node = g->process_order[i];
         
         if (!node->enabled) {
+            /* 被禁用的"处理节点"必须透明直通，不能直接从链路里摘掉。
+             * 原实现只置 processed 就 continue，该节点 buffer_len 停在 0；
+             * 下游节点收集输入时 max_len = max(src->buffer_len) = 0，长度沿
+             * 链路一路塌缩，最终 DAC/USB sink 因 src->buffer_len == 0 一个
+             * 样本都不写 —— 表现为"关掉某个效果器"变成"整机没声音"。
+             * 源节点/输出节点被禁用时仍保持原语义(不产生/不消费数据)。 */
+            if (!IsSourceNode(node->type) && !IsSinkNode(node->type)
+                && node->input_count > 0 && node->inputs[0]
+                && node->inputs[0]->src_node) {
+                src = node->inputs[0]->src_node;
+                if (src->buffer_len > 0) {
+                    memcpy(node->buffer, src->buffer,
+                           src->buffer_len * sizeof(uint32_t));
+                    node->buffer_len = src->buffer_len;
+                }
+            }
             node->processed = true;
             continue;
         }
@@ -872,6 +888,22 @@ uint16_t EffectGraph_ProcessAdaptive(void)
         node = g->process_order[i];
         
         if (!node->enabled) {
+            /* 被禁用的"处理节点"必须透明直通，不能直接从链路里摘掉。
+             * 原实现只置 processed 就 continue，该节点 buffer_len 停在 0；
+             * 下游节点收集输入时 max_len = max(src->buffer_len) = 0，长度沿
+             * 链路一路塌缩，最终 DAC/USB sink 因 src->buffer_len == 0 一个
+             * 样本都不写 —— 表现为"关掉某个效果器"变成"整机没声音"。
+             * 源节点/输出节点被禁用时仍保持原语义(不产生/不消费数据)。 */
+            if (!IsSourceNode(node->type) && !IsSinkNode(node->type)
+                && node->input_count > 0 && node->inputs[0]
+                && node->inputs[0]->src_node) {
+                src = node->inputs[0]->src_node;
+                if (src->buffer_len > 0) {
+                    memcpy(node->buffer, src->buffer,
+                           src->buffer_len * sizeof(uint32_t));
+                    node->buffer_len = src->buffer_len;
+                }
+            }
             node->processed = true;
             continue;
         }

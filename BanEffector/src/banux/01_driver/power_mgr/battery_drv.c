@@ -6,19 +6,41 @@
 // ADC filter buffer (define length in header file)
 static uint16_t adc_buf[FILTER_BUF_LEN] = {0};
 static uint8_t adc_buf_idx = 0;
+static uint8_t adc_buf_cnt = 0;   /* 已填充样本数: 避免开机前几次被初值 0 拉低 */
 
 /**
  * @brief Read battery ADC value from hardware
- * @return Raw ADC value (0~4095)
- * @note Provides ADC read logic
+ * @return Filtered ADC value (0~4095)
+ * @note Provides ADC read logic + moving-average filter
  */
 static uint16_t battery_adc_read(void)
 {
     uint16_t bat_adc_val = 0;
+    uint32_t sum = 0;
+    uint8_t  i;
+
     GPIO_RegOneBitClear(HW_BATTERY_ADC_GPIO_PORT, HW_BATTERY_ADC_GPIO_PIN);
     GPIO_RegOneBitSet(HW_BATTERY_ADC_GPIO_PORT, HW_BATTERY_ADC_GPIO_PIN);
     bat_adc_val = ADC_SingleModeDataGet(HW_BATTERY_ADC_CHANNEL);
-    return bat_adc_val;
+
+    /* 滑动平均滤波。adc_buf[]/adc_buf_idx 此前声明却从未被使用(工程文档
+     * 《检查Banbox工程命令行协议.md》记载为"ADC 滤波未启用"), 与头文件
+     * 声称的"内部自动完成滤波"不符。单次采样在满电阈值 4200mV 附近的
+     * ±3mV 噪声(1 LSB = 1.61mV)会使 battery_get_soc() 在 100/99 之间跳变
+     * (v_table[0]=4200→100, 4199 插值→99), 进而让 SYS_SUB_BATT_CHARGING 位
+     * 每 50ms 翻转一次; 每次翻转触发一行阻塞式 UART printf(~4.8ms @115200),
+     * 超过一个音频帧周期(48kHz/128samples = 2.67ms), 导致 DAC 缓冲欠载
+     * 输出杂音。 */
+    adc_buf[adc_buf_idx] = bat_adc_val;
+    adc_buf_idx = (uint8_t)((adc_buf_idx + 1u) % FILTER_BUF_LEN);
+    if (adc_buf_cnt < FILTER_BUF_LEN) {
+        adc_buf_cnt++;
+    }
+
+    for (i = 0; i < adc_buf_cnt; i++) {
+        sum += adc_buf[i];
+    }
+    return (uint16_t)(sum / adc_buf_cnt);
 }
 
 /**

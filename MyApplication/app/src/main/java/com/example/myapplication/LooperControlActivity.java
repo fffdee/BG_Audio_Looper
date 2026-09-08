@@ -116,6 +116,26 @@ public class LooperControlActivity extends BaseActivity {
     private static final int[]     segRecSource = {2, 2, 2, 2};
     private static final String[]  REC_SRC_NAMES = {"MIC L", "MIC R", "LINE L", "LINE R", "MIX"};
     private static final int       REC_SRC_ALL_MIX = 4;
+
+    /* ---- 各声道可选效果（音效节点名 / 显示名），下标与 REC_SRC_NAMES 对齐 ----
+     * 只列旁路(Bypass)安全的效果：Delay/Chorus 的输入输出都是打包立体声帧，
+     * bypass 时执行器 memcpy 直通，不改变数据格式。
+     * EQ 不在此列：EQ 节点承担"立体声→单声道"提取，若用 node bypass 会让下游
+     * ADC_Mixer 按单声道读到未提取的立体声数据（相当于我刚修的那个格式错位）。 */
+    private static final String[][] CH_FX_NODES = {
+            /* MIC_L  */ {"chorus_mic_l"},
+            /* MIC_R  */ {},
+            /* LINE_L */ {"delay_guitar_l", "chorus_guitar_l"},
+            /* LINE_R */ {},
+            /* MIX    */ {"delay_guitar_l", "chorus_guitar_l", "chorus_mic_l"},
+    };
+    private static final String[][] CH_FX_LABELS = {
+            /* MIC_L  */ {"合唱（麦克风）"},
+            /* MIC_R  */ {},
+            /* LINE_L */ {"延迟（吉他）", "合唱（吉他）"},
+            /* LINE_R */ {},
+            /* MIX    */ {"延迟（吉他）", "合唱（吉他）", "合唱（麦克风）"},
+    };
     /** 每段预裁剪起始偏移（ms），录制完成后自动应用（0=不裁剪） */
     private static final long[] segPreCropStartMs = {0L, 0L, 0L, 0L};
     /** 每段预裁剪末尾裁除时长（ms，从末尾倒退），录制完成后自动应用（0=不裁剪） */
@@ -3427,6 +3447,73 @@ public class LooperControlActivity extends BaseActivity {
      * 步骤7：弹出每段录制配置对话框
      * 可设置：录制多少小节后自动停止 / 停止后是否自动播放
      */
+    /**
+     * 构建「声道效果」区块：按该段的录制源（声道）列出可用效果的开关。
+     * 只列旁路安全的效果，原因见 CH_FX_NODES 注释。
+     */
+    private android.widget.LinearLayout buildChannelFxSection(int recSrc) {
+        android.widget.LinearLayout section = new android.widget.LinearLayout(this);
+        section.setOrientation(android.widget.LinearLayout.VERTICAL);
+        section.setBackgroundColor(clr(R.color.dialog_section_bg));
+        section.setPadding(24, 20, 24, 20);
+        android.widget.LinearLayout.LayoutParams lp =
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, 0, 16);
+        section.setLayoutParams(lp);
+
+        String srcName = (recSrc >= 0 && recSrc < REC_SRC_NAMES.length)
+                ? REC_SRC_NAMES[recSrc] : "MIX";
+
+        TextView lbl = new TextView(this);
+        lbl.setText("🎛️ " + srcName + " 声道效果");
+        lbl.setTextColor(clr(R.color.text_accent));
+        lbl.setTextSize(14);
+        lbl.setTypeface(null, android.graphics.Typeface.BOLD);
+        lbl.setPadding(0, 0, 0, 12);
+        section.addView(lbl);
+
+        boolean validSrc = (recSrc >= 0 && recSrc < CH_FX_NODES.length);
+        String[] nodes  = validSrc ? CH_FX_NODES[recSrc]  : CH_FX_NODES[REC_SRC_ALL_MIX];
+        String[] labels = validSrc ? CH_FX_LABELS[recSrc] : CH_FX_LABELS[REC_SRC_ALL_MIX];
+
+        if (nodes.length == 0) {
+            TextView none = new TextView(this);
+            none.setText("该声道无可切换效果");
+            none.setTextColor(clr(R.color.dialog_sub_text));
+            none.setTextSize(11);
+            section.addView(none);
+            return section;
+        }
+
+        for (int i = 0; i < nodes.length; i++) {
+            final String node  = nodes[i];
+            final String label = (i < labels.length) ? labels[i] : nodes[i];
+            android.widget.Switch sw = new android.widget.Switch(this);
+            sw.setText(label);
+            sw.setTextSize(13);
+            sw.setTextColor(clr(R.color.text_primary));
+            sw.setChecked(FxState.get(node, false));
+            sw.setPadding(0, 6, 0, 6);
+            sw.setOnCheckedChangeListener((btn, isChecked) -> {
+                FxState.put(node, isChecked);
+                // 启用 = 关闭旁路；关闭 = 打开旁路（直通原声）
+                sendCommand("graph bypass " + node + " " + (isChecked ? "off" : "on"), null);
+            });
+            section.addView(sw);
+        }
+
+        TextView hint = new TextView(this);
+        hint.setText("具体参数请到「音效控制」界面调节");
+        hint.setTextColor(clr(R.color.dialog_unit_text));
+        hint.setTextSize(10);
+        hint.setPadding(0, 10, 0, 0);
+        section.addView(hint);
+
+        return section;
+    }
+
     private void showSegConfigDialog(int idx) {
         // 用可变数组模拟 "局部 final" 变量
         final int[]     tmpMeasures     = {segMeasures[idx]};
@@ -3748,6 +3835,9 @@ public class LooperControlActivity extends BaseActivity {
         rowPreCrop.addView(sbCropEnd);
 
         root.addView(rowPreCrop);
+
+        // -- 该声道可选效果开关（按录制源声道列出）--
+        root.addView(buildChannelFxSection(segRecSource[idx]));
 
         // -- 最大录制时长区域 (从卡片 chip 移入设置弹窗) --
         android.widget.LinearLayout rowMaxRec = new android.widget.LinearLayout(this);

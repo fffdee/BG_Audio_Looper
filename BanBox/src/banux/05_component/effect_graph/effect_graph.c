@@ -253,6 +253,8 @@ GraphError_t EffectGraph_CreateFromConfig(const GraphConfig_t *config)
         }
         /* 设置节点参数 */
         memcpy(&node->params, &nc->params, sizeof(EffectParams_t));
+        /* 应用初始旁路状态（缺省 false，见 NodeConfig_t 说明） */
+        node->bypass = nc->bypass;
     }
     
     /* 创建所有边(连接) */

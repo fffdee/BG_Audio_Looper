@@ -12,6 +12,7 @@
 #include "effect_graph.h"
 #include "effect_graph_config.h"
 #include "sys_param.h"     /* For g_sys_param */
+#include "chain_graph_apply.h"  /* 保存前把运行时参数同步进 audio_chain 持久层 */
 #include <string.h>
 
 #if EFFECT_GRAPHICS_EN
@@ -114,6 +115,15 @@ static const ParamRange_t g_GainParamRange[] = {
 static const ParamRange_t g_DelayParamRange[] = {
     { "time",     10, 1000, "ms" },
     { "feedback", 0, 100, "%" },
+    { "wet",      0, 100, "%" },
+    { NULL, 0, 0, NULL }
+};
+
+static const ParamRange_t g_ChorusParamRange[] = {
+    { "depth",    0, 100, "%" },
+    { "rate",     0, 100, "0.1Hz" },
+    { "feedback", 0, 50,  "%" },
+    { "dry",      0, 100, "%" },
     { "wet",      0, 100, "%" },
     { NULL, 0, 0, NULL }
 };
@@ -369,6 +379,15 @@ static void PrintNodeParams(EffectNode_t *node)
             Shell_Printf("  time     = %d ms\n", node->params.delay.delay_ms);
             Shell_Printf("  feedback = %d (0-100)\n", node->params.delay.feedback);
             Shell_Printf("  wet      = %d (0-100)\n", node->params.delay.wet_dry);
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            Shell_Printf("Type: CHORUS\n");
+            Shell_Printf("  depth    = %d (0-100)\n", node->params.chorus.depth);
+            Shell_Printf("  rate     = %d (0-100, 0.1Hz step)\n", node->params.chorus.rate);
+            Shell_Printf("  feedback = %d (0-50)\n", node->params.chorus.feedback);
+            Shell_Printf("  dry      = %d (0-100)\n", node->params.chorus.dry);
+            Shell_Printf("  wet      = %d (0-100)\n", node->params.chorus.wet);
             break;
             
         case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
@@ -756,6 +775,22 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
             }
             break;
             
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            if (strcmp(param_name, "depth") == 0) {
+                node->params.chorus.depth = (uint8_t)value;
+            } else if (strcmp(param_name, "rate") == 0) {
+                node->params.chorus.rate = (uint8_t)value;
+            } else if (strcmp(param_name, "feedback") == 0) {
+                node->params.chorus.feedback = (uint8_t)value;
+            } else if (strcmp(param_name, "dry") == 0) {
+                node->params.chorus.dry = (uint8_t)value;
+            } else if (strcmp(param_name, "wet") == 0) {
+                node->params.chorus.wet = (uint8_t)value;
+            } else {
+                return -1;
+            }
+            break;
+            
         case EFFECT_NODE_TYPE_EFFECT_EXPANDER:
             if (strcmp(param_name, "threshold") == 0) {
                 node->params.expander.threshold = (int16_t)value;
@@ -790,7 +825,7 @@ static int SetNodeParam(EffectNode_t *node, const char *param_name, int32_t valu
     /* EQ参数已经在各自的分支中单独调用了保存 */
     if (node->type != EFFECT_NODE_TYPE_EFFECT_EQ) {
         extern SysParam_Status_t SysParam_SaveModule(const char *module);
-        if (SysParam_SaveModule("chain") == SYSPARAM_OK) {
+        if ((ChainGraph_SaveFromEffectGraph(0), SysParam_SaveModule("chain")) == SYSPARAM_OK) {
             Shell_Printf("[PARAM] Parameters saved to Flash\n");
         } else {
             Shell_Printf("[PARAM] ERROR: Failed to save parameters to Flash\n");
@@ -866,6 +901,22 @@ static int GetNodeParam(EffectNode_t *node, const char *param_name, int32_t *val
                 *value = node->params.delay.feedback;
             } else if (strcmp(param_name, "wet") == 0) {
                 *value = node->params.delay.wet_dry;
+            } else {
+                return -1;
+            }
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            if (strcmp(param_name, "depth") == 0) {
+                *value = node->params.chorus.depth;
+            } else if (strcmp(param_name, "rate") == 0) {
+                *value = node->params.chorus.rate;
+            } else if (strcmp(param_name, "feedback") == 0) {
+                *value = node->params.chorus.feedback;
+            } else if (strcmp(param_name, "dry") == 0) {
+                *value = node->params.chorus.dry;
+            } else if (strcmp(param_name, "wet") == 0) {
+                *value = node->params.chorus.wet;
             } else {
                 return -1;
             }
@@ -1044,7 +1095,7 @@ static int CmdNode(int argc, char *argv[])
         
         /* 保存到Flash */
         extern SysParam_Status_t SysParam_SaveModule(const char *module);
-        if (SysParam_SaveModule("chain") == SYSPARAM_OK) {
+        if ((ChainGraph_SaveFromEffectGraph(0), SysParam_SaveModule("chain")) == SYSPARAM_OK) {
             Shell_Printf("[PARAM] Node state saved to Flash\n");
         } else {
             Shell_Printf("[PARAM] ERROR: Failed to save node state to Flash\n");
@@ -1077,7 +1128,7 @@ static int CmdBypass(int argc, char *argv[])
         
         /* 保存到Flash */
         extern SysParam_Status_t SysParam_SaveModule(const char *module);
-        if (SysParam_SaveModule("chain") == SYSPARAM_OK) {
+        if ((ChainGraph_SaveFromEffectGraph(0), SysParam_SaveModule("chain")) == SYSPARAM_OK) {
             Shell_Printf("[PARAM] Bypass state saved to Flash\n");
         } else {
             Shell_Printf("[PARAM] ERROR: Failed to save bypass state to Flash\n");
@@ -1233,8 +1284,45 @@ static int CmdParam(int argc, char *argv[])
                     node->params.delay.feedback = atoi(argv[4]);
                 }
                 Shell_Printf("Delay feedback: %d\n", node->params.delay.feedback);
+            } else if (strcmp(param, "wet") == 0) {
+                if (argc >= 5) {
+                    node->params.delay.wet_dry = atoi(argv[4]);
+                }
+                Shell_Printf("Delay wet: %d\n", node->params.delay.wet_dry);
             } else {
                 Shell_Printf("ERROR: Unknown delay param '%s'\n", param);
+                return -1;
+            }
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            if (strcmp(param, "depth") == 0) {
+                if (argc >= 5) {
+                    node->params.chorus.depth = atoi(argv[4]);
+                }
+                Shell_Printf("Chorus depth: %d\n", node->params.chorus.depth);
+            } else if (strcmp(param, "rate") == 0) {
+                if (argc >= 5) {
+                    node->params.chorus.rate = atoi(argv[4]);
+                }
+                Shell_Printf("Chorus rate: %d\n", node->params.chorus.rate);
+            } else if (strcmp(param, "feedback") == 0) {
+                if (argc >= 5) {
+                    node->params.chorus.feedback = atoi(argv[4]);
+                }
+                Shell_Printf("Chorus feedback: %d\n", node->params.chorus.feedback);
+            } else if (strcmp(param, "dry") == 0) {
+                if (argc >= 5) {
+                    node->params.chorus.dry = atoi(argv[4]);
+                }
+                Shell_Printf("Chorus dry: %d\n", node->params.chorus.dry);
+            } else if (strcmp(param, "wet") == 0) {
+                if (argc >= 5) {
+                    node->params.chorus.wet = atoi(argv[4]);
+                }
+                Shell_Printf("Chorus wet: %d\n", node->params.chorus.wet);
+            } else {
+                Shell_Printf("ERROR: Unknown chorus param '%s'\n", param);
                 return -1;
             }
             break;
@@ -1546,6 +1634,15 @@ static void PrintNodeJSON(EffectNode_t *node, int is_last)
                         node->params.delay.delay_ms,
                         node->params.delay.feedback,
                         node->params.delay.wet_dry);
+            break;
+            
+        case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+            Shell_Printf("\"depth\":%d,\"rate\":%d,\"feedback\":%d,\"dry\":%d,\"wet\":%d",
+                        node->params.chorus.depth,
+                        node->params.chorus.rate,
+                        node->params.chorus.feedback,
+                        node->params.chorus.dry,
+                        node->params.chorus.wet);
             break;
             
         case EFFECT_NODE_TYPE_EFFECT_EXPANDER:

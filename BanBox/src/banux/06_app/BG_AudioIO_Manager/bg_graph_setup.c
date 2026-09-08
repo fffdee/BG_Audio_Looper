@@ -165,11 +165,20 @@ void BG_AudioIO_SetupEffectGraphCallbacks(void)
 		case EFFECT_NODE_TYPE_EFFECT_HOWLING:
 		case EFFECT_NODE_TYPE_EFFECT_NOISE_GATE:
 		case EFFECT_NODE_TYPE_EFFECT_GAIN:
-		case EFFECT_NODE_TYPE_EFFECT_DELAY:
-		case EFFECT_NODE_TYPE_EFFECT_CHORUS:
 		case EFFECT_NODE_TYPE_LOOPER:
 			node->func.process = Passthrough_Process;
 			DBG("[Audio] [%d] %s -> Passthrough\n", i, node->name);
+			break;
+
+		/* ===== ADC 单声道链效果：接真实算法（原为 Passthrough 直通） ===== */
+		case EFFECT_NODE_TYPE_EFFECT_DELAY:
+			node->func.process = Delay_Process;
+			DBG("[Audio] [%d] %s -> Delay\n", i, node->name);
+			break;
+
+		case EFFECT_NODE_TYPE_EFFECT_CHORUS:
+			node->func.process = Chorus_Process;
+			DBG("[Audio] [%d] %s -> Chorus\n", i, node->name);
 			break;
 			
 		default:

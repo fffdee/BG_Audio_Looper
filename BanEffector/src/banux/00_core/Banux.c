@@ -53,7 +53,15 @@ int Banux_Init(const BanuxConfig_t *config)
 
     if (config->driverInit) {
         ret = config->driverInit();
-        if (ret != 0) return -3;
+        if (ret != 0) {
+            /* 平台驱动注册失败降级为告警, 不中止初始化。NAND/PSRAM/SDCARD 等
+             * 可选外设未探测到属正常情况(硬件不在位或 FlashBus 未挂载), 不应
+             * 拖垮核心框架: 若在此 return -3, g_started 会保持 0, 使
+             * Banux_Process() 首行早返回 -> MainTask 的 while(1) 完全空转 ->
+             * platformProcess(Audio_Loop: USB CDC 轮询 + 效果图处理)永不执行,
+             * 实机表现为 USB 不枚举且音频链路无声。 */
+            DBG("[Banux] WARN: driverInit failed (%d), continuing without those devices\n", ret);
+        }
     }
 
 #if BANUX_INTERNAL_FLASH_FS_EN

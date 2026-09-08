@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 #include "bg_audio_io_internal.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "product_def.h"
 #include "debug.h"
 #include "bg_audio_detection.h"
@@ -153,6 +155,30 @@ uint16_t BT_GetAvailableData(EffectNode_t *node)
  *        所以这里直接读取 max_len 样本，不再检查 available。
  *        这保证了所有源节点返回相同长度。
  */
+/* 吉他声道插拔稳定期：插拔瞬间（含拔出）静音一小段，与麦克风 MicReady 对称，
+ * 防止热插拔 pop 噪声污染 DSP 链路。每个声道独立追踪，未稳定时按"未插入"处理。 */
+static uint8_t  g_g0_line1_plugged = 0xFF;  /* 0xFF=未初始化 */
+static uint8_t  g_g0_line2_plugged = 0xFF;  /* 0xFF=未初始化 */
+static uint32_t g_g0_line1_ticks   = 0u;    /* 上次稳定时刻(ms) */
+static uint32_t g_g0_line2_ticks   = 0u;    /* 上次稳定时刻(ms) */
+
+static uint32_t guitar_plug_mask(void)
+{
+    uint32_t now_ms = (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
+    bool p1 = BG_AudioDetection_Line1IsPlugged();
+    bool p2 = BG_AudioDetection_Line2IsPlugged();
+    /* 首次调用：初始化已知状态，避免开机误判插拔 */
+    if (g_g0_line1_plugged == 0xFF) { g_g0_line1_plugged = (uint8_t)p1; g_g0_line1_ticks = now_ms; }
+    if (g_g0_line2_plugged == 0xFF) { g_g0_line2_plugged = (uint8_t)p2; g_g0_line2_ticks = now_ms; }
+    /* 插拔状态变化：进入静音过渡期（插入去 pop、拔出防悬空噪声） */
+    if (p1 != (bool)g_g0_line1_plugged) { g_g0_line1_plugged = (uint8_t)p1; g_g0_line1_ticks = now_ms; }
+    if (p2 != (bool)g_g0_line2_plugged) { g_g0_line2_plugged = (uint8_t)p2; g_g0_line2_ticks = now_ms; }
+    /* 未插入声道持续静音；插入声道稳定期(1s)过后才放行 */
+    bool on1 = (!p1) ? false : (now_ms - g_g0_line1_ticks >= 1000U);
+    bool on2 = (!p2) ? false : (now_ms - g_g0_line2_ticks >= 1000U);
+    return (on1 ? 0x0000FFFFu : 0u) | (on2 ? 0xFFFF0000u : 0u);
+}
+
 uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint16_t max_len)
 {
 	uint16_t samples_to_read;
@@ -173,8 +199,9 @@ uint16_t ADC0_ReadGuitarData(EffectNode_t *node, uint32_t *out_buf, uint16_t max
 		 * 未插入的声道数据置 0，防止串音/浮空噪声污染 DSP 链路与 loop 录音。
 		 * 样本格式: bit31..16 = R(右声道/Line2), bit15..0 = L(左声道/Line1) */
 		{
-			uint32_t ch_mask = (BG_AudioDetection_Line1IsPlugged() ? 0x0000FFFFu : 0u)
-			                 | (BG_AudioDetection_Line2IsPlugged() ? 0xFFFF0000u : 0u);
+			/* 按声道插拔稳定期生成掩码：刚插拔（含拔出）的声道立即静音，
+			 * 与麦克风插入处理对称，消除热插拔 pop */
+			uint32_t ch_mask = guitar_plug_mask();
 			if (ch_mask != 0xFFFFFFFFu) {
 				uint16_t i;
 				for (i = 0; i < samples_to_read; i++) {
